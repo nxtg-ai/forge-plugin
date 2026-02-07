@@ -1,0 +1,12 @@
+{
+  "name": "nxtg-forge",
+  "version": "3.0.0",
+  "description": "AI-powered development governance — automated quality gates, agent orchestration, and project health monitoring for Claude Code",
+  "author": {
+    "name": "NXTG AI",
+    "url": "https://github.com/nxtg-ai"
+  },
+  "repository": "https://github.com/nxtg-ai/forge-plugin",
+  "license": "MIT",
+  "keywords": ["governance", "quality", "testing", "agents", "orchestration", "devops"]
+}

@@ -1,0 +1,81 @@
+{
+  "UserPromptSubmit": [
+    {
+      "description": "Pre-task initialization and state sync",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/pre-task.sh",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "description": "Post-task completion and quality checks",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-task.sh",
+          "timeout": 15
+        }
+      ]
+    },
+    {
+      "description": "Audit root directory for misplaced files",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/audit-root-cleanliness.sh",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "description": "Remind to run smoke tests when server/test files were modified",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/smoke-test-reminder.sh",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "description": "Enforce file placement rules - prevents doc sprawl in root",
+      "matcher": "Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/enforce-file-placement.sh",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "description": "Governance code quality check - advisory",
+      "matcher": "Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/governance-check.sh",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "description": "Governance code quality check - advisory",
+      "matcher": "Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/governance-check.sh",
+          "timeout": 10
+        }
+      ]
+    }
+  ]
+}
