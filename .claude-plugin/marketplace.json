@@ -1,0 +1,23 @@
+{
+  "name": "nxtg-forge",
+  "description": "NXTG-Forge plugin marketplace — AI-powered development governance for Claude Code",
+  "owner": {
+    "name": "NXTG AI",
+    "email": "awaliuddin@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "nxtg-forge",
+      "source": ".",
+      "description": "AI-powered development governance — automated quality gates, agent orchestration, and project health monitoring for Claude Code",
+      "version": "3.0.0",
+      "author": {
+        "name": "NXTG AI"
+      },
+      "category": "development",
+      "tags": ["governance", "quality", "testing", "agents", "orchestration"],
+      "license": "MIT",
+      "repository": "https://github.com/nxtg-ai/forge-plugin"
+    }
+  ]
+}
