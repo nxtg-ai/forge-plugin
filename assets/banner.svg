@@ -1,0 +1,330 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" width="900" height="300">
+  <defs>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="iconGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <linearGradient id="sweepGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#58a6ff" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#58a6ff" stop-opacity="0.08"/>
+      <stop offset="50%" stop-color="#58a6ff" stop-opacity="0.25"/>
+      <stop offset="60%" stop-color="#58a6ff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#161b22"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </radialGradient>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#58a6ff"/>
+      <stop offset="100%" stop-color="#388bfd"/>
+    </linearGradient>
+    <filter id="particleGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <clipPath id="bannerClip">
+      <rect x="0" y="0" width="900" height="300"/>
+    </clipPath>
+  </defs>
+
+  <style>
+    @keyframes titlePulse {
+      0%, 100% { opacity: 0.85; }
+      50% { opacity: 1; }
+    }
+    @keyframes titleGlowPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.7; }
+    }
+    @keyframes sweep {
+      0% { transform: translateX(-300px); }
+      100% { transform: translateX(1200px); }
+    }
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      50% { transform: translate(15px, -25px); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0); opacity: 0; }
+      15% { opacity: 0.6; }
+      85% { opacity: 0.6; }
+      50% { transform: translate(-20px, -30px); }
+    }
+    @keyframes float3 {
+      0%, 100% { transform: translate(0, 0); opacity: 0; }
+      10% { opacity: 0.7; }
+      90% { opacity: 0.7; }
+      50% { transform: translate(10px, -20px); }
+    }
+    @keyframes float4 {
+      0%, 100% { transform: translate(0, 0); opacity: 0; }
+      20% { opacity: 0.5; }
+      80% { opacity: 0.5; }
+      50% { transform: translate(-15px, -35px); }
+    }
+    @keyframes float5 {
+      0%, 100% { transform: translate(0, 0); opacity: 0; }
+      10% { opacity: 0.9; }
+      90% { opacity: 0.6; }
+      50% { transform: translate(25px, -15px); }
+    }
+    @keyframes shieldPulse {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.35; }
+    }
+    @keyframes gridFade {
+      0%, 100% { opacity: 0.04; }
+      50% { opacity: 0.08; }
+    }
+    @keyframes spark1 {
+      0%, 100% { opacity: 0; transform: translate(0,0); }
+      20% { opacity: 1; }
+      80% { opacity: 0.2; }
+      50% { transform: translate(-8px, -18px); }
+    }
+    @keyframes spark2 {
+      0%, 100% { opacity: 0; transform: translate(0,0); }
+      25% { opacity: 1; }
+      75% { opacity: 0.2; }
+      50% { transform: translate(10px, -22px); }
+    }
+    @keyframes spark3 {
+      0%, 100% { opacity: 0; transform: translate(0,0); }
+      15% { opacity: 0.8; }
+      85% { opacity: 0.1; }
+      50% { transform: translate(5px, -15px); }
+    }
+    @keyframes drawLine {
+      0% { stroke-dashoffset: 300; }
+      50% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -300; }
+    }
+    @keyframes orbit {
+      0% { transform: rotate(0deg) translateX(22px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(22px) rotate(-360deg); }
+    }
+    @keyframes nodePulse {
+      0%, 100% { r: 2; opacity: 0.4; }
+      50% { r: 3; opacity: 0.8; }
+    }
+    @keyframes badgePulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    .title-main { animation: titlePulse 4s ease-in-out infinite; }
+    .title-glow { animation: titleGlowPulse 4s ease-in-out infinite; }
+    .sweep-line { animation: sweep 6s ease-in-out infinite; }
+    .particle-1 { animation: float1 3.5s ease-in-out infinite; }
+    .particle-2 { animation: float2 4.2s ease-in-out infinite 0.5s; }
+    .particle-3 { animation: float3 3.8s ease-in-out infinite 1s; }
+    .particle-4 { animation: float4 4.5s ease-in-out infinite 1.5s; }
+    .particle-5 { animation: float5 3.2s ease-in-out infinite 2s; }
+    .particle-6 { animation: float1 4s ease-in-out infinite 0.8s; }
+    .particle-7 { animation: float3 3.6s ease-in-out infinite 2.3s; }
+    .particle-8 { animation: float2 4.8s ease-in-out infinite 1.2s; }
+    .shield-outer { animation: shieldPulse 5s ease-in-out infinite; }
+    .grid-lines { animation: gridFade 8s ease-in-out infinite; }
+    .spark-1 { animation: spark1 2.5s ease-out infinite; }
+    .spark-2 { animation: spark2 2.8s ease-out infinite 0.4s; }
+    .spark-3 { animation: spark3 2.2s ease-out infinite 0.8s; }
+    .accent-line { stroke-dasharray: 300; animation: drawLine 5s linear infinite; }
+    .orbit-dot { animation: orbit 8s linear infinite; transform-origin: center; }
+    .node-dot { animation: nodePulse 3s ease-in-out infinite; }
+    .badge-glow { animation: badgePulse 3s ease-in-out infinite; }
+  </style>
+
+  <!-- Background -->
+  <rect width="900" height="300" fill="url(#bgGlow)"/>
+
+  <!-- Grid pattern -->
+  <g class="grid-lines" clip-path="url(#bannerClip)">
+    <line x1="60" y1="0" x2="60" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="120" y1="0" x2="120" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="180" y1="0" x2="180" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="240" y1="0" x2="240" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="300" y1="0" x2="300" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="360" y1="0" x2="360" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="420" y1="0" x2="420" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="480" y1="0" x2="480" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="540" y1="0" x2="540" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="600" y1="0" x2="600" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="660" y1="0" x2="660" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="720" y1="0" x2="720" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="780" y1="0" x2="780" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="840" y1="0" x2="840" y2="300" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="0" y1="60" x2="900" y2="60" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="0" y1="120" x2="900" y2="120" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="0" y1="180" x2="900" y2="180" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+    <line x1="0" y1="240" x2="900" y2="240" stroke="#58a6ff" stroke-width="0.5" opacity="0.06"/>
+  </g>
+
+  <!-- Governance network nodes — background decoration -->
+  <g opacity="0.25">
+    <line x1="80" y1="60" x2="160" y2="100" stroke="#58a6ff" stroke-width="0.6" opacity="0.3"/>
+    <line x1="160" y1="100" x2="120" y2="200" stroke="#58a6ff" stroke-width="0.6" opacity="0.2"/>
+    <line x1="120" y1="200" x2="80" y2="250" stroke="#39d353" stroke-width="0.6" opacity="0.2"/>
+    <line x1="80" y1="250" x2="50" y2="200" stroke="#bc8cff" stroke-width="0.6" opacity="0.15"/>
+    <line x1="740" y1="70" x2="800" y2="130" stroke="#bc8cff" stroke-width="0.6" opacity="0.3"/>
+    <line x1="800" y1="130" x2="830" y2="210" stroke="#58a6ff" stroke-width="0.6" opacity="0.2"/>
+    <line x1="830" y1="210" x2="770" y2="260" stroke="#39d353" stroke-width="0.6" opacity="0.2"/>
+    <line x1="770" y1="260" x2="850" y2="240" stroke="#58a6ff" stroke-width="0.6" opacity="0.15"/>
+    <line x1="850" y1="240" x2="870" y2="180" stroke="#bc8cff" stroke-width="0.6" opacity="0.15"/>
+    <circle cx="80" cy="60" class="node-dot" fill="#58a6ff" r="2" opacity="0.5"/>
+    <circle cx="160" cy="100" class="node-dot" fill="#bc8cff" r="2" opacity="0.4" style="animation-delay: 0.5s"/>
+    <circle cx="120" cy="200" class="node-dot" fill="#58a6ff" r="2" opacity="0.4" style="animation-delay: 1s"/>
+    <circle cx="80" cy="250" class="node-dot" fill="#39d353" r="2" opacity="0.3" style="animation-delay: 1.5s"/>
+    <circle cx="50" cy="200" class="node-dot" fill="#bc8cff" r="2" opacity="0.3" style="animation-delay: 2s"/>
+    <circle cx="740" cy="70" class="node-dot" fill="#bc8cff" r="2" opacity="0.5" style="animation-delay: 0.3s"/>
+    <circle cx="800" cy="130" class="node-dot" fill="#58a6ff" r="2" opacity="0.4" style="animation-delay: 0.8s"/>
+    <circle cx="830" cy="210" class="node-dot" fill="#39d353" r="2" opacity="0.4" style="animation-delay: 1.3s"/>
+    <circle cx="770" cy="260" class="node-dot" fill="#58a6ff" r="2" opacity="0.3" style="animation-delay: 1.8s"/>
+    <circle cx="850" cy="240" class="node-dot" fill="#bc8cff" r="2" opacity="0.3" style="animation-delay: 2.1s"/>
+    <circle cx="870" cy="180" class="node-dot" fill="#58a6ff" r="2" opacity="0.25" style="animation-delay: 2.4s"/>
+  </g>
+
+  <!-- Sweep line -->
+  <g class="sweep-line" clip-path="url(#bannerClip)">
+    <rect x="0" y="0" width="300" height="300" fill="url(#sweepGrad)"/>
+  </g>
+
+  <!-- Shield + Anvil icon -->
+  <g transform="translate(240, 108)">
+    <!-- Shield outer glow -->
+    <path class="shield-outer" d="M0,-48 L28,-36 L28,8 C28,30 0,48 0,48 C0,48 -28,30 -28,8 L-28,-36 Z"
+          fill="none" stroke="#58a6ff" stroke-width="1.5" opacity="0.2" filter="url(#iconGlow)"/>
+    <!-- Shield body -->
+    <path d="M0,-44 L24,-33 L24,6 C24,26 0,42 0,42 C0,42 -24,26 -24,6 L-24,-33 Z"
+          fill="none" stroke="url(#shieldGrad)" stroke-width="2" opacity="0.8"/>
+    <!-- Inner shield fill -->
+    <path d="M0,-34 L16,-26 L16,2 C16,18 0,30 0,30 C0,30 -16,18 -16,2 L-16,-26 Z"
+          fill="#58a6ff" opacity="0.06"/>
+    <!-- Anvil symbol inside shield -->
+    <g transform="translate(0, -4)">
+      <!-- Anvil horn (left) -->
+      <path d="M-14,-6 L-8,-8 L-8,-4 L-14,-2 Z" fill="#58a6ff" opacity="0.6"/>
+      <!-- Anvil top -->
+      <path d="M-8,-8 L12,-8 L14,-4 L-8,-4 Z" fill="#58a6ff" opacity="0.75"/>
+      <!-- Anvil body -->
+      <path d="M-6,-4 L10,-4 L8,6 L-4,6 Z" fill="#58a6ff" opacity="0.55"/>
+      <!-- Anvil base -->
+      <path d="M-8,6 L12,6 L14,10 L-10,10 Z" fill="#58a6ff" opacity="0.65"/>
+      <!-- Hammer above anvil -->
+      <line x1="-4" y1="-20" x2="6" y2="-10" stroke="#bc8cff" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+      <rect x="4" y="-16" width="8" height="5" rx="1" transform="rotate(-45, 8, -13.5)" fill="#bc8cff" opacity="0.8"/>
+      <!-- Sparks from hammer strike -->
+      <circle cx="0" cy="-10" r="1.3" fill="#39d353" class="spark-1"/>
+      <circle cx="6" cy="-13" r="1" fill="#58a6ff" class="spark-2"/>
+      <circle cx="-3" cy="-13" r="0.9" fill="#bc8cff" class="spark-3"/>
+    </g>
+  </g>
+
+  <!-- Orbiting dot around shield -->
+  <g transform="translate(240, 104)">
+    <g class="orbit-dot" style="transform-origin: 0px 0px;">
+      <circle cx="22" cy="0" r="1.8" fill="#39d353" opacity="0.7" filter="url(#particleGlow)"/>
+    </g>
+  </g>
+
+  <!-- NXTG-FORGE title -->
+  <g transform="translate(500, 118)">
+    <!-- Glow layer -->
+    <text class="title-glow" x="50" y="0" text-anchor="middle"
+          font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="800"
+          font-size="56" fill="#58a6ff" opacity="0.4" filter="url(#glow)"
+          letter-spacing="5">NXTG-FORGE</text>
+    <!-- Main title -->
+    <text class="title-main" x="50" y="0" text-anchor="middle"
+          font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="800"
+          font-size="56" letter-spacing="5">
+      <tspan fill="#58a6ff">NXTG</tspan><tspan fill="#484f58">-</tspan><tspan fill="#e6edf3">FORGE</tspan>
+    </text>
+  </g>
+
+  <!-- Accent underline (animated draw) -->
+  <g transform="translate(310, 136)">
+    <line x1="0" y1="0" x2="280" y2="0" stroke="#21262d" stroke-width="1" opacity="0.6"/>
+    <line class="accent-line" x1="0" y1="0" x2="280" y2="0" stroke="#39d353" stroke-width="1.5" opacity="0.5"/>
+    <!-- End caps -->
+    <circle cx="0" cy="0" r="2" fill="#58a6ff" opacity="0.4"/>
+    <circle cx="280" cy="0" r="2" fill="#58a6ff" opacity="0.4"/>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="500" y="170" text-anchor="middle"
+        font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="400"
+        font-size="17" fill="#8b949e" letter-spacing="5.5"
+        opacity="0.9">AI-POWERED DEVELOPMENT GOVERNANCE</text>
+
+  <!-- Feature pills row -->
+  <g transform="translate(450, 210)">
+    <!-- Pill: 22 Agents -->
+    <g transform="translate(-175, 0)">
+      <rect x="-44" y="-12" width="88" height="24" rx="12" fill="#58a6ff" opacity="0.08" stroke="#58a6ff" stroke-width="0.6" stroke-opacity="0.25"/>
+      <text x="0" y="4" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="11" fill="#58a6ff" opacity="0.85">22 Agents</text>
+    </g>
+    <!-- Pill: 19 Commands -->
+    <g transform="translate(-55, 0)">
+      <rect x="-52" y="-12" width="104" height="24" rx="12" fill="#39d353" opacity="0.08" stroke="#39d353" stroke-width="0.6" stroke-opacity="0.25"/>
+      <text x="0" y="4" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="11" fill="#39d353" opacity="0.85">19 Commands</text>
+    </g>
+    <!-- Pill: Zero Config -->
+    <g transform="translate(75, 0)">
+      <rect x="-48" y="-12" width="96" height="24" rx="12" fill="#bc8cff" opacity="0.08" stroke="#bc8cff" stroke-width="0.6" stroke-opacity="0.25"/>
+      <text x="0" y="4" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="11" fill="#bc8cff" opacity="0.85">Zero Config</text>
+    </g>
+    <!-- Pill: MIT License -->
+    <g transform="translate(175, 0)">
+      <rect x="-40" y="-12" width="80" height="24" rx="12" fill="#e6edf3" opacity="0.05" stroke="#484f58" stroke-width="0.6" stroke-opacity="0.3"/>
+      <text x="0" y="4" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="11" fill="#8b949e" opacity="0.85">MIT License</text>
+    </g>
+  </g>
+
+  <!-- Floating particles (AI activity) -->
+  <g filter="url(#particleGlow)">
+    <circle class="particle-1" cx="145" cy="185" r="1.5" fill="#58a6ff" opacity="0"/>
+    <circle class="particle-2" cx="325" cy="245" r="1.2" fill="#39d353" opacity="0"/>
+    <circle class="particle-3" cx="590" cy="255" r="1.8" fill="#bc8cff" opacity="0"/>
+    <circle class="particle-4" cx="710" cy="195" r="1.3" fill="#58a6ff" opacity="0"/>
+    <circle class="particle-5" cx="825" cy="165" r="1.6" fill="#39d353" opacity="0"/>
+    <circle class="particle-6" cx="95" cy="85" r="1.4" fill="#bc8cff" opacity="0"/>
+    <circle class="particle-7" cx="765" cy="55" r="1.1" fill="#58a6ff" opacity="0"/>
+    <circle class="particle-8" cx="405" cy="65" r="1.5" fill="#39d353" opacity="0"/>
+    <!-- Extra particles for density -->
+    <circle class="particle-3" cx="200" cy="40" r="1" fill="#58a6ff" opacity="0" style="animation-delay: 1.7s"/>
+    <circle class="particle-5" cx="650" cy="275" r="1.3" fill="#bc8cff" opacity="0" style="animation-delay: 0.3s"/>
+    <circle class="particle-1" cx="500" cy="30" r="1.1" fill="#39d353" opacity="0" style="animation-delay: 2.5s"/>
+    <circle class="particle-4" cx="370" cy="280" r="1.4" fill="#58a6ff" opacity="0" style="animation-delay: 3s"/>
+  </g>
+
+  <!-- "for Claude Code" badge -->
+  <g transform="translate(780, 262)">
+    <rect x="-68" y="-12" width="136" height="24" rx="12" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+    <text class="badge-glow" x="0" y="4" text-anchor="middle"
+          font-family="'Segoe UI', system-ui, sans-serif" font-weight="500" font-size="11">
+      <tspan fill="#8b949e">for </tspan><tspan fill="#bc8cff" font-weight="600">Claude Code</tspan>
+    </text>
+  </g>
+
+  <!-- Version badge top-left -->
+  <g transform="translate(38, 26)">
+    <rect x="-18" y="-10" width="36" height="20" rx="4" fill="#39d353" opacity="0.1" stroke="#39d353" stroke-width="0.6" stroke-opacity="0.3"/>
+    <text x="0" y="4" text-anchor="middle" font-family="'SF Mono', 'Fira Code', monospace" font-weight="700" font-size="11" fill="#39d353" opacity="0.85">v3</text>
+  </g>
+
+  <!-- Top and bottom edge accents -->
+  <rect x="0" y="0" width="900" height="1" fill="#58a6ff" opacity="0.12"/>
+  <rect x="0" y="299" width="900" height="1" fill="#58a6ff" opacity="0.12"/>
+
+  <!-- Subtle corner accents -->
+  <path d="M0,0 L40,0 L0,0 L0,30" fill="none" stroke="#58a6ff" stroke-width="1" opacity="0.15"/>
+  <path d="M900,0 L860,0 M900,0 L900,30" fill="none" stroke="#58a6ff" stroke-width="1" opacity="0.15"/>
+  <path d="M0,300 L40,300 M0,300 L0,270" fill="none" stroke="#58a6ff" stroke-width="1" opacity="0.15"/>
+  <path d="M900,300 L860,300 M900,300 L900,270" fill="none" stroke="#58a6ff" stroke-width="1" opacity="0.15"/>
+</svg>

@@ -1,117 +1,292 @@
-# NXTG-Forge
+<p align="center">
+  <img src="assets/banner.svg" alt="NXTG-Forge" width="900">
+</p>
 
-AI-powered development governance plugin for Claude Code.
+<p align="center">
+  <strong>The AI Chief of Staff for your codebase</strong>
+</p>
 
-Forge adds **20 slash commands**, **22 specialized agents**, **29 skills**, and **6 governance hooks** to your Claude Code environment. It provides automated quality gates, agent orchestration, project health monitoring, and multi-backend support (Claude Code, Codex, Gemini).
+<p align="center">
+  <a href="#"><img src="https://img.shields.io/badge/version-3.0.0-6366f1?style=flat-square" alt="Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="License"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Claude_Code-Plugin-8b5cf6?style=flat-square" alt="Claude Code Plugin"></a>
+  <a href="#agents"><img src="https://img.shields.io/badge/agents-22-f97316?style=flat-square" alt="Agents"></a>
+  <a href="#commands"><img src="https://img.shields.io/badge/commands-20-06b6d4?style=flat-square" alt="Commands"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/skills-29-eab308?style=flat-square" alt="Skills"></a>
+</p>
+
+<p align="center">
+  20 commands &middot; 22 specialized agents &middot; 29 skills &middot; 6 governance hooks<br>
+  <em>Zero dependencies. Pure markdown. Install and go.</em>
+</p>
+
+<br>
+
+---
+
+<br>
+
+## What is Forge?
+
+Forge is an AI-powered development governance system that turns Claude Code into a full development platform. It adds automated quality gates, intelligent agent orchestration, and real-time project health monitoring to every project you work on. Think of it as a **Chief of Staff** that keeps your codebase healthy while you ship features.
+
+No servers. No build steps. No npm dependencies. Forge is pure markdown files that extend Claude Code's native capabilities — commands, agents, skills, and hooks that work the moment you install them.
+
+<br>
 
 ## Quick Start
 
 ```bash
-# Install the plugin
+# 1. Install the plugin
 claude plugin add nxtg-ai/forge-plugin
 
-# Initialize in your project
+# 2. Initialize Forge in your project
 /[FRG]-init
 
-# Check project health
+# 3. Check your project health
 /[FRG]-status
+
+# 4. Open the command center
+/[FRG]-command-center
 ```
 
-## What You Get
+That's it. Forge is now governing your project.
 
-### Commands (20)
+<br>
 
-| Command | Purpose |
-|---------|---------|
-| `/[FRG]-init` | Initialize Forge in a project (60-second setup wizard) |
-| `/[FRG]-status` | Display project state (git, tests, types, governance) |
-| `/[FRG]-status-enhanced` | Full dashboard with health score and metrics |
-| `/[FRG]-test` | Run test suite with detailed analysis |
-| `/[FRG]-checkpoint` | Save project state snapshot |
-| `/[FRG]-restore` | Restore from a checkpoint |
-| `/[FRG]-report` | Session activity report |
-| `/[FRG]-gap-analysis` | Analyze gaps across testing, docs, security, architecture |
-| `/[FRG]-enable-forge` | Activate command center with 4-option menu |
-| `/[FRG]-feature` | Add a feature with full agent orchestration |
-| `/[FRG]-deploy` | Pre-flight validation and deployment |
-| `/[FRG]-optimize` | Codebase performance and maintainability analysis |
-| `/[FRG]-spec` | Generate technical specifications |
-| `/[FRG]-agent-assign` | Assign tasks to specialized agents |
-| `/[FRG]-upgrade` | Detect and fix configuration gaps |
-| `/[FRG]-integrate` | Set up third-party service integrations |
-| `/[FRG]-compliance` | License compatibility and SBOM generation |
-| `/[FRG]-docs-status` | Documentation health and coverage |
-| `/[FRG]-docs-update` | Detect and fix stale documentation |
-| `/[FRG]-docs-audit` | Full documentation quality audit |
+## Commands
 
-### Agents (22)
+<h3 id="commands">20 slash commands across 5 categories</h3>
 
-Specialized subagents that Claude Code can invoke automatically based on task context:
+<table>
+<tr><td colspan="2"><h4>Project Governance</h4></td></tr>
+<tr>
+  <td><code>/[FRG]-init</code></td>
+  <td>Initialize Forge in any project — 60-second setup wizard</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-status</code></td>
+  <td>Project health at a glance — git, tests, types, governance</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-status-enhanced</code></td>
+  <td>Full dashboard with health score, metrics, and trend analysis</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-gap-analysis</code></td>
+  <td>Find missing tests, docs, security issues, and architecture gaps</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-compliance</code></td>
+  <td>License scanning and software bill of materials (SBOM)</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-command-center</code></td>
+  <td>Central hub for all Forge capabilities</td>
+</tr>
 
-- **Builder** — Feature implementation with tests and documentation
-- **Planner** — Architecture design and task breakdown
-- **Guardian** — Quality gates, security validation, pre-commit checks
-- **Detective** — Project health analysis and diagnostic investigation
-- **Security** — Vulnerability scanning and security hardening
-- **Testing** — Test generation and coverage analysis
-- **Performance** — Profiling, bundle analysis, optimization
-- **Refactor** — Code restructuring and complexity reduction
-- **API** — Endpoint design and API integration
-- **Database** — Schema design, migrations, query optimization
-- **UI** — Component development, styling, accessibility
-- **DevOps** — Docker, CI/CD, deployment automation
-- **Docs** — Documentation generation and maintenance
-- **Analytics** — Metrics tracking and usage analysis
-- **Compliance** — License auditing and regulatory compliance
-- **Integration** — External service connections
-- **Learning** — Pattern recognition and recommendation improvement
-- **Release Sentinel** — Documentation sync with code changes
-- **Governance Verifier** — Automated governance validation
-- **Orchestrator** — Multi-agent coordination
-- **Oracle** — Proactive governance sentinel for autonomous development
-- **CEO Loop** — Autonomous strategic decision-making
+<tr><td colspan="2"><h4>Feature Development</h4></td></tr>
+<tr>
+  <td><code>/[FRG]-feature</code></td>
+  <td>Plan and build features with full agent orchestration</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-spec</code></td>
+  <td>Generate detailed technical specifications</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-agent-assign</code></td>
+  <td>Assign tasks to specialized agents from the 22-agent roster</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-integrate</code></td>
+  <td>Scaffold third-party service integrations</td>
+</tr>
 
-### Skills (29)
+<tr><td colspan="2"><h4>Quality Assurance</h4></td></tr>
+<tr>
+  <td><code>/[FRG]-test</code></td>
+  <td>Run test suite with detailed failure analysis</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-deploy</code></td>
+  <td>Pre-flight validation before shipping to production</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-optimize</code></td>
+  <td>Performance, bundle size, and maintainability analysis</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-upgrade</code></td>
+  <td>Detect and fix configuration gaps and drift</td>
+</tr>
 
-Auto-activating knowledge modules that inform Claude Code's responses:
+<tr><td colspan="2"><h4>State Management</h4></td></tr>
+<tr>
+  <td><code>/[FRG]-checkpoint</code></td>
+  <td>Save a named snapshot of project state</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-restore</code></td>
+  <td>Roll back to any saved checkpoint</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-report</code></td>
+  <td>Generate session activity and progress reports</td>
+</tr>
 
-- Architecture, coding standards, testing strategy, security
-- Claude Code framework, Codex framework, Gemini framework
-- Agent development, skill development, runtime validation
-- Domain knowledge, git workflow, documentation standards
-- 6 specialized agent role skills (backend, CLI, architect, platform, integration, QA)
+<tr><td colspan="2"><h4>Documentation</h4></td></tr>
+<tr>
+  <td><code>/[FRG]-docs-status</code></td>
+  <td>Documentation health and coverage analysis</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-docs-update</code></td>
+  <td>Detect and fix stale documentation</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-docs-audit</code></td>
+  <td>Full documentation quality audit with actionable findings</td>
+</tr>
+</table>
 
-### Hooks (6)
+<br>
 
-Advisory governance hooks that run automatically:
+## Agents
 
-| Event | Hook | Purpose |
-|-------|------|---------|
-| UserPromptSubmit | pre-task.sh | State sync and initialization |
-| Stop | post-task.sh | Quality checks on task completion |
-| Stop | audit-root-cleanliness.sh | Prevent file sprawl in project root |
-| Stop | smoke-test-reminder.sh | Remind to test after server/test changes |
-| PostToolUse (Write) | enforce-file-placement.sh | Enforce file organization rules |
-| PostToolUse (Edit/Write) | governance-check.sh | Advisory code quality check |
+<h3 id="agents">22 specialized subagents</h3>
 
-All hooks are **non-blocking** — they observe and advise, they do not prevent actions.
+Forge agents are specialist personas that Claude Code invokes automatically based on task context. Each agent carries domain expertise, knows which tools to use, and follows proven patterns for its specialty.
 
-## Requirements
+| Agent | Specialty |
+|:------|:----------|
+| **Planner** | Architecture design, task breakdown, dependency mapping |
+| **Builder** | Feature implementation with tests and documentation |
+| **Guardian** | Quality gates, pre-commit checks, production readiness |
+| **Security** | Vulnerability scanning, OWASP checks, secrets detection |
+| **Testing** | Test generation, coverage analysis, edge case discovery |
+| **Performance** | Profiling, bundle analysis, runtime optimization |
+| **Orchestrator** | Multi-agent coordination and workflow management |
+| **Detective** | Root cause analysis and diagnostic investigation |
+| **Refactor** | Code restructuring and complexity reduction |
+| **DevOps** | Docker, CI/CD pipelines, deployment automation |
 
-- [Claude Code](https://claude.ai/claude-code) CLI
-- Git (for project status commands)
-- Node.js 18+ (for test commands)
+<p align="right"><em>+ 12 more specialists: API, Database, UI, Docs, Analytics, Compliance, Integration, Learning, Release Sentinel, Governance Verifier, Oracle, and CEO Loop.</em></p>
+
+<br>
+
+## Skills
+
+<h3 id="skills">29 auto-activating knowledge modules</h3>
+
+Skills are contextual knowledge packages that Claude loads automatically when they are relevant to the current task. They provide framework-specific patterns, coding standards, security guidelines, and domain expertise without requiring any manual activation.
+
+**Categories include:** core architecture, coding standards, testing strategy, security, documentation, git workflow, optimization, runtime validation, browser debugging, multi-backend frameworks (Claude Code, Codex, Gemini), agent development, skill development, and 7 specialized agent-role skills.
+
+<br>
+
+## Governance Hooks
+
+**6 advisory hooks** that run automatically at key moments in your workflow:
+
+| Trigger | Hook | What it does |
+|:--------|:-----|:-------------|
+| Task start | `pre-task.sh` | Syncs governance state and initializes context |
+| Task complete | `post-task.sh` | Runs quality checks on completed work |
+| Task complete | `audit-root-cleanliness.sh` | Flags unnecessary files in the project root |
+| Task complete | `smoke-test-reminder.sh` | Reminds you to test after server or test changes |
+| File write | `enforce-file-placement.sh` | Enforces file organization conventions |
+| File edit/write | `governance-check.sh` | Advisory code quality and standards check |
+
+All hooks are **non-blocking** — they observe and advise, they never prevent actions.
+
+<br>
+
+---
+
+<br>
+
+## How It Works
+
+Forge is a **pure-markdown plugin**. There is no TypeScript to compile, no npm packages to install, and no services to run. Everything is plain text files that extend Claude Code's native capabilities:
+
+- **Commands** are markdown instructions that tell Claude Code what to do using its built-in tools (Bash, Read, Write, Glob, Grep)
+- **Agents** are specialist personas invoked via Claude Code's Task tool with tailored system prompts
+- **Skills** provide contextual knowledge that Claude loads automatically based on task relevance
+- **Hooks** run shell scripts in response to Claude Code lifecycle events
+
+When you run `/[FRG]-feature`, for example, Forge's Planner agent designs the architecture, the Builder agent implements the code, the Testing agent writes tests, and the Guardian agent validates quality — all coordinated automatically.
+
+<br>
 
 ## Architecture
 
-Forge is a **pure-markdown plugin** — no TypeScript compilation, no npm dependencies, no running services. Everything is Claude Code commands, agents, and skills defined in markdown files.
+```
+Your Project
+  ├── .claude/
+  │   └── governance.json        # Project state (created by /[FRG]-init)
+  └── CLAUDE.md                  # Project context
 
-The plugin works by extending Claude Code's native capabilities:
-- Commands use Claude's built-in tools (Bash, Read, Write, Glob, Grep)
-- Agents are invoked via Claude's Task tool with specialized system prompts
-- Skills provide context that Claude loads automatically based on task relevance
-- Hooks run shell scripts in response to Claude Code events
+NXTG-Forge Plugin (loaded by Claude Code)
+  ├── commands/                  # 20 slash commands
+  │   ├── [FRG]-init.md
+  │   ├── [FRG]-status.md
+  │   ├── [FRG]-feature.md
+  │   └── ...
+  ├── agents/                    # 22 specialist subagents
+  │   ├── [AFRG]-builder.md
+  │   ├── [AFRG]-planner.md
+  │   ├── [AFRG]-guardian.md
+  │   └── ...
+  ├── skills/                    # 29 knowledge modules
+  │   ├── architecture/
+  │   ├── security/
+  │   ├── testing/
+  │   └── ...
+  └── hooks/                     # 6 advisory governance hooks
+      └── scripts/
+          ├── pre-task.sh
+          ├── post-task.sh
+          └── ...
+```
+
+<br>
+
+## Multi-Backend Support
+
+Forge is designed for Claude Code but includes framework skills for other AI coding assistants:
+
+| Backend | Support |
+|:--------|:--------|
+| **Claude Code** | Full support — commands, agents, skills, hooks |
+| **Codex CLI** | Framework skill for Codex-compatible patterns |
+| **Gemini CLI** | Framework skill for Gemini-compatible patterns |
+
+<br>
+
+## Requirements
+
+- **[Claude Code](https://claude.ai/claude-code)** v1.0.33 or later
+- **Git** (for project status and checkpoint commands)
+
+<br>
+
+## Contributing
+
+Forge is developed in the NXTG-Forge monorepo. Contributions, issues, and feature requests are welcome.
+
+**Repository:** [github.com/nxtg-ai/forge](https://github.com/nxtg-ai/forge)
+
+<br>
 
 ## License
 
-MIT
+[MIT](LICENSE) -- Copyright (c) 2026 [NXTG AI](https://github.com/nxtg-ai)
+
+<br>
+
+---
+
+<p align="center">
+  <sub>Built with Claude Code. Governed by Forge.</sub>
+</p>
