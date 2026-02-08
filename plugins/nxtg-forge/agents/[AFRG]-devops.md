@@ -90,7 +90,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY package.json ./
 EXPOSE 5051
-CMD ["node", "dist/server/api-server.js"]
+CMD ["node", "dist/index.js"]
 ```
 
 ## Environment Management

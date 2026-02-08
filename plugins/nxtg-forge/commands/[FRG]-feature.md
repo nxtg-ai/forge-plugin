@@ -62,6 +62,8 @@ Test Plan:
 Estimated Complexity: {LOW / MEDIUM / HIGH}
 ```
 
+Create `.claude/plans/` directory if it doesn't exist: `mkdir -p .claude/plans`
+
 Save the spec to `.claude/plans/{feature-slug}-spec.md`
 
 ## Step 4: Confirm Plan

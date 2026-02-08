@@ -63,7 +63,9 @@ grep -rn "as any" src/ --include="*.ts" | grep -v test | grep -v __tests__ | wc 
 
 ### 6. Governance & Agents
 
-Read `.claude/governance.json` and count `.claude/agents/*.md`.
+Read `.claude/governance.json` for governance state.
+
+Agents and commands are loaded from the NXTG-Forge plugin (22 agents, 20 commands built-in). No need to check `.claude/agents/` or `.claude/commands/` directories.
 
 ### 7. Dependencies
 ```bash

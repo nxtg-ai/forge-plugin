@@ -10,10 +10,10 @@ You are activating the **NXTG-Forge Command Center** - the canonical 4-option me
 
 Before showing the menu, quickly verify forge is set up:
 1. Check `.claude/governance.json` exists (Read tool)
-2. Check `.claude/commands/` has FRG commands (Glob tool)
-3. Check `.claude/agents/` directory exists (Glob tool)
+2. Check NXTG-Forge plugin is loaded (commands are available -- if this command is running, the plugin is active)
+3. Check git is initialized (`git rev-parse --is-inside-work-tree`)
 
-If not initialized, suggest: "Run `/frg-init` first to set up NXTG-Forge."
+If governance.json is missing, suggest: "Run `/frg-init` first to set up NXTG-Forge."
 
 ## Display Command Center
 
@@ -80,8 +80,9 @@ What would you like to work on?
    - Files to create/modify
    - Test plan
    - Estimated complexity
-4. Save spec to `.claude/plans/{feature-name}.md`
-5. Ask if user wants to start implementation
+4. Create `.claude/plans/` directory if it doesn't exist: `mkdir -p .claude/plans`
+5. Save spec to `.claude/plans/{feature-name}.md`
+6. Ask if user wants to start implementation
 
 ### Option 3: Soundboard
 

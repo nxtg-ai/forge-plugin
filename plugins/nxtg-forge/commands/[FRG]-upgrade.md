@@ -21,36 +21,32 @@ Options:
 
 Gather current setup info:
 
-1. Read `.claude/forge/config.yml` for current version
-2. Count current agents: `ls .claude/agents/*.md | wc -l`
-3. Count current commands: `ls .claude/commands/*.md | wc -l`
-4. Check governance: Read `.claude/governance.json`
+1. Check current plugin version (the plugin is NXTG-Forge itself -- agents and commands come from the plugin)
+2. Read `.claude/governance.json` for governance version and schema
+3. Read `.claude/settings.json` for hook configuration
 
 Display:
 ```
 CURRENT NXTG-FORGE STATE
 ===========================
-Config: {exists/missing}
-Agents: {count} defined
-Commands: {count} defined
-Governance: {active/missing}
+Plugin: NXTG-Forge (active -- 22 agents, 20 commands loaded)
+Governance: {active/missing} {version if present}
 Hooks: {count} configured
 ```
 
 ## Step 2: Check for Gaps
 
-Compare current state against expected state:
-- Are all standard agents present?
-- Are all standard commands present?
-- Is governance.json valid?
-- Are hooks configured in settings.json?
+Compare current project state against expected state:
+- Is `.claude/governance.json` valid and up to date?
+- Does its schema match the latest expected format?
+- Are hooks configured in `.claude/settings.json`?
+- Are any project-level config files stale?
 
 ```
 UPGRADE ANALYSIS
 =================
-  Agents: {current}/{expected} ({missing} missing)
-  Commands: {current}/{expected} ({missing} missing)
-  Config: {valid/needs update}
+  Plugin: NXTG-Forge (agents and commands loaded from plugin)
+  Governance schema: {current/needs migration}
   Hooks: {configured/missing}
 
   Items to update: {count}
@@ -60,7 +56,10 @@ UPGRADE ANALYSIS
 
 ### If `--check`, stop here and show what would change.
 
-For each missing or outdated item:
+**Plugin updates:** Agents and commands are managed by the plugin. Tell the user:
+"To update NXTG-Forge plugin agents/commands, update the plugin itself."
+
+**Project-level updates:** For governance.json schema migration or hook configuration:
 1. Show what will be created/updated
 2. Create/update the file
 3. Confirm success
@@ -78,15 +77,16 @@ APPLYING UPDATES
 ## Step 4: Verify
 
 After upgrade:
-1. Verify all files exist
-2. Validate JSON files parse correctly
+1. Validate governance.json parses correctly
+2. Verify hooks in settings.json
 3. Run quick health check
 
 ```
 UPGRADE COMPLETE
 ==================
-  Before: {old_count} agents, {old_cmd_count} commands
-  After: {new_count} agents, {new_cmd_count} commands
+  Plugin: NXTG-Forge (22 agents, 20 commands)
+  Governance: {status}
+  Hooks: {status}
 
   All configurations valid.
 

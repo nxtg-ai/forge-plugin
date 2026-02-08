@@ -49,22 +49,15 @@ Read `.claude/governance.json` if it exists. Extract:
 
 ### 5. Agent Inventory
 
-List available agents:
-```bash
-ls .claude/agents/*.md 2>/dev/null | wc -l
-```
+Agents are loaded from the NXTG-Forge plugin (22 built-in). No need to check `.claude/agents/` — the plugin provides them automatically.
 
-And list their names:
-```bash
-ls .claude/agents/*.md 2>/dev/null | xargs -I{} basename {} .md
-```
+Report: **Agents: 22 available (from NXTG-Forge plugin)**
 
 ### 6. Command Inventory
 
-Count available commands:
-```bash
-ls .claude/commands/*.md 2>/dev/null | wc -l
-```
+Commands are loaded from the NXTG-Forge plugin (20 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
+
+Report: **Commands: 20 available (from NXTG-Forge plugin)**
 
 ### 7. Build Status
 

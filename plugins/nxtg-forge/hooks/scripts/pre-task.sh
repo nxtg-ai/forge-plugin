@@ -67,13 +67,10 @@ if has_uncommitted_changes; then
     log_info "You have uncommitted changes. Consider committing before major tasks."
 fi
 
-# 5. Validate project structure
-REQUIRED_DIRS=("forge" ".claude/skills" ".claude/commands")
-for dir in "${REQUIRED_DIRS[@]}"; do
-    if [ ! -d "$PROJECT_ROOT/$dir" ]; then
-        log_warning "Required directory missing: $dir"
-    fi
-done
+# 5. Check for governance.json (created by /[FRG]-init)
+if [ ! -f "$PROJECT_ROOT/.claude/governance.json" ]; then
+    log_info "No governance.json found. Run /[FRG]-init to set up Forge."
+fi
 
 # 6. Check Python tools
 check_python_tools || log_info "Install tools with: pip install $(get_formatter) $(get_linter) $(get_type_checker)"

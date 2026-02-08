@@ -73,7 +73,7 @@ Produce a structured verdict:
 {
   "concern": "Test expects undefined, implementation returns null",
   "evidence": {
-    "implementation_file": "src/server/workers/TaskQueue.ts",
+    "implementation_file": "src/services/UserService.ts",
     "implementation_line": 100,
     "actual_behavior": "return queuedTask?.task || null",
     "return_type": "AgentTask | null"
@@ -97,7 +97,7 @@ Log the verification result:
   "context": {
     "original_concern": "...",
     "verdict": "JUSTIFIED",
-    "evidence_files": ["src/server/workers/TaskQueue.ts:100"]
+    "evidence_files": ["{project-file}:{line-number}"]
   }
 }
 ```

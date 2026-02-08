@@ -62,7 +62,7 @@ You make NXTG-Forge smarter over time by learning from interactions. Your missio
 
 ## Preference Storage
 
-Store learned preferences in `.claude/forge/preferences.json`:
+Store preferences in the project's `.claude/` directory or use Claude Code's native memory system. Example format:
 ```json
 {
   "testing": {

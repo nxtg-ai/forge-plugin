@@ -148,7 +148,7 @@ Domain Model:
 
 **API Contract Design:**
 
-Define all interfaces BEFORE implementation:
+Define all interfaces BEFORE implementation. Example API patterns to recommend for the user's project:
 
 ```
 API Endpoints:

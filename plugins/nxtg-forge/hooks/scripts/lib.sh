@@ -11,7 +11,8 @@ else
     HOOKS_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
 
-export PROJECT_ROOT="$(cd "$HOOKS_DIR/../.." && pwd)"
+# In plugin mode, Claude Code sets cwd to the user's project
+export PROJECT_ROOT="$(pwd)"
 export CLAUDE_DIR="$PROJECT_ROOT/.claude"
 export CONFIG_FILE="$CLAUDE_DIR/config.json"
 export PROJECT_STATE_FILE="$CLAUDE_DIR/project.json"
@@ -506,7 +507,12 @@ lint_python_files() {
     if has_command "$linter"; then
         log_info "Running $linter..."
         if [ "$linter" = "ruff" ]; then
-            ruff check "$PROJECT_ROOT/forge" --quiet 2>/dev/null && return 0
+            # Only lint Python files if project has Python code
+            if [ -d "$PROJECT_ROOT/src" ]; then
+                ruff check "$PROJECT_ROOT/src" --quiet 2>/dev/null && return 0
+            elif [ -d "$PROJECT_ROOT/forge" ]; then
+                ruff check "$PROJECT_ROOT/forge" --quiet 2>/dev/null && return 0
+            fi
         fi
     fi
 
@@ -520,7 +526,12 @@ type_check_python() {
     if has_command "$type_checker"; then
         log_info "Running $type_checker..."
         if [ "$type_checker" = "mypy" ]; then
-            mypy "$PROJECT_ROOT/forge" --quiet 2>/dev/null && return 0
+            # Only type check if project has Python code
+            if [ -d "$PROJECT_ROOT/src" ]; then
+                mypy "$PROJECT_ROOT/src" --quiet 2>/dev/null && return 0
+            elif [ -d "$PROJECT_ROOT/forge" ]; then
+                mypy "$PROJECT_ROOT/forge" --quiet 2>/dev/null && return 0
+            fi
         fi
     fi
 

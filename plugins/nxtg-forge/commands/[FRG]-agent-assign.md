@@ -18,12 +18,32 @@ Options:
 
 ## Step 1: Inventory Available Agents
 
-Read all agent files from `.claude/agents/`:
-```bash
-ls .claude/agents/*.md 2>/dev/null
-```
+**Available agents (from NXTG-Forge plugin):**
+The following agents are available via the Task tool. They don't need to be in `.claude/agents/` -- they're loaded from the plugin automatically.
 
-For each agent, read the frontmatter to get name, description, and tools.
+Built-in agents (22):
+- **forge-builder** - Code implementation and feature building
+- **forge-planner** - Architecture and planning
+- **forge-guardian** - Quality gate and governance enforcement
+- **forge-detective** - Bug investigation and root cause analysis
+- **forge-security** - Security auditing and vulnerability scanning
+- **forge-api** - API design and implementation
+- **forge-analytics** - Data analysis and metrics
+- **forge-compliance** - Compliance verification
+- **forge-database** - Database design and queries
+- **forge-devops** - CI/CD and deployment
+- **forge-docs** - Documentation writing
+- **forge-governance-verifier** - Governance validation
+- **forge-integration** - Service integration
+- **forge-learning** - Knowledge extraction and learning
+- **forge-orchestrator** - Multi-agent coordination
+- **forge-performance** - Performance optimization
+- **forge-refactor** - Code refactoring
+- **forge-release-sentinel** - Release readiness checking
+- **forge-testing** - Test writing and coverage
+- **forge-ui** - UI/UX implementation
+- **forge-oracle** - Strategic analysis and advice
+- **NXTG-CEO-LOOP** - Autonomous CEO decision mode
 
 ## Step 2: List Agents (`--list`)
 
@@ -105,7 +125,7 @@ Use AskUserQuestion to confirm before launching.
 ## Manual Override
 
 If `--agent <name>` specified:
-1. Verify the agent exists in `.claude/agents/`
+1. Verify the agent name matches one of the 22 built-in plugin agents listed above
 2. Display agent info
 3. Confirm assignment
 

@@ -45,14 +45,21 @@ if [ -n "$TASK_ID" ] && has_command jq && [ -f "$PROJECT_STATE_FILE" ]; then
 fi
 
 # 2. Run quality checks if tests exist
-if [ -d "$PROJECT_ROOT/tests" ] && has_command python; then
-    log_info "Running quick test validation..."
-
-    # Quick smoke test (timeout after 10 seconds)
-    if timeout 10 python -m pytest tests/ --tb=no -q --maxfail=1 2>/dev/null; then
+log_info "Running quick test validation..."
+# Try project's test runner (detect vitest, jest, pytest, etc.)
+if [ -f "$PROJECT_ROOT/package.json" ]; then
+    if timeout 10 npx vitest run --reporter=dot 2>/dev/null; then
         log_success "Quick validation passed"
     else
-        log_warning "Some tests may need attention (run 'make test' for details)"
+        log_warning "Some tests may need attention"
+    fi
+elif [ -f "$PROJECT_ROOT/pyproject.toml" ] || [ -d "$PROJECT_ROOT/tests" ]; then
+    if has_command python; then
+        if timeout 10 python -m pytest tests/ --tb=no -q --maxfail=1 2>/dev/null; then
+            log_success "Quick validation passed"
+        else
+            log_warning "Some tests may need attention"
+        fi
     fi
 fi
 
@@ -76,16 +83,14 @@ if [ -f "$GOVERNANCE_STATE_FILE" ]; then
 fi
 
 # 5. Update quality metrics in project.json
-if has_command python && [ -f "$PROJECT_STATE_FILE" ]; then
-    # Get test count
-    if [ -d "$PROJECT_ROOT/tests" ]; then
-        TEST_COUNT=$(find "$PROJECT_ROOT/tests" -name "test_*.py" -type f | wc -l)
+if [ -f "$PROJECT_STATE_FILE" ]; then
+    # Count test files across languages
+    TEST_COUNT=$(find "$PROJECT_ROOT" -name "*.test.ts" -o -name "*.test.js" -o -name "*.spec.ts" -o -name "*.spec.js" -o -name "test_*.py" -type f 2>/dev/null | wc -l)
 
-        if has_command jq; then
-            jq --argjson count "$TEST_COUNT" \
-               '.quality.tests.unit.total = $count' \
-               "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" && mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
-        fi
+    if has_command jq && [ "$TEST_COUNT" -gt 0 ]; then
+        jq --argjson count "$TEST_COUNT" \
+           '.quality.tests.unit.total = $count' \
+           "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" && mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
     fi
 fi
 
@@ -112,7 +117,7 @@ if [ -n "$TASK_ID" ] && [ "$TASK_STATUS" = "success" ]; then
     # Check if this is a significant task (more than 5 files modified)
     if [ -n "$FILES_MODIFIED" ] && [ "$FILES_MODIFIED" -gt 5 ]; then
         log_info "Major task completed. Consider creating a checkpoint:"
-        echo "  - python -m forge.cli checkpoint \"After $TASK_ID\""
+        echo "  - /[FRG]-checkpoint \"After $TASK_ID\""
     fi
 fi
 

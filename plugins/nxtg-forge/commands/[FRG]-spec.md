@@ -96,6 +96,8 @@ Create a structured specification:
 
 ## Step 3: Save Spec
 
+Create `.claude/plans/` directory if it doesn't exist: `mkdir -p .claude/plans`
+
 Save to `.claude/plans/{feature-slug}-spec.md`
 
 ```

@@ -43,7 +43,7 @@ You design and implement clean, consistent APIs. Your mission is to:
 ## API Server Context
 
 NXTG-Forge uses Express with TypeScript:
-- Server: `src/server/api-server.ts`
+- Server: Analyze the project's API server or route files
 - Port: 5051 (API + WebSocket)
 - WebSocket: `ws` library for real-time
 - Validation: Zod schemas

@@ -20,9 +20,10 @@ fi
 # If no file path, skip
 [ -z "$FILE_PATH" ] && exit 0
 
-# Only check TypeScript/JavaScript files in src/
+# Only check TypeScript/JavaScript/Python/Rust/Go source files
 case "$FILE_PATH" in
-    */src/*.ts|*/src/*.tsx|*/src/*.js|*/src/*.jsx) ;;
+    */src/*|*/app/*|*/lib/*|*/source/*) ;;
+    *.ts|*.tsx|*.js|*.jsx|*.py|*.rs|*.go) ;;
     *) exit 0 ;;
 esac
 
