@@ -1,0 +1,7 @@
+{
+  "governance-mcp": {
+    "type": "stdio",
+    "command": "bash",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/servers/governance-mcp/start.sh"]
+  }
+}

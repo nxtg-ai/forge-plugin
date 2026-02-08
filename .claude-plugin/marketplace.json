@@ -16,7 +16,7 @@
         "name": "NXTG AI"
       },
       "category": "development",
-      "tags": ["governance", "quality", "testing", "agents", "orchestration"],
+      "tags": ["governance", "quality", "testing", "agents", "orchestration", "dashboard", "mcp"],
       "license": "MIT",
       "repository": "https://github.com/nxtg-ai/forge-plugin"
     }

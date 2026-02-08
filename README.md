@@ -11,13 +11,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/Claude_Code-Plugin-8b5cf6?style=flat-square" alt="Claude Code Plugin"></a>
   <a href="#agents"><img src="https://img.shields.io/badge/agents-22-f97316?style=flat-square" alt="Agents"></a>
-  <a href="#commands"><img src="https://img.shields.io/badge/commands-20-06b6d4?style=flat-square" alt="Commands"></a>
+  <a href="#commands"><img src="https://img.shields.io/badge/commands-21-06b6d4?style=flat-square" alt="Commands"></a>
   <a href="#skills"><img src="https://img.shields.io/badge/skills-29-eab308?style=flat-square" alt="Skills"></a>
 </p>
 
 <p align="center">
-  20 commands &middot; 22 specialized agents &middot; 29 skills &middot; 6 governance hooks<br>
-  <em>Zero dependencies. Pure markdown. Install and go.</em>
+  21 commands &middot; 22 specialized agents &middot; 29 skills &middot; 8 MCP tools &middot; 6 governance hooks<br>
+  <em>Install and go. Visual dashboard included.</em>
 </p>
 
 <br>
@@ -30,7 +30,7 @@
 
 Forge is an AI-powered development governance system that turns Claude Code into a full development platform. It adds automated quality gates, intelligent agent orchestration, and real-time project health monitoring to every project you work on. Think of it as a **Chief of Staff** that keeps your codebase healthy while you ship features.
 
-No servers. No build steps. No npm dependencies. Forge is pure markdown files that extend Claude Code's native capabilities — commands, agents, skills, and hooks that work the moment you install them.
+Forge is pure markdown files that extend Claude Code's native capabilities — commands, agents, skills, hooks, and an MCP-powered governance dashboard that work the moment you install them.
 
 <br>
 
@@ -56,7 +56,7 @@ That's it. Forge is now governing your project.
 
 ## Commands
 
-<h3 id="commands">20 slash commands across 5 categories</h3>
+<h3 id="commands">21 slash commands across 6 categories</h3>
 
 <table>
 <tr><td colspan="2"><h4>Project Governance</h4></td></tr>
@@ -83,6 +83,10 @@ That's it. Forge is now governing your project.
 <tr>
   <td><code>/[FRG]-command-center</code></td>
   <td>Central hub for all Forge capabilities</td>
+</tr>
+<tr>
+  <td><code>/[FRG]-dashboard</code></td>
+  <td>Open visual governance dashboard in the browser (MCP-powered)</td>
 </tr>
 
 <tr><td colspan="2"><h4>Feature Development</h4></td></tr>
@@ -206,14 +210,46 @@ All hooks are **non-blocking** — they observe and advise, they never prevent a
 
 <br>
 
+## Governance Dashboard
+
+Forge includes an **MCP-powered governance dashboard** that opens in your browser. Run `/[FRG]-dashboard` and get a real-time visual overview of your project:
+
+- **Health Score** — A/B/C/D/F grade with 8 quality checks (governance, git, tests, docs, types, security, file size)
+- **Code Metrics** — Source files, test coverage, dependencies, largest files
+- **Git Status** — Branch, commits, working tree, top contributors
+- **Security Scan** — Hardcoded secrets, eval usage, npm audit vulnerabilities
+- **Checkpoints** — Saved governance snapshots with timestamps
+
+The dashboard is powered by 8 MCP tools that Claude can also use directly:
+
+| Tool | What it does |
+|:-----|:-------------|
+| `forge_get_health` | Health score with letter grade and check details |
+| `forge_get_governance_state` | Read governance.json (project, workstreams, metrics) |
+| `forge_get_git_status` | Branch, commits, working tree status |
+| `forge_get_code_metrics` | File counts, test coverage, dependencies |
+| `forge_run_tests` | Auto-detect and run test suite |
+| `forge_list_checkpoints` | List saved governance checkpoints |
+| `forge_security_scan` | Scan for secrets, eval, .env in git, npm audit |
+| `forge_open_dashboard` | Generate HTML dashboard and open in browser |
+
+**Requirements:** Node.js 18+ (for the MCP server). Dependencies install automatically on first use.
+
+<br>
+
+---
+
+<br>
+
 ## How It Works
 
-Forge is a **pure-markdown plugin**. There is no TypeScript to compile, no npm packages to install, and no services to run. Everything is plain text files that extend Claude Code's native capabilities:
+Forge is primarily a **markdown-based plugin** — commands, agents, skills, and hooks are all plain text files. The optional MCP server adds a visual dashboard with zero configuration:
 
 - **Commands** are markdown instructions that tell Claude Code what to do using its built-in tools (Bash, Read, Write, Glob, Grep)
 - **Agents** are specialist personas invoked via Claude Code's Task tool with tailored system prompts
 - **Skills** provide contextual knowledge that Claude loads automatically based on task relevance
 - **Hooks** run shell scripts in response to Claude Code lifecycle events
+- **MCP Server** provides governance tools and a visual dashboard
 
 When you run `/[FRG]-feature`, for example, Forge's Planner agent designs the architecture, the Builder agent implements the code, the Testing agent writes tests, and the Guardian agent validates quality — all coordinated automatically.
 
@@ -228,10 +264,10 @@ Your Project
   └── CLAUDE.md                  # Project context
 
 NXTG-Forge Plugin (loaded by Claude Code)
-  ├── commands/                  # 20 slash commands
+  ├── commands/                  # 21 slash commands
   │   ├── [FRG]-init.md
   │   ├── [FRG]-status.md
-  │   ├── [FRG]-feature.md
+  │   ├── [FRG]-dashboard.md     # Opens visual dashboard
   │   └── ...
   ├── agents/                    # 22 specialist subagents
   │   ├── [AFRG]-builder.md
@@ -241,8 +277,10 @@ NXTG-Forge Plugin (loaded by Claude Code)
   ├── skills/                    # 29 knowledge modules
   │   ├── architecture/
   │   ├── security/
-  │   ├── testing/
   │   └── ...
+  ├── servers/                   # MCP server (8 governance tools)
+  │   └── governance-mcp/
+  │       └── index.mjs          # Auto-installs deps on first run
   └── hooks/                     # 6 advisory governance hooks
       └── scripts/
           ├── pre-task.sh
@@ -268,6 +306,7 @@ Forge is designed for Claude Code but includes framework skills for other AI cod
 
 - **[Claude Code](https://claude.ai/claude-code)** v1.0.33 or later
 - **Git** (for project status and checkpoint commands)
+- **Node.js 18+** (for the MCP governance dashboard — optional)
 
 <br>
 

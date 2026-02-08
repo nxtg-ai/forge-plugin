@@ -1,0 +1,11 @@
+{
+  "name": "@nxtg-forge/governance-mcp",
+  "version": "3.0.0",
+  "description": "MCP server for NXTG-Forge governance dashboard",
+  "type": "module",
+  "main": "index.mjs",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  }
+}
