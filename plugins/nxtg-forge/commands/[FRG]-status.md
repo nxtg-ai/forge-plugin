@@ -55,9 +55,9 @@ Report: **Agents: 22 available (from NXTG-Forge plugin)**
 
 ### 6. Command Inventory
 
-Commands are loaded from the NXTG-Forge plugin (20 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
+Commands are loaded from the NXTG-Forge plugin (21 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
 
-Report: **Commands: 20 available (from NXTG-Forge plugin)**
+Report: **Commands: 21 available (from NXTG-Forge plugin)**
 
 ### 7. Build Status
 

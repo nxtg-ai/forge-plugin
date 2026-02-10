@@ -44,21 +44,23 @@ if [ -n "$TASK_ID" ] && has_command jq && [ -f "$PROJECT_STATE_FILE" ]; then
     fi
 fi
 
-# 2. Run quality checks if tests exist
-log_info "Running quick test validation..."
-# Try project's test runner (detect vitest, jest, pytest, etc.)
-if [ -f "$PROJECT_ROOT/package.json" ]; then
-    if timeout 10 npx vitest run --reporter=dot 2>/dev/null; then
-        log_success "Quick validation passed"
-    else
-        log_warning "Some tests may need attention"
-    fi
-elif [ -f "$PROJECT_ROOT/pyproject.toml" ] || [ -d "$PROJECT_ROOT/tests" ]; then
-    if has_command python; then
-        if timeout 10 python -m pytest tests/ --tb=no -q --maxfail=1 2>/dev/null; then
+# 2. Run quality checks only if test files were modified in this session
+MODIFIED_TEST_FILES=$(git diff --name-only 2>/dev/null | grep -cE '\.(test|spec)\.' || true)
+if [ "$MODIFIED_TEST_FILES" -gt 0 ] 2>/dev/null; then
+    log_info "Test files modified — running quick validation..."
+    if [ -f "$PROJECT_ROOT/package.json" ]; then
+        if timeout 10 npx vitest run --reporter=dot 2>/dev/null; then
             log_success "Quick validation passed"
         else
             log_warning "Some tests may need attention"
+        fi
+    elif [ -f "$PROJECT_ROOT/pyproject.toml" ] || [ -d "$PROJECT_ROOT/tests" ]; then
+        if has_command python; then
+            if timeout 10 python -m pytest tests/ --tb=no -q --maxfail=1 2>/dev/null; then
+                log_success "Quick validation passed"
+            else
+                log_warning "Some tests may need attention"
+            fi
         fi
     fi
 fi

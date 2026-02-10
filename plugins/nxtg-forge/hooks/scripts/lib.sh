@@ -560,22 +560,14 @@ print_header() {
 # Sentinel API Functions
 # ===================================================================
 
-# Post event to sentinel API (non-blocking, falls back to direct file write)
+# Post event to sentinel log (direct file write — no API dependency)
 post_sentinel_event() {
     local log_type="$1"      # INFO, WARN, ERROR, SUCCESS, CRITICAL
     local source="$2"        # e.g. "pre-task-hook", "post-task-hook"
     local message="$3"
     local severity="${4:-low}"
 
-    # Try API first (only if server is running)
-    if curl -s -f --max-time 2 -X POST http://localhost:5051/api/governance/sentinel \
-        -H "Content-Type: application/json" \
-        -d "{\"type\":\"$log_type\",\"source\":\"$source\",\"message\":\"$message\",\"severity\":\"$severity\"}" \
-        > /dev/null 2>&1; then
-        return 0
-    fi
-
-    # Fall back to direct file write
+    # Write directly to governance.json sentinel log
     append_sentinel_log "$log_type" "$message" "session" "$severity"
 }
 

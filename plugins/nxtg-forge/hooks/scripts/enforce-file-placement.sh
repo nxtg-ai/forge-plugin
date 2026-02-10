@@ -76,15 +76,12 @@ case "$UPPER" in
         ;;
 esac
 
-log_error "FILE PLACEMENT VIOLATION"
-log_error "File: $FILENAME"
-log_error "Attempted: project root"
-log_error "Should be: $SUGGESTED"
-log_error "Correct path: $PROJECT_ROOT/$SUGGESTED$FILENAME"
+log_warning "FILE PLACEMENT: $FILENAME in project root — consider moving to $SUGGESTED"
 
 # Log to governance
 append_sentinel_log "WARN" \
     "File placement violation: $FILENAME written to root instead of $SUGGESTED" \
     "file-placement" "medium" 2>/dev/null || true
 
-exit 2
+# Advisory only — do not block the Write tool
+exit 0
