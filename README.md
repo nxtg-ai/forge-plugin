@@ -310,11 +310,23 @@ Forge is designed for Claude Code but includes framework skills for other AI cod
 
 <br>
 
+## Ecosystem
+
+Forge is three repos that work together:
+
+| Repo | What it is |
+|:-----|:-----------|
+| **[forge-plugin](https://github.com/nxtg-ai/forge-plugin)** (this repo) | Claude Code plugin &mdash; commands, agents, skills, hooks |
+| **[forge](https://github.com/nxtg-ai/forge)** | Full platform &mdash; React dashboard, Infinity Terminal, API server |
+| **[forge-orchestrator](https://github.com/nxtg-ai/forge-orchestrator)** | Rust CLI &mdash; multi-agent task planning and coordination |
+
+The **plugin** works standalone with zero dependencies. The **dashboard** adds visual oversight for teams. The **orchestrator** adds multi-agent task decomposition with OpenAI-powered planning.
+
+<br>
+
 ## Contributing
 
-Forge is developed in the NXTG-Forge monorepo. Contributions, issues, and feature requests are welcome.
-
-**Repository:** [github.com/nxtg-ai/forge](https://github.com/nxtg-ai/forge)
+Contributions, issues, and feature requests are welcome.
 
 <br>
 
