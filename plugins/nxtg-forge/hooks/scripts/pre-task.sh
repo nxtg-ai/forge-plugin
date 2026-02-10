@@ -23,25 +23,14 @@ fi
 
 log_info "Pre-task hook triggered"
 
-# 1. Validate config.json
-validate_config || log_warning "Config validation failed"
+# 1. Validate config.json (skip silently if not present — it's optional)
+if [ -f "$CONFIG_FILE" ]; then
+    validate_config || log_warning "Config validation failed"
+fi
 
-# 2. Ensure project.json exists
-if [ ! -f "$PROJECT_STATE_FILE" ]; then
-    log_warning "project.json not found, creating from template..."
-    if [ -f "$PROJECT_STATE_FILE.template" ]; then
-        cp "$PROJECT_STATE_FILE.template" "$PROJECT_STATE_FILE"
-        # Update timestamps
-        CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        if has_command jq; then
-            jq --arg time "$CURRENT_TIME" \
-                '.project.created_at = $time | .project.last_updated = $time' \
-                "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" && mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
-        fi
-        log_success "Created project.json from template"
-    else
-        log_warning "project.json.template not found"
-    fi
+# 2. Check for project.json (optional — session tracking)
+if [ -f "$PROJECT_STATE_FILE" ]; then
+    log_debug "project.json found"
 fi
 
 # 3. Update last session info
@@ -72,8 +61,10 @@ if [ ! -f "$PROJECT_ROOT/.claude/governance.json" ]; then
     log_info "No governance.json found. Run /[FRG]-init to set up Forge."
 fi
 
-# 6. Check Python tools
-check_python_tools || log_info "Install tools with: pip install $(get_formatter) $(get_linter) $(get_type_checker)"
+# 6. Check Python tools (only for Python projects)
+if [ -f "$PROJECT_ROOT/pyproject.toml" ] || [ -f "$PROJECT_ROOT/setup.py" ] || [ -f "$PROJECT_ROOT/requirements.txt" ]; then
+    check_python_tools || log_info "Install tools with: pip install $(get_formatter) $(get_linter) $(get_type_checker)"
+fi
 
 # 7. Post session start to sentinel (non-blocking)
 BRANCH=$(get_current_branch)
