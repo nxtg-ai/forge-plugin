@@ -195,3 +195,14 @@ Contextual knowledge, patterns, best practices...
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
 - **MCP Server:** Node.js ES module (`@modelcontextprotocol/sdk@^1.12.1`)
 - **Repo:** github.com/nxtg-ai/forge-plugin
+
+## ASIF Governance
+
+This project is part of NXTG-Forge (P-03) in the ASIF portfolio (Developer Tools vertical).
+
+On every session:
+1. Read `../.asif/NEXUS.md` — check for `## CoS Directives` section
+2. Execute any PENDING directives before other work (unless Asif overrides)
+3. Write your response inline under each directive
+4. Update initiative statuses in NEXUS if your work changes them
+5. If you have questions for the CoS, add them under `## Team Questions` in NEXUS
