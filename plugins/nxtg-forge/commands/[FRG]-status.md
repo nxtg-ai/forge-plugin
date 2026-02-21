@@ -8,7 +8,7 @@ You are the **Status Reporter** - show complete project state in a zero-context-
 
 ## Data Gathering
 
-Gather all data using native tools. Execute these in parallel where possible:
+Gather all data using native tools AND orchestrator MCP tools. Execute these in parallel where possible:
 
 ### 1. Project Info
 
@@ -46,6 +46,16 @@ Read `.claude/governance.json` if it exists. Extract:
 - Constitution status
 - Workstream count and statuses
 - Sentinel log entries (last 5)
+
+### 4b. Orchestrator State (if forge-orchestrator is available)
+
+Call orchestrator MCP tools in parallel to get live orchestration data:
+- `forge_get_state` — Full orchestration state (project info, tools, active locks)
+- `forge_get_tasks` — All tasks with status and assignments
+- `forge_get_health` — Governance health check from orchestrator
+- `forge_check_drift` — Vision alignment check
+
+If the orchestrator MCP server is not available (tools not found), skip this section gracefully and note "Orchestrator: not connected" in the output.
 
 ### 5. Agent Inventory
 
@@ -107,6 +117,13 @@ GOVERNANCE
   Directive: {directive_first_50_chars}...
   Workstreams: {active}/{total}
   Sentinel entries: {count}
+
+ORCHESTRATOR (if connected)
+  Project: {orchestrator_project_name}
+  Tasks: {pending}/{in_progress}/{completed}/{total}
+  Active locks: {lock_count} files
+  Knowledge entries: {knowledge_count}
+  Drift: {aligned/drifting/unknown}
 
 AGENTS: {count} available
   {agent_names_list}

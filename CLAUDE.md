@@ -142,7 +142,13 @@ forge-plugin                ──spawns──►     forge-ui (http://localhost
 | **Orchestrator MCP** | forge-orchestrator | Rust (stdio) | 9 task/knowledge tools | Multi-agent task orchestration |
 | **Plugin MCP** | forge-plugin | Node.js (stdio) | 8 governance tools | Project health, metrics, dashboard |
 
-Both run as stdio MCP servers. Claude Code connects to both simultaneously when the plugin is installed and forge-orchestrator is configured.
+Both run as stdio MCP servers. Claude Code connects to both simultaneously when the plugin is installed and `forge` binary is in PATH.
+
+**The Lego Snap (N-12):** As of v3.0.0, the plugin's `.mcp.json` registers BOTH MCP servers. When Claude Code loads the plugin, it automatically connects to:
+1. `governance-mcp` — always available (Node.js, ships with plugin)
+2. `orchestrator-mcp` — available when `forge` binary is installed (Rust, from forge-orchestrator)
+
+Commands and agents are wired to call orchestrator MCP tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`, `forge_get_state`, `forge_get_plan`, `forge_capture_knowledge`, `forge_get_knowledge`, `forge_check_drift`, `forge_get_health`, `forge_set_project`) and gracefully fall back if the orchestrator is not running.
 
 ## File Format Conventions
 

@@ -3,5 +3,10 @@
     "type": "stdio",
     "command": "bash",
     "args": ["${CLAUDE_PLUGIN_ROOT}/servers/governance-mcp/start.sh"]
+  },
+  "orchestrator-mcp": {
+    "type": "stdio",
+    "command": "forge",
+    "args": ["mcp"]
   }
 }

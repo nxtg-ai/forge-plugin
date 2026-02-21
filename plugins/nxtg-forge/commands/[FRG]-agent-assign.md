@@ -16,6 +16,15 @@ Options:
 - `--auto`: Auto-assign based on task analysis (default)
 - `--agent <name>`: Manually assign to specific agent
 
+## Step 0: Check Orchestrator Task Board
+
+Before assigning agents, check if the orchestrator has tasks ready:
+1. Call `forge_get_tasks` to see all pending/assigned/blocked tasks
+2. Call `forge_get_state` to see active file locks and project state
+3. If there are pending orchestrator tasks, offer to assign agents to those first
+
+This connects the plugin's agent system to the orchestrator's task management.
+
 ## Step 1: Inventory Available Agents
 
 **Available agents (from NXTG-Forge plugin):**
@@ -110,17 +119,23 @@ Alternative agents:
 ## Step 5: Execute Assignment
 
 After agent selection:
-1. Display the chosen agent's full system prompt (from the .md file)
-2. Suggest launching the agent with the Task tool:
+1. If an orchestrator task ID is associated, call `forge_claim_task` with `task_id` and `agent: "claude"` to claim it and lock files
+2. Display the chosen agent's full system prompt (from the .md file)
+3. Suggest launching the agent with the Task tool:
 ```
 To execute this task with {agent_name}:
   The agent will use these tools: {tools}
+  Orchestrator task: {task_id or "none — local task"}
 
   Ready to launch? The agent will work autonomously on:
   "{task_description}"
 ```
 
 Use AskUserQuestion to confirm before launching.
+
+After the agent completes:
+1. If an orchestrator task was claimed, call `forge_complete_task` with a result summary
+2. Call `forge_capture_knowledge` to record any learnings from the task
 
 ## Manual Override
 

@@ -12,6 +12,7 @@ Before showing the menu, quickly verify forge is set up:
 1. Check `.claude/governance.json` exists (Read tool)
 2. Check NXTG-Forge plugin is loaded (commands are available -- if this command is running, the plugin is active)
 3. Check git is initialized (`git rev-parse --is-inside-work-tree`)
+4. Check orchestrator connection: call `forge_get_state` — if it returns data, the Rust orchestrator is connected. Show "Orchestrator: CONNECTED (v{version})" or "Orchestrator: NOT CONNECTED (run `forge mcp` to enable)"
 
 If governance.json is missing, suggest: "Run `/frg-init` first to set up NXTG-Forge."
 
@@ -46,12 +47,15 @@ Use `AskUserQuestion` to get the user's choice with these 4 options.
 
 ### Option 1: Continue / Resume
 
-Gather and display context:
+Gather and display context from BOTH local state and orchestrator:
 1. Read `.claude/governance.json` for current directive and workstreams
 2. Run `git log --oneline -10` for recent activity
 3. Run `git status --porcelain` for uncommitted work
 4. Check `.claude/checkpoints/` for saved states
 5. Read any TODO items from governance sentinel log
+6. Call `forge_get_tasks` to get orchestrator task board (pending, in-progress, blocked)
+7. Call `forge_get_plan` to get master plan and current phase
+8. Call `forge_check_drift` to verify alignment with vision
 
 Present:
 ```
@@ -64,8 +68,15 @@ Uncommitted: {count} files
 Current directive: {directive}
 Active workstreams: {count}
 
+ORCHESTRATOR TASK BOARD
+  Pending:     {list of pending tasks from forge_get_tasks}
+  In Progress: {list of in-progress tasks}
+  Blocked:     {list of blocked tasks}
+  Drift:       {aligned/drifting — from forge_check_drift}
+
 Pending work:
   - {task from governance}
+  - {task from orchestrator}
   - {uncommitted changes description}
 
 What would you like to work on?
@@ -74,15 +85,18 @@ What would you like to work on?
 ### Option 2: Review & Plan Features
 
 1. Ask user what feature they want to plan (using AskUserQuestion)
-2. Analyze current codebase structure for context
-3. Generate a feature spec with:
+2. Call `forge_get_plan` to see existing master plan and task decomposition
+3. Call `forge_get_tasks` to see current task board and what's already planned
+4. Analyze current codebase structure for context
+5. Generate a feature spec with:
    - Requirements
    - Files to create/modify
    - Test plan
    - Estimated complexity
-4. Create `.claude/plans/` directory if it doesn't exist: `mkdir -p .claude/plans`
-5. Save spec to `.claude/plans/{feature-name}.md`
-6. Ask if user wants to start implementation
+6. Create `.claude/plans/` directory if it doesn't exist: `mkdir -p .claude/plans`
+7. Save spec to `.claude/plans/{feature-name}.md`
+8. Call `forge_capture_knowledge` to record the feature decision (category: "decisions")
+9. Ask if user wants to start implementation
 
 ### Option 3: Soundboard
 

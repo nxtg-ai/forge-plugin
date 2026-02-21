@@ -17,6 +17,15 @@ Options:
 - `--fix`: Generate actionable fix plan after analysis
 - `--json`: Output as JSON
 
+## Pre-Analysis: Orchestrator Data
+
+Before running local analysis, pull orchestrator data if available:
+- Call `forge_get_health` — get orchestrator's governance health check (documentation quality, architecture metrics, task health, knowledge coverage, drift detection)
+- Call `forge_check_drift` — compare current work against project vision (SPEC.md)
+- Call `forge_get_knowledge` — check existing knowledge base for previously identified patterns
+
+Merge orchestrator findings with local analysis below. If orchestrator is not available, proceed with local analysis only.
+
 ## Analysis Execution
 
 Use Claude's native tools to perform real analysis. Launch parallel agents where possible for speed.
@@ -247,7 +256,9 @@ Always show whatever analysis IS possible.
 
 ## Integration
 
-After analysis, offer next steps:
+After analysis:
+1. Call `forge_capture_knowledge` to record the gap analysis findings (category: "research", title: "Gap Analysis {date}")
+2. Offer next steps:
 ```
 Next steps:
   /frg-test         Run test suite

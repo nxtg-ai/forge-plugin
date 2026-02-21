@@ -115,9 +115,15 @@ Next steps:
   /frg-status       View updated project status
 ```
 
-## Step 7: Update Governance
+## Step 7: Update Governance & Orchestrator
 
-Add the feature to `.claude/governance.json` workstreams if it exists.
+1. Add the feature to `.claude/governance.json` workstreams if it exists.
+2. Call `forge_capture_knowledge` to record the feature implementation as a learning:
+   - title: "Implemented: {feature_name}"
+   - content: Summary of what was built, files changed, patterns used
+   - category: "learnings"
+   - source: "feature implementation"
+3. If orchestrator tasks were involved, call `forge_complete_task` for each completed task.
 
 ## Error Handling
 
