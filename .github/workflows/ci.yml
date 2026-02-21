@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate plugin.json
+        run: |
+          jq . .claude-plugin/plugin.json > /dev/null
+          echo "plugin.json is valid JSON"
+
+      - name: Validate hooks.json
+        run: |
+          jq . plugins/nxtg-forge/hooks/hooks.json > /dev/null
+          echo "hooks.json is valid JSON"
+
+      - name: Check required plugin structure
+        run: |
+          test -d plugins/nxtg-forge/commands && echo "commands/ exists"
+          test -d plugins/nxtg-forge/agents && echo "agents/ exists"
+          test -d plugins/nxtg-forge/skills && echo "skills/ exists"
+          test -d plugins/nxtg-forge/hooks && echo "hooks/ exists"
+          test -f plugins/nxtg-forge/servers/governance-mcp/index.mjs && echo "MCP server exists"
+
+  mcp-server:
+    name: MCP Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install MCP server dependencies
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        run: npm install
+
+      - name: Validate MCP server imports
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        run: node -e "import('./index.mjs').then(() => console.log('MCP server imports OK')).catch(e => { console.error(e); process.exit(1); })"
