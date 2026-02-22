@@ -322,6 +322,8 @@ Forge is three repos that work together:
 
 The **plugin** works standalone with zero dependencies. The **dashboard** adds visual oversight for teams. The **orchestrator** adds multi-agent task decomposition with OpenAI-powered planning.
 
+> **Evaluating Forge?** See the [UAT Guide](https://github.com/nxtg-ai/forge-plugin/blob/main/UAT-Guide.md) for a guided walkthrough.
+
 <br>
 
 ## Contributing
@@ -339,5 +341,5 @@ Contributions, issues, and feature requests are welcome.
 ---
 
 <p align="center">
-  <sub>Built with Claude Code. Governed by Forge.</sub>
+  <sub>Built by <a href="https://nxtg.ai">NXTG.AI</a> &mdash; Governed by Forge.</sub>
 </p>
