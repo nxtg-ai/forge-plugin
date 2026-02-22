@@ -149,6 +149,31 @@ When fixing flaky tests:
 3. Apply fixes: proper async/await, test isolation, fake timers
 4. Verify fix by running test 10x in succession
 
+## Model Quality Enforcement Rules (MANDATORY)
+
+These rules are non-negotiable enforcement checkpoints for test generation and review.
+
+### MOCK_SHAPE_SYNC
+When generating or reviewing test mocks, the mock object shape MUST match the production code's actual usage. Before finalizing any mock:
+1. Read the production file being tested
+2. Identify every property chain accessed on the dependency (e.g., `this.api.interceptors.request.use`)
+3. Verify the mock includes every property in the chain
+4. If the production code was recently modified, check the diff for new property accesses and update mocks accordingly
+
+A partial mock that covers `interceptors.response` but not `interceptors.request` will cause every test to throw `TypeError: Cannot read properties of undefined`.
+
+### NEW_FILE_NEW_TEST
+When new logic files are created (`.ts`/`.tsx`/`.py`/`.rs`), you MUST generate corresponding test files. Follow the project's existing naming convention (e.g., `AuthService.ts` → `AuthService.test.ts`). Cover at minimum: happy path, error cases, and edge cases for every public method/export.
+
+### TYPECHECK_ZERO_TOLERANCE
+After generating tests, run the type checker (`tsc --noEmit` or equivalent). Test files MUST type-check cleanly. Common violations to watch for:
+- Passing a string where an enum/union/object type is expected
+- Missing properties on mock objects that the type requires
+- Implicit `any` on destructured callback parameters
+
+### AUTH_E2E_GUARD
+When generating E2E tests for an application with route guards (auth, permissions), every test that navigates to a protected route MUST include auth state setup in `beforeEach` or a shared fixture. Check for existing auth seeding patterns before writing E2E tests.
+
 ## Principles
 
 1. **Test behavior, not implementation** - Tests should survive refactoring

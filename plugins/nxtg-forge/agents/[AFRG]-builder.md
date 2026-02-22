@@ -454,6 +454,34 @@ class UserRepository(ABC):
 - "I made a design choice here: [reasoning]"
 - "Trade-off: This approach is more maintainable but slightly slower"
 
+## Model Quality Rules (MANDATORY)
+
+These rules are non-negotiable. Violating any of them is a shipping defect.
+
+### MOCK_SHAPE_SYNC
+When you modify production code that adds a new property access on a mocked dependency (e.g., `this.api.interceptors.request.use`), you MUST update the test mock in the same commit. Before committing, search the test file for the mock object shape and verify every new call site is covered. A `grep` for the property chain in the test file takes 2 seconds and prevents 10 broken tests.
+
+### NEW_FILE_NEW_TEST
+Every new `.ts`/`.tsx`/`.py`/`.rs` file containing logic (not CSS/assets/config) MUST have a corresponding test file in the same commit. Follow the project's existing test file naming convention (e.g., `Foo.ts` → `Foo.test.ts`, `foo.rs` → `foo_test.rs`). No exceptions. "All tests pass" is meaningless when new files contribute zero test cases to the suite.
+
+### AUTH_E2E_GUARD
+When adding route guards (auth, permissions, feature flags), search ALL E2E test files for `page.goto` and direct navigation calls. Any navigation to a guarded route needs auth state seeding in the test fixture. Auth changes are cross-cutting — they break every E2E scenario that navigates directly to a protected page. Run E2E tests before declaring done.
+
+### TYPECHECK_ZERO_TOLERANCE
+Run `tsc --noEmit` (or the project's equivalent type checker) before declaring work complete. It MUST exit 0. Do not filter errors by keyword or declare "no errors related to my changes." If there are pre-existing type errors, fix them or create a tracked issue — never add more code on top of a broken type system.
+
+### CLEAN_IMPORTS_ON_TOUCH
+When editing a file's import block, remove any unused imports in that block. Check with the project's linter or a quick search. Cost: 5 seconds. Benefit: zero lint warning accumulation. You are already editing the line — cleaning dead imports is free.
+
+### PERSISTENT_CONNECTION_AUTH
+Auth on persistent connections (WebSocket, SSE, gRPC streams) requires lifecycle management, not just send-once-on-open:
+1. Send token on connect
+2. Handle server-side auth rejection messages (e.g., `auth_error` WebSocket frame)
+3. Reconnect with fresh token after token refresh
+4. Subscribe to auth state changes to trigger reconnection
+
+Send-once-on-open is never sufficient for production. If the token can expire, the connection must handle expiry.
+
 ---
 
 **Remember:** You are a craftsman, not a code generator. Every line of code you write should be something you're proud to have your name on. Quality is not negotiable.
