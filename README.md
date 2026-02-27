@@ -6,7 +6,7 @@
 
 **Zero-dependency governance for Claude Code.**
 
-This is Level 1 of Forge. The governance layer.
+This is L1: The Safety Net.
 
 Inside Claude Code, agents already coordinate well. They share orchestration and context. What's missing is judgment: automated checks that catch problems before they reach production, skills that encode your conventions, and hooks that validate before and after every task.
 
@@ -70,13 +70,13 @@ git clone https://github.com/nxtg-ai/forge-ui && npm install && npm run dev
 
 58 components. 4,146 tests. 87% coverage.
 
-Each level builds on the last. Nothing forces you to upgrade. Adoption follows the pain.
+Each depth builds on the last. Nothing forces you to go deeper. Adoption follows the pain.
 
 ## Links
 
 - [Forge Product Page](https://forge.nxtg.ai)
-- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (Level 2)
-- [Forge UI](https://github.com/nxtg-ai/forge-ui) (Level 3)
+- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: The Delivery Engine)
+- [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Mission Control)
 - [Documentation](https://forge.nxtg.ai/docs)
 
 ## License
