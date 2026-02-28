@@ -40,6 +40,7 @@ description: |
   </example>
 model: sonnet
 color: blue
+background: true
 tools: Glob, Grep, Read, Bash, WebSearch, TodoWrite
 ---
 

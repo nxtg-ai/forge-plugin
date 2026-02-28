@@ -28,12 +28,16 @@ if [ -n "$TASK_ID" ] && has_command jq && [ -f "$PROJECT_STATE_FILE" ]; then
     CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     STATUS="${TASK_STATUS:-completed}"
 
-    jq --arg status "$STATUS" \
+    if jq --arg status "$STATUS" \
        --arg time "$CURRENT_TIME" \
        '.last_session.status = $status |
         .last_session.completed = $time |
         .project.last_updated = $time' \
-       "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" && mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
+       "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" 2>/dev/null && [ -s "$PROJECT_STATE_FILE.tmp" ]; then
+        mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
+    else
+        rm -f "$PROJECT_STATE_FILE.tmp"
+    fi
 
     if [ "$STATUS" = "success" ]; then
         log_success "Task completed successfully"
@@ -90,9 +94,13 @@ if [ -f "$PROJECT_STATE_FILE" ]; then
     TEST_COUNT=$(find "$PROJECT_ROOT" -name "*.test.ts" -o -name "*.test.js" -o -name "*.spec.ts" -o -name "*.spec.js" -o -name "test_*.py" -type f 2>/dev/null | wc -l)
 
     if has_command jq && [ "$TEST_COUNT" -gt 0 ]; then
-        jq --argjson count "$TEST_COUNT" \
+        if jq --argjson count "$TEST_COUNT" \
            '.quality.tests.unit.total = $count' \
-           "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" && mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
+           "$PROJECT_STATE_FILE" > "$PROJECT_STATE_FILE.tmp" 2>/dev/null && [ -s "$PROJECT_STATE_FILE.tmp" ]; then
+            mv "$PROJECT_STATE_FILE.tmp" "$PROJECT_STATE_FILE"
+        else
+            rm -f "$PROJECT_STATE_FILE.tmp"
+        fi
     fi
 fi
 

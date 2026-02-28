@@ -1,0 +1,20 @@
+{
+  "governance_mode": "advisory",
+  "scan_depth": "standard",
+  "health_threshold": "C",
+  "auto_fix_security": false,
+  "testing": {
+    "coverage_target": 86,
+    "coverage_minimum": 80,
+    "run_on_save": false
+  },
+  "safety": {
+    "max_file_changes_per_commit": 50,
+    "require_tests_for_commit": true,
+    "prevent_force_push_main": true
+  },
+  "hooks": {
+    "enabled": true,
+    "advisory_mode": true
+  }
+}

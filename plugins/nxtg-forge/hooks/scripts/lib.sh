@@ -202,8 +202,16 @@ sync_governance_progress() {
         ]
     ' "$GOVERNANCE_STATE_FILE")
 
-    echo "$updated" > "$GOVERNANCE_STATE_FILE.tmp" && mv "$GOVERNANCE_STATE_FILE.tmp" "$GOVERNANCE_STATE_FILE"
-    log_success "Synced governance workstream progress"
+    if [ -n "$updated" ]; then
+        echo "$updated" > "$GOVERNANCE_STATE_FILE.tmp"
+        if [ -s "$GOVERNANCE_STATE_FILE.tmp" ] && jq empty "$GOVERNANCE_STATE_FILE.tmp" 2>/dev/null; then
+            mv "$GOVERNANCE_STATE_FILE.tmp" "$GOVERNANCE_STATE_FILE"
+            log_success "Synced governance workstream progress"
+        else
+            rm -f "$GOVERNANCE_STATE_FILE.tmp"
+            log_warning "Governance sync produced invalid JSON, skipping"
+        fi
+    fi
 }
 
 # Append entry to governance sentinel log
@@ -224,7 +232,8 @@ append_sentinel_log() {
     local timestamp=$(date +%s)000
     local log_id="oracle-${timestamp}-$$"
 
-    jq --arg id "$log_id" \
+    local tmp_file="$GOVERNANCE_STATE_FILE.tmp"
+    if jq --arg id "$log_id" \
        --argjson ts "$timestamp" \
        --arg type "$log_type" \
        --arg sev "$severity" \
@@ -240,7 +249,17 @@ append_sentinel_log() {
            "message": $msg,
            "context": {},
            "actionRequired": false
-       }]' "$GOVERNANCE_STATE_FILE" > "$GOVERNANCE_STATE_FILE.tmp" && mv "$GOVERNANCE_STATE_FILE.tmp" "$GOVERNANCE_STATE_FILE"
+       }]' "$GOVERNANCE_STATE_FILE" > "$tmp_file" 2>/dev/null; then
+        # Only replace if jq produced valid non-empty output
+        if [ -s "$tmp_file" ] && jq empty "$tmp_file" 2>/dev/null; then
+            mv "$tmp_file" "$GOVERNANCE_STATE_FILE"
+        else
+            rm -f "$tmp_file"
+            log_warning "Governance state update produced invalid JSON, skipping"
+        fi
+    else
+        rm -f "$tmp_file"
+    fi
 }
 
 # Get governance workstream summary

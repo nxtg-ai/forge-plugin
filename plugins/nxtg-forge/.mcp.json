@@ -6,7 +6,7 @@
   },
   "orchestrator-mcp": {
     "type": "stdio",
-    "command": "forge",
-    "args": ["mcp"]
+    "command": "bash",
+    "args": ["-c", "command -v forge >/dev/null 2>&1 && exec forge mcp || exit 0"]
   }
 }
