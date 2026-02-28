@@ -13,7 +13,7 @@ npm install   # only if node_modules missing
 node index.mjs
 
 # Plugin lives at: plugins/nxtg-forge/
-# Installed by Claude Code via: claude plugin add /path/to/forge-plugin
+# Installed by Claude Code via: claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge
 ```
 
 ## Plugin Structure

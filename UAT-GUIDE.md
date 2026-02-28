@@ -56,7 +56,11 @@ ls SKILLS.md AGENTS.md 2>/dev/null || echo "No SKILLS.md or AGENTS.md (correct)"
 ### Step 2a: Install the Plugin
 
 ```bash
-claude plugin add nxtg-ai/forge-plugin
+# Add the Forge marketplace
+claude plugin marketplace add nxtg-ai/forge-plugin
+
+# Install the plugin
+claude plugin install nxtg-forge
 ```
 
 **Expected output:**
@@ -529,7 +533,7 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 1.1 | Install plugin | `claude plugin add nxtg-ai/forge-plugin` completes without error | | |
+| 1.1 | Install plugin | `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge` completes without error | | |
 | 1.2 | Plugin in settings | `nxtg-forge` appears in `~/.claude/settings.json` enabledPlugins | | |
 | 1.3 | Plugin files exist | `~/.claude/plugins/marketplaces/*/plugins/nxtg-forge/` has commands/, agents/, skills/, hooks/ | | |
 | 1.4 | No project pollution | Your project directory has NO new files from installation | | |

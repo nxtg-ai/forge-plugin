@@ -17,7 +17,11 @@ Every governance feature traces to a real failure mode. Hooks that validate befo
 ## Install
 
 ```bash
-claude plugin add nxtg-ai/forge-plugin
+# Add the Forge marketplace
+claude plugin marketplace add nxtg-ai/forge-plugin
+
+# Install the plugin
+claude plugin install nxtg-forge
 ```
 
 That's it. No build step. No config files. No runtime dependencies.

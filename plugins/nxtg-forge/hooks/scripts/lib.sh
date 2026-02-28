@@ -189,7 +189,7 @@ sync_governance_progress() {
     fi
 
     # Calculate progress for each workstream based on completed tasks
-    local updated=$(jq '
+    jq '
         .workstreams = [.workstreams[] |
             . as $ws |
             ($ws.tasks | map(select(.status == "completed")) | length) as $completed |
@@ -200,17 +200,16 @@ sync_governance_progress() {
             .metrics.tasksCompleted = $completed |
             .metrics.totalTasks = $total
         ]
-    ' "$GOVERNANCE_STATE_FILE")
+    ' "$GOVERNANCE_STATE_FILE" > "$GOVERNANCE_STATE_FILE.tmp" 2>/dev/null
 
-    if [ -n "$updated" ]; then
-        echo "$updated" > "$GOVERNANCE_STATE_FILE.tmp"
-        if [ -s "$GOVERNANCE_STATE_FILE.tmp" ] && jq empty "$GOVERNANCE_STATE_FILE.tmp" 2>/dev/null; then
-            mv "$GOVERNANCE_STATE_FILE.tmp" "$GOVERNANCE_STATE_FILE"
-            log_success "Synced governance workstream progress"
-        else
-            rm -f "$GOVERNANCE_STATE_FILE.tmp"
-            log_warning "Governance sync produced invalid JSON, skipping"
-        fi
+    # Size guard: only replace if jq produced valid non-empty output
+    if [ -s "$GOVERNANCE_STATE_FILE.tmp" ] && jq empty "$GOVERNANCE_STATE_FILE.tmp" 2>/dev/null; then
+        mv "$GOVERNANCE_STATE_FILE.tmp" "$GOVERNANCE_STATE_FILE"
+        log_success "Synced governance workstream progress"
+    else
+        rm -f "$GOVERNANCE_STATE_FILE.tmp"
+        log_warning "Governance sync produced invalid JSON, preserving original"
+        return 1
     fi
 }
 
