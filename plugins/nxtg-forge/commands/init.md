@@ -151,7 +151,7 @@ This project uses NXTG-Forge for AI-powered development governance.
 
 - **Vision:** {directive}
 - **Goals:** {goals}
-- **Commands:** Type /[FRG]- to see available Forge commands
+- **Commands:** Type /forge: to see available Forge commands
 - **Governance:** Project state tracked in .claude/governance.json
 ```
 
@@ -169,10 +169,10 @@ What was created:
 
 Your Next Steps:
 
-1. Check project status:  /[FRG]-status
-2. Plan a feature:        /[FRG]-feature "feature name"
-3. Run gap analysis:      /[FRG]-gap-analysis
-4. Command center:        /[FRG]-enable-forge
+1. Check project status:  /forge:status
+2. Plan a feature:        /forge:feature "feature name"
+3. Run gap analysis:      /forge:gap-analysis
+4. Command center:        /forge:command-center
 
 Quick Tips:
   - Forge tracks all work in .claude/governance.json

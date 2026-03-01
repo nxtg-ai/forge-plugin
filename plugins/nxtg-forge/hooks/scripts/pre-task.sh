@@ -56,9 +56,9 @@ if has_uncommitted_changes; then
     log_info "You have uncommitted changes. Consider committing before major tasks."
 fi
 
-# 5. Check for governance.json (created by /[FRG]-init)
+# 5. Check for governance.json (created by /forge:init)
 if [ ! -f "$PROJECT_ROOT/.claude/governance.json" ]; then
-    log_info "No governance.json found. Run /[FRG]-init to set up Forge."
+    log_info "No governance.json found. Run /forge:init to set up Forge."
 fi
 
 # 6. Check Python tools (only for Python projects)

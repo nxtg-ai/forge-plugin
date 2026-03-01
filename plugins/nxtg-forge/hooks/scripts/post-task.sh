@@ -127,7 +127,7 @@ if [ -n "$TASK_ID" ] && [ "$TASK_STATUS" = "success" ]; then
     # Check if this is a significant task (more than 5 files modified)
     if [ -n "$FILES_MODIFIED" ] && [ "$FILES_MODIFIED" -gt 5 ]; then
         log_info "Major task completed. Consider creating a checkpoint:"
-        echo "  - /[FRG]-checkpoint \"After $TASK_ID\""
+        echo "  - /forge:checkpoint \"After $TASK_ID\""
     fi
 fi
 

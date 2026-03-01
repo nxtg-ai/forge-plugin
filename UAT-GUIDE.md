@@ -117,31 +117,31 @@ In a new Claude Code session, verify components loaded.
 
 ### 3a: Commands Available
 
-Type `/[FRG]-` and you should see autocomplete suggestions for all 21 commands:
+Type `/forge:` and you should see autocomplete suggestions for all 21 commands:
 
 | Command | What It Does |
 |---------|-------------|
-| `/[FRG]-init` | Setup wizard |
-| `/[FRG]-status` | Project health check |
-| `/[FRG]-status-enhanced` | Detailed dashboard |
-| `/[FRG]-test` | Run tests |
-| `/[FRG]-feature` | Plan features |
-| `/[FRG]-spec` | Generate specs |
-| `/[FRG]-gap-analysis` | Find gaps |
-| `/[FRG]-deploy` | Pre-flight checks |
-| `/[FRG]-optimize` | Performance analysis |
-| `/[FRG]-checkpoint` | Save state |
-| `/[FRG]-restore` | Restore state |
-| `/[FRG]-report` | Activity report |
-| `/[FRG]-agent-assign` | Assign to agents |
-| `/[FRG]-integrate` | Service integration |
-| `/[FRG]-upgrade` | Config gap detection |
-| `/[FRG]-compliance` | License scanning |
-| `/[FRG]-docs-status` | Doc health |
-| `/[FRG]-docs-update` | Fix stale docs |
-| `/[FRG]-docs-audit` | Full doc audit |
-| `/[FRG]-command-center` | Central hub |
-| `/[FRG]-dashboard` | Visual dashboard |
+| `/forge:init` | Setup wizard |
+| `/forge:status` | Project health check |
+| `/forge:status-enhanced` | Detailed dashboard |
+| `/forge:test` | Run tests |
+| `/forge:feature` | Plan features |
+| `/forge:spec` | Generate specs |
+| `/forge:gap-analysis` | Find gaps |
+| `/forge:deploy` | Pre-flight checks |
+| `/forge:optimize` | Performance analysis |
+| `/forge:checkpoint` | Save state |
+| `/forge:restore` | Restore state |
+| `/forge:report` | Activity report |
+| `/forge:agent-assign` | Assign to agents |
+| `/forge:integrate` | Service integration |
+| `/forge:upgrade` | Config gap detection |
+| `/forge:compliance` | License scanning |
+| `/forge:docs-status` | Doc health |
+| `/forge:docs-update` | Fix stale docs |
+| `/forge:docs-audit` | Full doc audit |
+| `/forge:command-center` | Central hub |
+| `/forge:dashboard` | Visual dashboard |
 
 **If commands don't appear:** Plugin may not be enabled. Check `~/.claude/settings.json`.
 
@@ -181,7 +181,7 @@ When you submit a prompt, you should see hook output in the response:
 ### Step 4a: Run Init
 
 ```
-/[FRG]-init
+/forge:init
 ```
 
 ### Step 4b: Answer Questions
@@ -252,7 +252,7 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5a: Status Check
 
 ```
-/[FRG]-status
+/forge:status
 ```
 
 **Expected output:** A dashboard showing:
@@ -264,7 +264,7 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5b: Feature Development
 
 ```
-/[FRG]-feature "Add user authentication"
+/forge:feature "Add user authentication"
 ```
 
 **Expected behavior:**
@@ -277,7 +277,7 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5c: Gap Analysis
 
 ```
-/[FRG]-gap-analysis
+/forge:gap-analysis
 ```
 
 **Expected output:** Analysis across 5 dimensions:
@@ -290,13 +290,13 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5d: Checkpoint/Restore
 
 ```
-/[FRG]-checkpoint "Before refactoring auth"
+/forge:checkpoint "Before refactoring auth"
 ```
 
 **Creates:** `.claude/checkpoints/{timestamp}.json`
 
 ```
-/[FRG]-restore
+/forge:restore
 ```
 
 **Shows:** List of saved checkpoints to restore from.
@@ -314,12 +314,12 @@ When Claude needs a specialist, it uses the Task tool to spawn an agent:
 Task tool → selects agent (e.g., forge-security) → Claude loads the agent's .md file → executes with specialized instructions
 ```
 
-**You don't need to do anything special.** Commands like `/[FRG]-feature` automatically invoke the right agents.
+**You don't need to do anything special.** Commands like `/forge:feature` automatically invoke the right agents.
 
 ### Manual Agent Assignment
 
 ```
-/[FRG]-agent-assign "optimize database queries"
+/forge:agent-assign "optimize database queries"
 ```
 
 Claude will:
@@ -408,7 +408,7 @@ The MCP dashboard provides 8 governance tools and a visual HTML dashboard.
 ### First Use
 
 ```
-/[FRG]-dashboard
+/forge:dashboard
 ```
 
 **What happens:**
@@ -481,7 +481,7 @@ your-project/
 
 ## 11. Troubleshooting
 
-### "Commands don't show up when I type /[FRG]-"
+### "Commands don't show up when I type /forge:"
 
 1. Check plugin is enabled: `cat ~/.claude/settings.json | grep nxtg-forge`
 2. Start a new Claude Code session (plugins load on session start)
@@ -490,7 +490,7 @@ your-project/
 ### "Agents aren't being used"
 
 1. Agents are invoked by commands, not directly by users
-2. Try: `/[FRG]-feature "small task"` — this should invoke planner + builder agents
+2. Try: `/forge:feature "small task"` — this should invoke planner + builder agents
 3. Check agents exist: `ls ~/.claude/plugins/marketplaces/*/plugins/nxtg-forge/agents/`
 
 ### "Hooks aren't firing"
@@ -519,7 +519,7 @@ These are NOT from the Forge plugin. Possible sources:
 
 The sentinel log can accumulate many entries over time. Run:
 ```
-/[FRG]-status
+/forge:status
 ```
 This reads but doesn't inflate the file. To clean sentinel logs, you can manually trim the `sentinelLog` array in `.claude/governance.json`.
 
@@ -542,21 +542,21 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 2.1 | `/[FRG]-` autocomplete | Shows list of Forge commands | | |
-| 2.2 | `/[FRG]-init` | Wizard asks questions, creates governance.json | | |
-| 2.3 | `/[FRG]-status` | Shows project health dashboard | | |
-| 2.4 | `/[FRG]-test` | Runs test suite (or reports no tests) | | |
-| 2.5 | `/[FRG]-gap-analysis` | Analyzes 5 dimensions, shows report | | |
-| 2.6 | `/[FRG]-checkpoint` | Creates `.claude/checkpoints/` file | | |
-| 2.7 | `/[FRG]-feature "test"` | Plans a feature, invokes agents | | |
-| 2.8 | `/[FRG]-command-center` | Shows 4-option menu | | |
+| 2.1 | `/forge:` autocomplete | Shows list of Forge commands | | |
+| 2.2 | `/forge:init` | Wizard asks questions, creates governance.json | | |
+| 2.3 | `/forge:status` | Shows project health dashboard | | |
+| 2.4 | `/forge:test` | Runs test suite (or reports no tests) | | |
+| 2.5 | `/forge:gap-analysis` | Analyzes 5 dimensions, shows report | | |
+| 2.6 | `/forge:checkpoint` | Creates `.claude/checkpoints/` file | | |
+| 2.7 | `/forge:feature "test"` | Plans a feature, invokes agents | | |
+| 2.8 | `/forge:command-center` | Shows 4-option menu | | |
 
 ### Phase 3: Agents
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
 | 3.1 | Agents discovered | Ask "what forge agents are available" — lists agents | | |
-| 3.2 | Agent invocation | `/[FRG]-agent-assign "task"` shows roster and invokes | | |
+| 3.2 | Agent invocation | `/forge:agent-assign "task"` shows roster and invokes | | |
 | 3.3 | No project-level agents | `ls .claude/agents/` is empty or doesn't exist | | |
 
 ### Phase 4: Hooks
@@ -578,7 +578,7 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 6.1 | `/[FRG]-dashboard` | Generates and opens HTML dashboard | | |
+| 6.1 | `/forge:dashboard` | Generates and opens HTML dashboard | | |
 | 6.2 | Health score shown | Dashboard shows A-F grade with score | | |
 | 6.3 | Git status shown | Dashboard shows branch and commit info | | |
 
@@ -586,8 +586,8 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 7.1 | Open project A | `/[FRG]-init` + `/[FRG]-status` works | | |
-| 7.2 | Open project B | `/[FRG]-init` + `/[FRG]-status` works | | |
+| 7.1 | Open project A | `/forge:init` + `/forge:status` works | | |
+| 7.2 | Open project B | `/forge:init` + `/forge:status` works | | |
 | 7.3 | Projects are isolated | governance.json is different per project | | |
 | 7.4 | Commands are shared | Same 21 commands available in both projects | | |
 
@@ -595,9 +595,9 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 8.1 | No git repo | `/[FRG]-status` works but shows "not a git repo" | | |
-| 8.2 | No package.json | `/[FRG]-init` detects project type as "unknown" | | |
-| 8.3 | Empty project | `/[FRG]-init` + `/[FRG]-status` still work | | |
+| 8.1 | No git repo | `/forge:status` works but shows "not a git repo" | | |
+| 8.2 | No package.json | `/forge:init` detects project type as "unknown" | | |
+| 8.3 | Empty project | `/forge:init` + `/forge:status` still work | | |
 | 8.4 | Run init twice | Second run asks to keep or reset existing config | | |
 
 ---

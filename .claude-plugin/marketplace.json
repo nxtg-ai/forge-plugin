@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "nxtg-forge",
+  "name": "forge",
   "description": "NXTG-Forge plugin marketplace — AI-powered development governance for Claude Code",
   "owner": {
     "name": "NXTG AI",
@@ -8,10 +8,10 @@
   },
   "plugins": [
     {
-      "name": "nxtg-forge",
+      "name": "forge",
       "source": "./plugins/nxtg-forge",
       "description": "AI-powered development governance — automated quality gates, agent orchestration, and project health monitoring for Claude Code",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "author": {
         "name": "NXTG AI"
       },

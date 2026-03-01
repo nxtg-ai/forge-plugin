@@ -39,12 +39,12 @@ That's it. No build step. No config files. No runtime dependencies.
 ## Key Commands
 
 ```
-/[FRG]-status              → Project health score at a glance
-/[FRG]-gap-analysis        → Find missing tests, docs, security gaps
-/[FRG]-feature "desc"      → Multi-agent feature development
-/[FRG]-checkpoint           → Save restorable project state
-/[FRG]-test                 → Run tests with detailed analysis
-/[FRG]-deploy               → Deploy with pre-flight validation
+/forge:status              → Project health score at a glance
+/forge:gap-analysis        → Find missing tests, docs, security gaps
+/forge:feature "desc"      → Multi-agent feature development
+/forge:checkpoint           → Save restorable project state
+/forge:test                 → Run tests with detailed analysis
+/forge:deploy               → Deploy with pre-flight validation
 ```
 
 ## How It Works

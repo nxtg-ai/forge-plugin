@@ -55,7 +55,7 @@ function getGovernanceState() {
   if (!gov) {
     return {
       initialized: false,
-      message: "No governance.json found. Run /[FRG]-init to set up Forge.",
+      message: "No governance.json found. Run /forge:init to set up Forge.",
       path: govPath,
     };
   }
@@ -324,7 +324,7 @@ function listCheckpoints() {
   const root = getProjectRoot();
   const checkpointDir = join(root, ".claude", "checkpoints");
   if (!existsSync(checkpointDir)) {
-    return { checkpoints: [], message: "No checkpoints found. Use /[FRG]-checkpoint to create one." };
+    return { checkpoints: [], message: "No checkpoints found. Use /forge:checkpoint to create one." };
   }
 
   const files = readdirSync(checkpointDir)

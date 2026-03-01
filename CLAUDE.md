@@ -23,7 +23,7 @@ plugins/nxtg-forge/
 ├── .claude-plugin/
 │   └── plugin.json           # Manifest (name, version, description)
 ├── .mcp.json                 # MCP server config (governance-mcp via stdio)
-├── commands/                 # 21 slash commands ([FRG]-*.md)
+├── commands/                 # 21 slash commands (*.md (slash commands))
 ├── agents/                   # 22 agent definitions ([AFRG]-*.md)
 ├── skills/                   # 29 skill directories (*/SKILL.md)
 ├── hooks/                    # 6 governance hooks (bash scripts)
@@ -42,12 +42,12 @@ plugins/nxtg-forge/
 
 | Category | Commands |
 |----------|----------|
-| **Governance** | `/frg-init`, `/frg-status`, `/frg-status-enhanced`, `/frg-gap-analysis`, `/frg-compliance`, `/frg-command-center` |
-| **Feature Dev** | `/frg-feature`, `/frg-spec`, `/frg-agent-assign`, `/frg-integrate` |
-| **Quality** | `/frg-test`, `/frg-deploy`, `/frg-optimize`, `/frg-upgrade` |
-| **State** | `/frg-checkpoint`, `/frg-restore`, `/frg-report` |
-| **Docs** | `/frg-docs-status`, `/frg-docs-update`, `/frg-docs-audit` |
-| **Dashboard** | `/frg-dashboard` |
+| **Governance** | `/forge:init`, `/forge:status`, `/forge:status-enhanced`, `/forge:gap-analysis`, `/forge:compliance`, `/forge:command-center` |
+| **Feature Dev** | `/forge:feature`, `/forge:spec`, `/forge:agent-assign`, `/forge:integrate` |
+| **Quality** | `/forge:test`, `/forge:deploy`, `/forge:optimize`, `/forge:upgrade` |
+| **State** | `/forge:checkpoint`, `/forge:restore`, `/forge:report` |
+| **Docs** | `/forge:docs-status`, `/forge:docs-update`, `/forge:docs-audit` |
+| **Dashboard** | `/forge:dashboard` |
 
 **Format:** Markdown with YAML frontmatter (`description` field). Body contains structured instructions for Claude Code.
 
@@ -152,7 +152,7 @@ Commands and agents are wired to call orchestrator MCP tools (`forge_get_tasks`,
 
 ## File Format Conventions
 
-### Commands (`[FRG]-*.md`)
+### Commands (`*.md (slash commands)`)
 ```markdown
 ---
 description: "Short description shown in /help"
