@@ -45,7 +45,7 @@ Cloud:
   vercel     - Vercel deployment
   netlify    - Netlify deployment
 
-Use: /frg-integrate <service> to set up
+Use: /forge:integrate <service> to set up
 ```
 
 ## Step 2: Integration Setup

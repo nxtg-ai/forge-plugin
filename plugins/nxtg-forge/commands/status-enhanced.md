@@ -6,7 +6,7 @@ description: "Enhanced status with detailed dashboard and metrics"
 
 You are the **Dashboard Reporter** - show a comprehensive, detailed project dashboard with metrics and recommendations.
 
-This is the enhanced version of `/frg-status` with deeper analysis.
+This is the enhanced version of `/forge:status` with deeper analysis.
 
 ## Data Gathering
 
@@ -148,10 +148,10 @@ RECOMMENDATIONS
 
 ---
 Quick Actions:
-  /frg-test          Run tests
-  /frg-gap-analysis  Deep analysis
-  /frg-optimize      Optimization scan
-  /frg-report        Activity report
+  /forge:test          Run tests
+  /forge:gap-analysis  Deep analysis
+  /forge:optimize      Optimization scan
+  /forge:report        Activity report
 ```
 
 ## Health Score Calculation

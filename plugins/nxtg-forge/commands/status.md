@@ -2,7 +2,7 @@
 description: "Display complete project state (zero-context-friendly)"
 ---
 
-# NXTG-Forge Status
+# Forge Status
 
 You are the **Status Reporter** - show complete project state in a zero-context-friendly format.
 
@@ -82,64 +82,85 @@ Read `.claude/settings.json` and list configured hooks.
 
 ## Display Format
 
-Present the gathered data in this format:
+Present the gathered data using rich markdown formatting. The Claude TUI renders markdown beautifully — use headers, tables, bold, and horizontal rules to make this look polished and professional.
 
-```
-NXTG-Forge Project Status
-==========================
-
-PROJECT: {name} v{version}
-  Path: {cwd}
-  Commit: {short_hash}
-  Branch: {branch}
-
-GIT STATUS
-  Branch: {branch} ({ahead} ahead, {behind} behind)
-  Staged: {staged_count}
-  Modified: {modified_count}
-  Untracked: {untracked_count}
-
-  Recent commits:
-    {hash} {message}
-    {hash} {message}
-    {hash} {message}
-
-TESTS
-  Test files: {test_file_count}
-  Status: {passing}/{total} passing
-  Coverage: {coverage}% (if available)
-
-BUILD
-  TypeScript: {OK or ERROR with count}
-
-GOVERNANCE
-  Status: {constitution_status}
-  Directive: {directive_first_50_chars}...
-  Workstreams: {active}/{total}
-  Sentinel entries: {count}
-
-ORCHESTRATOR (if connected)
-  Project: {orchestrator_project_name}
-  Tasks: {pending}/{in_progress}/{completed}/{total}
-  Active locks: {lock_count} files
-  Knowledge entries: {knowledge_count}
-  Drift: {aligned/drifting/unknown}
-
-AGENTS: {count} available
-  {agent_names_list}
-
-COMMANDS: {count} available
-
-HOOKS: {hook_count} configured
-  {hook_descriptions}
+**IMPORTANT**: Output this as markdown text directly to the user. Do NOT wrap it in a code block. Use real markdown headers, tables, and formatting so the TUI renders it with proper styling.
 
 ---
-Quick Actions:
-  /frg-test          Run full test suite
-  /frg-checkpoint    Save current state
-  /frg-gap-analysis  Analyze project gaps
-  /frg-report        Session activity report
-```
+
+### Output Template
+
+# Forge Status
+
+**{name}** v{version} | `{branch}` @ `{short_hash}` | {cwd}
+
+---
+
+## Git
+
+| Metric | Value |
+|--------|-------|
+| Branch | `{branch}` |
+| Staged | {staged_count} |
+| Modified | {modified_count} |
+| Untracked | {untracked_count} |
+
+**Recent commits:**
+
+| Hash | Message |
+|------|---------|
+| `{hash}` | {message} |
+| `{hash}` | {message} |
+| `{hash}` | {message} |
+
+## Tests
+
+| Metric | Value |
+|--------|-------|
+| Test files | {test_file_count} |
+| Passing | {passing}/{total} |
+| Coverage | {coverage}% |
+
+## Build
+
+| Check | Status |
+|-------|--------|
+| TypeScript | {OK or ERROR with count} |
+
+## Governance
+
+| Metric | Value |
+|--------|-------|
+| Status | {constitution_status} |
+| Directive | {directive_first_50_chars}... |
+| Workstreams | {active}/{total} |
+| Sentinel entries | {count} |
+
+## Orchestrator
+
+If connected, show:
+
+| Metric | Value |
+|--------|-------|
+| Project | {orchestrator_project_name} |
+| Tasks | {pending} pending / {in_progress} active / {completed} done |
+| File locks | {lock_count} active |
+| Knowledge | {knowledge_count} entries |
+| Drift | {aligned/drifting/unknown} |
+
+If NOT connected, show: **Orchestrator**: not connected — install the Forge CLI for multi-agent coordination.
+
+## Tooling
+
+| Category | Count | Source |
+|----------|-------|--------|
+| Agents | {count} | Forge plugin |
+| Commands | {count} | Forge plugin |
+| Hooks | {hook_count} | Project config |
+
+---
+
+**Quick actions:** `/forge:test` | `/forge:checkpoint` | `/forge:gap-analysis` | `/forge:report`
 
 ## Parse Arguments
 
@@ -165,6 +186,6 @@ RECOVERY NEEDED
 
   Options:
     1. Continue working on current changes
-    2. /frg-checkpoint save   (checkpoint current state)
+    2. /forge:checkpoint save   (checkpoint current state)
     3. git stash              (stash changes)
 ```

@@ -261,8 +261,8 @@ After analysis:
 2. Offer next steps:
 ```
 Next steps:
-  /frg-test         Run test suite
-  /frg-status       View current state
-  /frg-checkpoint   Save state before fixes
-  /frg-feature      Plan feature to address gaps
+  /forge:test         Run test suite
+  /forge:status       View current state
+  /forge:checkpoint   Save state before fixes
+  /forge:feature      Plan feature to address gaps
 ```

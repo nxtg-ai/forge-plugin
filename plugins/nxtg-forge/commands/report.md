@@ -134,10 +134,10 @@ RECOMMENDATIONS
 
 ---
 Next steps:
-  /frg-status       Check current state
-  /frg-test         Run test suite
-  /frg-checkpoint   Save checkpoint
-  /frg-gap-analysis Identify remaining gaps
+  /forge:status       Check current state
+  /forge:test         Run test suite
+  /forge:checkpoint   Save checkpoint
+  /forge:gap-analysis Identify remaining gaps
 ```
 
 ### JSON Output (`--json`)
@@ -168,5 +168,5 @@ Not a git repository. Session report requires git history.
 If no commits found in timeframe:
 ```
 No commits found in the specified timeframe.
-Try: /frg-report --since "7 days ago"
+Try: /forge:report --since "7 days ago"
 ```

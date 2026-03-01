@@ -14,7 +14,7 @@ Before showing the menu, quickly verify forge is set up:
 3. Check git is initialized (`git rev-parse --is-inside-work-tree`)
 4. Check orchestrator connection: call `forge_get_state` — if it returns data, the Rust orchestrator is connected. Show "Orchestrator: CONNECTED (v{version})" or "Orchestrator: NOT CONNECTED (run `forge mcp` to enable)"
 
-If governance.json is missing, suggest: "Run `/frg-init` first to set up NXTG-Forge."
+If governance.json is missing, suggest: "Run `/forge:init` first to set up NXTG-Forge."
 
 ## Display Command Center
 
@@ -113,7 +113,7 @@ Enter open discussion mode:
 ### Option 4: Health Check
 
 Run comprehensive health analysis:
-1. Execute `/frg-gap-analysis` logic
+1. Execute `/forge:gap-analysis` logic
 2. Run `npx vitest run` for test status
 3. Check `npx tsc --noEmit` for type safety
 4. Run `npm audit` for security
@@ -149,5 +149,5 @@ If the user types free text instead of 1-4, map to the closest option:
 
 After handling any option, offer to return to the command center:
 ```
-Return to command center? (/frg-enable-forge)
+Return to command center? (/forge:enable-forge)
 ```

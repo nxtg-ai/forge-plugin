@@ -70,8 +70,8 @@ Recommendations:
 
 ---
 Actions:
-  /frg-docs-audit    Detailed documentation audit
-  /frg-docs-update   Update stale documentation
+  /forge:docs-audit    Detailed documentation audit
+  /forge:docs-update   Update stale documentation
 ```
 
 ## Error Handling

@@ -132,7 +132,7 @@ forge-plugin                ──spawns──►     forge-ui (http://localhost
 ```
 
 - **forge-orchestrator** (`../forge-orchestrator/`): Rust CLI + MCP server. This plugin calls its 9 MCP tools via stdio for task management, knowledge capture, drift detection. The orchestrator runs independently as a binary.
-- **forge-ui** (`../v3/`): React dashboard + Infinity Terminal. The `/frg-dashboard` command opens it in a browser.
+- **forge-ui** (`../v3/`): React dashboard + Infinity Terminal. The `/forge:dashboard` command opens it in a browser.
 - **MCP is the only integration layer.** No direct imports or shared code between repos.
 
 ### Two MCP Servers

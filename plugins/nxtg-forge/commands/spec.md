@@ -104,8 +104,8 @@ Save to `.claude/plans/{feature-slug}-spec.md`
 Spec saved: .claude/plans/{feature-slug}-spec.md
 
 Next steps:
-  /frg-feature {feature_name}   Implement this feature
-  /frg-checkpoint save           Save state before starting
+  /forge:feature {feature_name}   Implement this feature
+  /forge:checkpoint save           Save state before starting
 ```
 
 ## Interactive Mode (`--interactive`)

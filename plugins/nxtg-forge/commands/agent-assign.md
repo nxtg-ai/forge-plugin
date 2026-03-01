@@ -146,6 +146,6 @@ If `--agent <name>` specified:
 
 ## Error Handling
 
-- No agents found: suggest running `/frg-init` to set up agents
+- No agents found: suggest running `/forge:init` to set up agents
 - No matching agent: suggest the closest match and offer manual assignment
 - Agent file unreadable: skip and note in output

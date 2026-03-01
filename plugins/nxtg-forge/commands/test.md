@@ -106,7 +106,7 @@ After showing results, provide analysis:
 All tests passing. Test health is good.
 
 Suggestions:
-  - Consider adding tests for uncovered files (use /frg-gap-analysis --scope testing)
+  - Consider adding tests for uncovered files (use /forge:gap-analysis --scope testing)
   - Current test file count: {count}
 ```
 
@@ -125,7 +125,7 @@ Quick fix hints:
 **If no tests exist:**
 ```
 No tests found. Consider adding tests:
-  - Run /frg-gap-analysis --scope testing to identify coverage gaps
+  - Run /forge:gap-analysis --scope testing to identify coverage gaps
   - Test files should be in src/**/__tests__/ or src/**/*.test.ts
 ```
 
@@ -149,7 +149,7 @@ Try:
 After test run, offer next steps:
 ```
 Next steps:
-  /frg-status       View overall project health
-  /frg-checkpoint   Save current state
-  /frg-report       Generate session report
+  /forge:status       View overall project health
+  /forge:checkpoint   Save current state
+  /forge:report       Generate session report
 ```

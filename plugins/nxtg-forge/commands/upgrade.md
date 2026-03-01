@@ -90,7 +90,7 @@ UPGRADE COMPLETE
 
   All configurations valid.
 
-  Run /frg-status for full project state.
+  Run /forge:status for full project state.
 ```
 
 ## Error Handling
@@ -100,5 +100,5 @@ If upgrade fails:
 Upgrade failed: {error}
 
 No changes were made (or changes rolled back).
-Try: /frg-init to reinitialize from scratch.
+Try: /forge:init to reinitialize from scratch.
 ```

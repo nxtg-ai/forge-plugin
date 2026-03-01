@@ -110,9 +110,9 @@ All tests: {PASSING / FAILING}
 Type check: {OK / ERRORS}
 
 Next steps:
-  /frg-test         Verify full test suite
-  /frg-checkpoint   Save current state
-  /frg-status       View updated project status
+  /forge:test         Verify full test suite
+  /forge:checkpoint   Save current state
+  /forge:status       View updated project status
 ```
 
 ## Step 7: Update Governance & Orchestrator

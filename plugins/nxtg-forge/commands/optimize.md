@@ -130,7 +130,7 @@ Always show what was changed and confirm before applying.
 
 ```
 Next steps:
-  /frg-test         Verify optimizations don't break tests
-  /frg-status       View updated project state
-  /frg-gap-analysis Full gap analysis
+  /forge:test         Verify optimizations don't break tests
+  /forge:status       View updated project state
+  /forge:gap-analysis Full gap analysis
 ```

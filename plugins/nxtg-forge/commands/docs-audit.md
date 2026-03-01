@@ -103,6 +103,6 @@ RECOMMENDATIONS
 
 ---
 Actions:
-  /frg-docs-update           Fix stale docs
-  /frg-docs-update --jsdoc   Add missing JSDoc
+  /forge:docs-update           Fix stale docs
+  /forge:docs-update --jsdoc   Add missing JSDoc
 ```

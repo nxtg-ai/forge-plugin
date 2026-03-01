@@ -108,10 +108,10 @@ SBOM
 
 ---
 Quick Actions:
-  /frg-compliance --sbom       Generate SBOM file
-  /frg-compliance --fix        Suggest replacements
-  /frg-deploy --validate-only  Pre-deploy validation
-  /frg-gap-analysis --scope security  Security gap analysis
+  /forge:compliance --sbom       Generate SBOM file
+  /forge:compliance --fix        Suggest replacements
+  /forge:deploy --validate-only  Pre-deploy validation
+  /forge:gap-analysis --scope security  Security gap analysis
 ```
 
 ### If `--conflicts-only`, show only the LICENSE CONFLICTS section.

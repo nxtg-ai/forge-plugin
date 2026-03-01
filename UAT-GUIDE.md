@@ -176,7 +176,7 @@ When you submit a prompt, you should see hook output in the response:
 
 ---
 
-## 4. Project Initialization (`/frg-init`)
+## 4. Project Initialization (`/forge:init`)
 
 ### Step 4a: Run Init
 
@@ -230,7 +230,7 @@ cat .claude/governance.json | head -20
 grep "NXTG-Forge" CLAUDE.md
 ```
 
-### What `/frg-init` Does NOT Create
+### What `/forge:init` Does NOT Create
 
 These items are FROM THE PLUGIN and should NOT be in your project:
 - `.claude/agents/` — Agents come from the plugin
@@ -449,16 +449,16 @@ These come from the plugin and are available in every project:
 
 **You don't touch these files.** Plugin updates replace them.
 
-### Per-Project (Created by /frg-init)
+### Per-Project (Created by /forge:init)
 
 These are the ONLY files Forge creates in your project:
 
 ```
 your-project/
 ├── .claude/
-│   ├── governance.json    # Created by /frg-init
-│   └── checkpoints/       # Created by /frg-checkpoint (optional)
-└── CLAUDE.md              # Updated by /frg-init
+│   ├── governance.json    # Created by /forge:init
+│   └── checkpoints/       # Created by /forge:checkpoint (optional)
+└── CLAUDE.md              # Updated by /forge:init
 ```
 
 **That's it.** If you see other Forge-related files in your project, they shouldn't be there.
@@ -653,7 +653,7 @@ Plugin Install Location (GLOBAL):
   ├── .mcp.json                    ← MCP server config (auto-registered)
   └── servers/governance-mcp/      ← MCP dashboard server (starts on demand)
 
-Project Level (PER-PROJECT, created by /frg-init):
+Project Level (PER-PROJECT, created by /forge:init):
   your-project/
   ├── .claude/governance.json      ← Project state (ONLY governance file)
   ├── .claude/checkpoints/         ← Optional snapshots

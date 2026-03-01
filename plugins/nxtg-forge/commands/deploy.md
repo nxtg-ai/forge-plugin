@@ -70,8 +70,8 @@ Deployment blocked:
   - {list of failed checks}
 
 Fix these issues before deploying:
-  /frg-test    Fix failing tests
-  /frg-optimize  Address code issues
+  /forge:test    Fix failing tests
+  /forge:optimize  Address code issues
 ```
 
 If all checks pass, ask user to confirm:
@@ -132,7 +132,7 @@ DEPLOYMENT COMPLETE
   Branch: {git branch}
   Checkpoint: pre-deploy-{timestamp}
 
-  Rollback: /frg-restore pre-deploy-{timestamp}
+  Rollback: /forge:restore pre-deploy-{timestamp}
 ```
 
 ## Error Handling
@@ -144,7 +144,7 @@ Error: {error message}
 
 Recovery:
   1. Check the error above
-  2. Restore checkpoint: /frg-restore pre-deploy-{timestamp}
+  2. Restore checkpoint: /forge:restore pre-deploy-{timestamp}
   3. Fix the issue
-  4. Try again: /frg-deploy
+  4. Try again: /forge:deploy
 ```
