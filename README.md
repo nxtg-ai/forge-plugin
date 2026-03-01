@@ -60,8 +60,8 @@ Governance hooks run automatically. Before every task, pre-task hooks validate t
 For multi-tool coordination across Claude Code, Codex CLI, and Gemini CLI (file locking, shared knowledge, task boards), add the Forge Orchestrator:
 
 ```bash
-git clone https://github.com/nxtg-ai/forge-orchestrator && cd forge-orchestrator
-cargo build --release
+curl -fsSL https://forge.nxtg.ai/install.sh | sh
+forge init
 ```
 
 One Rust binary. 4MB. 293 tests. Zero runtime dependencies. The orchestrator is the coordination layer that makes separate AI tools work as a team.
