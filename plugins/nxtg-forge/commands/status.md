@@ -81,7 +81,17 @@ IMPORTANT: Do NOT run `npx tsc` if there is no `tsconfig.json`. It will produce 
 
 ### 8. Hook Status
 
-Read `.claude/settings.json` and list configured hooks.
+Hooks are loaded from the NXTG-Forge plugin (6 built-in). They are defined in the plugin's `hooks/hooks.json` and run automatically — they do NOT require `.claude/settings.json`.
+
+The 6 hooks are:
+- **UserPromptSubmit**: `pre-task.sh` — sync governance state, initialize context
+- **Stop**: `post-task.sh` — quality checks on completed work
+- **Stop**: `audit-root-cleanliness.sh` — flag unnecessary root files
+- **Stop**: `smoke-test-reminder.sh` — remind to test after server/test changes
+- **PostToolUse (Write)**: `enforce-file-placement.sh` — enforce file organization
+- **PostToolUse (Edit/Write)**: `governance-check.sh` — advisory code quality check
+
+Report: **Hooks: 6 active (from NXTG-Forge plugin)**
 
 ## Display Format — MANDATORY
 
@@ -127,7 +137,7 @@ If the MCP health tool returns individual check results instead of dimension sco
 
 **9. Orchestrator section:** Output `## Orchestrator`. If connected: `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. If NOT connected: output `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\``
 
-**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22), Commands (21), Hooks.
+**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22, NXTG-Forge plugin), Commands (21, NXTG-Forge plugin), Hooks (6, NXTG-Forge plugin).
 
 **11. Quick actions:** Output `**Quick actions:** \`/forge:test\` | \`/forge:gap-analysis\` | \`/forge:feature\` | \`/forge:report\``
 
