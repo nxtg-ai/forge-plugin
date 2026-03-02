@@ -80,87 +80,43 @@ npx tsc --noEmit 2>&1 | tail -5
 
 Read `.claude/settings.json` and list configured hooks.
 
-## Display Format
+## Display Format — MANDATORY
 
-Present the gathered data using rich markdown formatting. The Claude TUI renders markdown beautifully — use headers, tables, bold, and horizontal rules to make this look polished and professional.
+You MUST format your output using markdown tables and headers. Do NOT use plain text with indentation. Do NOT use `===` underlines. The Claude TUI renders markdown beautifully — tables render as styled grids, headers render as bold colored text, and horizontal rules render as separators.
 
-**IMPORTANT**: Output this as markdown text directly to the user. Do NOT wrap it in a code block. Use real markdown headers, tables, and formatting so the TUI renders it with proper styling.
+Output your response using EXACTLY this structure (replace placeholders with real data):
 
----
+**Line 1 — Title as H1 header:**
+Write a markdown H1: `# Forge Status`
 
-### Output Template
+**Line 2 — Project summary as bold + code spans:**
+Write: `**{name}** v{version} on \`{branch}\` @ \`{short_hash}\``
 
-# Forge Status
+**Then a horizontal rule:** `---`
 
-**{name}** v{version} | `{branch}` @ `{short_hash}` | {cwd}
+**Section: Git — use a markdown table:**
+Write a `## Git` header, then a markdown table with columns `| Metric | Value |` containing Branch, Staged, Modified, Untracked rows. Then write `**Recent commits:**` followed by another table with `| Hash | Message |` columns.
 
----
+**Section: Tests — use a markdown table:**
+Write a `## Tests` header, then a table with Test files, Passing, Coverage rows. If no test runner, show "No test runner detected" in the value.
 
-## Git
+**Section: Build — use a markdown table:**
+Write a `## Build` header, then a table with build check results.
 
-| Metric | Value |
-|--------|-------|
-| Branch | `{branch}` |
-| Staged | {staged_count} |
-| Modified | {modified_count} |
-| Untracked | {untracked_count} |
+**Section: Governance — use a markdown table:**
+Write a `## Governance` header, then a table with Status, Vision (first 60 chars), Workstreams, Sentinel entries rows.
 
-**Recent commits:**
+**Section: Orchestrator — one line:**
+If connected: write `## Orchestrator` then a table with Tasks, Locks, Knowledge, Drift rows.
+If NOT connected: write `**Orchestrator:** not connected`
 
-| Hash | Message |
-|------|---------|
-| `{hash}` | {message} |
-| `{hash}` | {message} |
-| `{hash}` | {message} |
+**Section: Tooling — use a markdown table:**
+Write a `## Tooling` header, then a table with `| Category | Count | Source |` columns for Agents, Commands, Hooks.
 
-## Tests
+**Final line — quick actions as bold inline:**
+Write: `**Quick actions:** \`/forge:test\` | \`/forge:gap-analysis\` | \`/forge:feature\` | \`/forge:report\``
 
-| Metric | Value |
-|--------|-------|
-| Test files | {test_file_count} |
-| Passing | {passing}/{total} |
-| Coverage | {coverage}% |
-
-## Build
-
-| Check | Status |
-|-------|--------|
-| TypeScript | {OK or ERROR with count} |
-
-## Governance
-
-| Metric | Value |
-|--------|-------|
-| Status | {constitution_status} |
-| Directive | {directive_first_50_chars}... |
-| Workstreams | {active}/{total} |
-| Sentinel entries | {count} |
-
-## Orchestrator
-
-If connected, show:
-
-| Metric | Value |
-|--------|-------|
-| Project | {orchestrator_project_name} |
-| Tasks | {pending} pending / {in_progress} active / {completed} done |
-| File locks | {lock_count} active |
-| Knowledge | {knowledge_count} entries |
-| Drift | {aligned/drifting/unknown} |
-
-If NOT connected, show: **Orchestrator**: not connected — install the Forge CLI for multi-agent coordination.
-
-## Tooling
-
-| Category | Count | Source |
-|----------|-------|--------|
-| Agents | {count} | Forge plugin |
-| Commands | {count} | Forge plugin |
-| Hooks | {hook_count} | Project config |
-
----
-
-**Quick actions:** `/forge:test` | `/forge:checkpoint` | `/forge:gap-analysis` | `/forge:report`
+CRITICAL: Every section MUST use a markdown table (pipe-delimited with header row and separator row). Do NOT fall back to plain-text indented format. Tables are what make this look professional in the Claude TUI.
 
 ## Parse Arguments
 
