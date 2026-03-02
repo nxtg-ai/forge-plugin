@@ -139,18 +139,43 @@ If the MCP health tool returns individual check results instead of dimension sco
 
 **10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22, Forge plugin), Commands (21, Forge plugin), Hooks (6, Forge plugin).
 
-**11. Quick actions:** Output `**Quick actions:** \`/forge:test\` | \`/forge:gap-analysis\` | \`/forge:feature\` | \`/forge:report\``
+**11. Recovery section (conditional):** If git has uncommitted changes (modified or untracked files from Step 2), output `## Recovery Needed` with a table of uncommitted files and their status.
+
+**12. Interactive menu:** After ALL output is complete, use `AskUserQuestion` to present the user with next actions. Choose the best 3 options based on the health data gathered:
+
+- If health score is low on tests → include "Add tests to boost health"
+- If there are uncommitted changes → include "Commit changes"
+- If governance is not initialized → include "Initialize governance"
+- Always include "Run gap analysis" as a safe default
+- Always include "Plan a feature" as a creative option
+
+Present exactly 4 options via AskUserQuestion (the tool automatically adds an "Other" free-text option):
+
+Example options (adapt based on actual health data):
+- **Commit changes** (description: "Stage and commit your current work")
+- **Add tests** (description: "Generate tests to boost your health score from {grade} to {next_grade}")
+- **Run gap analysis** (description: "Deep dive into testing, docs, security, and architecture gaps")
+- **Plan a feature** (description: "Design and build a new feature with agent orchestration")
+
+**13. Handle the selection:**
+- If "Commit changes" → run the `/commit` skill
+- If "Add tests" → run `/forge:feature "Add comprehensive tests for the project"`
+- If "Run gap analysis" → run `/forge:gap-analysis`
+- If "Plan a feature" → run `/forge:feature`
+- If "Initialize governance" → run `/forge:init`
+- If user types something custom → treat it as a new task and proceed
 
 CRITICAL REMINDERS:
 - Every `##` header triggers color rendering in the TUI — do NOT skip the `##`
 - Progress bars (`████░░░░`) inside table cells make health scores visual and scannable
 - The `⚡` in the H1 title adds visual identity
 - Tables auto-size to content — never pad with spaces
+- The AskUserQuestion at the end turns status from a dead-end into a launchpad
 
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu)
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
@@ -159,18 +184,3 @@ If `$ARGUMENTS` contains:
 
 If any data source is unavailable, show "N/A" for that section rather than failing.
 Always show whatever data IS available.
-
-## Zero-Context Recovery
-
-If governance shows interrupted session or git has uncommitted changes, add a recovery section:
-
-```
-RECOVERY NEEDED
-  Uncommitted changes detected.
-  Last commit: {hash} {message} ({time_ago})
-
-  Options:
-    1. Continue working on current changes
-    2. /forge:checkpoint save   (checkpoint current state)
-    3. git stash              (stash changes)
-```
