@@ -80,10 +80,12 @@ function getGitStatus() {
   const status = run("git status --porcelain", { cwd: root });
   const contributors = run("git shortlog -sn --no-merges HEAD | head -5", { cwd: root });
 
-  const lines = status ? status.split("\n") : [];
-  const modified = lines.filter((l) => l.startsWith(" M") || l.startsWith("M ")).length;
-  const untracked = lines.filter((l) => l.startsWith("??")).length;
-  const staged = lines.filter((l) => /^[AMDR]/.test(l)).length;
+  const lines = status ? status.split("\n").filter(Boolean) : [];
+  // Exclude .claude/ paths — governance.json writes should not penalize git cleanliness
+  const relevantLines = lines.filter((l) => !l.slice(3).trim().startsWith(".claude/"));
+  const modified = relevantLines.filter((l) => l.startsWith(" M") || l.startsWith("M ")).length;
+  const untracked = relevantLines.filter((l) => l.startsWith("??")).length;
+  const staged = relevantLines.filter((l) => /^[AMDR]/.test(l)).length;
 
   return {
     branch,
@@ -92,7 +94,7 @@ function getGitStatus() {
     modified,
     untracked,
     staged,
-    clean: lines.length === 0,
+    clean: relevantLines.length === 0,
     contributors: contributors
       ? contributors.split("\n").map((l) => l.trim())
       : [],
