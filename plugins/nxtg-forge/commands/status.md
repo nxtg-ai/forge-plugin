@@ -82,41 +82,57 @@ Read `.claude/settings.json` and list configured hooks.
 
 ## Display Format — MANDATORY
 
-You MUST format your output using markdown tables and headers. Do NOT use plain text with indentation. Do NOT use `===` underlines. The Claude TUI renders markdown beautifully — tables render as styled grids, headers render as bold colored text, and horizontal rules render as separators.
+You MUST output using **real markdown** — `#` headers, `##` sub-headers, `---` rules, and pipe-delimited tables. The Claude TUI renders markdown with **color and styling**: H1 headers are large and bold, H2 headers are colored, bold text is highlighted, code spans are styled, and tables render as bordered grids. Plain text gets NONE of this. If you skip the markdown syntax, the output will be a colorless wall of text.
 
-Output your response using EXACTLY this structure (replace placeholders with real data):
+Do NOT wrap output in a code block. Do NOT use `===` underlines. Do NOT use indented plain text. Every header MUST start with `#` or `##`. Every data section MUST use a pipe-delimited markdown table.
 
-**Line 1 — Title as H1 header:**
-Write a markdown H1: `# Forge Status`
+**IMPORTANT:** Output the markdown directly. The `#` and `##` characters trigger the TUI's color rendering engine.
 
-**Line 2 — Project summary as bold + code spans:**
-Write: `**{name}** v{version} on \`{branch}\` @ \`{short_hash}\``
+Here is the EXACT structure to output (substitute real values for placeholders):
 
-**Then a horizontal rule:** `---`
+**1. Title:** Output `# ⚡ Forge Status` (H1 with the lightning emoji — this renders large and bold in TUI)
 
-**Section: Git — use a markdown table:**
-Write a `## Git` header, then a markdown table with columns `| Metric | Value |` containing Branch, Staged, Modified, Untracked rows. Then write `**Recent commits:**` followed by another table with `| Hash | Message |` columns.
+**2. Project line:** Output `**{name}** v{version} on \`{branch}\` @ \`{short_hash}\``
 
-**Section: Tests — use a markdown table:**
-Write a `## Tests` header, then a table with Test files, Passing, Coverage rows. If no test runner, show "No test runner detected" in the value.
+**3. Horizontal rule:** Output `---`
 
-**Section: Build — use a markdown table:**
-Write a `## Build` header, then a table with build check results.
+**4. Git section:** Output `## Git` then this table:
 
-**Section: Governance — use a markdown table:**
-Write a `## Governance` header, then a table with Status, Vision (first 60 chars), Workstreams, Sentinel entries rows.
+`| Metric | Value |` with rows for Branch, Staged, Modified, Untracked. Then output `**Recent commits:**` followed by a `| Hash | Message |` table with the last 5 commits.
 
-**Section: Orchestrator — one line:**
-If connected: write `## Orchestrator` then a table with Tasks, Locks, Knowledge, Drift rows.
-If NOT connected: write `**Orchestrator:** not connected`
+**5. Health section (IMPORTANT — use progress bars):** Output `## Health` then a table with these columns:
 
-**Section: Tooling — use a markdown table:**
-Write a `## Tooling` header, then a table with `| Category | Count | Source |` columns for Agents, Commands, Hooks.
+`| Dimension | Bar | Score |`
 
-**Final line — quick actions as bold inline:**
-Write: `**Quick actions:** \`/forge:test\` | \`/forge:gap-analysis\` | \`/forge:feature\` | \`/forge:report\``
+For each health dimension, generate a progress bar using Unicode block characters. Calculate filled blocks as `round(score / max * 20)`. Use `█` for filled and `░` for empty, always 20 characters wide total. Example rows:
 
-CRITICAL: Every section MUST use a markdown table (pipe-delimited with header row and separator row). Do NOT fall back to plain-text indented format. Tables are what make this look professional in the Claude TUI.
+`| Tests | ████████████████░░░░ | 16/20 |`
+`| Types | ██████████████████░░ | 18/20 |`
+`| Security | █████████████░░░░░░░ | 13/20 |`
+`| Quality | ██████████░░░░░░░░░░ | 10/20 |`
+`| **Overall** | **████████████████░░░░** | **B (57/100)** |`
+
+Map total score to letter grade: A (90-100), B (75-89), C (60-74), D (40-59), F (0-39).
+
+If the MCP health tool returns individual check results instead of dimension scores, group the checks into these 4 dimensions and calculate sub-totals.
+
+**6. Tests section:** Output `## Tests` then `| Metric | Value |` table with Test files, Passing, Coverage rows.
+
+**7. Build section:** Output `## Build` then `| Check | Status |` table.
+
+**8. Governance section:** Output `## Governance` then `| Metric | Value |` table with Status, Vision (first 60 chars), Workstreams, Sentinel entries rows.
+
+**9. Orchestrator section:** Output `## Orchestrator`. If connected: `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. If NOT connected: output `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\``
+
+**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22), Commands (21), Hooks.
+
+**11. Quick actions:** Output `**Quick actions:** \`/forge:test\` | \`/forge:gap-analysis\` | \`/forge:feature\` | \`/forge:report\``
+
+CRITICAL REMINDERS:
+- Every `##` header triggers color rendering in the TUI — do NOT skip the `##`
+- Progress bars (`████░░░░`) inside table cells make health scores visual and scannable
+- The `⚡` in the H1 title adds visual identity
+- Tables auto-size to content — never pad with spaces
 
 ## Parse Arguments
 
