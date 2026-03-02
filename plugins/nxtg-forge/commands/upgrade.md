@@ -1,104 +1,94 @@
 ---
-description: "Upgrade NXTG-Forge configuration and agents"
+description: "Upgrade Forge plugin to latest version + update project config"
 ---
 
-# NXTG-Forge Upgrade
+# Forge Upgrade
 
-You are the **Upgrade Manager** - update NXTG-Forge configuration, agents, and commands to the latest version.
+You are the **Upgrade Manager** — update the Forge plugin and project configuration to the latest version.
 
 ## Parse Arguments
 
 Arguments received: `$ARGUMENTS`
 
 Options:
-- No arguments: Check for updates and apply
-- `--check`: Only check what would be updated
-- `--agents`: Only update agent definitions
-- `--commands`: Only update command definitions
-- `--config`: Only update configuration files
+- No arguments: Check for updates, upgrade plugin, refresh project config
+- `--check`: Only check what would be updated (no changes)
+- `--plugin`: Only update the plugin itself
+- `--config`: Only update governance config and hooks
 
-## Step 1: Current State Analysis
+## Step 1: Check Current Version
 
-Gather current setup info:
-
-1. Check current plugin version (the plugin is NXTG-Forge itself -- agents and commands come from the plugin)
-2. Read `.claude/governance.json` for governance version and schema
-3. Read `.claude/settings.json` for hook configuration
+Run this bash command to get the installed plugin version:
+```bash
+claude plugin list 2>/dev/null | grep -i forge
+```
 
 Display:
 ```
-CURRENT NXTG-FORGE STATE
-===========================
-Plugin: NXTG-Forge (active -- 22 agents, 20 commands loaded)
-Governance: {active/missing} {version if present}
-Hooks: {count} configured
+## Forge Upgrade Check
+
+**Installed:** forge v{version}
 ```
 
-## Step 2: Check for Gaps
+## Step 2: Update Plugin
 
-Compare current project state against expected state:
-- Is `.claude/governance.json` valid and up to date?
-- Does its schema match the latest expected format?
-- Are hooks configured in `.claude/settings.json`?
-- Are any project-level config files stale?
-
-```
-UPGRADE ANALYSIS
-=================
-  Plugin: NXTG-Forge (agents and commands loaded from plugin)
-  Governance schema: {current/needs migration}
-  Hooks: {configured/missing}
-
-  Items to update: {count}
+This is the most important step. Run:
+```bash
+claude plugin update forge 2>&1
 ```
 
-## Step 3: Apply Updates
-
-### If `--check`, stop here and show what would change.
-
-**Plugin updates:** Agents and commands are managed by the plugin. Tell the user:
-"To update NXTG-Forge plugin agents/commands, update the plugin itself."
-
-**Project-level updates:** For governance.json schema migration or hook configuration:
-1. Show what will be created/updated
-2. Create/update the file
-3. Confirm success
-
+If that succeeds, tell the user:
 ```
-APPLYING UPDATES
-==================
-  [x] Updated {item}
-  [x] Created {item}
-  [x] Fixed {item}
-
-  {count} items updated successfully.
+**Plugin updated.** Restart your Claude Code session to load the new version.
 ```
 
-## Step 4: Verify
+If it fails with "already up to date", show:
+```
+**Plugin is current.** No update available.
+```
 
-After upgrade:
-1. Validate governance.json parses correctly
-2. Verify hooks in settings.json
-3. Run quick health check
+If it fails for another reason, try the full reinstall:
+```bash
+claude plugin uninstall forge 2>&1
+claude plugin marketplace add nxtg-ai/forge-plugin 2>&1
+claude plugin install forge 2>&1
+```
+
+**IMPORTANT:** After a plugin update, the user MUST restart their Claude Code session. The updated commands, agents, and skills only load on session start. Tell the user this clearly.
+
+### If `--check` was passed, skip the actual update. Just report what version is available.
+
+## Step 3: Project Config Check
+
+After plugin update (or if `--config` flag):
+
+1. Check if `.claude/governance.json` exists and is valid JSON
+2. Check if hooks are configured in `.claude/settings.json`
+3. If governance.json schema is outdated, offer to migrate
+
+Display any config issues found.
+
+## Step 4: Summary
 
 ```
-UPGRADE COMPLETE
-==================
-  Plugin: NXTG-Forge (22 agents, 20 commands)
-  Governance: {status}
-  Hooks: {status}
+## Upgrade Complete
 
-  All configurations valid.
+| Component | Status |
+|-----------|--------|
+| Plugin | {updated to vX.Y.Z / already current / failed} |
+| Governance | {valid / needs init / migrated} |
+| Hooks | {active / not configured} |
 
-  Run /forge:status for full project state.
+**Next:** Restart Claude Code to load updated plugin, then run `/forge:status`
 ```
 
 ## Error Handling
 
-If upgrade fails:
+If upgrade fails, show the error and suggest:
 ```
-Upgrade failed: {error}
+Manual update (from terminal):
+  claude plugin update forge
 
-No changes were made (or changes rolled back).
-Try: /forge:init to reinitialize from scratch.
+Full reinstall (from terminal):
+  claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install forge
 ```
