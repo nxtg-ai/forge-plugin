@@ -30,9 +30,26 @@ Display:
 **Installed:** forge v{version}
 ```
 
-## Step 2: Update Plugin
+## Step 2: Sync Marketplace (workaround for Claude Code bug #29071)
 
-This is the most important step. Run:
+Claude Code's `plugin update` has a known bug where it runs `git fetch` but never `git merge`, so the local marketplace clone stays stale. We fix this by pulling manually first.
+
+Run this bash command to find and update the marketplace clone:
+```bash
+MARKETPLACE_DIR=$(find ~/.claude/plugins/marketplaces/ -maxdepth 1 -name "*forge-plugin*" -type d 2>/dev/null | head -1)
+if [ -n "$MARKETPLACE_DIR" ]; then
+  cd "$MARKETPLACE_DIR" && git pull --ff-only origin main 2>&1 || git pull --ff-only origin master 2>&1
+  echo "SYNCED: $MARKETPLACE_DIR"
+else
+  echo "NO_MARKETPLACE_CLONE"
+fi
+```
+
+If `SYNCED`, continue to Step 3. If `NO_MARKETPLACE_CLONE`, skip to the reinstall path in Step 3.
+
+## Step 3: Update Plugin
+
+Now run the update (marketplace clone is fresh from Step 2):
 ```bash
 claude plugin update forge 2>&1
 ```
@@ -47,7 +64,7 @@ If it fails with "already up to date", show:
 **Plugin is current.** No update available.
 ```
 
-If it fails for another reason, try the full reinstall:
+If it fails for another reason (or `NO_MARKETPLACE_CLONE` from Step 2), try the full reinstall:
 ```bash
 claude plugin uninstall forge 2>&1
 claude plugin marketplace add nxtg-ai/forge-plugin 2>&1
@@ -56,9 +73,9 @@ claude plugin install forge 2>&1
 
 **IMPORTANT:** After a plugin update, the user MUST restart their Claude Code session. The updated commands, agents, and skills only load on session start. Tell the user this clearly.
 
-### If `--check` was passed, skip the actual update. Just report what version is available.
+### If `--check` was passed, skip the actual update. Just report what version is available after syncing the marketplace.
 
-## Step 3: Project Config Check
+## Step 4: Project Config Check
 
 After plugin update (or if `--config` flag):
 
@@ -68,13 +85,14 @@ After plugin update (or if `--config` flag):
 
 Display any config issues found.
 
-## Step 4: Summary
+## Step 5: Summary
 
 ```
 ## Upgrade Complete
 
 | Component | Status |
 |-----------|--------|
+| Marketplace | {synced / fresh install / failed} |
 | Plugin | {updated to vX.Y.Z / already current / failed} |
 | Governance | {valid / needs init / migrated} |
 | Hooks | {active / not configured} |
@@ -87,6 +105,7 @@ Display any config issues found.
 If upgrade fails, show the error and suggest:
 ```
 Manual update (from terminal):
+  cd ~/.claude/plugins/marketplaces/nxtg-ai-forge-plugin/ && git pull
   claude plugin update forge
 
 Full reinstall (from terminal):
