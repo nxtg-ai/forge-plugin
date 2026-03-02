@@ -835,7 +835,10 @@ function generateDashboard() {
       // WSL2: use wslpath to get a Windows-accessible path, then explorer.exe to open
       const winPath = execSync(`wslpath -w "${tmpPath}" 2>/dev/null`, { timeout: 3000 }).toString().trim();
       if (winPath) {
-        url = `file:///${winPath.replace(/\\/g, "/")}`;
+        // UNC paths (\\wsl.localhost\...) → file://wsl.localhost/... (RFC 8089)
+        // Non-UNC paths (C:\...) → file:///C:/...
+        const fwdPath = winPath.replace(/\\/g, "/");
+        url = fwdPath.startsWith("//") ? `file:${fwdPath}` : `file:///${fwdPath}`;
         spawnProcess("explorer.exe", [winPath], { detached: true, stdio: "ignore" }).unref();
       }
     } else if (process.platform === "darwin") {
