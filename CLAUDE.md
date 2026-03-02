@@ -44,7 +44,7 @@ plugins/nxtg-forge/
 |----------|----------|
 | **Governance** | `/forge:init`, `/forge:status`, `/forge:status-enhanced`, `/forge:gap-analysis`, `/forge:compliance`, `/forge:command-center` |
 | **Feature Dev** | `/forge:feature`, `/forge:spec`, `/forge:agent-assign`, `/forge:integrate` |
-| **Quality** | `/forge:test`, `/forge:deploy`, `/forge:optimize`, `/forge:upgrade` |
+| **Quality** | `/forge:test`, `/forge:deploy`, `/forge:optimize`, `/forge:update` |
 | **State** | `/forge:checkpoint`, `/forge:restore`, `/forge:report` |
 | **Docs** | `/forge:docs-status`, `/forge:docs-update`, `/forge:docs-audit` |
 | **Dashboard** | `/forge:dashboard` |

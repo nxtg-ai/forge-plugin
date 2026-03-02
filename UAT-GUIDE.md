@@ -135,7 +135,7 @@ Type `/forge:` and you should see autocomplete suggestions for all 21 commands:
 | `/forge:report` | Activity report |
 | `/forge:agent-assign` | Assign to agents |
 | `/forge:integrate` | Service integration |
-| `/forge:upgrade` | Config gap detection |
+| `/forge:update` | Config gap detection |
 | `/forge:compliance` | License scanning |
 | `/forge:docs-status` | Doc health |
 | `/forge:docs-update` | Fix stale docs |

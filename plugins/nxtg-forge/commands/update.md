@@ -1,17 +1,17 @@
 ---
-description: "Upgrade Forge plugin to latest version + update project config"
+description: "Update Forge to latest — syncs past Claude Code bug #29071"
 ---
 
-# Forge Upgrade
+# Forge Update
 
-You are the **Upgrade Manager** — update the Forge plugin and project configuration to the latest version.
+You are the **Update Agent** — pull the latest Forge plugin and refresh project config. Includes a built-in workaround for [Claude Code #29071](https://github.com/anthropics/claude-code/issues/29071) (stale marketplace cache).
 
 ## Parse Arguments
 
 Arguments received: `$ARGUMENTS`
 
 Options:
-- No arguments: Check for updates, upgrade plugin, refresh project config
+- No arguments: Check for updates, update plugin, refresh project config
 - `--check`: Only check what would be updated (no changes)
 - `--plugin`: Only update the plugin itself
 - `--config`: Only update governance config and hooks
@@ -25,16 +25,16 @@ claude plugin list 2>/dev/null | grep -i forge
 
 Display:
 ```
-## Forge Upgrade Check
+## Forge Update
 
 **Installed:** forge v{version}
 ```
 
-## Step 2: Sync Marketplace (workaround for Claude Code bug #29071)
+## Step 2: Sync Marketplace (#29071 bypass)
 
-Claude Code's `plugin update` has a known bug where it runs `git fetch` but never `git merge`, so the local marketplace clone stays stale. We fix this by pulling manually first.
+Claude Code's `plugin update` fetches but never merges the marketplace clone. We pull it ourselves first.
 
-Run this bash command to find and update the marketplace clone:
+Run this bash command to find and sync the marketplace clone:
 ```bash
 MARKETPLACE_DIR=$(find ~/.claude/plugins/marketplaces/ -maxdepth 1 -name "*forge-plugin*" -type d 2>/dev/null | head -1)
 if [ -n "$MARKETPLACE_DIR" ]; then
@@ -56,12 +56,12 @@ claude plugin update forge 2>&1
 
 If that succeeds, tell the user:
 ```
-**Plugin updated.** Restart your Claude Code session to load the new version.
+**Updated.** Restart your Claude Code session to load the new version.
 ```
 
 If it fails with "already up to date", show:
 ```
-**Plugin is current.** No update available.
+**Already on latest.** No update available.
 ```
 
 If it fails for another reason (or `NO_MARKETPLACE_CLONE` from Step 2), try the full reinstall:
@@ -71,7 +71,7 @@ claude plugin marketplace add nxtg-ai/forge-plugin 2>&1
 claude plugin install forge 2>&1
 ```
 
-**IMPORTANT:** After a plugin update, the user MUST restart their Claude Code session. The updated commands, agents, and skills only load on session start. Tell the user this clearly.
+**IMPORTANT:** After an update, the user MUST restart their Claude Code session. Updated commands, agents, and skills only load on session start. Tell the user this clearly.
 
 ### If `--check` was passed, skip the actual update. Just report what version is available after syncing the marketplace.
 
@@ -88,7 +88,7 @@ Display any config issues found.
 ## Step 5: Summary
 
 ```
-## Upgrade Complete
+## Update Complete
 
 | Component | Status |
 |-----------|--------|
@@ -97,12 +97,12 @@ Display any config issues found.
 | Governance | {valid / needs init / migrated} |
 | Hooks | {active / not configured} |
 
-**Next:** Restart Claude Code to load updated plugin, then run `/forge:status`
+**Next:** Restart Claude Code to load the new version, then `/forge:status`
 ```
 
 ## Error Handling
 
-If upgrade fails, show the error and suggest:
+If update fails, show the error and suggest:
 ```
 Manual update (from terminal):
   cd ~/.claude/plugins/marketplaces/nxtg-ai-forge-plugin/ && git pull
