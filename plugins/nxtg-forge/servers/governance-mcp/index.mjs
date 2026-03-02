@@ -128,9 +128,17 @@ function getCodeMetrics() {
     testPattern = "*_test.go";
   }
 
+  // Expand brace patterns into find -o syntax (find doesn't support shell brace expansion)
+  function findNameExpr(pattern) {
+    if (!pattern.includes("{")) return `-name "${pattern}"`;
+    const base = pattern.replace(/^\*\./, "");
+    const exts = base.replace(/[{}]/g, "").split(",");
+    return "\\( " + exts.map(e => `-name "*.${e}"`).join(" -o ") + " \\)";
+  }
+
   // Count source files
   const sourceFiles = run(
-    `find . -name "${sourceExt.replace("{", "\\{").replace("}", "\\}")}" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" 2>/dev/null | wc -l`,
+    `find . ${findNameExpr(sourceExt)} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" 2>/dev/null | wc -l`,
     { cwd: root, shell: "/bin/bash" }
   );
 
@@ -142,13 +150,13 @@ function getCodeMetrics() {
 
   // Count total lines
   const totalLines = run(
-    `find . -name "${sourceExt.replace("{", "\\{").replace("}", "\\}")}" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
+    `find . ${findNameExpr(sourceExt)} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
     { cwd: root, shell: "/bin/bash" }
   );
 
   // Large files (>300 lines)
   const largeFiles = run(
-    `find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.py" -o -name "*.rs" -o -name "*.go" 2>/dev/null | grep -v node_modules | grep -v dist | grep -v .git | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
+    `find . \\( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \\) -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
     { cwd: root, shell: "/bin/bash" }
   );
 
