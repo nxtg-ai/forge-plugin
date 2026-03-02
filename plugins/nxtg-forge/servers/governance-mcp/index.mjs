@@ -470,7 +470,7 @@ function generateDashboard() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NXTG-Forge | ${projectName}</title>
+  <title>Forge | ${projectName}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -493,11 +493,11 @@ function generateDashboard() {
   <header class="border-b border-slate-800/80 backdrop-blur-sm sticky top-0 z-50 bg-[#0a0a0f]/80">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="1.5"/><polygon points="12,6 16,8.5 16,15.5 12,18 8,15.5 8,8.5" fill="white" opacity="0.9"/><path d="M12,3 L12,1 L10.5,2.5 L12,1 L13.5,2.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
         </div>
-        <h1 class="text-lg font-semibold">NXTG-Forge</h1>
-        <span class="text-xs text-slate-500 font-mono">v3.0.0</span>
+        <h1 class="text-lg font-semibold">Forge</h1>
+        <span class="text-xs text-slate-500 font-mono">v3.1.0</span>
       </div>
       <div class="flex items-center gap-4 text-sm text-slate-400">
         <span class="flex items-center gap-1.5">
@@ -669,13 +669,156 @@ function generateDashboard() {
         </div>`).join("")}
       </div>
     </div>` : ""}
+
+    <!-- Level Up — Forge Progression -->
+    <div class="card rounded-2xl p-8">
+      <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
+        <span class="text-2xl">🔥</span> Level Up Your Build Game
+      </h3>
+      <p class="text-slate-400 text-sm mb-6">Forge grows with you. Start vibing, graduate to shipping.</p>
+      <div class="grid md:grid-cols-3 gap-4">
+        <!-- L1: Vibe Coder -->
+        <div class="rounded-xl p-5 border-2 ${health.score > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-slate-700 bg-slate-800/30"}">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider ${health.score > 0 ? "text-emerald-400" : "text-slate-500"}">Level 1</span>
+            ${health.score > 0 ? '<span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">Active</span>' : '<span class="text-xs text-slate-600">Locked</span>'}
+          </div>
+          <h4 class="text-lg font-bold mb-1">🎮 Vibe Coder</h4>
+          <p class="text-slate-400 text-xs mb-3">22 AI agents. Governance on autopilot. Ship faster with guardrails.</p>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /forge:status — project health at a glance</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /forge:feature — plan and build features</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /forge:test — run tests with analysis</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 22 specialized agents on demand</div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-700/50">
+            <code class="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded">claude plugin install forge</code>
+          </div>
+        </div>
+
+        <!-- L2: Pro Builder -->
+        <div class="rounded-xl p-5 border-2 border-slate-700 bg-slate-800/30 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Level 2</span>
+            <span class="text-xs text-slate-600">+ Orchestrator</span>
+          </div>
+          <h4 class="text-lg font-bold mb-1">⚡ Pro Builder</h4>
+          <p class="text-slate-400 text-xs mb-3">Multi-agent task orchestration. Knowledge that persists. Drift detection.</p>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex items-center gap-1.5"><span class="text-amber-400">+</span> Parallel agent task assignment</div>
+            <div class="flex items-center gap-1.5"><span class="text-amber-400">+</span> Cross-session knowledge capture</div>
+            <div class="flex items-center gap-1.5"><span class="text-amber-400">+</span> Vision drift detection</div>
+            <div class="flex items-center gap-1.5"><span class="text-amber-400">+</span> File-level conflict prevention</div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-700/50">
+            <code class="text-xs text-amber-300 bg-amber-500/10 px-2 py-1 rounded">curl -fsSL https://forge.nxtg.ai/install.sh | sh</code>
+          </div>
+        </div>
+
+        <!-- L3: Ship Lord -->
+        <div class="rounded-xl p-5 border-2 border-slate-700 bg-slate-800/30 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Level 3</span>
+            <span class="text-xs text-slate-600">+ Dashboard</span>
+          </div>
+          <h4 class="text-lg font-bold mb-1">👑 Ship Lord</h4>
+          <p class="text-slate-400 text-xs mb-3">Real-time visual dashboard. Infinity Terminal. Full mission control.</p>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex items-center gap-1.5"><span class="text-purple-400">+</span> Real-time governance dashboard</div>
+            <div class="flex items-center gap-1.5"><span class="text-purple-400">+</span> Infinity Terminal (agent feed)</div>
+            <div class="flex items-center gap-1.5"><span class="text-purple-400">+</span> Multi-project portfolio view</div>
+            <div class="flex items-center gap-1.5"><span class="text-purple-400">+</span> Team collaboration mode</div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-700/50">
+            <span class="text-xs text-purple-300 bg-purple-500/10 px-2 py-1 rounded">Coming soon</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resources & Quick Start -->
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card rounded-xl p-6">
+        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          Quick Start
+        </h3>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+            <div>
+              <p class="text-sm text-slate-200 font-medium">Initialize governance</p>
+              <code class="text-xs text-slate-400">/forge:init</code>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+            <div>
+              <p class="text-sm text-slate-200 font-medium">Plan your first feature</p>
+              <code class="text-xs text-slate-400">/forge:feature "add user auth"</code>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+            <div>
+              <p class="text-sm text-slate-200 font-medium">Check health anytime</p>
+              <code class="text-xs text-slate-400">/forge:status</code>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+            <div>
+              <p class="text-sm text-slate-200 font-medium">Find gaps before shipping</p>
+              <code class="text-xs text-slate-400">/forge:gap-analysis</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-xl p-6">
+        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Resources
+        </h3>
+        <div class="space-y-2.5">
+          <a href="https://github.com/nxtg-ai/forge-plugin" target="_blank" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors group">
+            <div class="flex items-center gap-2.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#8b949e"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              <span class="text-sm text-slate-300 group-hover:text-slate-100">GitHub Repository</span>
+            </div>
+            <span class="text-xs text-slate-600">nxtg-ai/forge-plugin →</span>
+          </a>
+          <a href="https://forge.nxtg.ai" target="_blank" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors group">
+            <div class="flex items-center gap-2.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span class="text-sm text-slate-300 group-hover:text-slate-100">Documentation</span>
+            </div>
+            <span class="text-xs text-slate-600">forge.nxtg.ai →</span>
+          </a>
+          <a href="https://github.com/nxtg-ai/forge-plugin/issues" target="_blank" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors group">
+            <div class="flex items-center gap-2.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span class="text-sm text-slate-300 group-hover:text-slate-100">Report Issues / Feedback</span>
+            </div>
+            <span class="text-xs text-slate-600">Issues →</span>
+          </a>
+          <a href="https://www.producthunt.com/products/forge-7" target="_blank" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800/50 transition-colors group">
+            <div class="flex items-center gap-2.5">
+              <span class="text-sm">🚀</span>
+              <span class="text-sm text-slate-300 group-hover:text-slate-100">Product Hunt</span>
+            </div>
+            <span class="text-xs text-slate-600">Upvote →</span>
+          </a>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Footer -->
   <footer class="border-t border-slate-800/50 mt-12">
     <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between text-xs text-slate-600">
-      <span>Generated by NXTG-Forge Governance MCP Server</span>
-      <span>Built with Claude Code. Governed by Forge.</span>
+      <span>Generated by Forge · <a href="https://github.com/nxtg-ai/forge-plugin" class="text-indigo-500 hover:text-indigo-400 transition-colors">GitHub</a> · <a href="https://forge.nxtg.ai" class="text-indigo-500 hover:text-indigo-400 transition-colors">Docs</a></span>
+      <span>From "it compiles" to "it ships." ⚡</span>
     </div>
   </footer>
 </body>
