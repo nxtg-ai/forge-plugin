@@ -13,7 +13,7 @@ npm install   # only if node_modules missing
 node index.mjs
 
 # Plugin lives at: plugins/nxtg-forge/
-# Installed by Claude Code via: claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge
+# Installed by Claude Code via: claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install forge
 ```
 
 ## Plugin Structure
@@ -31,7 +31,7 @@ plugins/nxtg-forge/
 │   └── scripts/lib.sh        # Shared utilities
 └── servers/
     └── governance-mcp/       # Node.js MCP server (index.mjs, 8 tools)
-        ├── package.json      # @nxtg-forge/governance-mcp v3.0.0
+        ├── package.json      # @nxtg-forge/governance-mcp v3.1.0
         ├── index.mjs         # 835 lines, ES module
         └── start.sh          # Auto-install launcher
 ```
@@ -144,7 +144,7 @@ forge-plugin                ──spawns──►     forge-ui (http://localhost
 
 Both run as stdio MCP servers. Claude Code connects to both simultaneously when the plugin is installed and `forge` binary is in PATH.
 
-**The Lego Snap (N-12):** As of v3.0.0, the plugin's `.mcp.json` registers BOTH MCP servers. When Claude Code loads the plugin, it automatically connects to:
+**The Lego Snap (N-12):** As of v3.1.0, the plugin's `.mcp.json` registers BOTH MCP servers. When Claude Code loads the plugin, it automatically connects to:
 1. `governance-mcp` — always available (Node.js, ships with plugin)
 2. `orchestrator-mcp` — available when `forge` binary is installed (Rust, from forge-orchestrator)
 
@@ -196,7 +196,7 @@ Contextual knowledge, patterns, best practices...
 
 ## Key Dimensions
 
-- **Version:** 3.0.0
+- **Version:** 3.1.0
 - **Components:** 21 commands, 22 agents, 29 skills, 6 hooks, 8 MCP tools
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
 - **MCP Server:** Node.js ES module (`@modelcontextprotocol/sdk@^1.12.1`)

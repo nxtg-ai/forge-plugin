@@ -6,7 +6,7 @@
 
 **Zero-dependency governance for Claude Code.**
 
-This is L1: The Safety Net.
+This is L1: Vibe Coder.
 
 Inside Claude Code, agents already coordinate well. They share orchestration and context. What's missing is judgment: automated checks that catch problems before they reach production, skills that encode your conventions, and hooks that validate before and after every task.
 
@@ -21,7 +21,7 @@ Every governance feature traces to a real failure mode. Hooks that validate befo
 claude plugin marketplace add nxtg-ai/forge-plugin
 
 # Install the plugin
-claude plugin install nxtg-forge
+claude plugin install forge
 ```
 
 That's it. No build step. No config files. No runtime dependencies.
@@ -79,8 +79,8 @@ Each depth builds on the last. Nothing forces you to go deeper. Adoption follows
 ## Links
 
 - [Forge Product Page](https://forge.nxtg.ai)
-- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: The Delivery Engine)
-- [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Mission Control)
+- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: Pro Builder)
+- [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Ship Lord)
 
 ## License
 
