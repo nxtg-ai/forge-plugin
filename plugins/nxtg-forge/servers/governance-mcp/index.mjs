@@ -39,8 +39,9 @@ function readJson(filePath) {
 }
 
 function getProjectRoot() {
-  // Claude Code sets cwd to the user's project root
-  return process.cwd();
+  // FORGE_PROJECT_ROOT is set by start.sh before cd'ing into the server directory.
+  // Falls back to cwd for direct invocation (e.g. development/testing).
+  return process.env.FORGE_PROJECT_ROOT || process.cwd();
 }
 
 // ---------------------------------------------------------------------------
@@ -839,7 +840,8 @@ function generateDashboard() {
         // Non-UNC paths (C:\...) → file:///C:/...
         const fwdPath = winPath.replace(/\\/g, "/");
         url = fwdPath.startsWith("//") ? `file:${fwdPath}` : `file:///${fwdPath}`;
-        spawnProcess("explorer.exe", [winPath], { detached: true, stdio: "ignore" }).unref();
+        // Use cmd.exe /c start to open in default browser (explorer.exe uses file association which may open VS Code)
+        spawnProcess("cmd.exe", ["/c", "start", "", winPath], { detached: true, stdio: "ignore" }).unref();
       }
     } else if (process.platform === "darwin") {
       spawnProcess("open", [tmpPath], { detached: true, stdio: "ignore" }).unref();

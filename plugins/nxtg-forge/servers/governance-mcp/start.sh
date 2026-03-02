@@ -2,6 +2,10 @@
 # NXTG-Forge Governance MCP Server Launcher
 # Installs dependencies on first run, then starts the server
 # Exits cleanly (0) if prerequisites are missing — prevents MCP "failed" status for L1-only users
+
+# Save project root (Claude Code sets cwd to user's project before launching MCP servers)
+export FORGE_PROJECT_ROOT="$(pwd)"
+
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
