@@ -49,4 +49,12 @@ jobs:
 
       - name: Validate MCP server imports
         working-directory: plugins/nxtg-forge/servers/governance-mcp
+        env:
+          FORGE_TEST_MODE: '1'
         run: node -e "import('./index.mjs').then(() => console.log('MCP server imports OK')).catch(e => { console.error(e); process.exit(1); })"
+
+      - name: Run governance-mcp tests
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        env:
+          FORGE_TEST_MODE: '1'
+        run: node --test __tests__/health.test.mjs

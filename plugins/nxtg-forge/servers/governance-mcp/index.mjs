@@ -1013,6 +1013,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// Start
-const transport = new StdioServerTransport();
-await server.connect(transport);
+// Export tool functions for testing (quis custodiet ipsos custodes)
+export {
+  getGovernanceState,
+  getGitStatus,
+  getCodeMetrics,
+  getHealthScore,
+  getTestResults,
+  listCheckpoints,
+  getSecurityScan,
+};
+
+// Start server only when run directly (not imported for testing)
+const isDirectRun = !process.env.FORGE_TEST_MODE;
+if (isDirectRun) {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
