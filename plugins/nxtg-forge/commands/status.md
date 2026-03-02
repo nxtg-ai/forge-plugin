@@ -71,10 +71,13 @@ Report: **Commands: 21 available (from NXTG-Forge plugin)**
 
 ### 7. Build Status
 
-Check if TypeScript compiles:
-```bash
-npx tsc --noEmit 2>&1 | tail -5
-```
+Only run build checks relevant to the detected project type:
+- **If `tsconfig.json` exists**: run `npx tsc --noEmit 2>&1 | tail -5`
+- **If `Cargo.toml` exists**: run `cargo check 2>&1 | tail -5`
+- **If `pyproject.toml` or `setup.py` exists**: run `python -m py_compile` on a sample file
+- **Otherwise**: skip the build check and report "No build system detected" in the Build section
+
+IMPORTANT: Do NOT run `npx tsc` if there is no `tsconfig.json`. It will produce ugly errors on non-TypeScript projects.
 
 ### 8. Hook Status
 
