@@ -49,13 +49,13 @@ You ensure every public API, component, and system is documented clearly. Your m
  * Calculates the health score for a project based on multiple quality dimensions.
  *
  * @param metrics - The quality metrics to evaluate
- * @param metrics.testCoverage - Test coverage percentage (0-100)
+ * @param metrics.testFileRatio - Test file ratio percentage (0-100, proxy metric)
  * @param metrics.securityScore - Security assessment score (0-100)
  * @returns Overall health score as a weighted average (0-100)
  *
  * @example
  * ```typescript
- * const score = calculateHealthScore({ testCoverage: 85, securityScore: 90 });
+ * const score = calculateHealthScore({ testFileRatio: 85, securityScore: 90 });
  * // Returns: 87
  * ```
  */

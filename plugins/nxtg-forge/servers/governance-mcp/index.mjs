@@ -920,7 +920,7 @@ const TOOLS = [
   {
     name: "forge_get_code_metrics",
     description:
-      "Get code metrics: source file count, test file count, test coverage percentage, total lines, largest files, and dependency counts.",
+      "Get code metrics: source file count, test file count, test file ratio and line coverage (when available), total lines, largest files, and dependency counts.",
     inputSchema: { type: "object", properties: {}, required: [] },
   },
   {

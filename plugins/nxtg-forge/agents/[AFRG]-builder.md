@@ -269,7 +269,7 @@ def test_feature_error_case():
 
 ```python
 def calculate_health_score(
-    test_coverage: float,
+    test_file_ratio: float,
     security_score: float,
     doc_coverage: float,
     architecture_score: float,
@@ -278,7 +278,7 @@ def calculate_health_score(
     """Calculate overall project health score.
 
     Args:
-        test_coverage: Test coverage percentage (0-100)
+        test_file_ratio: Test file ratio percentage (0-100)
         security_score: Security assessment score (0-100)
         doc_coverage: Documentation coverage percentage (0-100)
         architecture_score: Architecture quality score (0-100)
@@ -292,7 +292,7 @@ def calculate_health_score(
         86
     """
     return int(
-        test_coverage * 0.30 +
+        test_file_ratio * 0.30 +
         security_score * 0.25 +
         doc_coverage * 0.15 +
         architecture_score * 0.20 +
