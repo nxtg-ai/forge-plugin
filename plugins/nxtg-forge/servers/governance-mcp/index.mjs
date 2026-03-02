@@ -138,9 +138,9 @@ function getCodeMetrics() {
     return "\\( " + exts.map(e => `-name "*.${e}"`).join(" -o ") + " \\)";
   }
 
-  // Count source files
+  // Count source files (exclude config files, test files, build artifacts)
   const sourceFiles = run(
-    `find . ${findNameExpr(sourceExt)} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" 2>/dev/null | wc -l`,
+    `find . ${findNameExpr(sourceExt)} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" -not -name "*.config.*" 2>/dev/null | wc -l`,
     { cwd: root, shell: "/bin/bash" }
   );
 
