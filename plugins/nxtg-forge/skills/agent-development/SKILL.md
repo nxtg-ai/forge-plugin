@@ -309,8 +309,8 @@ cp templates/agent-specialist.template.md .claude/agents/your-agent.md
 # Copy template
 cp templates/agent-coordinator.template.md .claude/agents/orchestrator.md
 
-# Coordinators have pre-filled coordination patterns
-# Just customize for your specific coordination needs
+# Orchestrators have pre-filled orchestration patterns
+# Just customize for your specific orchestration needs
 ```
 
 ### 3. Analyzer Agent Template

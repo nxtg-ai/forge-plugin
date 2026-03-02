@@ -519,7 +519,7 @@ Application layer component orchestrating domain logic for specific task
 
 - Claude starts with blank slate every time
 - No memory of project structure or decisions
-- Manual coordination of different tasks
+- Manual orchestration of different tasks
 - No quality tracking
 
 **With NXTG-Forge**:

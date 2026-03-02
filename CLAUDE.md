@@ -61,7 +61,7 @@ plugins/nxtg-forge/
 | `forge-security` | Vulnerability scanning, OWASP | sonnet |
 | `forge-testing` | Test generation, coverage analysis | sonnet |
 | `forge-performance` | Profiling, bundle optimization | sonnet |
-| `forge-orchestrator` | Multi-agent coordination | opus |
+| `forge-orchestrator` | Multi-agent orchestration | opus |
 | `forge-detective` | Root cause analysis, diagnostics | sonnet |
 | `forge-refactor` | Code restructuring, DRY | sonnet |
 | `forge-devops` | Docker, CI/CD, deployment | sonnet |

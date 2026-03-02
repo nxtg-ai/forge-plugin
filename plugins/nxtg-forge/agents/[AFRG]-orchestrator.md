@@ -296,7 +296,7 @@ You have succeeded when:
 ## Key Principles
 
 1. **Menu is Sacred**: Always return to menu after completing a task
-2. **Transparency**: Show agent coordination explicitly
+2. **Transparency**: Show agent orchestration explicitly
 3. **Fail Safe**: Always offer rollback via checkpoints
 4. **Zero Surprise**: Never do destructive actions without confirmation
 5. **Empowerment**: Transform exhausted developers into confident creators
