@@ -829,25 +829,27 @@ function generateDashboard() {
   writeFileSync(tmpPath, html);
 
   // Try to open in browser (non-blocking)
+  let url = `file://${tmpPath}`;
   try {
     if (existsSync("/mnt/c/Windows")) {
-      // WSL2: convert path and open with Windows browser
-      const winPath = tmpPath.replace(/^\/tmp/, "/mnt/c/Users/Public").replace(/\//g, "\\");
-      // Copy to a Windows-accessible path first
-      execSync(`cp "${tmpPath}" /mnt/c/Users/Public/ 2>/dev/null`, { timeout: 3000 });
-      const winFile = `C:\\Users\\Public\\${tmpPath.split("/").pop()}`;
-      spawnProcess("cmd.exe", ["/c", "start", "", winFile], { detached: true, stdio: "ignore" }).unref();
+      // WSL2: use wslpath to get a Windows-accessible path, then explorer.exe to open
+      const winPath = execSync(`wslpath -w "${tmpPath}" 2>/dev/null`, { timeout: 3000 }).toString().trim();
+      if (winPath) {
+        url = `file:///${winPath.replace(/\\/g, "/")}`;
+        spawnProcess("explorer.exe", [winPath], { detached: true, stdio: "ignore" }).unref();
+      }
     } else if (process.platform === "darwin") {
       spawnProcess("open", [tmpPath], { detached: true, stdio: "ignore" }).unref();
     } else {
       spawnProcess("xdg-open", [tmpPath], { detached: true, stdio: "ignore" }).unref();
     }
   } catch {
-    // Browser open failed — user can open manually
+    // Browser open failed — user can open manually via the URL
   }
 
   return {
     path: tmpPath,
+    url,
     projectName,
     healthScore: health.score,
     healthGrade: health.grade,
@@ -910,7 +912,7 @@ const TOOLS = [
 ];
 
 const server = new Server(
-  { name: "forge-governance", version: "3.0.0" },
+  { name: "forge-governance", version: "3.1.0" },
   { capabilities: { tools: {} } }
 );
 

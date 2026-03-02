@@ -11,26 +11,19 @@ You are the **Dashboard Launcher** — open the visual governance dashboard for 
 
 1. Use the MCP tool `forge_open_dashboard` to generate and open the HTML dashboard in the browser.
 
-2. Display the result to the user:
+2. Display the result to the user using this format:
 
 ```
-Dashboard opened!
+## Dashboard opened!
 
-Project: {projectName}
-Health Score: {healthScore}/100 ({healthGrade})
-File: {path}
+**{projectName}** · Health: {healthScore}/100 ({healthGrade})
 
-The dashboard shows:
-  - Health score with detailed checks
-  - Code metrics and test coverage
-  - Git status and contributors
-  - Security scan results
-  - Saved checkpoints
-
-Tip: Refresh the page to see updated metrics.
+Open: {url}
 ```
 
-3. If the dashboard fails to open in the browser, show the file path so the user can open it manually.
+The `{url}` field is a clickable `file://` URL that opens in the browser. Always show the `url` field, not the `path` field — file paths open in the editor, URLs open in the browser.
+
+3. If the dashboard didn't auto-open, the user can click the URL above or copy-paste it into their browser.
 
 ## Fallback
 
