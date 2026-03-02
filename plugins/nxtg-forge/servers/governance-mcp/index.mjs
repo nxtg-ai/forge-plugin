@@ -173,13 +173,33 @@ function getCodeMetrics() {
     }
   }
 
+  // Real line coverage from Istanbul/c8/nyc report (null = no report found)
+  const realCoverage = (() => {
+    const coveragePaths = [
+      join(root, "coverage", "coverage-summary.json"),
+      join(root, ".nyc_output", "coverage-summary.json"),
+    ];
+    for (const p of coveragePaths) {
+      if (existsSync(p)) {
+        const cov = readJson(p);
+        if (cov?.total?.lines?.pct !== undefined) {
+          return Math.round(cov.total.lines.pct);
+        }
+      }
+    }
+    return null;
+  })();
+
   return {
     projectType,
     sourceFiles: parseInt(sourceFiles) || 0,
     testFiles: parseInt(testFiles) || 0,
-    testCoverage: parseInt(testFiles) && parseInt(sourceFiles)
+    // testFileRatio: test files / source files (proxy metric, not real coverage)
+    testFileRatio: parseInt(testFiles) && parseInt(sourceFiles)
       ? Math.round((parseInt(testFiles) / parseInt(sourceFiles)) * 100)
       : 0,
+    // testCoverage: actual line coverage % from Istanbul/c8 report, or null if unavailable
+    testCoverage: realCoverage,
     totalLines: totalLines ? totalLines.trim() : "unknown",
     largeFiles: largeFiles ? largeFiles.split("\n").map((l) => l.trim()).filter(Boolean) : [],
     dependencies: deps,
@@ -213,11 +233,14 @@ function getHealthScore() {
     checks.push({ name: "Git Clean", status: "warn", points: 5, note: `${git.modified} modified, ${git.untracked} untracked` });
   }
 
-  // Has tests (20 pts)
+  // Has tests (20 pts) — score by file ratio; display real coverage if available
   if (metrics.testFiles > 0) {
-    const testScore = Math.min(20, Math.round((metrics.testCoverage / 100) * 20));
+    const testScore = Math.min(20, Math.round((metrics.testFileRatio / 100) * 20));
     score += testScore;
-    checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: `${metrics.testCoverage}% file coverage` });
+    const coverageNote = metrics.testCoverage !== null
+      ? `${metrics.testCoverage}% line coverage`
+      : `${metrics.testFileRatio}% file ratio`;
+    checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: coverageNote });
   } else {
     checks.push({ name: "Test Coverage", status: "fail", points: 0, note: "No tests found" });
   }
