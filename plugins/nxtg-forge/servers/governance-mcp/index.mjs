@@ -44,6 +44,16 @@ function getProjectRoot() {
   return process.env.FORGE_PROJECT_ROOT || process.cwd();
 }
 
+// BUG-05: Build artifact directories to exclude from all find commands.
+// Projects using Next.js, Rust, Python, Vite, etc. should not be penalized
+// for build output in sourceFiles, testFiles, totalLines, or largeFiles counts.
+const BUILD_ARTIFACT_EXCLUDES = [
+  "node_modules", "dist", ".git",
+  ".next", "build", "out", "target",
+  "coverage", ".nyc_output", "__pycache__", ".pytest_cache",
+  "vendor", ".venv", ".turbo", ".vite",
+].map((d) => `-not -path "*/${d}/*"`).join(" ");
+
 // ---------------------------------------------------------------------------
 // Tool implementations
 // ---------------------------------------------------------------------------
@@ -115,8 +125,8 @@ function getCodeMetrics() {
   let testPattern = "*.test.*";
   if (hasPackageJson) {
     projectType = "node";
-    sourceExt = "*.{ts,tsx,js,jsx}";
-    testPattern = "*.{test,spec}.{ts,tsx,js,jsx}";
+    sourceExt = "*.{ts,tsx,js,jsx,mjs,cjs,mts,cts}";
+    testPattern = "*.{test,spec}.{ts,tsx,js,jsx,mjs,cjs,mts,cts}";
   } else if (hasCargoToml) {
     projectType = "rust";
     sourceExt = "*.rs";
@@ -140,25 +150,25 @@ function getCodeMetrics() {
 
   // Count source files (exclude config files, test files, build artifacts)
   const sourceFiles = run(
-    `find . ${findNameExpr(sourceExt)} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" -not -name "*.config.*" 2>/dev/null | wc -l`,
+    `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" -not -name "*.config.*" 2>/dev/null | wc -l`,
     { cwd: root, shell: "/bin/bash" }
   );
 
   // Count test files
   const testFiles = run(
-    `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -path "*/__tests__/*" \\) -not -path "*/node_modules/*" -not -path "*/dist/*" 2>/dev/null | wc -l`,
+    `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -path "*/__tests__/*" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | wc -l`,
     { cwd: root, shell: "/bin/bash" }
   );
 
   // Count total lines
   const totalLines = run(
-    `find . ${findNameExpr(sourceExt)} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
+    `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
     { cwd: root, shell: "/bin/bash" }
   );
 
   // Large files (>300 lines)
   const largeFiles = run(
-    `find . \\( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \\) -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
+    `find . \\( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
     { cwd: root, shell: "/bin/bash" }
   );
 
@@ -261,13 +271,28 @@ function getHealthScore() {
     checks.push({ name: "CLAUDE.md", status: "warn", points: 0, note: "Recommended for AI-assisted development" });
   }
 
-  // TypeScript / type checking (10 pts)
-  if (existsSync(join(root, "tsconfig.json"))) {
-    score += 10;
-    checks.push({ name: "Type Safety", status: "pass", points: 10 });
-  } else {
-    checks.push({ name: "Type Safety", status: "info", points: 0 });
-  }
+  // TypeScript / type checking (0-10 pts, tiered)
+  // BUG-04: Nuanced scoring — strict tsconfig > basic tsconfig > jsconfig > nothing
+  const tsTypeSafety = (() => {
+    const tsConfig = readJson(join(root, "tsconfig.json"));
+    if (tsConfig) {
+      const co = tsConfig.compilerOptions || {};
+      const strictFlags = ["noImplicitAny", "strictNullChecks", "strictFunctionTypes",
+        "strictBindCallApply", "strictPropertyInitialization", "noImplicitThis",
+        "alwaysStrict"];
+      const activeStrictFlags = strictFlags.filter((f) => co[f] === true).length;
+      if (co.strict === true || activeStrictFlags >= 3) {
+        return { points: 10, status: "pass", note: "strict TypeScript" };
+      }
+      return { points: 7, status: "pass", note: "TypeScript (not strict)" };
+    }
+    if (existsSync(join(root, "jsconfig.json"))) {
+      return { points: 4, status: "info", note: "jsconfig only" };
+    }
+    return { points: 0, status: "info", note: "no type config" };
+  })();
+  score += tsTypeSafety.points;
+  checks.push({ name: "Type Safety", status: tsTypeSafety.status, points: tsTypeSafety.points, note: tsTypeSafety.note });
 
   // No large files (10 pts)
   const largeCount = metrics.largeFiles.filter((f) => {

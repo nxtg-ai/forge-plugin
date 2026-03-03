@@ -81,7 +81,7 @@ describe("forge_get_health", () => {
     writeFile(dir, "package.json", JSON.stringify({ name: "test", dependencies: {} }));
     writeFile(dir, "README.md", "# Test Project");
     writeFile(dir, "CLAUDE.md", "# Instructions");
-    writeFile(dir, "tsconfig.json", "{}");
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
     writeFile(dir, "src/app.ts", "export const x = 1;\n".repeat(20));
     writeFile(dir, "src/utils.ts", "export const y = 2;\n".repeat(20));
     writeFile(dir, "src/lib.ts", "export const z = 3;\n".repeat(20));
@@ -215,6 +215,275 @@ describe("forge_get_health", () => {
     assert.ok(result.grade);
     assert.ok(Array.isArray(result.checks));
     // Should not crash
+
+    cleanup(dir);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-04: Type Safety tiered scoring
+// ---------------------------------------------------------------------------
+
+describe("BUG-04: Type Safety tiered scoring", () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = makeTempProject();
+    gitInit(dir);
+    writeFile(dir, "package.json", JSON.stringify({ name: "ts-test" }));
+    writeFile(dir, "src/app.ts", "export const x = 1;");
+  });
+
+  it("scores 10 for tsconfig with strict: true", () => {
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 10);
+    assert.equal(check.status, "pass");
+    assert.ok(check.note.includes("strict"), `Note should mention strict: ${check.note}`);
+
+    cleanup(dir);
+  });
+
+  it("scores 7 for basic tsconfig (no strict)", () => {
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { target: "es2020" } }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 7);
+    assert.equal(check.status, "pass");
+
+    cleanup(dir);
+  });
+
+  it("scores 7 for empty tsconfig (parsed as valid JSON)", () => {
+    writeFile(dir, "tsconfig.json", "{}");
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 7);
+
+    cleanup(dir);
+  });
+
+  it("scores 10 for 3+ individual strict flags", () => {
+    writeFile(dir, "tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noImplicitAny: true,
+        strictNullChecks: true,
+        strictFunctionTypes: true,
+      },
+    }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 10);
+    assert.equal(check.status, "pass");
+
+    cleanup(dir);
+  });
+
+  it("scores 4 for jsconfig.json only", () => {
+    writeFile(dir, "jsconfig.json", JSON.stringify({ compilerOptions: { baseUrl: "." } }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 4);
+    assert.equal(check.status, "info");
+
+    cleanup(dir);
+  });
+
+  it("scores 0 with no type config at all", () => {
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 0);
+    assert.equal(check.status, "info");
+
+    cleanup(dir);
+  });
+
+  it("scores 7 for strict: false (tsconfig exists but not strict)", () => {
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: false } }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 7);
+
+    cleanup(dir);
+  });
+
+  it("tsconfig takes precedence over jsconfig when both exist", () => {
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
+    writeFile(dir, "jsconfig.json", JSON.stringify({ compilerOptions: { baseUrl: "." } }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const check = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(check.points, 10, "tsconfig should win over jsconfig");
+
+    cleanup(dir);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-05: Build artifact exclusions
+// ---------------------------------------------------------------------------
+
+describe("BUG-05: Build artifact exclusions", () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = makeTempProject();
+    gitInit(dir);
+    writeFile(dir, "package.json", JSON.stringify({ name: "artifact-test" }));
+  });
+
+  it("excludes .next/ from source file count", () => {
+    writeFile(dir, "src/app.ts", "export const x = 1;");
+    writeFile(dir, ".next/server/chunks/123.js", "// compiled output");
+    writeFile(dir, ".next/static/abc.js", "// static output");
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const metrics = getCodeMetrics();
+
+    assert.equal(metrics.sourceFiles, 1, `Expected 1 source file (.next excluded), got ${metrics.sourceFiles}`);
+
+    cleanup(dir);
+  });
+
+  it("excludes build/ and target/ from source file count", () => {
+    writeFile(dir, "src/app.ts", "export const x = 1;");
+    writeFile(dir, "build/output.js", "// build output");
+    writeFile(dir, "target/debug/app.ts", "// compiled");
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const metrics = getCodeMetrics();
+
+    assert.equal(metrics.sourceFiles, 1, `Expected 1 source file (build/target excluded), got ${metrics.sourceFiles}`);
+
+    cleanup(dir);
+  });
+
+  it("excludes coverage/ and .nyc_output/ from source file count", () => {
+    writeFile(dir, "src/app.ts", "export const x = 1;");
+    writeFile(dir, "coverage/lcov-report/index.js", "// coverage report");
+    writeFile(dir, ".nyc_output/report.js", "// nyc output");
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const metrics = getCodeMetrics();
+
+    assert.equal(metrics.sourceFiles, 1, `Expected 1 source file (coverage excluded), got ${metrics.sourceFiles}`);
+
+    cleanup(dir);
+  });
+
+  it("excludes __pycache__/ and .venv/ from source file count", () => {
+    writeFile(dir, "src/app.ts", "export const x = 1;");
+    writeFile(dir, "__pycache__/app.cpython-311.js", "// bytecode");
+    writeFile(dir, ".venv/lib/site.js", "// virtualenv");
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const metrics = getCodeMetrics();
+
+    assert.equal(metrics.sourceFiles, 1, `Expected 1 source file (__pycache__/.venv excluded), got ${metrics.sourceFiles}`);
+
+    cleanup(dir);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-06: Scoring architecture documentation tests
+// ---------------------------------------------------------------------------
+
+describe("BUG-06: Scoring architecture", () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = makeTempProject();
+    gitInit(dir);
+  });
+
+  it("boilerplate project cannot exceed grade B", () => {
+    // A project with all file-existence checks but no real work
+    writeFile(dir, "package.json", JSON.stringify({ name: "boilerplate" }));
+    writeFile(dir, "README.md", "# Boilerplate");
+    writeFile(dir, "CLAUDE.md", "# Instructions");
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
+    writeFile(dir, ".claude/governance.json", JSON.stringify({ version: "1.0", project: { name: "test" } }));
+    // No source files, no tests → Test Coverage = 0, Git Clean = 15
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+
+    // Max achievable: governance(20) + git(15) + tests(0) + readme(10) + claude(10)
+    //                 + types(10) + filesize(10) + security(5) = 80 → B
+    assert.ok(result.score <= 80, `Boilerplate project scored ${result.score}, should be ≤80`);
+    assert.ok(result.grade !== "A", `Boilerplate project graded ${result.grade}, should not be A`);
+
+    cleanup(dir);
+  });
+
+  it("file-existence checks total exactly 52 points", () => {
+    // Document the architectural fact: 52 of 100 points come from file existence alone
+    // This test forces a conscious decision if scoring weights change
+    const fileExistenceChecks = {
+      "Governance": 20,     // governance.json exists
+      "README": 10,         // README.md exists
+      "CLAUDE.md": 10,      // CLAUDE.md exists
+      "Type Safety": 10,    // tsconfig/jsconfig exists (max tier)
+      "No .env in Git": 2,  // absence of .env (existence-based)
+    };
+    // Note: "No .env in Git" scores 5 total, but 2pts are "absence-based" attribution
+    // The actual architectural concern: governance(20) + readme(10) + claude(10) + types(10) = 50
+    // These 4 checks award 50 points for file existence alone.
+
+    writeFile(dir, "package.json", JSON.stringify({ name: "arch-test" }));
+    writeFile(dir, "README.md", "# Test");
+    writeFile(dir, "CLAUDE.md", "# Test");
+    writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
+    writeFile(dir, ".claude/governance.json", JSON.stringify({ version: "1.0", project: { name: "test" } }));
+    gitCommitAll(dir, "init");
+    withProject(dir);
+
+    const result = getHealthScore();
+    const fileChecks = ["Governance", "README", "CLAUDE.md", "Type Safety"];
+    const filePoints = fileChecks.reduce((sum, name) => {
+      const check = result.checks.find((c) => c.name === name);
+      return sum + (check ? check.points : 0);
+    }, 0);
+
+    assert.equal(filePoints, 50, `File-existence checks should total 50pts, got ${filePoints}`);
 
     cleanup(dir);
   });
