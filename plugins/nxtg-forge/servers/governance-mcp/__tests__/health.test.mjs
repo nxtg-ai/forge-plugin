@@ -31,7 +31,8 @@ function makeTempProject() {
 }
 
 function gitInit(dir) {
-  execSync("git init", { cwd: dir, stdio: "ignore" });
+  // Use -b main for consistent branch name across git versions/environments
+  execSync("git init -b main", { cwd: dir, stdio: "ignore" });
   execSync('git config user.email "test@test.com"', { cwd: dir, stdio: "ignore" });
   execSync('git config user.name "Test"', { cwd: dir, stdio: "ignore" });
 }
