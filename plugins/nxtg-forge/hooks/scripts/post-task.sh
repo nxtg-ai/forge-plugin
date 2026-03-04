@@ -21,6 +21,8 @@ if ! hooks_enabled; then
     exit 0
 fi
 
+require_git
+
 log_info "Post-task hook triggered"
 
 # 1. Update project.json with completion status

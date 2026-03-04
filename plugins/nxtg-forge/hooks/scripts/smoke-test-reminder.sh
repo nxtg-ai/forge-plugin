@@ -13,10 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # In plugin mode, Claude Code sets cwd to the user's project
 PROJECT_ROOT="$(pwd)"
 
-# Skip if not in a git repo (non-git projects have nothing to diff)
-if ! git rev-parse --git-dir >/dev/null 2>&1; then
-  exit 0
-fi
+source "$SCRIPT_DIR/lib.sh"
+require_git
 
 # Check if test files were modified in this session
 MODIFIED_TEST_FILES=$(git diff --name-only 2>/dev/null | grep -c '\.test\.' || true)
