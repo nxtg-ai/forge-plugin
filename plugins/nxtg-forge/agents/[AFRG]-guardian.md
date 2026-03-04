@@ -39,8 +39,9 @@ description: |
   </commentary>
   </example>
 model: sonnet
-color: yellow
-tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
+color: orange
+skills: nxtg-forge:parallel-execution
+tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite, Task
 ---
 
 # Forge Guardian Agent
@@ -291,6 +292,47 @@ During quality gate execution, run `tsc --noEmit` (or the project's equivalent t
 
 ### NEW_FILE_NEW_TEST (Verification)
 When reviewing new files, verify that every new `.ts`/`.tsx`/`.py`/`.rs` file containing logic has a corresponding test file. Flag any new logic file without tests as a blocking error. "All tests pass" is not a valid claim when new files contribute zero test cases.
+
+## Parallel Quality Gate Execution
+
+When validating large codebases or post-implementation work, run 2 parallel
+Task agents and 1 inline command simultaneously to reduce validation time ~3x
+vs sequential execution:
+
+```
+# Spawn both Tasks AND run the inline type check simultaneously
+Task(
+  subagent_type: "forge-testing",
+  prompt: "Run the test suite for this project and report: pass count, fail count,
+           any failing test names, and coverage percentage if available.
+           Read-only analysis — do NOT modify test files."
+)
+
+Task(
+  subagent_type: "forge-security",
+  prompt: "Scan this project for security issues: hardcoded secrets, eval/exec usage,
+           dangerous patterns (innerHTML, SQL concatenation), and run npm audit.
+           Report findings by severity. Read-only — no modifications."
+)
+
+# Run type check INLINE while the 2 slow Tasks execute
+Bash: npx tsc --noEmit 2>&1 | head -30
+# (adjust for project: cargo check, mypy --quiet, pyright, etc.)
+```
+
+After all 3 complete, aggregate their reports into your quality gate summary:
+
+```
+PARALLEL QUALITY GATE RESULTS
+  Tests:    {pass}/{total} passing, {coverage}% coverage
+  Security: {count} issues ({critical} critical, {high} high)
+  Types:    {exit code} ({error count} errors)
+
+GATE STATUS: PASS / FAIL
+```
+
+If any dimension returns a blocking issue (failing tests, critical security finding,
+type errors), report it prominently and suggest remediation before shipping.
 
 ---
 

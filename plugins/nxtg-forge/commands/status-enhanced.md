@@ -1,5 +1,6 @@
 ---
 description: "Enhanced status with detailed dashboard and metrics"
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Enhanced Status Dashboard

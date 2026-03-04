@@ -1,5 +1,6 @@
 ---
 description: "Update Forge to latest — syncs past Claude Code bug #29071"
+disable-model-invocation: true
 ---
 
 # Forge Update

@@ -1,5 +1,7 @@
 ---
 description: "Analyze project gaps across testing, docs, security, and architecture"
+disable-model-invocation: true
+argument-hint: "[--scope testing|docs|security|architecture] [--severity critical|high] [--fix]"
 ---
 
 # NXTG-Forge Gap Analysis
@@ -29,6 +31,62 @@ Merge orchestrator findings with local analysis below. If orchestrator is not av
 ## Analysis Execution
 
 Use Claude's native tools to perform real analysis. Launch parallel agents where possible for speed.
+
+### Plan Mode Pre-Flight
+
+Before running analysis, declare scope to the user:
+
+```
+GAP ANALYSIS SCOPE
+  Dimensions: Testing, Documentation, Security, Architecture, Performance
+  Method: Parallel agent execution (5 simultaneous Task agents)
+  Output: Prioritized gap list with remediation plan
+
+Proceed? (or specify --scope <area> for targeted run)
+```
+
+Skip this pre-flight if `--scope` argument was provided — targeted runs can
+proceed immediately.
+
+### Agent Team Execution
+
+When the Task tool is available, spawn all 5 dimension agents simultaneously
+for ~5x faster analysis vs sequential:
+
+```
+Task(
+  subagent_type: "forge-testing",
+  prompt: "Analyze test coverage: count source files vs test files in src/,
+           list untested source files, calculate coverage %. Read-only."
+)
+
+Task(
+  subagent_type: "forge-docs",
+  prompt: "Analyze documentation: check README.md, CHANGELOG.md, JSDoc on exports,
+           API docs. List gaps. Read-only."
+)
+
+Task(
+  subagent_type: "forge-security",
+  prompt: "Analyze security: check hardcoded secrets, eval/exec usage, .env in git,
+           run npm audit. Report by severity. Read-only."
+)
+
+Task(
+  subagent_type: "forge-detective",
+  prompt: "Analyze architecture quality: large files (>300 lines), circular deps, 'as any' casts,
+           missing error handling, TODO/FIXME/HACK comments. Report findings. Read-only."
+)
+
+Task(
+  subagent_type: "forge-performance",
+  prompt: "Analyze performance: bundle size, node_modules size, dep count, console.log
+           in production code, outdated deps (npm outdated). Read-only."
+)
+```
+
+Aggregate all 5 reports into the Summary Report below. If Task tool is not available,
+run each dimension sequentially as documented below.
 
 ### Dimension 1: Test Coverage
 

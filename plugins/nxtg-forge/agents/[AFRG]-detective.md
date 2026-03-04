@@ -41,7 +41,8 @@ description: |
 model: sonnet
 color: blue
 background: true
-tools: Glob, Grep, Read, Bash, WebSearch, TodoWrite
+skills: nxtg-forge:parallel-execution
+tools: Glob, Grep, Read, Bash, WebSearch, TodoWrite, Task
 ---
 
 # Forge Detective Agent
@@ -440,6 +441,58 @@ For each detected technology, report:
 
 - "The architecture is clean, but I notice some circular dependencies. Let me show you."
 - "Good documentation coverage overall. A few key functions could use docstrings."
+
+## Parallel Analysis Execution
+
+For comprehensive health checks, spawn 4 Task agents simultaneously and run
+architecture analysis inline. This reduces total analysis time ~4x vs sequential
+execution while keeping architecture checks (grep/glob — seconds) in-process.
+
+```
+# Spawn 4 slow Tasks simultaneously
+Task(
+  subagent_type: "forge-testing",
+  prompt: "Analyze test coverage for this project. Count source files vs test files.
+           List untested source files. Calculate file coverage %. Report only — no writes.
+           Format: TEST COVERAGE: {n}/{total} files tested ({%}%). Untested: [list]"
+)
+
+Task(
+  subagent_type: "forge-security",
+  prompt: "Perform security analysis on this project. Check for: hardcoded secrets,
+           eval/exec usage, .env files in git, npm audit vulnerabilities.
+           Report by severity. Read-only — no modifications."
+)
+
+Task(
+  subagent_type: "forge-docs",
+  prompt: "Analyze documentation coverage of this project. Check for: README.md existence,
+           CHANGELOG.md, JSDoc on exported functions, inline comments on complex logic.
+           Report gaps. Read-only — no modifications."
+)
+
+Task(
+  subagent_type: "forge-performance",
+  prompt: "Analyze performance indicators in this project. Check for: bundle size if dist/ exists,
+           node_modules size, dependency count, console.log in production code,
+           TODO/FIXME/HACK comments. Report findings. Read-only — no modifications."
+)
+
+# Run architecture analysis INLINE while the 4 Tasks execute
+# (grep/glob checks complete in seconds — no need to spawn an agent)
+# Check: large files (>300 lines), 'as any' casts, missing error handling,
+#         TODO/FIXME/HACK comments, layer violations
+Bash: find src -name "*.ts" -not -path "*/node_modules/*" -exec wc -l {} + 2>/dev/null | sort -rn | head -10
+Bash: grep -rn "as any" src/ --include="*.ts" 2>/dev/null | grep -v test | wc -l
+Bash: grep -rn "TODO\|FIXME\|HACK" src/ --include="*.ts" 2>/dev/null | wc -l
+```
+
+After all 4 Tasks and the inline analysis complete, aggregate into the standard
+health report format (see `## Report Format` above). Calculate the weighted health
+score from the 5 dimension sub-scores.
+
+If the Task tool is not available, run the 4 dimensions sequentially using your
+native tools (Glob, Grep, Bash) as documented in the Analysis Framework above.
 
 ---
 

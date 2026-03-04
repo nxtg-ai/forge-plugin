@@ -24,7 +24,7 @@ description: |
   </example>
 
 model: sonnet
-color: magenta
+color: purple
 tools: Read, Grep, Glob, Bash, Write
 ---
 

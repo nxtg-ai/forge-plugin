@@ -1,6 +1,7 @@
 ---
 description: "Open the NXTG-Forge governance dashboard in your browser"
 allowed-tools: ["mcp__plugin_nxtg_forge_governance_mcp__forge_open_dashboard", "mcp__plugin_nxtg_forge_governance_mcp__forge_get_health"]
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Governance Dashboard

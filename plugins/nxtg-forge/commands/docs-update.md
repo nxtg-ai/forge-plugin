@@ -1,5 +1,7 @@
 ---
 description: "Update stale documentation based on code changes"
+disable-model-invocation: true
+argument-hint: "[file-path] [--all]"
 ---
 
 # NXTG-Forge Documentation Updater

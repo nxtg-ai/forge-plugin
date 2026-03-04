@@ -1,5 +1,7 @@
 ---
 description: "Display comprehensive session activity report"
+disable-model-invocation: true
+argument-hint: "[--format markdown|json]"
 ---
 
 # NXTG-Forge Session Report

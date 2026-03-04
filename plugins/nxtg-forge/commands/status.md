@@ -1,5 +1,7 @@
 ---
 description: "Display complete project state (zero-context-friendly)"
+disable-model-invocation: true
+argument-hint: "[--json] [--verbose]"
 ---
 
 # Forge Status

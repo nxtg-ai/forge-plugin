@@ -39,7 +39,7 @@ description: |
   </commentary>
   </example>
 model: opus
-color: magenta
+color: purple
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite, Task
 ---
 

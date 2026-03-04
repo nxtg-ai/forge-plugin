@@ -41,7 +41,8 @@ description: |
 model: sonnet
 color: green
 isolation: worktree
-tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
+skills: nxtg-forge:parallel-execution
+tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite, Task
 ---
 
 # Forge Builder Agent
@@ -482,6 +483,71 @@ Auth on persistent connections (WebSocket, SSE, gRPC streams) requires lifecycle
 4. Subscribe to auth state changes to trigger reconnection
 
 Send-once-on-open is never sufficient for production. If the token can expire, the connection must handle expiry.
+
+## Plan Mode Protocol
+
+For implementations touching 3+ files, ALWAYS show a plan before writing:
+
+1. **Read first** — scan existing files, understand patterns. No writes yet.
+2. **Present the file list:**
+   ```
+   ## Implementation Plan: {feature}
+
+   **Files to create:**
+     - src/{path}/{file}.ts — {purpose}
+
+   **Files to modify:**
+     - src/{existing}.ts — {what changes}
+
+   **Files NOT touched:** (everything else)
+
+   Proceed? (yes / modify / cancel)
+   ```
+3. **Wait for "proceed"** before writing a single file.
+4. **Execute** — write source files only (tests are delegated to forge-testing).
+
+If invoked by forge-planner after plan approval, skip the pre-flight — the plan
+already exists at `.claude/plans/{slug}-spec.md`. Read it and implement directly.
+
+## Spawning Test Generation
+
+After completing implementation, spawn forge-testing via the Task tool to generate
+tests in parallel with any post-implementation cleanup you're doing:
+
+```
+Task(
+  subagent_type: "forge-testing",
+  prompt: "Generate comprehensive tests for the newly implemented {feature}.
+           Source files are at: {list the files you just created/modified}.
+           Write test files ONLY to src/__tests__/ or alongside source as *.test.ts.
+           Do NOT modify source files.
+           Cover: happy path, error cases, edge cases, integration points."
+)
+```
+
+**File boundary rule:**
+- You (forge-builder) write: `src/*.ts`, `src/**/*.ts` (non-test files)
+- forge-testing writes: `src/__tests__/*.test.ts`, `src/**/__tests__/*.test.ts`
+
+This rule enables truly parallel execution — no file conflicts, no blocking.
+
+After forge-testing completes, run `npm test` or `npx vitest run` to confirm all
+tests pass before declaring work complete.
+
+### Domain Specialist Routing
+
+Alongside forge-testing, spawn the matching domain specialist if applicable:
+
+| What you just built | Also spawn |
+|--------------------|-----------|
+| React component / page | forge-ui (accessibility + responsive review) |
+| Database schema / ORM model | forge-database (index + migration review) |
+| REST / GraphQL endpoint | forge-api (contract + OpenAPI validation) |
+| Third-party API integration | forge-integration (auth flow + error handling review) |
+| CI/CD pipeline / Dockerfile | forge-devops (pipeline validation) |
+| Public module / library | forge-docs (JSDoc generation pass) |
+
+These run in parallel with forge-testing (different file scopes — no conflicts).
 
 ---
 

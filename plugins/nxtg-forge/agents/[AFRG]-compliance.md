@@ -21,7 +21,7 @@ description: |
   </commentary>
   </example>
 model: haiku
-color: yellow
+color: orange
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---
 

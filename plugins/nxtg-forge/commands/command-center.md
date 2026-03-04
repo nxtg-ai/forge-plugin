@@ -1,5 +1,6 @@
 ---
 description: "Activate forge command center with orchestrator"
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Command Center

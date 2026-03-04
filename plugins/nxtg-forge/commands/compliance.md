@@ -1,5 +1,7 @@
 ---
 description: "Scan tech stack, check license compatibility, and generate SBOM"
+disable-model-invocation: true
+argument-hint: "[--scope npm|pypi|go|cargo] [--format json]"
 ---
 
 # NXTG-Forge Compliance Check

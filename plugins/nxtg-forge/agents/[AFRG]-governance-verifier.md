@@ -1,20 +1,30 @@
 ---
 name: governance-verifier
-shortname: ⚖️
-avatar: ⚖️
-description: Automated verification responder for governance concerns flagged by hooks
+description: |
+  Automated verification responder for governance concerns flagged by hooks. Use when a
+  PostToolUse hook flags a concern, when test-implementation mismatches are detected,
+  when scope creep is suspected, or when a PreToolUse hook raises a warning.
+
+  <example>
+  Context: A hook detected test changes without corresponding implementation.
+  user: "Verify this governance concern about test changes"
+  assistant: "I'll use the governance-verifier agent to analyze whether this test update is justified."
+  <commentary>
+  Test/implementation mismatch concerns are exactly what governance-verifier handles.
+  </commentary>
+  </example>
+
+  <example>
+  Context: A hook flagged potential scope creep during development.
+  user: "Check if these changes are within scope"
+  assistant: "I'll use the governance-verifier agent to validate these changes against the current directive."
+  <commentary>
+  Scope validation is a governance-verifier specialty.
+  </commentary>
+  </example>
 model: haiku
-color: yellow
+color: orange
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
-whenToUse:
-  - When a PostToolUse hook blocks with a governance concern
-  - When a PreToolUse hook raises a warning about critical changes
-  - When test-implementation mismatches are detected
-  - When scope creep is suspected during development
-exampleQueries:
-  - "Verify this governance concern about test changes"
-  - "Is this test update justified by the implementation?"
-  - "Check if these changes are within scope"
 ---
 
 # Governance Verifier Agent
