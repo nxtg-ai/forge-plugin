@@ -38,10 +38,36 @@ function readJson(filePath) {
   }
 }
 
+const serverVersion = readJson(join(import.meta.dirname, "package.json"))?.version ?? "unknown";
+
 function getProjectRoot() {
   // FORGE_PROJECT_ROOT is set by start.sh before cd'ing into the server directory.
   // Falls back to cwd for direct invocation (e.g. development/testing).
   return process.env.FORGE_PROJECT_ROOT || process.cwd();
+}
+
+function findApplicationRoot(projectRoot) {
+  const manifests = ["package.json", "Cargo.toml", "pyproject.toml", "go.mod"];
+
+  // 1. Check project root first (preserves existing behavior for 99% of users)
+  for (const m of manifests) {
+    if (existsSync(join(projectRoot, m))) return projectRoot;
+  }
+
+  // 2. Walk one level deep — find first subdirectory with a manifest
+  try {
+    const entries = readdirSync(projectRoot, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (["node_modules", ".git", ".claude", ".forge"].includes(entry.name)) continue;
+      const candidate = join(projectRoot, entry.name);
+      for (const m of manifests) {
+        if (existsSync(join(candidate, m))) return candidate;
+      }
+    }
+  } catch {}
+
+  return projectRoot; // fallback — no manifest found anywhere
 }
 
 // BUG-05: Build artifact directories to exclude from all find commands.
@@ -113,12 +139,13 @@ function getGitStatus() {
 
 function getCodeMetrics() {
   const root = getProjectRoot();
+  const appRoot = findApplicationRoot(root);
 
   // Detect project type
-  const hasPackageJson = existsSync(join(root, "package.json"));
-  const hasCargoToml = existsSync(join(root, "Cargo.toml"));
-  const hasPyproject = existsSync(join(root, "pyproject.toml"));
-  const hasGoMod = existsSync(join(root, "go.mod"));
+  const hasPackageJson = existsSync(join(appRoot, "package.json"));
+  const hasCargoToml = existsSync(join(appRoot, "Cargo.toml"));
+  const hasPyproject = existsSync(join(appRoot, "pyproject.toml"));
+  const hasGoMod = existsSync(join(appRoot, "go.mod"));
 
   let projectType = "unknown";
   let sourceExt = "*.ts";
@@ -151,32 +178,32 @@ function getCodeMetrics() {
   // Count source files (exclude config files, test files, build artifacts)
   const sourceFiles = run(
     `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" -not -name "*.config.*" 2>/dev/null | wc -l`,
-    { cwd: root, shell: "/bin/bash" }
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Count test files
   const testFiles = run(
     `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -path "*/__tests__/*" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | wc -l`,
-    { cwd: root, shell: "/bin/bash" }
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Count total lines
   const totalLines = run(
     `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
-    { cwd: root, shell: "/bin/bash" }
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Large files (>300 lines)
   const largeFiles = run(
     `find . \\( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
-    { cwd: root, shell: "/bin/bash" }
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Dependencies
   let deps = 0;
   let devDeps = 0;
   if (hasPackageJson) {
-    const pkg = readJson(join(root, "package.json"));
+    const pkg = readJson(join(appRoot, "package.json"));
     if (pkg) {
       deps = Object.keys(pkg.dependencies || {}).length;
       devDeps = Object.keys(pkg.devDependencies || {}).length;
@@ -186,8 +213,8 @@ function getCodeMetrics() {
   // Real line coverage from Istanbul/c8/nyc report (null = no report found)
   const realCoverage = (() => {
     const coveragePaths = [
-      join(root, "coverage", "coverage-summary.json"),
-      join(root, ".nyc_output", "coverage-summary.json"),
+      join(appRoot, "coverage", "coverage-summary.json"),
+      join(appRoot, ".nyc_output", "coverage-summary.json"),
     ];
     for (const p of coveragePaths) {
       if (existsSync(p)) {
@@ -222,6 +249,7 @@ function getHealthScore() {
   const git = getGitStatus();
   const metrics = getCodeMetrics();
   const root = getProjectRoot();
+  const appRoot = findApplicationRoot(root);
 
   let score = 0;
   const checks = [];
@@ -256,7 +284,7 @@ function getHealthScore() {
   }
 
   // Has README (10 pts)
-  if (existsSync(join(root, "README.md"))) {
+  if (existsSync(join(appRoot, "README.md"))) {
     score += 10;
     checks.push({ name: "README", status: "pass", points: 10 });
   } else {
@@ -274,7 +302,7 @@ function getHealthScore() {
   // TypeScript / type checking (0-10 pts, tiered)
   // BUG-04: Nuanced scoring — strict tsconfig > basic tsconfig > jsconfig > nothing
   const tsTypeSafety = (() => {
-    const tsConfig = readJson(join(root, "tsconfig.json"));
+    const tsConfig = readJson(join(appRoot, "tsconfig.json"));
     if (tsConfig) {
       const co = tsConfig.compilerOptions || {};
       const strictFlags = ["noImplicitAny", "strictNullChecks", "strictFunctionTypes",
@@ -286,7 +314,7 @@ function getHealthScore() {
       }
       return { points: 7, status: "pass", note: "TypeScript (not strict)" };
     }
-    if (existsSync(join(root, "jsconfig.json"))) {
+    if (existsSync(join(appRoot, "jsconfig.json"))) {
       return { points: 4, status: "info", note: "jsconfig only" };
     }
     return { points: 0, status: "info", note: "no type config" };
@@ -327,10 +355,11 @@ function getHealthScore() {
 
 function getTestResults() {
   const root = getProjectRoot();
-  const hasVitest = existsSync(join(root, "node_modules", ".bin", "vitest"));
-  const hasJest = existsSync(join(root, "node_modules", ".bin", "jest"));
-  const hasPytest = existsSync(join(root, ".venv", "bin", "pytest")) ||
-    run("which pytest", { cwd: root });
+  const appRoot = findApplicationRoot(root);
+  const hasVitest = existsSync(join(appRoot, "node_modules", ".bin", "vitest"));
+  const hasJest = existsSync(join(appRoot, "node_modules", ".bin", "jest"));
+  const hasPytest = existsSync(join(appRoot, ".venv", "bin", "pytest")) ||
+    run("which pytest", { cwd: appRoot });
 
   let runner = null;
   let result = null;
@@ -338,18 +367,18 @@ function getTestResults() {
   if (hasVitest) {
     runner = "vitest";
     result = run("npx vitest run --reporter=json 2>/dev/null | tail -1", {
-      cwd: root,
+      cwd: appRoot,
       timeout: 60000,
     });
   } else if (hasJest) {
     runner = "jest";
     result = run("npx jest --json 2>/dev/null | tail -1", {
-      cwd: root,
+      cwd: appRoot,
       timeout: 60000,
     });
   } else if (hasPytest) {
     runner = "pytest";
-    result = run("pytest --tb=short -q 2>&1 | tail -5", { cwd: root, timeout: 60000 });
+    result = run("pytest --tb=short -q 2>&1 | tail -5", { cwd: appRoot, timeout: 60000 });
   }
 
   if (!runner) {
@@ -404,6 +433,7 @@ function listCheckpoints() {
 
 function getSecurityScan() {
   const root = getProjectRoot();
+  const appRoot = findApplicationRoot(root);
   const findings = [];
 
   // Check for hardcoded secrets
@@ -416,7 +446,7 @@ function getSecurityScan() {
   for (const { pattern, label } of secretPatterns) {
     const matches = run(
       `grep -rnI "${pattern}" --include="*.ts" --include="*.js" --include="*.py" . 2>/dev/null | grep -v node_modules | grep -v dist | head -5`,
-      { cwd: root }
+      { cwd: appRoot }
     );
     if (matches) {
       findings.push({
@@ -432,7 +462,7 @@ function getSecurityScan() {
   // Check for eval
   const evalMatches = run(
     `grep -rn "eval(" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v node_modules | grep -v dist | wc -l`,
-    { cwd: root }
+    { cwd: appRoot }
   );
   if (parseInt(evalMatches) > 0) {
     findings.push({
@@ -456,8 +486,8 @@ function getSecurityScan() {
 
   // npm audit (if available)
   let audit = null;
-  if (existsSync(join(root, "package-lock.json"))) {
-    const auditRaw = run("npm audit --json 2>/dev/null", { cwd: root, timeout: 30000 });
+  if (existsSync(join(appRoot, "package-lock.json"))) {
+    const auditRaw = run("npm audit --json 2>/dev/null", { cwd: appRoot, timeout: 30000 });
     if (auditRaw) {
       try {
         const auditData = JSON.parse(auditRaw);
@@ -556,12 +586,12 @@ function generateDashboard() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="1.5"/><polygon points="12,6 16,8.5 16,15.5 12,18 8,15.5 8,8.5" fill="white" opacity="0.9"/><path d="M12,3 L12,1 L10.5,2.5 L12,1 L13.5,2.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
         </div>
         <h1 class="text-lg font-semibold">Forge</h1>
-        <span class="text-xs text-slate-500 font-mono">v3.1.0</span>
+        <span class="text-xs text-slate-500 font-mono">v${serverVersion}</span>
       </div>
       <div class="flex items-center gap-4 text-sm text-slate-400">
         <span class="flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full ${git.clean ? "bg-emerald-400" : "bg-amber-400"} pulse-slow"></span>
-          ${git.branch}
+          ${git.branch ?? "\u2014"}
         </span>
         <span class="font-mono text-xs">${new Date().toLocaleString()}</span>
       </div>
@@ -595,7 +625,7 @@ function generateDashboard() {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Source Files</div>
-        <div class="text-2xl font-bold text-slate-100">${metrics.sourceFiles}</div>
+        <div class="text-2xl font-bold text-slate-100">${metrics.sourceFiles ?? 0}</div>
         <div class="text-xs text-slate-500 mt-1">${metrics.projectType}</div>
       </div>
       <div class="card rounded-xl p-5">
@@ -605,12 +635,12 @@ function generateDashboard() {
       </div>
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Commits</div>
-        <div class="text-2xl font-bold text-slate-100">${git.commitCount}</div>
+        <div class="text-2xl font-bold text-slate-100">${git.commitCount ?? "N/A"}</div>
         <div class="text-xs text-slate-500 mt-1">${git.branch}</div>
       </div>
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Dependencies</div>
-        <div class="text-2xl font-bold text-slate-100">${metrics.dependencies}</div>
+        <div class="text-2xl font-bold text-slate-100">${metrics.dependencies ?? 0}</div>
         <div class="text-xs text-slate-500 mt-1">+${metrics.devDependencies} dev</div>
       </div>
     </div>
@@ -887,8 +917,11 @@ function generateDashboard() {
   const tmpPath = join(tmpdir(), `forge-dashboard-${Date.now()}.html`);
   writeFileSync(tmpPath, html);
 
-  // Try to open in browser (non-blocking)
+  // Try to open in browser (non-blocking, skip in test mode)
   let url = `file://${tmpPath}`;
+  if (process.env.FORGE_TEST_MODE) {
+    return { path: tmpPath, url, projectName, healthScore: health.score, healthGrade: health.grade };
+  }
   try {
     if (existsSync("/mnt/c/Windows")) {
       // WSL2: use wslpath to get a Windows-accessible path, then explorer.exe to open
@@ -975,7 +1008,7 @@ const TOOLS = [
 ];
 
 const server = new Server(
-  { name: "forge-governance", version: "3.2.0" },
+  { name: "forge-governance", version: serverVersion },
   { capabilities: { tools: {} } }
 );
 
@@ -1047,6 +1080,8 @@ export {
   getTestResults,
   listCheckpoints,
   getSecurityScan,
+  findApplicationRoot,
+  generateDashboard,
 };
 
 // Start server only when run directly (not imported for testing)

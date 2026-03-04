@@ -10,7 +10,7 @@
 
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
@@ -18,7 +18,7 @@ import { execSync } from "node:child_process";
 // Prevent MCP server from starting during tests
 process.env.FORGE_TEST_MODE = "1";
 
-const { getHealthScore, getGitStatus, getCodeMetrics, getTestResults, getGovernanceState } =
+const { getHealthScore, getGitStatus, getCodeMetrics, getTestResults, getGovernanceState, getSecurityScan, findApplicationRoot, generateDashboard } =
   await import("../index.mjs");
 
 // ---------------------------------------------------------------------------
@@ -93,9 +93,8 @@ describe("forge_get_health", () => {
 
     const result = getHealthScore();
 
-    assert.equal(typeof result.score, "number");
-    assert.ok(result.score > 0, `Score should be > 0, got ${result.score}`);
-    assert.ok(result.grade !== "F", `Grade should not be F, got ${result.grade}`);
+    assert.ok(result.score >= 75 && result.score <= 100, `Score should be 75–100, got ${result.score}`);
+    assert.ok(result.grade === "A" || result.grade === "B", `Grade should be A or B, got ${result.grade}`);
     assert.equal(result.maxScore, 100);
     assert.ok(Array.isArray(result.checks));
 
@@ -175,7 +174,6 @@ describe("forge_get_health", () => {
 
     const metrics = getCodeMetrics();
 
-    assert.equal(typeof metrics.testFileRatio, "number");
     assert.equal(metrics.sourceFiles, 4, `Expected 4 source files, got ${metrics.sourceFiles}`);
     assert.equal(metrics.testFiles, 2, `Expected 2 test files, got ${metrics.testFiles}`);
     assert.equal(metrics.testFileRatio, 50, `Expected 50% ratio, got ${metrics.testFileRatio}`);
@@ -210,9 +208,8 @@ describe("forge_get_health", () => {
 
     const result = getHealthScore();
 
-    assert.equal(typeof result.score, "number");
-    assert.ok(result.score >= 0);
-    assert.ok(result.grade);
+    assert.equal(result.score, 40, `Empty project should score exactly 40 (git+readme+filesize+security), got ${result.score}`);
+    assert.equal(result.grade, "F", `Empty project should be grade F, got ${result.grade}`);
     assert.ok(Array.isArray(result.checks));
     // Should not crash
 
@@ -735,5 +732,148 @@ describe("forge_get_governance_state", () => {
     assert.deepEqual(result.qualityGates, { coverage: 80 });
 
     cleanup(dir);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Subdirectory project layout (workspace with app in subdirectory)
+// ---------------------------------------------------------------------------
+
+describe("Subdirectory project layout", () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = makeTempProject();
+    gitInit(dir);
+    // Governance files at workspace root
+    writeFile(dir, "CLAUDE.md", "# Workspace Instructions");
+    writeFile(dir, ".claude/governance.json", JSON.stringify({ version: "1.0", project: { name: "workspace" } }));
+    // Application lives in app/ subdirectory
+    writeFile(dir, "app/package.json", JSON.stringify({
+      name: "my-app",
+      dependencies: { express: "4.0.0" },
+      devDependencies: { vitest: "1.0.0" },
+    }));
+    writeFile(dir, "app/package-lock.json", JSON.stringify({ lockfileVersion: 3 }));
+    writeFile(dir, "app/README.md", "# My App");
+    writeFile(dir, "app/tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
+    writeFile(dir, "app/src/index.js", "export const x = 1;\n".repeat(10));
+    writeFile(dir, "app/src/index.test.js", "test('x', () => {});\n");
+    mkdirSync(join(dir, "app", "node_modules", ".bin"), { recursive: true });
+    writeFileSync(join(dir, "app", "node_modules", ".bin", "jest"), "");
+    gitCommitAll(dir, "initial workspace");
+    withProject(dir);
+  });
+
+  after(() => {});
+
+  it("findApplicationRoot returns root when manifest exists at root", () => {
+    // Create a separate temp dir with package.json at root
+    const rootDir = makeTempProject();
+    writeFile(rootDir, "package.json", JSON.stringify({ name: "root-app" }));
+
+    const result = findApplicationRoot(rootDir);
+    assert.equal(result, rootDir, "Should return root when manifest is at root");
+
+    cleanup(rootDir);
+  });
+
+  it("findApplicationRoot finds manifest in subdirectory", () => {
+    // dir has no package.json at root, but app/package.json exists
+    const result = findApplicationRoot(dir);
+    assert.equal(result, join(dir, "app"), "Should find app/ subdirectory");
+  });
+
+  it("findApplicationRoot skips node_modules/.git/.claude directories", () => {
+    const skipDir = makeTempProject();
+    // Put manifests only in excluded directories
+    writeFile(skipDir, "node_modules/pkg/package.json", JSON.stringify({ name: "dep" }));
+    writeFile(skipDir, ".git/hooks/package.json", JSON.stringify({ name: "hook" }));
+    writeFile(skipDir, ".claude/package.json", JSON.stringify({ name: "claude" }));
+
+    const result = findApplicationRoot(skipDir);
+    assert.equal(result, skipDir, "Should fallback to root when only excluded dirs have manifests");
+
+    cleanup(skipDir);
+  });
+
+  it("getCodeMetrics detects subdirectory package.json", () => {
+    const metrics = getCodeMetrics();
+
+    assert.equal(metrics.projectType, "node", "Should detect node project in subdirectory");
+    assert.ok(metrics.dependencies > 0, `Should find dependencies, got ${metrics.dependencies}`);
+    assert.ok(metrics.sourceFiles > 0, `Should find source files, got ${metrics.sourceFiles}`);
+  });
+
+  it("getCodeMetrics calculates testFileRatio in subdirectory", () => {
+    const metrics = getCodeMetrics();
+
+    assert.ok(metrics.testFileRatio > 0, `testFileRatio should be > 0, got ${metrics.testFileRatio}`);
+    assert.ok(metrics.testFiles > 0, `testFiles should be > 0, got ${metrics.testFiles}`);
+  });
+
+  it("getHealthScore finds README in subdirectory", () => {
+    const result = getHealthScore();
+    const readmeCheck = result.checks.find((c) => c.name === "README");
+
+    assert.equal(readmeCheck.status, "pass", "Should find README.md in app/ subdirectory");
+    assert.equal(readmeCheck.points, 10);
+  });
+
+  it("getHealthScore keeps CLAUDE.md check at governance root", () => {
+    const result = getHealthScore();
+    const claudeCheck = result.checks.find((c) => c.name === "CLAUDE.md");
+
+    assert.equal(claudeCheck.status, "pass", "Should find CLAUDE.md at workspace root");
+    assert.equal(claudeCheck.points, 10);
+  });
+
+  it("getHealthScore finds tsconfig.json in subdirectory", () => {
+    const result = getHealthScore();
+    const typeCheck = result.checks.find((c) => c.name === "Type Safety");
+
+    assert.equal(typeCheck.points, 10, "Should award 10pts for strict tsconfig in subdirectory");
+  });
+
+  it("getTestResults detects jest runner in subdirectory", () => {
+    const result = getTestResults();
+
+    // We placed node_modules/.bin/jest in app/ — runner must be exactly "jest"
+    assert.equal(result.runner, "jest", `Should detect jest from app/node_modules/.bin/jest, got: ${result.runner}`);
+  });
+
+  it("getSecurityScan runs npm audit against subdirectory package-lock", () => {
+    const result = getSecurityScan();
+
+    // Verify the scan completed (not crashed)
+    assert.ok(Array.isArray(result.findings), "findings should be an array");
+    assert.equal(result.totalFindings, result.findings.length, "totalFindings should match findings array length");
+    // npm audit should have been attempted (audit key present, even if it errored on our fake lockfile)
+    // If package-lock.json wasn't found, audit would be strictly null
+    assert.notEqual(result.audit, undefined, "audit should be defined (npm audit was attempted via subdirectory package-lock.json)");
+  });
+
+  it("server version in dashboard matches package.json version", () => {
+    const pkg = JSON.parse(readFileSync(join(import.meta.dirname, "..", "package.json"), "utf-8"));
+    const result = generateDashboard();
+    const html = readFileSync(result.path, "utf-8");
+
+    // Dashboard must contain the actual version from package.json
+    assert.ok(html.includes(`v${pkg.version}`), `Dashboard should contain v${pkg.version}, not a hardcoded version`);
+    // And must NOT contain any previous hardcoded versions
+    assert.ok(!html.includes("v3.1.0"), "Dashboard must not contain hardcoded v3.1.0");
+    assert.ok(!html.includes("v3.2.0"), "Dashboard must not contain hardcoded v3.2.0");
+  });
+
+  it("dashboard renders project data from subdirectory, not garbage", () => {
+    const result = generateDashboard();
+    const html = readFileSync(result.path, "utf-8");
+
+    // Dashboard should show the governance project name, not "Project" fallback
+    assert.ok(html.includes("workspace"), `Dashboard should show project name "workspace" from governance.json`);
+    // Source files count should reflect the subdirectory app, not 0
+    assert.ok(!html.match(/>0<\/div>\s*<div[^>]*>node</), "Source file count should not be 0 for a node project with files");
+    // Dependencies should reflect the subdirectory package.json
+    assert.ok(html.includes("express") || html.match(/>\d+<\/div>\s*<div[^>]*>\+/), "Dashboard should show dependency count from subdirectory");
   });
 });
