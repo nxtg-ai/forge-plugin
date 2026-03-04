@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   validate:
     name: Validate Plugin
