@@ -78,7 +78,7 @@
 
 ### DIRECTIVE-FPL-20260303-01 — Trilogy Launch Week 1: Ship & Verify
 **From**: Forge Program Lead | **Priority**: P0
-**Injected**: 2026-03-03 | **Estimate**: S | **Status**: PENDING
+**Injected**: 2026-03-03 | **Estimate**: S | **Status**: DONE
 
 **Context**: Trilogy Week 1 launches today (Mar 3). The plugin is at v3.3.2 with 43 governance-mcp tests passing and 35 SOTA alignment fixes shipped. Before the session ends, get all pending state committed and CI green.
 
