@@ -15,7 +15,7 @@
 | N-02 | Subdirectory Support | DEVELOPER EXPERIENCE | SHIPPED | P0 | 2026-03 |
 | N-03 | Claude Code SOTA Alignment | AGENT ECOSYSTEM | SHIPPED | P1 | 2026-03 |
 | N-04 | Ghost Agent Fix | AGENT ECOSYSTEM | SHIPPED | P1 | 2026-03 |
-| N-05 | Forge Trilogy Launch Prep | DEVELOPER EXPERIENCE | BUILDING | P0 | 2026-03 |
+| N-05 | Forge Trilogy Launch Prep | DEVELOPER EXPERIENCE | SHIPPED | P0 | 2026-03 |
 | N-06 | Plugin Update Mechanism | DEVELOPER EXPERIENCE | BLOCKED | P1 | 2026-03 |
 
 ---
@@ -93,7 +93,11 @@
 - If CI fails, fix the root cause; do NOT add `continue-on-error`
 
 **Response** (filled by forge-plugin team):
+> **COMPLETED** — 2026-03-05
 >
+> Working tree was already clean (FPL committed everything in the v3.3.2 session). Confirmed 43/43 tests passing. N-05 status updated to SHIPPED.
+>
+> **Started**: 2026-03-03 | **Completed**: 2026-03-05 | **Actual**: S
 
 ---
 
