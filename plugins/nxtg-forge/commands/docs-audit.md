@@ -1,5 +1,6 @@
 ---
 description: "Comprehensive documentation quality audit"
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Documentation Audit

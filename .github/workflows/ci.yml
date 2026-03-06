@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   validate:
     name: Validate Plugin
@@ -32,6 +36,12 @@ jobs:
           test -d plugins/nxtg-forge/hooks && echo "hooks/ exists"
           test -f plugins/nxtg-forge/servers/governance-mcp/index.mjs && echo "MCP server exists"
 
+      - name: Create issue on CI failure
+        uses: jayqi/failed-build-issue-action@v1
+        if: failure() && github.event.pull_request == null
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
   mcp-server:
     name: MCP Server
     runs-on: ubuntu-latest
@@ -49,4 +59,18 @@ jobs:
 
       - name: Validate MCP server imports
         working-directory: plugins/nxtg-forge/servers/governance-mcp
+        env:
+          FORGE_TEST_MODE: '1'
         run: node -e "import('./index.mjs').then(() => console.log('MCP server imports OK')).catch(e => { console.error(e); process.exit(1); })"
+
+      - name: Run governance-mcp tests
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        env:
+          FORGE_TEST_MODE: '1'
+        run: node --test __tests__/health.test.mjs
+
+      - name: Create issue on CI failure
+        uses: jayqi/failed-build-issue-action@v1
+        if: failure() && github.event.pull_request == null
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

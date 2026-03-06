@@ -1,5 +1,7 @@
 ---
 description: "Generate technical specifications for features"
+disable-model-invocation: true
+argument-hint: "[feature name or description]"
 ---
 
 # NXTG-Forge Spec Generator

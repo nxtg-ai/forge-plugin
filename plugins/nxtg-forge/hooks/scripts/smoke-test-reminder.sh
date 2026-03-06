@@ -13,6 +13,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # In plugin mode, Claude Code sets cwd to the user's project
 PROJECT_ROOT="$(pwd)"
 
+source "$SCRIPT_DIR/lib.sh"
+require_git
+
 # Check if test files were modified in this session
 MODIFIED_TEST_FILES=$(git diff --name-only 2>/dev/null | grep -c '\.test\.' || true)
 MODIFIED_SERVER_FILES=$(git diff --name-only 2>/dev/null | grep -c 'api-server\|server/' || true)

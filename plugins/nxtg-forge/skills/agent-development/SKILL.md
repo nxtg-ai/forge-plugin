@@ -11,48 +11,63 @@ Agents are autonomous specialists that execute tasks within the NXTG-Forge orche
 
 ## Required Frontmatter
 
-Every agent MUST have proper YAML frontmatter with these required fields:
+Every agent MUST have proper YAML frontmatter. Claude Code's canonical schema:
 
 ```yaml
 ---
-name: agent-name
-shortname: 🔧
-avatar: 🔧
-description: Clear one-line description of what this agent does
-whenToUse:
-  - Specific scenario 1
-  - Specific scenario 2
-  - Specific scenario 3
-exampleQueries:
-  - "Example user request this agent handles"
-  - "Another example query"
+name: agent-name          # REQUIRED: lowercase letters, numbers, hyphens only (max 64 chars)
+description: |            # REQUIRED: When Claude should delegate here. Include <example> blocks.
+  Use this agent when...
+
+  <example>
+  Context: User asks to do X.
+  user: "Do X please"
+  assistant: "I'll use agent-name to handle X."
+  <commentary>
+  Why this agent is the right choice.
+  </commentary>
+  </example>
+model: sonnet             # Optional: sonnet | opus | haiku (default: inherit)
+color: cyan               # Optional: purple | cyan | green | orange | blue | red
+isolation: worktree       # Optional: worktree (for parallel file work without conflicts)
+memory: project           # Optional: user | project | local (persistent cross-session memory)
+skills: plugin-name:skill # Optional: preload specific skill (full content at startup)
+tools: Read, Grep, Glob, Write, Edit, Bash, TodoWrite, Task  # Optional: tool allowlist
 ---
 ```
 
 ### Frontmatter Fields Explained
 
-- **name** (REQUIRED): Lowercase, hyphenated agent identifier (e.g., "architect", "qa-engineer")
-- **shortname** (REQUIRED): Single emoji representing the agent
-- **avatar** (REQUIRED): Single emoji (usually same as shortname)
-- **description** (REQUIRED): One-line description of agent's purpose
-- **whenToUse** (REQUIRED): List of 3-5 specific scenarios when this agent should be invoked
-- **exampleQueries** (REQUIRED): List of 2-4 example user requests this agent handles
+- **name** (REQUIRED): Lowercase letters, numbers, and hyphens only — e.g., `forge-builder`. NO uppercase.
+- **description** (REQUIRED): When Claude should auto-delegate to this agent. Use `<example>` blocks for strong matching.
+- **model** (optional): `sonnet` (default for most), `opus` (high-stakes decisions), `haiku` (fast/cheap tasks)
+- **color** (optional): Valid values: `purple`, `cyan`, `green`, `orange`, `blue`, `red`
+- **tools** (optional): Comma-separated allowlist. Omit `Task` for leaf workers (prevents sub-delegation).
+- **isolation** (optional): `worktree` — gives the agent its own git branch for conflict-free parallel work
+- **memory** (optional): `project` — persists `MEMORY.md` across sessions (checked into git); `user` — all projects
+- **skills** (optional): Comma-separated skill names to preload (full content injected at startup)
+- **disallowedTools** (optional): Tools to explicitly deny (denylist, complements `tools` allowlist)
+- **permissionMode** (optional): `acceptEdits` for auto-accept file edits, `plan` for read-only exploration
 
 ## Agent Structure Template
 
 ```markdown
 ---
 name: your-agent-name
-shortname: 🎯
-avatar: 🎯
-description: What this agent does in one clear sentence
-whenToUse:
-  - Scenario where this agent is needed
-  - Another specific use case
-  - Third scenario
-exampleQueries:
-  - "User request example 1"
-  - "User request example 2"
+description: |
+  Use this agent when [specific scenario]. This includes: [use case 1], [use case 2].
+
+  <example>
+  Context: User wants to do X.
+  user: "Do X"
+  assistant: "I'll use your-agent-name to handle X."
+  <commentary>
+  X is exactly what your-agent-name specializes in.
+  </commentary>
+  </example>
+model: sonnet
+color: cyan
+tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---
 
 # 🎯 Agent Display Name
@@ -309,8 +324,8 @@ cp templates/agent-specialist.template.md .claude/agents/your-agent.md
 # Copy template
 cp templates/agent-coordinator.template.md .claude/agents/orchestrator.md
 
-# Coordinators have pre-filled coordination patterns
-# Just customize for your specific coordination needs
+# Orchestrators have pre-filled orchestration patterns
+# Just customize for your specific orchestration needs
 ```
 
 ### 3. Analyzer Agent Template

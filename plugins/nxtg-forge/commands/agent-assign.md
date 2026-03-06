@@ -1,5 +1,7 @@
 ---
 description: "Assign tasks to specialized agents"
+disable-model-invocation: true
+argument-hint: "[agent-name] [task description]"
 ---
 
 # NXTG-Forge Agent Assignment
@@ -45,14 +47,14 @@ Built-in agents (22):
 - **forge-governance-verifier** - Governance validation
 - **forge-integration** - Service integration
 - **forge-learning** - Knowledge extraction and learning
-- **forge-orchestrator** - Multi-agent coordination
+- **forge-orchestrator** - Multi-agent orchestration
 - **forge-performance** - Performance optimization
 - **forge-refactor** - Code refactoring
 - **forge-release-sentinel** - Release readiness checking
 - **forge-testing** - Test writing and coverage
 - **forge-ui** - UI/UX implementation
 - **forge-oracle** - Strategic analysis and advice
-- **NXTG-CEO-LOOP** - Autonomous CEO decision mode
+- **nxtg-ceo-loop** - Autonomous CEO decision mode
 
 ## Step 2: List Agents (`--list`)
 

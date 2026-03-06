@@ -1,5 +1,7 @@
 ---
 description: "Deploy with pre-flight validation and safety checks"
+disable-model-invocation: true
+argument-hint: "[--env staging|production] [--dry-run]"
 ---
 
 # NXTG-Forge Deploy

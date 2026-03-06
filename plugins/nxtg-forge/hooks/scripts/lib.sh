@@ -419,6 +419,13 @@ is_git_repo() {
     git rev-parse --git-dir > /dev/null 2>&1
 }
 
+# Guard: require git repo or exit gracefully
+require_git() {
+    if ! is_git_repo; then
+        exit 0
+    fi
+}
+
 # Get current branch
 get_current_branch() {
     if is_git_repo; then
@@ -615,6 +622,7 @@ export -f get_file_extension
 export -f has_command
 export -f check_python_tools
 export -f is_git_repo
+export -f require_git
 export -f get_current_branch
 export -f has_uncommitted_changes
 export -f count_uncommitted_files

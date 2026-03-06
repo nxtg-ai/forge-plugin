@@ -1,5 +1,7 @@
 ---
 description: "Save and restore project state checkpoints"
+disable-model-invocation: true
+argument-hint: "[save|restore|list] [checkpoint-name]"
 ---
 
 # NXTG-Forge Checkpoint Manager

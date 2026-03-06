@@ -293,7 +293,7 @@ Skills are context-aware capabilities that activate automatically based on what 
 - Structured brainstorming (`/brainstorm` command)
 - Project planning
 - Code review guidance
-- Parallel agent coordination
+- Parallel agent orchestration
 
 **Architecture Skills:**
 - High-level design consultation

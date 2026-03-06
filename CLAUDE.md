@@ -13,7 +13,7 @@ npm install   # only if node_modules missing
 node index.mjs
 
 # Plugin lives at: plugins/nxtg-forge/
-# Installed by Claude Code via: claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge
+# Installed by Claude Code via: claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install forge
 ```
 
 ## Plugin Structure
@@ -31,7 +31,7 @@ plugins/nxtg-forge/
 │   └── scripts/lib.sh        # Shared utilities
 └── servers/
     └── governance-mcp/       # Node.js MCP server (index.mjs, 8 tools)
-        ├── package.json      # @nxtg-forge/governance-mcp v3.0.0
+        ├── package.json      # @nxtg-forge/governance-mcp v3.2.0
         ├── index.mjs         # 835 lines, ES module
         └── start.sh          # Auto-install launcher
 ```
@@ -44,7 +44,7 @@ plugins/nxtg-forge/
 |----------|----------|
 | **Governance** | `/forge:init`, `/forge:status`, `/forge:status-enhanced`, `/forge:gap-analysis`, `/forge:compliance`, `/forge:command-center` |
 | **Feature Dev** | `/forge:feature`, `/forge:spec`, `/forge:agent-assign`, `/forge:integrate` |
-| **Quality** | `/forge:test`, `/forge:deploy`, `/forge:optimize`, `/forge:upgrade` |
+| **Quality** | `/forge:test`, `/forge:deploy`, `/forge:optimize`, `/forge:update` |
 | **State** | `/forge:checkpoint`, `/forge:restore`, `/forge:report` |
 | **Docs** | `/forge:docs-status`, `/forge:docs-update`, `/forge:docs-audit` |
 | **Dashboard** | `/forge:dashboard` |
@@ -61,7 +61,7 @@ plugins/nxtg-forge/
 | `forge-security` | Vulnerability scanning, OWASP | sonnet |
 | `forge-testing` | Test generation, coverage analysis | sonnet |
 | `forge-performance` | Profiling, bundle optimization | sonnet |
-| `forge-orchestrator` | Multi-agent coordination | opus |
+| `forge-orchestrator` | Multi-agent orchestration | opus |
 | `forge-detective` | Root cause analysis, diagnostics | sonnet |
 | `forge-refactor` | Code restructuring, DRY | sonnet |
 | `forge-devops` | Docker, CI/CD, deployment | sonnet |
@@ -144,7 +144,7 @@ forge-plugin                ──spawns──►     forge-ui (http://localhost
 
 Both run as stdio MCP servers. Claude Code connects to both simultaneously when the plugin is installed and `forge` binary is in PATH.
 
-**The Lego Snap (N-12):** As of v3.0.0, the plugin's `.mcp.json` registers BOTH MCP servers. When Claude Code loads the plugin, it automatically connects to:
+**The Lego Snap (N-12):** As of v3.2.0, the plugin's `.mcp.json` registers BOTH MCP servers. When Claude Code loads the plugin, it automatically connects to:
 1. `governance-mcp` — always available (Node.js, ships with plugin)
 2. `orchestrator-mcp` — available when `forge` binary is installed (Rust, from forge-orchestrator)
 
@@ -196,7 +196,7 @@ Contextual knowledge, patterns, best practices...
 
 ## Key Dimensions
 
-- **Version:** 3.0.0
+- **Version:** 3.2.0
 - **Components:** 21 commands, 22 agents, 29 skills, 6 hooks, 8 MCP tools
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
 - **MCP Server:** Node.js ES module (`@modelcontextprotocol/sdk@^1.12.1`)
@@ -206,8 +206,9 @@ Contextual knowledge, patterns, best practices...
 
 This project is part of NXTG-Forge (P-03) in the ASIF portfolio (Developer Tools vertical).
 
-On every session:
-1. Read `../.asif/NEXUS.md` — check for `## CoS Directives` section
+On every session (check BOTH your own NEXUS and the program NEXUS):
+1. Read `.asif/NEXUS.md` (your own) — check for `## CoS Directives` section
+1a. ALSO read `../.asif/NEXUS.md` (program-level) — check for directives targeting this repo
 2. Execute any PENDING directives before other work (unless Asif overrides)
 3. Write your response inline under each directive
 4. Update initiative statuses in NEXUS if your work changes them

@@ -6,7 +6,7 @@
 
 **Zero-dependency governance for Claude Code.**
 
-This is L1: The Safety Net.
+This is L1: Vibe Coder.
 
 Inside Claude Code, agents already coordinate well. They share orchestration and context. What's missing is judgment: automated checks that catch problems before they reach production, skills that encode your conventions, and hooks that validate before and after every task.
 
@@ -21,7 +21,7 @@ Every governance feature traces to a real failure mode. Hooks that validate befo
 claude plugin marketplace add nxtg-ai/forge-plugin
 
 # Install the plugin
-claude plugin install nxtg-forge
+claude plugin install forge
 ```
 
 That's it. No build step. No config files. No runtime dependencies.
@@ -57,14 +57,14 @@ Governance hooks run automatically. Before every task, pre-task hooks validate t
 
 ## Upgrade Path
 
-For multi-tool coordination across Claude Code, Codex CLI, and Gemini CLI (file locking, shared knowledge, task boards), add the Forge Orchestrator:
+For multi-tool orchestration across Claude Code, Codex CLI, and Gemini CLI (file locking, shared knowledge, task boards), add the Forge Orchestrator:
 
 ```bash
 curl -fsSL https://forge.nxtg.ai/install.sh | sh
 forge init
 ```
 
-One Rust binary. 4MB. 293 tests. Zero runtime dependencies. The orchestrator is the coordination layer that makes separate AI tools work as a team.
+One Rust binary. 4MB. 293 tests. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
 
 For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add Forge UI:
 
@@ -79,8 +79,8 @@ Each depth builds on the last. Nothing forces you to go deeper. Adoption follows
 ## Links
 
 - [Forge Product Page](https://forge.nxtg.ai)
-- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: The Delivery Engine)
-- [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Mission Control)
+- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: Pro Builder)
+- [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Ship Lord)
 
 ## License
 

@@ -21,7 +21,8 @@ description: |
   </commentary>
   </example>
 model: haiku
-color: magenta
+color: purple
+memory: project
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---
 

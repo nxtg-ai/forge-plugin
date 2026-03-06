@@ -1,5 +1,7 @@
 ---
 description: "Restore project state from a checkpoint"
+disable-model-invocation: true
+argument-hint: "[checkpoint-name]"
 ---
 
 # NXTG-Forge Restore

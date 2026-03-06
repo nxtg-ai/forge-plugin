@@ -1,5 +1,6 @@
 ---
 description: "Initialize NXTG-Forge in a project - 60 second setup wizard"
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Initialization Wizard

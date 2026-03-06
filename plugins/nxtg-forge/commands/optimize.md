@@ -1,5 +1,7 @@
 ---
 description: "Analyze and optimize codebase for performance and maintainability"
+disable-model-invocation: true
+argument-hint: "[--scope performance|bundle|deps|code-quality|types] [--fix]"
 ---
 
 # NXTG-Forge Optimizer
@@ -15,6 +17,58 @@ Options:
 - `--scope <area>`: Focus on: `performance`, `bundle`, `deps`, `code-quality`, `types`
 - `--fix`: Apply safe optimizations automatically
 - `--report`: Generate optimization report
+
+## Plan Mode Pre-Flight (for --fix mode)
+
+When `--fix` is specified, ALWAYS run analysis first and present a fix plan before
+writing any files. Never apply fixes without prior approval.
+
+**Required pre-flight sequence:**
+1. Run analysis (read-only) across all 7 dimensions below
+2. Present the fix plan:
+   ```
+   OPTIMIZATION FIX PLAN
+     Files to modify:
+       - {file} — {what will change}
+       - {file} — {what will change}
+
+     Safe auto-fixes: {list}
+     Manual review needed: {list}
+
+   Proceed with fixes? (yes / modify / cancel)
+   ```
+3. Wait for "proceed" before any Edit or Write operations
+
+## Agent Team Execution (Analysis Phase)
+
+When the Task tool is available, spawn 3 parallel agents for the analysis phase
+to reduce analysis time ~3x vs sequential:
+
+```
+Task(
+  subagent_type: "forge-detective",
+  prompt: "Analyze code quality: find files >300 lines, count 'as any' casts,
+           find 'as unknown' assertions, find console.log in production code
+           (exclude test files), count TODO/FIXME/HACK comments. Read-only."
+)
+
+Task(
+  subagent_type: "forge-performance",
+  prompt: "Analyze dependency health: run npm outdated, check for unused deps
+           (npx depcheck if available), report bundle size from dist/ if it exists.
+           Read-only."
+)
+
+Task(
+  subagent_type: "forge-detective",
+  prompt: "Analyze dead code: find exported symbols in src/ that are not imported
+           anywhere else in the codebase. List each unused export with its file
+           and line number. Read-only."
+)
+```
+
+Merge the 3 agent reports into the Output Format below. If Task tool is not available,
+run the 7 dimensions sequentially as documented below.
 
 ## Analysis Dimensions
 

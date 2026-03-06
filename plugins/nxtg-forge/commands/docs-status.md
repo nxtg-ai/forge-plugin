@@ -1,5 +1,6 @@
 ---
 description: "Show documentation health and coverage"
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Documentation Status

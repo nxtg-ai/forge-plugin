@@ -1,5 +1,7 @@
 ---
 description: "Execute project tests with detailed analysis and reporting"
+disable-model-invocation: true
+argument-hint: "[--watch] [--coverage] [test-pattern]"
 ---
 
 # NXTG-Forge Test Runner

@@ -1,5 +1,7 @@
 ---
 description: "Display complete project state (zero-context-friendly)"
+disable-model-invocation: true
+argument-hint: "[--json] [--verbose]"
 ---
 
 # Forge Status
@@ -59,15 +61,15 @@ If the orchestrator MCP server is not available (tools not found), skip this sec
 
 ### 5. Agent Inventory
 
-Agents are loaded from the NXTG-Forge plugin (22 built-in). No need to check `.claude/agents/` — the plugin provides them automatically.
+Agents are loaded from the Forge plugin (22 built-in). No need to check `.claude/agents/` — the plugin provides them automatically.
 
-Report: **Agents: 22 available (from NXTG-Forge plugin)**
+Report: **Agents: 22 available (from Forge plugin)**
 
 ### 6. Command Inventory
 
-Commands are loaded from the NXTG-Forge plugin (21 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
+Commands are loaded from the Forge plugin (21 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
 
-Report: **Commands: 21 available (from NXTG-Forge plugin)**
+Report: **Commands: 21 available (from Forge plugin)**
 
 ### 7. Build Status
 
@@ -81,7 +83,17 @@ IMPORTANT: Do NOT run `npx tsc` if there is no `tsconfig.json`. It will produce 
 
 ### 8. Hook Status
 
-Read `.claude/settings.json` and list configured hooks.
+Hooks are loaded from the Forge plugin (6 built-in). They are defined in the plugin's `hooks/hooks.json` and run automatically — they do NOT require `.claude/settings.json`.
+
+The 6 hooks are:
+- **UserPromptSubmit**: `pre-task.sh` — sync governance state, initialize context
+- **Stop**: `post-task.sh` — quality checks on completed work
+- **Stop**: `audit-root-cleanliness.sh` — flag unnecessary root files
+- **Stop**: `smoke-test-reminder.sh` — remind to test after server/test changes
+- **PostToolUse (Write)**: `enforce-file-placement.sh` — enforce file organization
+- **PostToolUse (Edit/Write)**: `governance-check.sh` — advisory code quality check
+
+Report: **Hooks: 6 active (from Forge plugin)**
 
 ## Display Format — MANDATORY
 
@@ -127,20 +139,45 @@ If the MCP health tool returns individual check results instead of dimension sco
 
 **9. Orchestrator section:** Output `## Orchestrator`. If connected: `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. If NOT connected: output `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\``
 
-**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22), Commands (21), Hooks.
+**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22, Forge plugin), Commands (21, Forge plugin), Hooks (6, Forge plugin).
 
-**11. Quick actions:** Output `**Quick actions:** \`/forge:test\` | \`/forge:gap-analysis\` | \`/forge:feature\` | \`/forge:report\``
+**11. Recovery section (conditional):** If git has uncommitted changes (modified or untracked files from Step 2), output `## Recovery Needed` with a table of uncommitted files and their status.
+
+**12. Interactive menu:** After ALL output is complete, use `AskUserQuestion` to present the user with next actions. Choose the best 3 options based on the health data gathered:
+
+- If health score is low on tests → include "Add tests to boost health"
+- If there are uncommitted changes → include "Commit changes"
+- If governance is not initialized → include "Initialize governance"
+- Always include "Run gap analysis" as a safe default
+- Always include "Plan a feature" as a creative option
+
+Present exactly 4 options via AskUserQuestion (the tool automatically adds an "Other" free-text option):
+
+Example options (adapt based on actual health data):
+- **Commit changes** (description: "Stage and commit your current work")
+- **Add tests** (description: "Generate tests to boost your health score from {grade} to {next_grade}")
+- **Run gap analysis** (description: "Deep dive into testing, docs, security, and architecture gaps")
+- **Plan a feature** (description: "Design and build a new feature with agent orchestration")
+
+**13. Handle the selection:**
+- If "Commit changes" → run the `/commit` skill
+- If "Add tests" → run `/forge:feature "Add comprehensive tests for the project"`
+- If "Run gap analysis" → run `/forge:gap-analysis`
+- If "Plan a feature" → run `/forge:feature`
+- If "Initialize governance" → run `/forge:init`
+- If user types something custom → treat it as a new task and proceed
 
 CRITICAL REMINDERS:
 - Every `##` header triggers color rendering in the TUI — do NOT skip the `##`
 - Progress bars (`████░░░░`) inside table cells make health scores visual and scannable
 - The `⚡` in the H1 title adds visual identity
 - Tables auto-size to content — never pad with spaces
+- The AskUserQuestion at the end turns status from a dead-end into a launchpad
 
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu)
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
@@ -149,18 +186,3 @@ If `$ARGUMENTS` contains:
 
 If any data source is unavailable, show "N/A" for that section rather than failing.
 Always show whatever data IS available.
-
-## Zero-Context Recovery
-
-If governance shows interrupted session or git has uncommitted changes, add a recovery section:
-
-```
-RECOVERY NEEDED
-  Uncommitted changes detected.
-  Last commit: {hash} {message} ({time_ago})
-
-  Options:
-    1. Continue working on current changes
-    2. /forge:checkpoint save   (checkpoint current state)
-    3. git stash              (stash changes)
-```

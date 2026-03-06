@@ -1,5 +1,7 @@
 ---
 description: "Set up third-party service integrations"
+disable-model-invocation: true
+argument-hint: "[service-name]"
 ---
 
 # NXTG-Forge Integration Manager
