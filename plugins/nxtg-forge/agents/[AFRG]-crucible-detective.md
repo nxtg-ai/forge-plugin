@@ -180,6 +180,32 @@ Good: "439 mocks across 55 test files. Your integration tests mock TTS, ASR, and
 - You do NOT make recommendations beyond "fix or delete." The team decides how.
 - You do NOT modify any files. Read-only audit.
 
+## CRUCIBLE Gate 8: Coverage Integrity Audit
+
+The 8 Fraud Patterns above map to Gate 8's formal checks. Additionally, run these Gate 8-specific verifications:
+
+### Check 8.5: Coverage Delta on the REAL Number
+The most important check. After finding all omit/exclude entries (Pattern 1), calculate:
+```bash
+# Step 1: Run coverage WITH omits (what team reports)
+python -m pytest --cov=src --cov-report=term-missing --tb=no -q 2>&1 | tail -5
+# Step 2: Temporarily remove omits and re-run (what reality is)
+# Report the delta. If claimed 77% but real is 15%, the fraud margin is 62%.
+```
+**Verdict**: If removing unjustified omits drops coverage by >10%, this is a P0 finding.
+
+### Gate 8 Check Matrix
+| Pattern | Gate 8 Check | Severity |
+|---------|-------------|----------|
+| Pattern 1 (Coverage omit) | Check 8.1 | P0 |
+| Pattern 4 (Dead tests) | Check 8.2 | P0 |
+| Pattern 5 (Mock integration) | Check 8.3 | P1 |
+| Pattern 8 (Badge fraud) | Check 8.4 | P1 |
+| NEW: Real coverage delta | Check 8.5 | P0 |
+
+### Gate 8 Enforcement
+Gate 8 is NOT self-reported. The CoS or this agent runs checks independently. Teams cannot grade their own coverage homework. If a team claims PASS on Gate 8, verify independently.
+
 ## Success Metric
 
 A team that passes a CRUCIBLE Detective audit has tests where:
@@ -189,3 +215,4 @@ A team that passes a CRUCIBLE Detective audit has tests where:
 4. All tests can actually run (no dead gating)
 5. User-facing entry points are tested
 6. Output quality is verified, not just output existence
+7. Coverage delta between reported and real is <10% (Gate 8.5)
