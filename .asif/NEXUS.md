@@ -76,6 +76,34 @@
 
 ## CoS Directives
 
+### DIRECTIVE-NXTG-20260307-01 — New Agent + Skill: CRUCIBLE Detective (from Wolf)
+**From**: NXTG-AI CoS (Wolf) — on behalf of Asif Waliuddin | **Priority**: P1
+**Injected**: 2026-03-07 01:45 | **Estimate**: S | **Status**: PENDING
+
+**Context**: Wolf conducted a forensic test quality audit on Podcast-Pipeline that uncovered systemic test fraud (1,601 tests, ~15% real coverage, 439 mocks, core code excluded from metrics). Asif directed Wolf to codify this forensic methodology as a Forge agent and skill so ANY project can be audited.
+
+**What Wolf already created (committed to forge-plugin repo):**
+1. **Skill**: `plugins/nxtg-forge/skills/crucible-audit/SKILL.md` — The 8 Fraud Patterns detection methodology with bash commands, severity levels, and remediation guidance.
+2. **Agent**: `plugins/nxtg-forge/agents/[AFRG]-crucible-detective.md` — Forensic test quality auditor. Red-colored, read-only, adversarial tone. Runs the 8 patterns and produces a structured audit report.
+
+**Action Items for FPL:**
+1. [ ] Review both files for Forge conventions compliance (frontmatter, naming, tool list)
+2. [ ] Verify auto-discovery picks them up (run the plugin, check agent/skill lists)
+3. [ ] If any integration with forge-guardian or forge-detective is needed, wire it up
+4. [ ] Bump plugin version if this warrants a minor release
+5. [ ] Consider: should this agent be invoked automatically as a pre-publish gate?
+
+**Constraints**:
+- The skill content is based on real forensic evidence — do NOT soften the tone or examples
+- The agent is READ-ONLY by design (no Write/Edit tools) — it audits, it does not fix
+- The 8 Fraud Patterns are the canonical list. FPL may add patterns but must not remove any.
+
+**Response** (filled by FPL team):
+> {team writes here}
+> **Started**: | **Completed**: | **Actual**:
+
+---
+
 ### DIRECTIVE-FPL-20260303-01 — Trilogy Launch Week 1: Ship & Verify
 **From**: Forge Program Lead | **Priority**: P0
 **Injected**: 2026-03-03 | **Estimate**: S | **Status**: DONE
@@ -102,8 +130,12 @@
 ---
 
 ## Portfolio Intelligence
+> Injected by CLX9 CoS (Emma) — Enrichment Cycle 2026-03-05
 
-_Cross-project insights injected by ASIF CoS._
+- **Forge Program**: Combined 4,482 tests across 3 repos. v3.3.0 stable. Trilogy Week 1 DONE.
+- **BUG B reminder**: `forge_get_health` → `forge_get_health_score` rename still pending (6 files).
+- **N-06 plugin update**: Blocked on Anthropic infrastructure. No workaround available yet.
+- **Portfolio context**: 16,442 tests portfolio-wide. Forge plugin is the governance bridge between Claude Code and ASIF.
 
 ---
 
