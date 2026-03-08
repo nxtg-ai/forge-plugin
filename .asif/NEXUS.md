@@ -373,7 +373,7 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 
 ### DIRECTIVE-NXTG-20260307-05 — CEO-LOOP ORBIT Upgrade
 **From**: NXTG-AI CoS (Wolf) — via CLX9 enrichment (Emma) | **Priority**: P1
-**Injected**: 2026-03-08 10:00 | **Estimate**: L | **Status**: PENDING
+**Injected**: 2026-03-08 10:00 | **Estimate**: L | **Status**: DONE
 
 > **Context**: ASIF studied the CEO-LOOP as input to building the ORBIT model
 > (Governance Loop v2) for portfolio-level autonomy. The ORBIT model's five novel
@@ -435,9 +435,35 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
   escalate for design decision.
 
 **Response** (filled by FPL team):
-> {team writes here when they've acted}
-> **Started**: | **Completed**: | **Actual**:
-> **Commit**: _(required — code-producing directive)_
+> **COMPLETED** — 2026-03-08
+>
+> All 9 steps implemented. Full integration test passed.
+>
+> **Files created:**
+> - `skills/ceo-loop/SKILL.md` — Full ORBIT protocol, Forge-scoped. Schema for decisions.jsonl, progress.md, state.json documented. All 5 phases (OBSERVE/REASON/BUILD/INSPECT/TURN) with bash commands and Agent Team delegation instructions.
+> - `hooks/scripts/ceo-loop-stop.sh` — Executable Stop hook. NO-OP when inactive. When active: reads state, checks TURN conditions (max iterations, time limit), increments counter, reads progress context, builds adaptive prompt, outputs `{"decision":"block","reason":"..."}`. No interference with existing Stop hooks.
+> - `commands/ceo-loop.md` — `/forge:ceo-loop [max-iter] [time-limit]`. Creates state/progress files, reads pending decisions, starts Iteration 1.
+> - `commands/ceo-loop-cancel.md` — `/forge:ceo-loop-cancel`. Graceful exit: session stats, final progress entry, `active:false`. Decision journal preserved.
+>
+> **Files modified:**
+> - `hooks/hooks.json` — ceo-loop-stop.sh added at TOP of Stop array (runs before other Stop hooks)
+> - `agents/[NXTG-CEO]-LOOP.md` — Surgical changes only: added `skills: nxtg-forge:ceo-loop` to frontmatter; replaced pseudocode LOOP PROTOCOL with ORBIT mechanism reference; added DECISION JOURNAL section; added TRUST CALIBRATION section. Identity/vision/decision-matrix untouched.
+> - `servers/governance-mcp/package.json` — v3.3.0 → v3.4.0 (new skill + commands + hook)
+>
+> **Integration test results (Step 8):**
+> - Condition 1 (active loop, within limits): Hook outputs `{"decision":"block","reason":"..."}` with adaptive prompt. Iteration incremented 2→3. State correctly updated. ✓
+> - Condition 2 (max iterations reached): Hook exits 0, sets `active:false`, no output. ✓
+> - Condition 3 (time limit exceeded): Hook exits 0, sets `active:false`. ✓
+> - Condition 4 (no-op when inactive): Empty output, exit 0. ✓
+> - Constraint check: existing Stop hooks (post-task.sh, audit-root-cleanliness.sh, smoke-test-reminder.sh) unaffected — ceo-loop-stop.sh only blocks when explicitly active. ✓
+>
+> **Key design notes:**
+> - The adaptive prompt includes: iteration N of max, estimated budget %, progress file summary, pending decision preview, last retrograde status, accuracy %
+> - Trust calibration: standard/elevated/demoted levels tracked in state.json; demotion alert (accuracy < 80%) surfaces to human in REASON phase
+> - CRLF guard: `sed -i 's/\r//'` required on WSL2 — apply to any new hooks written on this platform
+>
+> **Started**: 2026-03-08 | **Completed**: 2026-03-08 | **Actual**: L
+> **Commit**: pending — ready to commit
 
 ---
 
@@ -461,6 +487,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-03-08 | DIRECTIVE-NXTG-20260307-05 COMPLETED — CEO-LOOP ORBIT Upgrade. v3.4.0. 6 files created/modified. Integration test: 4/4 conditions pass. |
 | 2026-03-08 | DIRECTIVE-FPL-20260307-03 RE-RUN (post-688ea23) — Structured template filled with verified metrics. Verdict: FAIL. 23/23 agents CLEAN. index.mjs 0% coverage (P0). 12/70 hollow assertions (17.1%). 2/3 mutations caught. 6 silent catch blocks. |
 | 2026-03-07 | DIRECTIVE-FPL-20260307-03 initial audit — free-form report (superseded by 2026-03-08 structured template). |
 | 2026-03-07 | DIRECTIVE-NXTG-20260307-01 COMPLETED — crucible-detective TodoWrite removed (READ-ONLY enforced). |
