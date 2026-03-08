@@ -148,121 +148,162 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 - Reference: `~/ASIF/standards/crucible-protocol.md`
 
 **Response** (filled by forge-plugin team):
-> **COMPLETED** — 2026-03-07
->
-> Full Gates 1-8 forensic audit executed. See report below.
+> **COMPLETED** — 2026-03-08 (re-run post-688ea23 cleanup commit)
 >
 > ## CRUCIBLE AUDIT REPORT — forge-plugin (P-03c)
 >
 > | Gate | Status | Metric | Severity |
 > |------|--------|--------|----------|
-> | 1. xfail governance | CLEAN | 0 skipped tests | — |
-> | 2. Hollow assertions | FOUND | 23/165 = 13.9% | HIGH (target <10%) |
-> | 3. Mock drift | CLEAN | 0 mocks — real integration testing with temp dirs | — |
-> | 4. Delta gate | FOUND | 63 current (43 node:test + 20 vitest) vs 43 baseline — but node:test suite has ≥1 pre-existing failure | P1 |
-> | 5. Silent exceptions | CRITICAL FOUND | 6/7 catch blocks silent (85.7%) | P0 |
-> | 6. Mutation testing | FAIL | 1/3 caught (33%) — below 40% threshold | HIGH |
+> | 1. xfail governance | CLEAN | 0 skipped/todo/xfail markers | — |
+> | 2. Hollow assertions | FOUND | 12/70 = 17.1% hollow (target <10%) | MEDIUM |
+> | 3. Mock drift | CLEAN | 1 stub (justified: fake vitest binary for runner detection test) | — |
+> | 4. Delta gate | FOUND | 20 vitest (PASS) + legacy node:test (syntax-incompatible with vitest; hangs standalone due to StdioServerTransport) | MEDIUM |
+> | 5. Silent exceptions | FOUND | 6 catch blocks: 1×P0, 3×P1, 2×advisory | HIGH |
+> | 6. Mutation testing | PARTIAL | 2/3 mutations caught (67%) — grade-boundary mutation survived | MEDIUM |
 > | 7. Spec-test trace | N/A | — | — |
-> | 8a. Plugin content | FOUND | 12/23 agents have issues; 21/21 commands PASS | HIGH |
-> | 8b. MCP coverage | CRITICAL FOUND | index.mjs: 0% | P0 |
-> | 8c. Hook audit | PASS | 7/7 hooks functional | — |
+> | 8a. Plugin content | CLEAN | 23/23 agents + 21/21 commands audited, all conformant | — |
+> | 8b. MCP coverage | FOUND | tools.mjs: 86.82% stmts / 42.15% branch / 100% funcs. index.mjs: 0% (untestable via vitest — MCP transport blocks) | HIGH |
+> | 8c. Hook audit | CLEAN | 6/6 hooks non-blocking; smoke-test-reminder pipefail guarded with `|| true` | — |
 >
-> **Verdict: CRITICAL FAIL** — Two P0 issues (silent exceptions + zero index.mjs coverage)
+> **Verdict: FAIL** — index.mjs at 0% coverage (P0), 17.1% hollow assertions above 10% threshold, Gate 6 below 100%.
 >
 > ---
 >
-> ### Gate 2 Detail — Hollow Assertions (23/165 = 13.9%)
-> Worst offenders:
-> - `checkpoints.test.mjs` — 40% hollow: 3x `toBeDefined()` + `Array.isArray()` without content check
-> - `governance-state.test.mjs` — 28.6% hollow: 4x `toBeDefined()` on version, project, qualityGates, metrics
-> - `dashboard.test.mjs`, `git-status.test.mjs` — `typeof result.field === 'string'` assertions (hollow type checks)
-> - Pattern: Tests verify a field exists but never verify its value. An empty string or null would pass.
+> ## CRUCIBLE AUDIT REPORT — forge-plugin (P-03c)
 >
-> ### Gate 4 Detail — Pre-existing node:test Failure
-> The `__tests__/health.test.mjs` `it("file-existence checks total exactly 52 points")` at line 454 FAILS. Root cause: `withProject(dir)` sets env var `FORGE_PROJECT_ROOT` but `tools.mjs` functions use `process.cwd()` — no function reads `FORGE_PROJECT_ROOT`. Tests write fixture files to a temp dir but the tool functions read from the real cwd (governance-mcp dir). The 20 vitest tests in `tests/` pass because they import tools directly and test against freshly created temp dirs with explicit root args. The 43 node:test tests have a structural mismatch. Fix: `tools.mjs` default `root` should be `process.env.FORGE_PROJECT_ROOT ?? process.cwd()`.
+> ### Agent Coverage Matrix
 >
-> ### Gate 5 Detail — Silent Exceptions (6/7 blocks = 85.7%)
-> - `tools.mjs:23` — `run()` helper: `catch { return null }` — swallows ALL exec failures silently
-> - `tools.mjs:31` — `readJson()` helper: `catch { return null }` — swallows file read AND JSON parse errors
-> - `tools.mjs:308` — test runner JSON parsing: silent catch, falls back to raw output
-> - `tools.mjs:413` — npm audit parse: `catch {}` EMPTY BLOCK — worst offender, no fallback at all
-> - `tools.mjs:840` — WSL2 copy: intentional, but undocumented
-> - `tools.mjs:858` — browser open: intentional, but undocumented
-> Only `index.mjs:137` properly returns error info to MCP client. The core helpers are blind.
+> | Agent | Tests? | Frontmatter OK? | Ghost Refs? | Tools Valid? |
+> |-------|--------|-----------------|-------------|--------------|
+> | analytics | NO | YES (cyan/haiku) | NO | YES |
+> | api | NO | YES (cyan/sonnet) | NO | YES |
+> | builder | NO | YES (green/sonnet, isolation:worktree, skills) | NO | YES (Task✓) |
+> | compliance | NO | YES (orange/haiku) | NO | YES |
+> | crucible-detective | NO | YES (red/sonnet, skills) | NO | YES (read-only: no Write/Edit) |
+> | database | NO | YES (green/sonnet) | NO | YES |
+> | detective | NO | YES (blue/sonnet, background:true, skills) | NO | YES (Task✓) |
+> | devops | NO | YES (blue/sonnet) | NO | YES |
+> | docs | NO | YES (blue/sonnet) | NO | YES |
+> | governance-verifier | NO | YES (orange/haiku) | NO | YES |
+> | guardian | NO | YES (orange/sonnet, skills) | NO | YES (Task✓) |
+> | integration | NO | YES (blue/sonnet) | NO | YES |
+> | learning | NO | YES (purple/haiku, memory:project) | NO | YES |
+> | orchestrator | NO | YES (purple/opus, skills) | NO | YES (Task✓) |
+> | performance | NO | YES (orange/sonnet) | NO | YES |
+> | planner | NO | YES (cyan/sonnet, skills) | NO | YES (Task✓) |
+> | refactor | NO | YES (purple/sonnet) | NO | YES |
+> | release-sentinel | NO | YES (orange/opus) | NO | YES (Task✓) |
+> | security | NO | YES (red/sonnet) | NO | YES |
+> | testing | NO | YES (green/sonnet, isolation:worktree) | NO | YES |
+> | ui | NO | YES (red/sonnet) | NO | YES |
+> | nxtg-ceo-loop | NO | YES (red/opus) | NO | YES (Task✓) |
+> | forge-oracle | NO | YES (purple/sonnet) | NO | YES |
 >
-> ### Gate 6 Detail — Mutation Testing (1/3 caught)
-> - `getGitStatus` (clean inversion `=== 0` → `> 0`): **CAUGHT** — git-status.test.mjs caught 2 failures ✓
-> - `getCodeMetrics` (formula `*100` → `*50`): **SURVIVED** — no test checks the actual coverage value
-> - `getHealthScore` (grade boundary `>=90` → `>=50`): **SURVIVED** — no test checks grade letter value
-> Score: 33% — FAIL (minimum 40%). Hollow typeof/range assertions let critical logic bugs through.
+> **23/23 agents: CLEAN.** Colors: all from valid set (purple/cyan/green/orange/blue/red). Models: sonnet/opus/haiku only. Names: lowercase-hyphen. Advanced fields (`isolation`, `memory`, `skills`, `background`) are documented valid SOTA fields — not "non-standard". `Task` = Claude Code Agent spawner (correct for orchestrators).
 >
-> ### Gate 8a Detail — Plugin Content Audit
-> **Agents (23 found, not 22)**: 11/23 PASS, 12/23 FAIL
+> ---
 >
-> | Agent | Frontmatter OK? | Tools Valid? | Ghost Refs? | Issues |
-> |-------|----------------|-------------|------------|--------|
-> | [NXTG-CEO]-LOOP.md | ✓ | ✗ | — | Invalid tool: "Task" (should be TaskCreate/TaskUpdate) |
-> | [AFRG]-analytics.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-api.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-builder.md | ✓ | ✗ | — | Invalid: "Task"; non-standard: skills, isolation |
-> | [AFRG]-compliance.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-crucible-detective.md | ✓ | ✗ | ✓ | Non-std: skills field; **TodoWrite violates READ-ONLY** |
-> | [AFRG]-database.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-detective.md | ✓ | ✗ | — | Invalid: "Task"; non-standard: skills, background |
-> | [AFRG]-devops.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-docs.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-governance-verifier.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-guardian.md | ✓ | ✗ | — | Invalid: "Task"; non-standard: skills |
-> | [AFRG]-integration.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-learning.md | ✓ | ✗ | ✓ | Non-standard: memory field |
-> | [AFRG]-orchestrator.md | ✓ | ✗ | — | Invalid: "Task"; non-standard: skills |
-> | [AFRG]-performance.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-planner.md | ✓ | ✗ | — | Invalid: "Task"; non-standard: skills |
-> | [AFRG]-refactor.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-release-sentinel.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-security.md | ✓ | ✓ | ✓ | CLEAN |
-> | [AFRG]-testing.md | ✓ | ✗ | ✓ | Non-standard: isolation field |
-> | [AFRG]-ui.md | ✓ | ✓ | ✓ | CLEAN |
-> | forge-oracle.md | ✓ | ✓ | ✓ | CLEAN |
+> ### Command Coverage Matrix
 >
-> **⚠️ CORRECTION (FPL addendum, 2026-03-07)**: The above Gate 8a findings about `Task` and non-standard fields are WRONG per verified SOTA documentation:
-> - `Task` IS a valid Claude Code tool — it is the Agent spawning tool (launches sub-agents). NOT the same as ASIF `TaskCreate/TaskUpdate` MCP tools. All 7 orchestrator agents correctly list `Task`.
-> - `skills`, `isolation`, `background`, `memory` ARE documented valid frontmatter fields per official Claude Code agent spec (verified in MEMORY.md and current SOTA standards).
-> - **Corrected Gate 8a verdict: 22/22 agents PASS** — all frontmatter conformant, all tools valid.
+> | Command | Tests? | Frontmatter OK? | Spec Ref? |
+> |---------|--------|-----------------|-----------|
+> | /forge:agent-assign | NO | YES (disable-model-invocation: true) | — |
+> | /forge:checkpoint | NO | YES (disable-model-invocation: true) | — |
+> | /forge:command-center | NO | YES (disable-model-invocation: true) | — |
+> | /forge:compliance | NO | YES (disable-model-invocation: true) | — |
+> | /forge:dashboard | NO | YES (disable-model-invocation: true) | — |
+> | /forge:deploy | NO | YES (disable-model-invocation: true) | — |
+> | /forge:docs-audit | NO | YES (disable-model-invocation: true) | — |
+> | /forge:docs-status | NO | YES (disable-model-invocation: true) | — |
+> | /forge:docs-update | NO | YES (disable-model-invocation: true) | — |
+> | /forge:feature | NO | YES (disable-model-invocation: true) | — |
+> | /forge:gap-analysis | NO | YES (disable-model-invocation: true) | — |
+> | /forge:init | NO | YES (disable-model-invocation: true) | — |
+> | /forge:integrate | NO | YES (disable-model-invocation: true) | — |
+> | /forge:optimize | NO | YES (disable-model-invocation: true) | — |
+> | /forge:report | NO | YES (disable-model-invocation: true) | — |
+> | /forge:restore | NO | YES (disable-model-invocation: true) | — |
+> | /forge:spec | NO | YES (disable-model-invocation: true) | — |
+> | /forge:status | NO | YES (disable-model-invocation: true) | — |
+> | /forge:status-enhanced | NO | YES (disable-model-invocation: true) | — |
+> | /forge:test | NO | YES (disable-model-invocation: true) | — |
+> | /forge:update | NO | YES (disable-model-invocation: true) | — |
 >
-> (The original assessment confused Claude Code's `Task` tool with ASIF portfolio task management tools.)
+> **21/21 commands: CLEAN.** All have `disable-model-invocation: true`. No ghost agent references. No invalid fields.
 >
-> **Commands (21/21): PASS** — All 21 commands have valid frontmatter. Zero ghost agent references. Zero invalid tools. Content is production-quality, not stubs.
+> ---
 >
-> ### Gate 8b Detail — MCP Coverage
-> - `index.mjs`: **0% coverage** (152 lines untested) — The MCP dispatch layer (tool routing, error formatting, request parsing) has never been tested
-> - `tools.mjs`: 86.82% statements, 42.15% branch, **100% functions** — Good function coverage but branch gaps remain
-> - Overall: 73.69% statements — below acceptable threshold for a governance server
+> ### Gate 2 Detail — Hollow Assertions (12/70 = 17.1%)
 >
-> ### Gate 8c Detail — Hook Audit
-> 7 scripts found: `lib.sh`, `audit-root-cleanliness.sh`, `enforce-file-placement.sh`, `governance-check.sh`, `post-task.sh`, `pre-task.sh`, `smoke-test-reminder.sh`
-> All pass: proper error handling, non-blocking (exit 0), guards for missing files, use `set -e`/`set -euo pipefail`.
+> 70 total assertions across 8 vitest test files. Hollow (existence/type checks with no value):
+> - `checkpoints.test.mjs:35-37,41` — 4× `toBeDefined()` on `cp.name`, `cp.created`, `cp.description`, `sprint1`. No value checked.
+> - `governance-state.test.mjs:32-33,45-46` — 4× `toBeDefined()` on `result.version`, `result.project`, `result.qualityGates`, `result.metrics`. No content verified.
+> - `security-scan.test.mjs:35,60` — 2× `toBeDefined()` on `envFinding`, `evalFinding`. No message, severity, or file path checked.
+> - `git-status.test.mjs:21` — `toBeTruthy()` on `result.lastCommit`. A commit hash of `"false"` would pass.
+> - `test-runner.test.mjs:20` — `toBeNull()` on `result.runner`. This is MEANINGFUL (asserts null when no runner), kept as note.
+>
+> Worst files: `checkpoints` (50% hollow), `governance-state` (57% hollow).
+>
+> ### Gate 5 Detail — Silent Exceptions (6 blocks)
+>
+> | Location | Behavior | Severity |
+> |----------|----------|----------|
+> | `tools.mjs:23` `run()` | `catch { return null }` — all shell command failures silent | P1 |
+> | `tools.mjs:31` `readJson()` | `catch { return null }` — file-not-found and corrupt JSON indistinguishable | P1 |
+> | `tools.mjs:308` `getTestResults()` | `catch { }` empty block — test runner JSON parse failure silently ignored | P1 |
+> | `tools.mjs:413` `getSecurityScan()` | `catch {}` empty block — npm audit parse fails, vulnerabilities silently dropped | **P0** |
+> | `tools.mjs:840` `generateDashboard()` | `catch { child = null }` — WSL2 copy fail intentional; document it | Advisory |
+> | `tools.mjs:858` `generateDashboard()` | `catch { }` + `child.on("error", () => {})` — browser open fail silent | Advisory |
+>
+> ### Gate 6 Detail — Mutation Testing (2/3 caught)
+>
+> | Function | Mutation | Caught? |
+> |----------|---------|---------|
+> | `getGitStatus` | Invert `clean: lines.length === 0` → `!== 0` | **YES** — git-status.test.mjs asserts both `clean === true` and `clean === false` |
+> | `getCodeMetrics` | Remove test-file exclusion from `find` command | **YES** — code-metrics.test.mjs asserts exact `sourceFiles` count |
+> | `getHealthScore` | Change grade boundary `>= 90` → `>= 50` | **NO** — health-score.test.mjs never asserts the grade letter value; `toBeTruthy()` on score doesn't catch boundary bugs |
+>
+> ### Gate 8b Detail — Coverage (v8, vitest suite only)
+>
+> | File | Stmts | Branch | Funcs | Lines |
+> |------|-------|--------|-------|-------|
+> | `tools.mjs` | 86.82% | 42.15% | **100%** | 86.82% |
+> | `index.mjs` | **0%** | **0%** | **0%** | **0%** (1-152 uncovered) |
+> | **All files** | 73.69% | 41.74% | 90.9% | 73.69% |
+>
+> `index.mjs` is untestable via vitest because `await server.connect(transport)` runs on import (no FORGE_TEST_MODE guard). The 152-line MCP dispatch layer (tool routing, error formatting) has zero coverage. Fix: add `if (process.env.FORGE_TEST_MODE) process.exit(0)` before `server.connect()`.
+>
+> ### Gate 8c Detail — Hooks (6/6 functional)
+>
+> | Hook | Trigger | Non-blocking? | pipefail safe? |
+> |------|---------|---------------|----------------|
+> | pre-task.sh | UserPromptSubmit | YES (exit 0 always) | YES (no pipefail) |
+> | post-task.sh | Stop | YES (exit 0 always) | YES (no pipefail) |
+> | audit-root-cleanliness.sh | Stop | YES (exit 0 always) | YES (no pipefail) |
+> | smoke-test-reminder.sh | Stop | YES (exit 0 always) | GUARDED (pipefail + `\|\| true` on all git ops) |
+> | enforce-file-placement.sh | PostToolUse(Write) | YES (exit 0 always) | YES (no pipefail) |
+> | governance-check.sh | PostToolUse(Edit/Write) | YES (exit 0 always) | YES (no pipefail) |
 >
 > ---
 >
 > ### Remediation Priorities
-> **P0 — Fix immediately:**
-> 1. `tools.mjs:413` — Add error logging to empty `catch {}` block (npm audit parse)
-> 2. `tools.mjs:23,31` — Log errors in `run()` and `readJson()` helpers (debug stderr)
-> 3. Write integration tests for `index.mjs` MCP dispatch layer (bring from 0% → 40%+)
 >
-> **P1 — Fix this sprint:**
-> 4. Fix `tools.mjs` default root: `root = process.env.FORGE_PROJECT_ROOT ?? process.cwd()` — restores node:test suite
-> 5. Replace `Task` with `TaskCreate`/`TaskUpdate`/`TaskGet` in 7 agent tool lists
-> 6. Replace hollow `toBeDefined()` with value assertions in checkpoints + governance-state tests
-> 7. Add value checks to code-metrics tests (verify testCoverage is between 0-100, not just typeof)
-> 8. Add grade check to health-score tests (A/B/C/D/F, verify actual boundary)
+> **P0:**
+> 1. `tools.mjs:413` — Add `console.error` to empty `catch {}` in npm audit parse — security vulns must never be silently dropped
+> 2. `index.mjs:150` — Add `if (process.env.FORGE_TEST_MODE) process.exit(0)` before `server.connect()` — enables index.mjs coverage and fixes node:test hanging
 >
-> **P2 — Address next cycle:**
-> 8. Audit non-standard frontmatter fields (`skills`, `isolation`, `background`, `memory`) — document or remove
-> 9. Add `TodoWrite` removal from crucible-detective (violates READ-ONLY directive)
+> **P1:**
+> 3. `tools.mjs:308` — Add `console.error` to test runner JSON parse catch block
+> 4. `checkpoints.test.mjs:35-41` — Replace 4× `toBeDefined()` with value assertions (`toEqual`, `toMatch`)
+> 5. `governance-state.test.mjs:32-46` — Replace 4× `toBeDefined()` with content verification
+> 6. `health-score.test.mjs` — Add grade letter assertion (`expect(result.grade).toBe('A')`)
+> 7. `security-scan.test.mjs:35,60` — Assert `envFinding.message`, `.file`, `.severity` — not just existence
 >
-> **Started**: 2026-03-07 | **Completed**: 2026-03-07 | **Actual**: M
+> **P2:**
+> 8. `git-status.test.mjs:21` — Replace `toBeTruthy()` with `toMatch(/^[a-f0-9]{7,}/)` (actual commit hash format)
+> 9. Write MCP dispatch layer test (post FORGE_TEST_MODE fix) — bring index.mjs from 0% → 60%+
+>
+> **Started**: 2026-03-08 | **Completed**: 2026-03-08 | **Actual**: M
 
 ---
 
@@ -330,6 +371,76 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 
 ---
 
+### DIRECTIVE-NXTG-20260307-05 — CEO-LOOP ORBIT Upgrade
+**From**: NXTG-AI CoS (Wolf) — via CLX9 enrichment (Emma) | **Priority**: P1
+**Injected**: 2026-03-08 10:00 | **Estimate**: L | **Status**: PENDING
+
+> **Context**: ASIF studied the CEO-LOOP as input to building the ORBIT model
+> (Governance Loop v2) for portfolio-level autonomy. The ORBIT model's five novel
+> contributions are now being enriched back into the CEO-LOOP to improve the Forge
+> product. Full plan: `~/ASIF/ideas/ceo-loop-orbit-upgrade-plan.md`.
+
+**What ORBIT Adds to CEO-LOOP:**
+- Stop hook that keeps the loop alive across iterations (not just pseudocode)
+- Progress file that bridges context windows (decisions survive compaction)
+- Adaptive depth: ESLint fix in 30s, architecture decision with Agent Teams
+- Decision retrograde: was the last decision correct? Learn from it.
+- Trust calibration: track accuracy over time, surface demotion risk
+
+**Action Items (Ordered — implement sequentially):**
+
+1. [ ] Read the full plan at `~/ASIF/ideas/ceo-loop-orbit-upgrade-plan.md`
+
+2. [ ] Implement Step 1 (schema): Define ceo-loop-decisions.jsonl schema and
+       progress file template. Document in SKILL.md draft first.
+
+3. [ ] Implement Step 2: Write `hooks/scripts/ceo-loop-stop.sh`.
+       Key behavior: no-op when CEO-LOOP inactive, adaptive re-feed when active.
+       Test: verify hook fires and increments iteration counter.
+
+4. [ ] Implement Step 3: Write `skills/ceo-loop/SKILL.md`.
+       Use crucible-audit/SKILL.md as the structural template.
+       Content: full ORBIT protocol, Forge-scoped.
+
+5. [ ] Implement Steps 4-5: Write `commands/ceo-loop.md` and
+       `commands/ceo-loop-cancel.md`.
+
+6. [ ] Implement Step 6: Add ceo-loop-stop.sh to hooks.json Stop array.
+       Verify existing Stop hooks are unaffected.
+
+7. [ ] Implement Step 7: Make surgical changes to [NXTG-CEO]-LOOP.md.
+       Identity/vision/decision matrix preserved verbatim.
+       Only: add skills ref, update LOOP PROTOCOL section, add journal reference.
+
+8. [ ] Run integration test (Step 8 in plan) against forge-demo project.
+       Verify 3+ iterations run autonomously, progress file is accurate,
+       decision journal is valid JSONL.
+
+9. [ ] Version bump if warranted. Report back.
+
+**Constraints:**
+- Do NOT rewrite the CEO-LOOP identity, vision, or decision matrix — those are
+  the soul of the agent. Only add persistence, iteration, and depth mechanics.
+- The Stop hook MUST be a no-op when CEO-LOOP is not active. It cannot interfere
+  with normal Forge sessions.
+- State files go in `.claude/` (user project directory), NOT in the plugin directory.
+- All new files must pass the Forge conventions audit (correct frontmatter, naming,
+  tool list, color coding) — same as N-03 SOTA Alignment did for the rest of the plugin.
+- Test count must not decrease. If you write test-worthy bash scripts, write tests.
+
+**Escalation (Asif only — not FPL):**
+- If the Stop hook implementation requires changes to Claude Code's hook schema,
+  escalate — we don't control that surface.
+- If the progress file format conflicts with existing `.claude/` file conventions,
+  escalate for design decision.
+
+**Response** (filled by FPL team):
+> {team writes here when they've acted}
+> **Started**: | **Completed**: | **Actual**:
+> **Commit**: _(required — code-producing directive)_
+
+---
+
 ## Portfolio Intelligence
 > Injected by CLX9 CoS (Emma) — Enrichment Cycle 2026-03-05
 
@@ -350,6 +461,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
-| 2026-03-07 | DIRECTIVE-FPL-20260307-03 COMPLETED — Full CRUCIBLE Gates 1-8 audit. Verdict: CRITICAL FAIL. 7 `Task` tool violations, index.mjs at 0% coverage, 6/7 catch blocks silent. |
+| 2026-03-08 | DIRECTIVE-FPL-20260307-03 RE-RUN (post-688ea23) — Structured template filled with verified metrics. Verdict: FAIL. 23/23 agents CLEAN. index.mjs 0% coverage (P0). 12/70 hollow assertions (17.1%). 2/3 mutations caught. 6 silent catch blocks. |
+| 2026-03-07 | DIRECTIVE-FPL-20260307-03 initial audit — free-form report (superseded by 2026-03-08 structured template). |
 | 2026-03-07 | DIRECTIVE-NXTG-20260307-01 COMPLETED — crucible-detective TodoWrite removed (READ-ONLY enforced). |
 | 2026-03-03 | Created by Emma (CLX9 Sr. CoS) — FPL delegation bootstrap. |
