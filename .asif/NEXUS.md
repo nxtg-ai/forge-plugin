@@ -467,6 +467,37 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 
 ---
 
+### DIRECTIVE-NXTG-20260308-10 — P0: CI RED — Fix Missing Exports in index.mjs (43/43 Tests Fail)
+**From**: NXTG-AI CoS (Wolf) | **Priority**: P0
+**Injected**: 2026-03-08 | **Estimate**: S | **Status**: PENDING
+
+**Context**: CI is RED — all 43 governance-mcp tests fail. Asif flagged this directly. The CRUCIBLE audit refactored functions into `tools.mjs` but `index.mjs` does NOT re-export them. Test file `health.test.mjs:21-22` does `await import("../index.mjs")` and destructures 8 functions that are imported into `index.mjs` but never re-exported.
+
+**Root cause**: `index.mjs` lines 16-25 import from `./tools.mjs` but all imports are private (no `export`). Additionally, `findApplicationRoot` is referenced in tests (lines 770-794) but does NOT exist in either `tools.mjs` or `index.mjs`.
+
+**Errors in CI**:
+- `getTestResults is not a function` (line 839)
+- `getSecurityScan is not a function` (line 846)
+- `generateDashboard is not a function` (lines 858, 869)
+- Plus: `findApplicationRoot` (lines 775, 783, 794) — function doesn't exist anywhere
+
+**Action Items**:
+1. [ ] Fix `index.mjs` — re-export all functions the test expects. Add after the existing imports:
+   ```js
+   export { getGovernanceState, getGitStatus, getCodeMetrics, getHealthScore, getTestResults, getSecurityScan, generateDashboard } from "./tools.mjs";
+   ```
+2. [ ] Fix `findApplicationRoot` — either add it to `tools.mjs` (it should find the nearest directory with package.json/pyproject.toml, skipping node_modules/.git/.claude), OR if it was removed intentionally, remove its tests from `health.test.mjs` (lines 770-800, plus the import at line 21). Check git history for what it used to do: `git log --all -p -S "findApplicationRoot" -- index.mjs`
+3. [ ] Run `node --test plugins/nxtg-forge/servers/governance-mcp/__tests__/health.test.mjs` — must pass
+4. [ ] Push. CI must go GREEN.
+
+**Constraints**:
+- Do NOT delete tests to make CI pass. Fix the exports.
+- The functions exist in `tools.mjs` — this is purely a re-export issue.
+
+**Response** (filled by project team):
+
+---
+
 ## Portfolio Intelligence
 > Injected by CLX9 CoS (Emma) — Enrichment Cycle 2026-03-05
 
