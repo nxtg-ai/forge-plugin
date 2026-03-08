@@ -1,32 +1,32 @@
 ---
-name: forge-ui
+name: ui
 description: |
   Use this agent when UI component development, styling, or frontend architecture work is needed. This includes: building React components, implementing responsive layouts, creating design system components, adding animations, improving accessibility, and optimizing UI performance.
 
   <example>
   Context: User needs a new dashboard widget.
   user: "Build a real-time metrics card component"
-  assistant: "I'll use the forge-ui agent to create a polished metrics card with real-time updates."
+  assistant: "I'll use the ui agent to create a polished metrics card with real-time updates."
   <commentary>
-  React component creation with proper styling is a forge-ui task.
+  React component creation with proper styling is a ui task.
   </commentary>
   </example>
 
   <example>
   Context: UI needs accessibility improvements.
   user: "Make the navigation keyboard accessible"
-  assistant: "I'll use the forge-ui agent to add proper ARIA attributes and keyboard navigation."
+  assistant: "I'll use the ui agent to add proper ARIA attributes and keyboard navigation."
   <commentary>
-  Accessibility improvements are a forge-ui specialty.
+  Accessibility improvements are a ui specialty.
   </commentary>
   </example>
 
   <example>
   Context: Layout breaks on mobile.
   user: "The terminal page doesn't work on mobile"
-  assistant: "I'll use the forge-ui agent to implement responsive behavior for the terminal page."
+  assistant: "I'll use the ui agent to implement responsive behavior for the terminal page."
   <commentary>
-  Responsive design fixes are forge-ui tasks.
+  Responsive design fixes are ui tasks.
   </commentary>
   </example>
 model: sonnet

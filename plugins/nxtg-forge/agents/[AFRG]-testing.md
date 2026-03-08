@@ -1,32 +1,32 @@
 ---
-name: forge-testing
+name: testing
 description: |
   Use this agent when test generation, coverage analysis, or test infrastructure work is needed. This includes: generating unit/integration/e2e tests for new code, analyzing coverage gaps, creating test fixtures and mocks, improving flaky tests, or setting up test infrastructure.
 
   <example>
   Context: User has implemented a new service without tests.
   user: "I just wrote the NotificationService, can you generate tests?"
-  assistant: "I'll use the forge-testing agent to generate comprehensive tests for the NotificationService."
+  assistant: "I'll use the testing agent to generate comprehensive tests for the NotificationService."
   <commentary>
-  Since new code needs test coverage, use the forge-testing agent to generate tests with edge cases and mocks.
+  Since new code needs test coverage, use the testing agent to generate tests with edge cases and mocks.
   </commentary>
   </example>
 
   <example>
   Context: User wants to find gaps in test coverage.
   user: "Where are we missing test coverage?"
-  assistant: "I'll use the forge-testing agent to analyze coverage gaps and prioritize what needs testing."
+  assistant: "I'll use the testing agent to analyze coverage gaps and prioritize what needs testing."
   <commentary>
-  Coverage analysis is the forge-testing agent's specialty.
+  Coverage analysis is the testing agent's specialty.
   </commentary>
   </example>
 
   <example>
   Context: Tests are flaky or unreliable.
   user: "Some tests keep failing intermittently"
-  assistant: "I'll use the forge-testing agent to identify and fix flaky tests."
+  assistant: "I'll use the testing agent to identify and fix flaky tests."
   <commentary>
-  Flaky test diagnosis and repair is a core forge-testing capability.
+  Flaky test diagnosis and repair is a core testing capability.
   </commentary>
   </example>
 model: sonnet

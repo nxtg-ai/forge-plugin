@@ -150,12 +150,12 @@ Type `/forge:` and you should see autocomplete suggestions for all 21 commands:
 Ask Claude: "What agents are available from the forge plugin?"
 
 You should see references to 22 agents including:
-- `forge-planner`, `forge-builder`, `forge-guardian`, `forge-security`
-- `forge-testing`, `forge-performance`, `forge-detective`, `forge-refactor`
-- `forge-orchestrator`, `forge-devops`, `forge-api`, `forge-database`
-- `forge-ui`, `forge-docs`, `forge-analytics`, `forge-compliance`
-- `forge-integration`, `forge-learning`, `forge-release-sentinel`
-- `forge-oracle`, `governance-verifier`, `NXTG-CEO-LOOP`
+- `planner`, `builder`, `guardian`, `security`
+- `testing`, `performance`, `detective`, `refactor`
+- `orchestrator`, `devops`, `api`, `database`
+- `ui`, `docs`, `analytics`, `compliance`
+- `integration`, `learning`, `release-sentinel`
+- `oracle`, `governance-verifier`, `NXTG-CEO-LOOP`
 
 **Note:** Agents live in the plugin cache directory. They are NOT copied to `~/.claude/agents/` or your project. This is correct behavior.
 
@@ -311,7 +311,7 @@ Agents are invoked automatically by commands or manually via the Task tool.
 
 When Claude needs a specialist, it uses the Task tool to spawn an agent:
 ```
-Task tool → selects agent (e.g., forge-security) → Claude loads the agent's .md file → executes with specialized instructions
+Task tool → selects agent (e.g., security) → Claude loads the agent's .md file → executes with specialized instructions
 ```
 
 **You don't need to do anything special.** Commands like `/forge:feature` automatically invoke the right agents.
@@ -324,7 +324,7 @@ Task tool → selects agent (e.g., forge-security) → Claude loads the agent's 
 
 Claude will:
 1. Show the available agent roster
-2. Recommend the best agent (e.g., forge-database)
+2. Recommend the best agent (e.g., database)
 3. Invoke the agent to work on the task
 
 ### Where Agents Live (Important!)

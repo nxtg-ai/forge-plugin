@@ -1,32 +1,32 @@
 ---
-name: forge-planner
+name: planner
 description: |
   Use this agent when the user needs strategic feature planning, architecture design, or task breakdown for NXTG-Forge 2.0 projects. This includes scenarios where: (1) the user wants to design a new feature from concept to implementation plan, (2) complex work needs to be decomposed into manageable tasks with dependencies and estimates, (3) architecture decisions need to be made with explicit trade-offs, (4) the user needs refactoring plans with rollback strategies, or (5) the Forge Orchestrator routes the user to planning mode (Option 2: Review & Plan Features).
 
   <example>
   Context: User wants to plan a new authentication feature for their application.
   user: "I need to add OAuth2 authentication to my API"
-  assistant: "This requires strategic feature planning and architecture design. Let me use the Task tool to launch the forge-planner agent to help design this feature comprehensively."
+  assistant: "This requires strategic feature planning and architecture design. Let me use the Task tool to launch the planner agent to help design this feature comprehensively."
   <commentary>
-  Since the user is requesting a new feature that needs architecture design, task breakdown, and implementation strategy, use the forge-planner agent to create a complete feature plan.
+  Since the user is requesting a new feature that needs architecture design, task breakdown, and implementation strategy, use the planner agent to create a complete feature plan.
   </commentary>
   </example>
 
   <example>
   Context: User has a complex feature that needs to be broken down into tasks.
   user: "I have this idea for a real-time notification system but I'm not sure where to start"
-  assistant: "A real-time notification system involves multiple components and decisions. Let me use the Task tool to launch the forge-planner agent to help architect this and create an actionable implementation plan."
+  assistant: "A real-time notification system involves multiple components and decisions. Let me use the Task tool to launch the planner agent to help architect this and create an actionable implementation plan."
   <commentary>
-  The user is expressing uncertainty about how to approach a complex feature. The forge-planner agent will guide them through requirements gathering, architecture design, and task breakdown.
+  The user is expressing uncertainty about how to approach a complex feature. The planner agent will guide them through requirements gathering, architecture design, and task breakdown.
   </commentary>
   </example>
 
   <example>
   Context: User needs to refactor existing code with a clear strategy.
   user: "Our current database layer is a mess, we need to restructure it"
-  assistant: "Refactoring requires careful planning to avoid breaking changes. Let me use the Task tool to launch the forge-planner agent to create a refactoring plan with current state analysis, target state, and rollback strategy."
+  assistant: "Refactoring requires careful planning to avoid breaking changes. Let me use the Task tool to launch the planner agent to create a refactoring plan with current state analysis, target state, and rollback strategy."
   <commentary>
-  Refactoring plans require the forge-planner agent's structured approach to analyze current state, define target state, and provide safe transformation steps.
+  Refactoring plans require the planner agent's structured approach to analyze current state, define target state, and provide safe transformation steps.
   </commentary>
   </example>
 model: sonnet
@@ -392,20 +392,20 @@ writing or delegating:
 
 ## Agent Team Delegation
 
-After the user approves a plan, spawn forge-builder and forge-testing in parallel
+After the user approves a plan, spawn builder and testing in parallel
 using the Task tool. Use this exact invocation pattern:
 
 ```
 # Spawn both simultaneously (no dependencies between them)
 Task(
-  subagent_type: "forge-builder",
+  subagent_type: "builder",
   prompt: "Implement the {feature} per the spec at .claude/plans/{slug}-spec.md.
            Write source files ONLY (src/*.ts). Do NOT write test files.
            No writes outside the declared file list."
 )
 
 Task(
-  subagent_type: "forge-testing",
+  subagent_type: "testing",
   prompt: "Generate tests for the {feature} per the spec at .claude/plans/{slug}-spec.md.
            Write test files ONLY (src/__tests__/*.test.ts). Do NOT write source files.
            No writes outside the test directory."
@@ -413,14 +413,14 @@ Task(
 ```
 
 **File boundary contract (enforced by prompt):**
-- forge-builder writes: `src/*.ts`, `src/**/*.ts` (non-test)
-- forge-testing writes: `src/__tests__/*.test.ts`, `src/**/__tests__/*.test.ts`
+- builder writes: `src/*.ts`, `src/**/*.ts` (non-test)
+- testing writes: `src/__tests__/*.test.ts`, `src/**/__tests__/*.test.ts`
 - No overlap — both agents can run truly in parallel
 
-After both complete, invoke forge-guardian for the quality gate:
+After both complete, invoke guardian for the quality gate:
 ```
 Task(
-  subagent_type: "forge-guardian",
+  subagent_type: "guardian",
   prompt: "Run quality gate on the completed {feature} implementation.
            Check tests, types, and security. Report findings."
 )
@@ -429,21 +429,21 @@ Task(
 ### Domain Routing: Pick the Right Specialist
 
 Before finalizing your Phase B agent list, check the feature domain and add
-the appropriate domain specialist alongside forge-builder + forge-testing:
+the appropriate domain specialist alongside builder + testing:
 
 | Feature Domain | Add to Phase B or Phase C |
 |----------------|--------------------------|
-| Database schema / migrations | forge-database (after forge-builder) |
-| REST API / GraphQL endpoints | forge-api (after forge-builder) |
-| Frontend / React components | forge-ui (after forge-builder) |
-| Third-party service integration | forge-integration (after forge-builder) |
-| Infrastructure / CI/CD | forge-devops (after forge-builder) |
-| Public API / library code | forge-docs (after forge-builder — JSDoc pass) |
-| Compliance-sensitive feature | forge-compliance (in Phase C before forge-guardian) |
-| Performance-critical feature | forge-performance (in Phase C before forge-guardian) |
+| Database schema / migrations | database (after builder) |
+| REST API / GraphQL endpoints | api (after builder) |
+| Frontend / React components | ui (after builder) |
+| Third-party service integration | integration (after builder) |
+| Infrastructure / CI/CD | devops (after builder) |
+| Public API / library code | docs (after builder — JSDoc pass) |
+| Compliance-sensitive feature | compliance (in Phase C before guardian) |
+| Performance-critical feature | performance (in Phase C before guardian) |
 
 For multi-domain features, chain specialists sequentially in Phase C before
-the forge-guardian quality gate.
+the guardian quality gate.
 
 ---
 

@@ -38,7 +38,7 @@ tools: Read, Grep, Glob, Write, Edit, Bash, TodoWrite, Task  # Optional: tool al
 
 ### Frontmatter Fields Explained
 
-- **name** (REQUIRED): Lowercase letters, numbers, and hyphens only — e.g., `forge-builder`. NO uppercase.
+- **name** (REQUIRED): Lowercase letters, numbers, and hyphens only — e.g., `builder`. NO uppercase.
 - **description** (REQUIRED): When Claude should auto-delegate to this agent. Use `<example>` blocks for strong matching.
 - **model** (optional): `sonnet` (default for most), `opus` (high-stakes decisions), `haiku` (fast/cheap tasks)
 - **color** (optional): Valid values: `purple`, `cyan`, `green`, `orange`, `blue`, `red`

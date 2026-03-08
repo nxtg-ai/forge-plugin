@@ -1,23 +1,23 @@
 ---
-name: forge-devops
+name: devops
 description: |
   Use this agent when infrastructure, deployment, CI/CD, or environment configuration work is needed. This includes: Docker/container setup, GitHub Actions workflows, environment variable management, server configuration, monitoring setup, and deployment automation.
 
   <example>
   Context: User needs a Docker setup.
   user: "Containerize the app for production deployment"
-  assistant: "I'll use the forge-devops agent to create Docker configuration for production."
+  assistant: "I'll use the devops agent to create Docker configuration for production."
   <commentary>
-  Containerization is a forge-devops task.
+  Containerization is a devops task.
   </commentary>
   </example>
 
   <example>
   Context: CI pipeline needs enhancement.
   user: "Add a staging deployment step to our GitHub Actions"
-  assistant: "I'll use the forge-devops agent to update the CI/CD pipeline with staging deployment."
+  assistant: "I'll use the devops agent to update the CI/CD pipeline with staging deployment."
   <commentary>
-  CI/CD pipeline work is a forge-devops specialty.
+  CI/CD pipeline work is a devops specialty.
   </commentary>
   </example>
 model: sonnet

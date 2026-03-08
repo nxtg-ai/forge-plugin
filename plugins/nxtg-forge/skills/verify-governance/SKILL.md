@@ -152,8 +152,8 @@ The test change correctly reflects the implementation behavior.
 ## Integration
 
 This skill works with:
-- **forge-oracle**: Shares governance analysis patterns
-- **forge-guardian**: Coordinates on quality concerns
+- **oracle**: Shares governance analysis patterns
+- **guardian**: Coordinates on quality concerns
 - **PostToolUse hooks**: Responds to hook blocks
 
 ## Tips

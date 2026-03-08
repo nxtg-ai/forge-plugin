@@ -55,27 +55,27 @@ plugins/nxtg-forge/
 
 | Agent | Specialty | Model |
 |-------|-----------|-------|
-| `forge-planner` | Architecture design, task breakdown | sonnet |
-| `forge-builder` | Feature implementation with tests | sonnet |
-| `forge-guardian` | Quality gates, pre-commit checks | sonnet |
-| `forge-security` | Vulnerability scanning, OWASP | sonnet |
-| `forge-testing` | Test generation, coverage analysis | sonnet |
-| `forge-performance` | Profiling, bundle optimization | sonnet |
-| `forge-orchestrator` | Multi-agent orchestration | opus |
-| `forge-detective` | Root cause analysis, diagnostics | sonnet |
-| `forge-refactor` | Code restructuring, DRY | sonnet |
-| `forge-devops` | Docker, CI/CD, deployment | sonnet |
-| `forge-api` | REST/GraphQL API design | sonnet |
-| `forge-database` | Schema, migrations, query tuning | sonnet |
-| `forge-ui` | Frontend components, UX | sonnet |
-| `forge-docs` | Technical documentation | sonnet |
-| `forge-analytics` | Metrics, monitoring | sonnet |
-| `forge-compliance` | Regulatory, license auditing | sonnet |
-| `forge-integration` | Third-party service connections | sonnet |
-| `forge-learning` | Knowledge capture, team learning | sonnet |
+| `planner` | Architecture design, task breakdown | sonnet |
+| `builder` | Feature implementation with tests | sonnet |
+| `guardian` | Quality gates, pre-commit checks | sonnet |
+| `security` | Vulnerability scanning, OWASP | sonnet |
+| `testing` | Test generation, coverage analysis | sonnet |
+| `performance` | Profiling, bundle optimization | sonnet |
+| `orchestrator` | Multi-agent orchestration | opus |
+| `detective` | Root cause analysis, diagnostics | sonnet |
+| `refactor` | Code restructuring, DRY | sonnet |
+| `devops` | Docker, CI/CD, deployment | sonnet |
+| `api` | REST/GraphQL API design | sonnet |
+| `database` | Schema, migrations, query tuning | sonnet |
+| `ui` | Frontend components, UX | sonnet |
+| `docs` | Technical documentation | sonnet |
+| `analytics` | Metrics, monitoring | sonnet |
+| `compliance` | Regulatory, license auditing | sonnet |
+| `integration` | Third-party service connections | sonnet |
+| `learning` | Knowledge capture, team learning | sonnet |
 | `release-sentinel` | Version management, releases | sonnet |
 | `governance-verifier` | Quality gate enforcement | sonnet |
-| `forge-oracle` | General advisory, decision support | sonnet |
+| `oracle` | General advisory, decision support | sonnet |
 | `NXTG-CEO-LOOP` | Executive oversight, strategic alignment | opus |
 
 **Format:** Markdown with YAML frontmatter (`name`, `description`, `model`, `color`, `tools`). Body is the agent's system prompt.

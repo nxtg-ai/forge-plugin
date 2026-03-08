@@ -1,23 +1,23 @@
 ---
-name: forge-api
+name: api
 description: |
   Use this agent when API design, endpoint creation, or API integration work is needed. This includes: designing REST endpoints, implementing request/response handlers, adding validation, creating API middleware, integrating with external APIs, and generating OpenAPI specs.
 
   <example>
   Context: User needs a new API endpoint.
   user: "Add a PATCH endpoint for updating agent configuration"
-  assistant: "I'll use the forge-api agent to design and implement the endpoint with validation."
+  assistant: "I'll use the api agent to design and implement the endpoint with validation."
   <commentary>
-  API endpoint creation with proper validation is a forge-api task.
+  API endpoint creation with proper validation is a api task.
   </commentary>
   </example>
 
   <example>
   Context: User wants to integrate an external service.
   user: "Connect to the GitHub API to fetch repo stats"
-  assistant: "I'll use the forge-api agent to implement the GitHub API integration."
+  assistant: "I'll use the api agent to implement the GitHub API integration."
   <commentary>
-  External API integration is a forge-api specialty.
+  External API integration is a api specialty.
   </commentary>
   </example>
 model: sonnet

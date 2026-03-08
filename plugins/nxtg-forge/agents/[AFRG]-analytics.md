@@ -1,23 +1,23 @@
 ---
-name: forge-analytics
+name: analytics
 description: |
   Use this agent when metrics tracking, data analysis, or reporting is needed. This includes: implementing analytics events, building dashboards, analyzing usage patterns, creating reports, tracking KPIs, and measuring feature adoption.
 
   <example>
   Context: User wants to understand usage patterns.
   user: "Which features are used most?"
-  assistant: "I'll use the forge-analytics agent to analyze usage data and create a report."
+  assistant: "I'll use the analytics agent to analyze usage data and create a report."
   <commentary>
-  Usage analysis and reporting is a forge-analytics task.
+  Usage analysis and reporting is a analytics task.
   </commentary>
   </example>
 
   <example>
   Context: User needs to track a new metric.
   user: "Track how long each agent takes to complete tasks"
-  assistant: "I'll use the forge-analytics agent to implement timing instrumentation for agent tasks."
+  assistant: "I'll use the analytics agent to implement timing instrumentation for agent tasks."
   <commentary>
-  Metrics instrumentation is a forge-analytics specialty.
+  Metrics instrumentation is a analytics specialty.
   </commentary>
   </example>
 model: haiku

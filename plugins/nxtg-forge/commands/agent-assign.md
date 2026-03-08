@@ -33,27 +33,27 @@ This connects the plugin's agent system to the orchestrator's task management.
 The following agents are available via the Task tool. They don't need to be in `.claude/agents/` -- they're loaded from the plugin automatically.
 
 Built-in agents (22):
-- **forge-builder** - Code implementation and feature building
-- **forge-planner** - Architecture and planning
-- **forge-guardian** - Quality gate and governance enforcement
-- **forge-detective** - Bug investigation and root cause analysis
-- **forge-security** - Security auditing and vulnerability scanning
-- **forge-api** - API design and implementation
-- **forge-analytics** - Data analysis and metrics
-- **forge-compliance** - Compliance verification
-- **forge-database** - Database design and queries
-- **forge-devops** - CI/CD and deployment
-- **forge-docs** - Documentation writing
-- **forge-governance-verifier** - Governance validation
-- **forge-integration** - Service integration
-- **forge-learning** - Knowledge extraction and learning
-- **forge-orchestrator** - Multi-agent orchestration
-- **forge-performance** - Performance optimization
-- **forge-refactor** - Code refactoring
-- **forge-release-sentinel** - Release readiness checking
-- **forge-testing** - Test writing and coverage
-- **forge-ui** - UI/UX implementation
-- **forge-oracle** - Strategic analysis and advice
+- **builder** - Code implementation and feature building
+- **planner** - Architecture and planning
+- **guardian** - Quality gate and governance enforcement
+- **detective** - Bug investigation and root cause analysis
+- **security** - Security auditing and vulnerability scanning
+- **api** - API design and implementation
+- **analytics** - Data analysis and metrics
+- **compliance** - Compliance verification
+- **database** - Database design and queries
+- **devops** - CI/CD and deployment
+- **docs** - Documentation writing
+- **governance-verifier** - Governance validation
+- **integration** - Service integration
+- **learning** - Knowledge extraction and learning
+- **orchestrator** - Multi-agent orchestration
+- **performance** - Performance optimization
+- **refactor** - Code refactoring
+- **release-sentinel** - Release readiness checking
+- **testing** - Test writing and coverage
+- **ui** - UI/UX implementation
+- **oracle** - Strategic analysis and advice
 - **nxtg-ceo-loop** - Autonomous CEO decision mode
 
 ## Step 2: List Agents (`--list`)

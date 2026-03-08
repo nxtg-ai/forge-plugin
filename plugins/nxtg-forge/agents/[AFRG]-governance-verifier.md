@@ -139,7 +139,7 @@ When invoked, produce a clear verification report:
 
 ## Integration Points
 
-### With forge-oracle
+### With oracle
 - Shares sentinel log for audit trail
 - Respects same confidence thresholds
 - Uses same severity levels

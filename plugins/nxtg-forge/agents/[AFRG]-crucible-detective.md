@@ -41,7 +41,7 @@ description: |
 model: sonnet
 color: red
 skills: nxtg-forge:crucible-audit, nxtg-forge:testing, nxtg-forge:core-testing
-tools: Glob, Grep, Read, Bash, TodoWrite
+tools: Glob, Grep, Read, Bash
 ---
 
 # CRUCIBLE Detective Agent

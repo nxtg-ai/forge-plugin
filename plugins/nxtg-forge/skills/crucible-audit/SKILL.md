@@ -1,5 +1,5 @@
 ---
-name: CRUCIBLE Audit
+name: crucible-audit
 description: Forensic test quality auditing based on the CRUCIBLE Protocol. Detects test fraud — hollow assertions, coverage gaming, mock proliferation, dead tests, and metric inflation that creates false green signals.
 ---
 

@@ -1,23 +1,23 @@
 ---
-name: forge-integration
+name: integration
 description: |
   Use this agent when connecting to external services, APIs, or third-party tools. This includes: GitHub API integration, Sentry setup, webhook handling, OAuth flows, MCP server connections, and service-to-service communication.
 
   <example>
   Context: User wants GitHub integration.
   user: "Connect to GitHub to show PR status in the dashboard"
-  assistant: "I'll use the forge-integration agent to implement the GitHub API integration."
+  assistant: "I'll use the integration agent to implement the GitHub API integration."
   <commentary>
-  External service integration is a forge-integration task.
+  External service integration is a integration task.
   </commentary>
   </example>
 
   <example>
   Context: User needs webhook handling.
   user: "Set up a webhook endpoint for GitHub push events"
-  assistant: "I'll use the forge-integration agent to create the webhook handler with signature verification."
+  assistant: "I'll use the integration agent to create the webhook handler with signature verification."
   <commentary>
-  Webhook implementation with security is a forge-integration specialty.
+  Webhook implementation with security is a integration specialty.
   </commentary>
   </example>
 model: sonnet

@@ -81,17 +81,17 @@ After user approval (Step 4), execute via a 3-phase pipeline:
 
 **Phase A — Finalize contracts (sequential):**
 
-Invoke forge-planner to confirm interface contracts are locked in the spec file.
+Invoke planner to confirm interface contracts are locked in the spec file.
 The spec at `.claude/plans/{feature-slug}-spec.md` must define all type signatures
 and file boundaries before Phase B begins.
 
 **Phase B — Parallel build + test (simultaneous):**
 
-Spawn forge-builder and forge-testing at the same time using the Task tool:
+Spawn builder and testing at the same time using the Task tool:
 
 ```
 Task(
-  subagent_type: "forge-builder",
+  subagent_type: "builder",
   prompt: "Implement the {feature_name} feature per the spec at
            .claude/plans/{feature-slug}-spec.md.
            Write source files ONLY as listed in 'Files to Create/Modify'.
@@ -99,7 +99,7 @@ Task(
 )
 
 Task(
-  subagent_type: "forge-testing",
+  subagent_type: "testing",
   prompt: "Generate comprehensive tests for the {feature_name} feature per the spec at
            .claude/plans/{feature-slug}-spec.md.
            Write test files ONLY (src/__tests__/*.test.ts or *.test.ts alongside source).
@@ -113,7 +113,7 @@ Wait for both Tasks to complete before proceeding to Phase C.
 
 ```
 Task(
-  subagent_type: "forge-guardian",
+  subagent_type: "guardian",
   prompt: "Run quality gate on the completed {feature_name} implementation.
            Check: all tests pass, zero type errors (tsc --noEmit), no security issues.
            Report findings."

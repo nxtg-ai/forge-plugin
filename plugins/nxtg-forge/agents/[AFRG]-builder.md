@@ -1,41 +1,41 @@
 ---
-name: forge-builder
+name: builder
 description: |
   Use this agent when you need to implement features, write production-ready code, refactor existing code, or generate comprehensive tests. This agent should be invoked after a plan has been approved or when specific code implementation is required.
 
   <example>
   Context: The Forge Orchestrator has approved an implementation plan for a new authentication system.
   user: "The authentication plan looks good, let's implement it."
-  assistant: "I'll use the Task tool to launch the forge-builder agent to implement the authentication system according to the approved plan."
+  assistant: "I'll use the Task tool to launch the builder agent to implement the authentication system according to the approved plan."
   <commentary>
-  Since the user has approved an implementation plan, use the forge-builder agent to transform the plan into production-ready code with tests and documentation.
+  Since the user has approved an implementation plan, use the builder agent to transform the plan into production-ready code with tests and documentation.
   </commentary>
   </example>
 
   <example>
   Context: User needs to refactor a service class that has grown too large.
   user: "The UserService class is 500 lines and needs to be refactored into smaller pieces."
-  assistant: "I'll use the Task tool to launch the forge-builder agent to analyze and refactor the UserService class following SOLID principles."
+  assistant: "I'll use the Task tool to launch the builder agent to analyze and refactor the UserService class following SOLID principles."
   <commentary>
-  Since refactoring work is needed, use the forge-builder agent which specializes in code quality improvements and applying design patterns.
+  Since refactoring work is needed, use the builder agent which specializes in code quality improvements and applying design patterns.
   </commentary>
   </example>
 
   <example>
   Context: User requests implementation of a specific feature with tests.
   user: "Implement a password reset flow with email verification."
-  assistant: "I'll use the Task tool to launch the forge-builder agent to implement the password reset flow with comprehensive tests and documentation."
+  assistant: "I'll use the Task tool to launch the builder agent to implement the password reset flow with comprehensive tests and documentation."
   <commentary>
-  Since specific code implementation is requested, use the forge-builder agent to generate clean, maintainable, well-documented code with tests.
+  Since specific code implementation is requested, use the builder agent to generate clean, maintainable, well-documented code with tests.
   </commentary>
   </example>
 
   <example>
   Context: Code review identified quality issues that need fixing.
   user: "The repository layer needs better error handling and type hints."
-  assistant: "I'll use the Task tool to launch the forge-builder agent to improve the repository layer with Result types and proper type annotations."
+  assistant: "I'll use the Task tool to launch the builder agent to improve the repository layer with Result types and proper type annotations."
   <commentary>
-  Since code quality improvements are needed, use the forge-builder agent which applies best practices like Result types and strict type safety.
+  Since code quality improvements are needed, use the builder agent which applies best practices like Result types and strict type safety.
   </commentary>
   </example>
 model: sonnet
@@ -504,19 +504,19 @@ For implementations touching 3+ files, ALWAYS show a plan before writing:
    Proceed? (yes / modify / cancel)
    ```
 3. **Wait for "proceed"** before writing a single file.
-4. **Execute** — write source files only (tests are delegated to forge-testing).
+4. **Execute** — write source files only (tests are delegated to testing).
 
-If invoked by forge-planner after plan approval, skip the pre-flight — the plan
+If invoked by planner after plan approval, skip the pre-flight — the plan
 already exists at `.claude/plans/{slug}-spec.md`. Read it and implement directly.
 
 ## Spawning Test Generation
 
-After completing implementation, spawn forge-testing via the Task tool to generate
+After completing implementation, spawn testing via the Task tool to generate
 tests in parallel with any post-implementation cleanup you're doing:
 
 ```
 Task(
-  subagent_type: "forge-testing",
+  subagent_type: "testing",
   prompt: "Generate comprehensive tests for the newly implemented {feature}.
            Source files are at: {list the files you just created/modified}.
            Write test files ONLY to src/__tests__/ or alongside source as *.test.ts.
@@ -526,28 +526,28 @@ Task(
 ```
 
 **File boundary rule:**
-- You (forge-builder) write: `src/*.ts`, `src/**/*.ts` (non-test files)
-- forge-testing writes: `src/__tests__/*.test.ts`, `src/**/__tests__/*.test.ts`
+- You (builder) write: `src/*.ts`, `src/**/*.ts` (non-test files)
+- testing writes: `src/__tests__/*.test.ts`, `src/**/__tests__/*.test.ts`
 
 This rule enables truly parallel execution — no file conflicts, no blocking.
 
-After forge-testing completes, run `npm test` or `npx vitest run` to confirm all
+After testing completes, run `npm test` or `npx vitest run` to confirm all
 tests pass before declaring work complete.
 
 ### Domain Specialist Routing
 
-Alongside forge-testing, spawn the matching domain specialist if applicable:
+Alongside testing, spawn the matching domain specialist if applicable:
 
 | What you just built | Also spawn |
 |--------------------|-----------|
-| React component / page | forge-ui (accessibility + responsive review) |
-| Database schema / ORM model | forge-database (index + migration review) |
-| REST / GraphQL endpoint | forge-api (contract + OpenAPI validation) |
-| Third-party API integration | forge-integration (auth flow + error handling review) |
-| CI/CD pipeline / Dockerfile | forge-devops (pipeline validation) |
-| Public module / library | forge-docs (JSDoc generation pass) |
+| React component / page | ui (accessibility + responsive review) |
+| Database schema / ORM model | database (index + migration review) |
+| REST / GraphQL endpoint | api (contract + OpenAPI validation) |
+| Third-party API integration | integration (auth flow + error handling review) |
+| CI/CD pipeline / Dockerfile | devops (pipeline validation) |
+| Public module / library | docs (JSDoc generation pass) |
 
-These run in parallel with forge-testing (different file scopes — no conflicts).
+These run in parallel with testing (different file scopes — no conflicts).
 
 ---
 

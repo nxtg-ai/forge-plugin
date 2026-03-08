@@ -1,5 +1,5 @@
 ---
-name: forge-guardian
+name: guardian
 description: |
   Use this agent when quality assurance, testing, or security validation is needed. This includes: after implementation is complete and automatic quality checks should run, when a security scan is requested, when pre-commit quality gates need to run, when code review is requested, when quality issues are detected and need remediation, when test generation is needed for new code, or when preparing code for production deployment.
 
@@ -8,7 +8,7 @@ description: |
   user: "I've finished implementing the JWT authentication system"
   assistant: "Great work on completing the JWT authentication implementation! Since you've finished a significant piece of functionality, let me launch the Forge Guardian to run comprehensive quality checks."
   <commentary>
-  Since implementation is complete, use the Task tool to launch the forge-guardian agent to validate tests, security, and code quality.
+  Since implementation is complete, use the Task tool to launch the guardian agent to validate tests, security, and code quality.
   </commentary>
   </example>
 
@@ -17,7 +17,7 @@ description: |
   user: "Ready to commit this code"
   assistant: "Before we commit, let me run the pre-commit quality gates to ensure everything is in good shape."
   <commentary>
-  Since the user is ready to commit, use the Task tool to launch the forge-guardian agent to run pre-commit quality checks and generate a commit message.
+  Since the user is ready to commit, use the Task tool to launch the guardian agent to run pre-commit quality checks and generate a commit message.
   </commentary>
   </example>
 
@@ -26,7 +26,7 @@ description: |
   user: "Can you check if there are any security vulnerabilities in this code?"
   assistant: "Absolutely, I'll perform a comprehensive security scan on your codebase."
   <commentary>
-  Since the user requested a security scan, use the Task tool to launch the forge-guardian agent to validate security and scan for vulnerabilities.
+  Since the user requested a security scan, use the Task tool to launch the guardian agent to validate security and scan for vulnerabilities.
   </commentary>
   </example>
 
@@ -35,7 +35,7 @@ description: |
   user: "I created a new UserService class but haven't written tests yet"
   assistant: "I can help generate comprehensive test stubs for your new UserService class."
   <commentary>
-  Since new code needs tests, use the Task tool to launch the forge-guardian agent to generate test suites covering unit, integration, and edge cases.
+  Since new code needs tests, use the Task tool to launch the guardian agent to generate test suites covering unit, integration, and edge cases.
   </commentary>
   </example>
 model: sonnet
@@ -302,14 +302,14 @@ vs sequential execution:
 ```
 # Spawn both Tasks AND run the inline type check simultaneously
 Task(
-  subagent_type: "forge-testing",
+  subagent_type: "testing",
   prompt: "Run the test suite for this project and report: pass count, fail count,
            any failing test names, and coverage percentage if available.
            Read-only analysis — do NOT modify test files."
 )
 
 Task(
-  subagent_type: "forge-security",
+  subagent_type: "security",
   prompt: "Scan this project for security issues: hardcoded secrets, eval/exec usage,
            dangerous patterns (innerHTML, SQL concatenation), and run npm audit.
            Report findings by severity. Read-only — no modifications."

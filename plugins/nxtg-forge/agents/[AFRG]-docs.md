@@ -1,23 +1,23 @@
 ---
-name: forge-docs
+name: docs
 description: |
   Use this agent when documentation needs to be generated, updated, or audited. This includes: generating JSDoc/TSDoc for code, creating README files, writing API documentation, maintaining changelogs, checking for stale docs, or creating architecture guides.
 
   <example>
   Context: User has added new components without documentation.
   user: "Can you document the new dashboard components?"
-  assistant: "I'll use the forge-docs agent to generate comprehensive documentation for the dashboard components."
+  assistant: "I'll use the docs agent to generate comprehensive documentation for the dashboard components."
   <commentary>
-  Since new code needs documentation, use the forge-docs agent to generate JSDoc and component docs.
+  Since new code needs documentation, use the docs agent to generate JSDoc and component docs.
   </commentary>
   </example>
 
   <example>
   Context: User wants to update the changelog.
   user: "Generate a changelog from recent commits"
-  assistant: "I'll use the forge-docs agent to generate a changelog from conventional commits."
+  assistant: "I'll use the docs agent to generate a changelog from conventional commits."
   <commentary>
-  Changelog generation from git history is a forge-docs capability.
+  Changelog generation from git history is a docs capability.
   </commentary>
   </example>
 model: sonnet

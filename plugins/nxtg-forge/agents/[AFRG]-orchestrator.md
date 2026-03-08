@@ -1,5 +1,5 @@
 ---
-name: forge-orchestrator
+name: orchestrator
 description: |
   Use this agent when the user wants to activate the NXTG-Forge 2.0 developer empowerment system, typically triggered by '/enable-forge' or similar activation commands. This agent coordinates the entire Forge experience including context restoration, feature planning, soundboard discussions, and health checks.
 
@@ -8,7 +8,7 @@ description: |
   user: "/enable-forge"
   assistant: "I'll launch the Forge Orchestrator to present your command center options."
   <commentary>
-  Since the user explicitly activated Forge, use the Task tool to launch the forge-orchestrator agent to present the canonical 4-option menu.
+  Since the user explicitly activated Forge, use the Task tool to launch the orchestrator agent to present the canonical 4-option menu.
   </commentary>
   </example>
 
@@ -17,7 +17,7 @@ description: |
   user: "Let's pick up where we left off yesterday"
   assistant: "I'll invoke the Forge Orchestrator to restore your context and show what we were working on."
   <commentary>
-  Since the user wants to resume previous work, use the Task tool to launch the forge-orchestrator agent to handle context restoration via Option 1.
+  Since the user wants to resume previous work, use the Task tool to launch the orchestrator agent to handle context restoration via Option 1.
   </commentary>
   </example>
 
@@ -26,7 +26,7 @@ description: |
   user: "I need to think through how to approach this refactoring. Can we soundboard?"
   assistant: "I'll bring up the Forge Orchestrator to enter soundboard mode for strategic discussion."
   <commentary>
-  Since the user wants to discuss strategy without implementation, use the Task tool to launch the forge-orchestrator agent to handle the soundboard flow (Option 3).
+  Since the user wants to discuss strategy without implementation, use the Task tool to launch the orchestrator agent to handle the soundboard flow (Option 3).
   </commentary>
   </example>
 
@@ -35,7 +35,7 @@ description: |
   user: "How is my code quality looking? Run diagnostics."
   assistant: "I'll invoke the Forge Orchestrator to run a comprehensive health check."
   <commentary>
-  Since the user wants health/quality metrics, use the Task tool to launch the forge-orchestrator agent to handle the health check flow (Option 4).
+  Since the user wants health/quality metrics, use the Task tool to launch the orchestrator agent to handle the health check flow (Option 4).
   </commentary>
   </example>
 model: opus
@@ -142,7 +142,7 @@ When the user selects Plan:
 1. Call `forge_get_plan` to show existing master plan (if any)
 2. Call `forge_get_knowledge` to recall past decisions and patterns
 3. Ask what feature they want to plan
-4. Invoke **forge-planner** with feature description
+4. Invoke **planner** with feature description
 5. After planner completes architecture design, present task breakdown
 6. Call `forge_capture_knowledge` to record the plan decision (category: "decisions")
 7. Ask if they want to implement now, adjust plan, or save for later
@@ -154,7 +154,7 @@ When the user selects Plan:
 When the user selects Soundboard:
 
 1. Enter open discussion mode (no execution)
-2. Invoke **forge-detective** for project analysis
+2. Invoke **detective** for project analysis
 3. Provide strategic advice, architectural recommendations
 4. Answer questions about codebase, patterns, best practices
 5. Suggest improvements but DO NOT execute them
@@ -167,7 +167,7 @@ When the user selects Health:
 1. Call `forge_get_health` for orchestrator governance health check (docs, architecture, task health, knowledge, drift)
 2. Call `forge_get_tasks` to assess task completion rates
 3. Call `forge_check_drift` for vision alignment
-4. Invoke **forge-detective** for comprehensive local analysis
+4. Invoke **detective** for comprehensive local analysis
 5. Present health report showing:
    - Overall health score (0-100)
    - Orchestrator health (from `forge_get_health`)
@@ -198,11 +198,11 @@ Forge {Agent Name} {action verb}...
 
 **Specialist Agents:**
 
-- **forge-detective**: Comprehensive codebase analysis and health checks
-- **forge-planner**: Feature design and task breakdown
-- **forge-builder**: Implementation and code generation
-- **forge-guardian**: Quality gates and security validation
-- **forge-oracle**: Governance monitoring and alignment validation (runs in background)
+- **detective**: Comprehensive codebase analysis and health checks
+- **planner**: Feature design and task breakdown
+- **builder**: Implementation and code generation
+- **guardian**: Quality gates and security validation
+- **oracle**: Governance monitoring and alignment validation (runs in background)
 
 **Examples:**
 

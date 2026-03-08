@@ -1,41 +1,41 @@
 ---
-name: forge-detective
+name: detective
 description: |
   Use this agent when the user needs comprehensive project analysis, including health checks, technology stack detection, gap analysis, code quality assessment, security scanning, or architectural review. This agent should be invoked for Option 4 (Health Check) or Option 3 (Soundboard) scenarios, during initial project activation for technology detection, or when the user asks questions like 'Is my architecture sound?', 'What's wrong with this codebase?', 'Should I refactor this?', or 'Where are the bottlenecks?'
 
   <example>
   Context: User wants to understand the health of their project.
   user: "Can you analyze the health of this project?"
-  assistant: "I'll launch the forge-detective agent to perform a comprehensive health analysis of your project."
+  assistant: "I'll launch the detective agent to perform a comprehensive health analysis of your project."
   <commentary>
-  Since the user is requesting project health analysis, use the Task tool to launch the forge-detective agent to examine code quality, security, documentation, architecture, and git practices.
+  Since the user is requesting project health analysis, use the Task tool to launch the detective agent to examine code quality, security, documentation, architecture, and git practices.
   </commentary>
   </example>
 
   <example>
   Context: User is unsure about their architectural decisions and wants advice.
   user: "Is my architecture sound? Should I refactor this monolith?"
-  assistant: "Let me use the forge-detective agent to analyze your architecture and provide strategic advice on your refactoring question."
+  assistant: "Let me use the detective agent to analyze your architecture and provide strategic advice on your refactoring question."
   <commentary>
-  Since the user is asking for architectural guidance in soundboard mode, use the Task tool to launch the forge-detective agent to analyze patterns, identify issues, and suggest improvements with trade-offs.
+  Since the user is asking for architectural guidance in soundboard mode, use the Task tool to launch the detective agent to analyze patterns, identify issues, and suggest improvements with trade-offs.
   </commentary>
   </example>
 
   <example>
   Context: User wants to know what technologies their project uses.
   user: "What tech stack is this project using?"
-  assistant: "I'll invoke the forge-detective agent to detect and report on your complete technology stack."
+  assistant: "I'll invoke the detective agent to detect and report on your complete technology stack."
   <commentary>
-  Since the user needs technology detection, use the Task tool to launch the forge-detective agent to identify languages, frameworks, databases, external services, and development tools.
+  Since the user needs technology detection, use the Task tool to launch the detective agent to identify languages, frameworks, databases, external services, and development tools.
   </commentary>
   </example>
 
   <example>
   Context: User is concerned about security vulnerabilities.
   user: "Are there any security issues in this codebase?"
-  assistant: "Let me launch the forge-detective agent to perform a comprehensive security analysis of your project."
+  assistant: "Let me launch the detective agent to perform a comprehensive security analysis of your project."
   <commentary>
-  Since the user is asking about security, use the Task tool to launch the forge-detective agent to scan for dependency vulnerabilities, hardcoded secrets, weak cryptography, and common security issues.
+  Since the user is asking about security, use the Task tool to launch the detective agent to scan for dependency vulnerabilities, hardcoded secrets, weak cryptography, and common security issues.
   </commentary>
   </example>
 model: sonnet
@@ -451,28 +451,28 @@ execution while keeping architecture checks (grep/glob — seconds) in-process.
 ```
 # Spawn 4 slow Tasks simultaneously
 Task(
-  subagent_type: "forge-testing",
+  subagent_type: "testing",
   prompt: "Analyze test coverage for this project. Count source files vs test files.
            List untested source files. Calculate file coverage %. Report only — no writes.
            Format: TEST COVERAGE: {n}/{total} files tested ({%}%). Untested: [list]"
 )
 
 Task(
-  subagent_type: "forge-security",
+  subagent_type: "security",
   prompt: "Perform security analysis on this project. Check for: hardcoded secrets,
            eval/exec usage, .env files in git, npm audit vulnerabilities.
            Report by severity. Read-only — no modifications."
 )
 
 Task(
-  subagent_type: "forge-docs",
+  subagent_type: "docs",
   prompt: "Analyze documentation coverage of this project. Check for: README.md existence,
            CHANGELOG.md, JSDoc on exported functions, inline comments on complex logic.
            Report gaps. Read-only — no modifications."
 )
 
 Task(
-  subagent_type: "forge-performance",
+  subagent_type: "performance",
   prompt: "Analyze performance indicators in this project. Check for: bundle size if dist/ exists,
            node_modules size, dependency count, console.log in production code,
            TODO/FIXME/HACK comments. Report findings. Read-only — no modifications."

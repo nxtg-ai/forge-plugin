@@ -55,31 +55,31 @@ for ~5x faster analysis vs sequential:
 
 ```
 Task(
-  subagent_type: "forge-testing",
+  subagent_type: "testing",
   prompt: "Analyze test coverage: count source files vs test files in src/,
            list untested source files, calculate coverage %. Read-only."
 )
 
 Task(
-  subagent_type: "forge-docs",
+  subagent_type: "docs",
   prompt: "Analyze documentation: check README.md, CHANGELOG.md, JSDoc on exports,
            API docs. List gaps. Read-only."
 )
 
 Task(
-  subagent_type: "forge-security",
+  subagent_type: "security",
   prompt: "Analyze security: check hardcoded secrets, eval/exec usage, .env in git,
            run npm audit. Report by severity. Read-only."
 )
 
 Task(
-  subagent_type: "forge-detective",
+  subagent_type: "detective",
   prompt: "Analyze architecture quality: large files (>300 lines), circular deps, 'as any' casts,
            missing error handling, TODO/FIXME/HACK comments. Report findings. Read-only."
 )
 
 Task(
-  subagent_type: "forge-performance",
+  subagent_type: "performance",
   prompt: "Analyze performance: bundle size, node_modules size, dep count, console.log
            in production code, outdated deps (npm outdated). Read-only."
 )

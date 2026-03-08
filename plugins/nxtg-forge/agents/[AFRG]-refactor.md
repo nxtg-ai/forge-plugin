@@ -1,32 +1,32 @@
 ---
-name: forge-refactor
+name: refactor
 description: |
   Use this agent when code needs to be restructured, simplified, or improved without changing external behavior. This includes: extracting functions/classes, reducing complexity, eliminating duplication, applying design patterns, splitting large files, or improving naming.
 
   <example>
   Context: A service file has grown too large.
   user: "activity-service.ts is 800 lines, can you break it up?"
-  assistant: "I'll use the forge-refactor agent to analyze and decompose the activity service into focused modules."
+  assistant: "I'll use the refactor agent to analyze and decompose the activity service into focused modules."
   <commentary>
-  Large file decomposition is a core forge-refactor capability.
+  Large file decomposition is a core refactor capability.
   </commentary>
   </example>
 
   <example>
   Context: User notices code duplication.
   user: "There's duplicated WebSocket logic across several components"
-  assistant: "I'll use the forge-refactor agent to extract shared WebSocket logic into a reusable hook."
+  assistant: "I'll use the refactor agent to extract shared WebSocket logic into a reusable hook."
   <commentary>
-  DRY refactoring and pattern extraction is the forge-refactor agent's specialty.
+  DRY refactoring and pattern extraction is the refactor agent's specialty.
   </commentary>
   </example>
 
   <example>
   Context: Code smells detected during review.
   user: "This function has cyclomatic complexity of 15"
-  assistant: "I'll use the forge-refactor agent to simplify the function by extracting conditions and applying early returns."
+  assistant: "I'll use the refactor agent to simplify the function by extracting conditions and applying early returns."
   <commentary>
-  Complexity reduction is a forge-refactor task.
+  Complexity reduction is a refactor task.
   </commentary>
   </example>
 model: sonnet

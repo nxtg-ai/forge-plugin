@@ -244,7 +244,7 @@ append_sentinel_log() {
            "type": $type,
            "severity": $sev,
            "category": $cat,
-           "source": "forge-oracle",
+           "source": "oracle",
            "message": $msg,
            "context": {},
            "actionRequired": false

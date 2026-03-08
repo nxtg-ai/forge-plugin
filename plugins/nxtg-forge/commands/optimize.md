@@ -46,21 +46,21 @@ to reduce analysis time ~3x vs sequential:
 
 ```
 Task(
-  subagent_type: "forge-detective",
+  subagent_type: "detective",
   prompt: "Analyze code quality: find files >300 lines, count 'as any' casts,
            find 'as unknown' assertions, find console.log in production code
            (exclude test files), count TODO/FIXME/HACK comments. Read-only."
 )
 
 Task(
-  subagent_type: "forge-performance",
+  subagent_type: "performance",
   prompt: "Analyze dependency health: run npm outdated, check for unused deps
            (npx depcheck if available), report bundle size from dist/ if it exists.
            Read-only."
 )
 
 Task(
-  subagent_type: "forge-detective",
+  subagent_type: "detective",
   prompt: "Analyze dead code: find exported symbols in src/ that are not imported
            anywhere else in the codebase. List each unused export with its file
            and line number. Read-only."

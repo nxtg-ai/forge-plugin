@@ -1,23 +1,23 @@
 ---
-name: forge-performance
+name: performance
 description: |
   Use this agent when performance optimization, profiling, or bundle analysis is needed. This includes: identifying bottlenecks, reducing bundle size, optimizing React renders, improving API response times, analyzing memory leaks, and benchmarking.
 
   <example>
   Context: User notices the app is slow.
   user: "The dashboard takes forever to load"
-  assistant: "I'll use the forge-performance agent to profile the dashboard and identify bottlenecks."
+  assistant: "I'll use the performance agent to profile the dashboard and identify bottlenecks."
   <commentary>
-  Performance profiling and optimization is the forge-performance agent's specialty.
+  Performance profiling and optimization is the performance agent's specialty.
   </commentary>
   </example>
 
   <example>
   Context: Bundle size is too large.
   user: "Our bundle is over 2MB, can we reduce it?"
-  assistant: "I'll use the forge-performance agent to analyze the bundle and recommend optimizations."
+  assistant: "I'll use the performance agent to analyze the bundle and recommend optimizations."
   <commentary>
-  Bundle size analysis and tree-shaking recommendations are forge-performance tasks.
+  Bundle size analysis and tree-shaking recommendations are performance tasks.
   </commentary>
   </example>
 model: sonnet

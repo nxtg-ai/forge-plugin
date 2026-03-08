@@ -1,23 +1,23 @@
 ---
-name: forge-database
+name: database
 description: |
   Use this agent when database work is needed. This includes: schema design, migration creation, query optimization, data modeling, indexing strategy, and database troubleshooting.
 
   <example>
   Context: User needs to add a new data model.
   user: "I need to store user preferences with versioning"
-  assistant: "I'll use the forge-database agent to design the schema and create the migration."
+  assistant: "I'll use the database agent to design the schema and create the migration."
   <commentary>
-  Schema design and migration creation is a forge-database task.
+  Schema design and migration creation is a database task.
   </commentary>
   </example>
 
   <example>
   Context: Queries are slow.
   user: "The activity feed query takes 2 seconds"
-  assistant: "I'll use the forge-database agent to analyze and optimize the query."
+  assistant: "I'll use the database agent to analyze and optimize the query."
   <commentary>
-  Query optimization is a forge-database specialty.
+  Query optimization is a database specialty.
   </commentary>
   </example>
 model: sonnet

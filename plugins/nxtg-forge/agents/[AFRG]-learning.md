@@ -1,23 +1,23 @@
 ---
-name: forge-learning
+name: learning
 description: |
   Use this agent when the system needs to learn from past sessions, improve recommendations, or adapt to user patterns. This includes: analyzing session history for patterns, improving agent selection accuracy, learning from user corrections, optimizing workflow recommendations, and building user preference models.
 
   <example>
   Context: User wants better recommendations.
   user: "The system keeps suggesting things I don't need"
-  assistant: "I'll use the forge-learning agent to analyze your usage patterns and improve recommendations."
+  assistant: "I'll use the learning agent to analyze your usage patterns and improve recommendations."
   <commentary>
-  Recommendation improvement based on user patterns is a forge-learning task.
+  Recommendation improvement based on user patterns is a learning task.
   </commentary>
   </example>
 
   <example>
   Context: System should learn from mistakes.
   user: "Remember that I prefer Vitest over Jest"
-  assistant: "I'll use the forge-learning agent to capture this preference for future sessions."
+  assistant: "I'll use the learning agent to capture this preference for future sessions."
   <commentary>
-  Capturing and applying user preferences is a forge-learning specialty.
+  Capturing and applying user preferences is a learning specialty.
   </commentary>
   </example>
 model: haiku
