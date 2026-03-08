@@ -30,14 +30,11 @@ describe('listCheckpoints', () => {
     expect(result.checkpoints.length).toBeGreaterThanOrEqual(1);
     expect(result.count).toBeGreaterThanOrEqual(1);
 
-    // Each checkpoint should have name and created fields
-    const cp = result.checkpoints[0];
-    expect(cp.name).toBeDefined();
-    expect(cp.created).toBeDefined();
-    expect(cp.description).toBeDefined();
-
-    // Check the sprint-1 checkpoint we created
+    // Sprint-1 checkpoint should have correct name, description, and ISO date
     const sprint1 = result.checkpoints.find((c) => c.name === 'sprint-1');
-    expect(sprint1).toBeDefined();
+    expect(sprint1).not.toBeUndefined();
+    expect(sprint1.name).toBe('sprint-1');
+    expect(sprint1.description).toBe('End of Sprint 1 checkpoint');
+    expect(sprint1.created).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 });

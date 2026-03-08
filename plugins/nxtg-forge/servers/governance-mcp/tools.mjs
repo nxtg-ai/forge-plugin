@@ -20,7 +20,8 @@ import { tmpdir } from "os";
 export function run(cmd, opts = {}) {
   try {
     return execSync(cmd, { encoding: "utf-8", timeout: 15000, ...opts }).trim();
-  } catch {
+  } catch (err) {
+    console.error('[governance-mcp] run() failed:', cmd, err.message || err);
     return null;
   }
 }
@@ -28,7 +29,8 @@ export function run(cmd, opts = {}) {
 export function readJson(filePath) {
   try {
     return JSON.parse(readFileSync(filePath, "utf-8"));
-  } catch {
+  } catch (err) {
+    console.error('[governance-mcp] readJson() failed:', filePath, err.message || err);
     return null;
   }
 }
@@ -305,8 +307,8 @@ export function getTestResults(root = process.cwd()) {
   if (result && (runner === "vitest" || runner === "jest")) {
     try {
       parsed = JSON.parse(result);
-    } catch {
-      // JSON parsing failed, return raw output
+    } catch (err) {
+      console.error('[governance-mcp] getTestResults() JSON parse failed:', err.message || err);
     }
   }
 
@@ -410,7 +412,9 @@ export function getSecurityScan(root = process.cwd()) {
             ? Object.values(auditData.metadata.vulnerabilities).reduce((a, b) => a + b, 0)
             : 0,
         };
-      } catch {}
+      } catch (err) {
+        console.error('[governance-mcp] getSecurityScan() npm audit parse failed — vulnerabilities may be silently dropped:', err.message || err);
+      }
     }
   }
 

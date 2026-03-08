@@ -29,8 +29,8 @@ describe('getGovernanceState', () => {
     const result = getGovernanceState(root);
 
     expect(result.initialized).toBe(true);
-    expect(result.version).toBeDefined();
-    expect(result.project).toBeDefined();
+    expect(result.version).toBe('3.0.0');
+    expect(result.project.name).toBe('Forge Test Project');
   });
 
   it('returned fields match what is in the fixture governance.json', () => {
@@ -42,7 +42,7 @@ describe('getGovernanceState', () => {
     expect(result.project.vision).toContain('fixture');
     // workstreams array in fixture has 2 entries
     expect(result.workstreams).toBe(2);
-    expect(result.qualityGates).toBeDefined();
-    expect(result.metrics).toBeDefined();
+    expect(result.qualityGates).toEqual({ minTestCoverage: 80, maxFileSize: 300 });
+    expect(result.metrics).toEqual({ sessionsCount: 5, featuresShipped: 2 });
   });
 });

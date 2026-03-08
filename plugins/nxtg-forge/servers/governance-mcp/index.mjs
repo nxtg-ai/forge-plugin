@@ -147,6 +147,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// Start
-const transport = new StdioServerTransport();
-await server.connect(transport);
+// Start (FORGE_TEST_MODE guard enables vitest to import without blocking on stdio)
+if (!process.env.FORGE_TEST_MODE) {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}

@@ -18,7 +18,7 @@ describe('getGitStatus', () => {
 
     // Fixture has at least 1 commit
     expect(result.commitCount).toBeGreaterThanOrEqual(1);
-    expect(result.lastCommit).toBeTruthy();
+    expect(result.lastCommit).toMatch(/^[a-f0-9]{7,}/);
   });
 
   it('clean working tree is reported as clean:true', () => {
