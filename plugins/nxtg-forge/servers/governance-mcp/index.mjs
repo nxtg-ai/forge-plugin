@@ -22,6 +22,20 @@ import {
   listCheckpoints,
   getSecurityScan,
   generateDashboard,
+  findApplicationRoot,
+} from "./tools.mjs";
+
+// Re-export all tool functions so tests can destructure from index.mjs
+export {
+  getGovernanceState,
+  getGitStatus,
+  getCodeMetrics,
+  getHealthScore,
+  getTestResults,
+  listCheckpoints,
+  getSecurityScan,
+  generateDashboard,
+  findApplicationRoot,
 } from "./tools.mjs";
 
 // ---------------------------------------------------------------------------

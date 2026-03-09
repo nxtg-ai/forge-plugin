@@ -10,15 +10,24 @@ beforeAll(setupFixture);
 afterAll(teardownFixture);
 
 describe('getTestResults', () => {
-  it('returns runner:null when no test runner binary exists', () => {
+  it('returns runner:null (or global pytest) when no project-local test runner exists', () => {
     // A bare temp directory with no node_modules
     const emptyDir = mkdtempSync(join(tmpdir(), 'forge-runner-empty-'));
     execSync('git init', { cwd: emptyDir, stdio: 'pipe' });
 
     const result = getTestResults(emptyDir);
 
-    expect(result.runner).toBeNull();
-    expect(result.message).toMatch(/no test runner/i);
+    // On machines with global pytest installed, getTestResults falls back to `which pytest`
+    const pytestGlobal = (() => {
+      try { execSync('which pytest', { stdio: 'ignore' }); return true; } catch { return false; }
+    })();
+
+    if (pytestGlobal) {
+      expect(result.runner).toBe('pytest');
+    } else {
+      expect(result.runner).toBeNull();
+      expect(result.message).toMatch(/no test runner/i);
+    }
 
     import('fs').then(({ rmSync }) => rmSync(emptyDir, { recursive: true, force: true }));
   });

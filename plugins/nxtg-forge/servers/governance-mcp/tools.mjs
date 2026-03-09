@@ -35,11 +35,52 @@ export function readJson(filePath) {
   }
 }
 
+// Dynamic version from package.json (replaces hardcoded string in dashboard)
+export const serverVersion = readJson(join(import.meta.dirname, "package.json"))?.version ?? "unknown";
+
+// BUG-05: Build artifact directories to exclude from all find commands.
+const BUILD_ARTIFACT_EXCLUDES = [
+  "node_modules", "dist", ".git",
+  ".next", "build", "out", "target",
+  "coverage", ".nyc_output", "__pycache__", ".pytest_cache",
+  "vendor", ".venv", ".turbo", ".vite",
+].map((d) => `-not -path "*/${d}/*"`).join(" ");
+
+/**
+ * Find the directory that contains the project manifest (package.json, Cargo.toml, etc.).
+ * Checks startDir first (preserves existing behavior), then walks one level deep.
+ * Skips node_modules, .git, .claude, .forge.
+ */
+export function findApplicationRoot(startDir) {
+  const manifests = ["package.json", "Cargo.toml", "pyproject.toml", "go.mod"];
+  const excluded = ["node_modules", ".git", ".claude", ".forge"];
+
+  // 1. Check startDir itself first
+  for (const m of manifests) {
+    if (existsSync(join(startDir, m))) return startDir;
+  }
+
+  // 2. Walk one level deep — find first subdirectory with a manifest
+  try {
+    const entries = readdirSync(startDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (excluded.includes(entry.name)) continue;
+      const candidate = join(startDir, entry.name);
+      for (const m of manifests) {
+        if (existsSync(join(candidate, m))) return candidate;
+      }
+    }
+  } catch { /* skip unreadable root */ }
+
+  return startDir; // fallback — no manifest found
+}
+
 // ---------------------------------------------------------------------------
 // Tool implementations
 // ---------------------------------------------------------------------------
 
-export function getGovernanceState(root = process.cwd()) {
+export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const govPath = join(root, ".claude", "governance.json");
   const gov = readJson(govPath);
 
@@ -61,17 +102,19 @@ export function getGovernanceState(root = process.cwd()) {
   };
 }
 
-export function getGitStatus(root = process.cwd()) {
+export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const branch = run("git rev-parse --abbrev-ref HEAD", { cwd: root });
   const commitCount = run("git rev-list --count HEAD", { cwd: root });
   const lastCommit = run('git log -1 --format="%h %s (%cr)"', { cwd: root });
   const status = run("git status --porcelain", { cwd: root });
   const contributors = run("git shortlog -sn --no-merges HEAD | head -5", { cwd: root });
 
-  const lines = status ? status.split("\n") : [];
-  const modified = lines.filter((l) => l.startsWith(" M") || l.startsWith("M ")).length;
-  const untracked = lines.filter((l) => l.startsWith("??")).length;
-  const staged = lines.filter((l) => /^[AMDR]/.test(l)).length;
+  const lines = status ? status.split("\n").filter(Boolean) : [];
+  // BUG-01: Exclude .claude/ paths — governance writes should not penalize git cleanliness
+  const relevantLines = lines.filter((l) => !l.slice(3).trim().startsWith(".claude/"));
+  const modified = relevantLines.filter((l) => l.startsWith(" M") || l.startsWith("M ")).length;
+  const untracked = relevantLines.filter((l) => l.startsWith("??")).length;
+  const staged = relevantLines.filter((l) => /^[AMDR]/.test(l)).length;
 
   return {
     branch,
@@ -80,103 +123,109 @@ export function getGitStatus(root = process.cwd()) {
     modified,
     untracked,
     staged,
-    clean: lines.length === 0,
+    clean: relevantLines.length === 0,
     contributors: contributors
       ? contributors.split("\n").map((l) => l.trim())
       : [],
   };
 }
 
-export function getCodeMetrics(root = process.cwd()) {
-  // Detect project type
-  const hasPackageJson = existsSync(join(root, "package.json"));
-  const hasCargoToml = existsSync(join(root, "Cargo.toml"));
-  const hasPyproject = existsSync(join(root, "pyproject.toml"));
-  const hasGoMod = existsSync(join(root, "go.mod"));
+export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
+  const appRoot = findApplicationRoot(root);
+
+  // Detect project type from appRoot (supports subdirectory manifests)
+  const hasPackageJson = existsSync(join(appRoot, "package.json"));
+  const hasCargoToml = existsSync(join(appRoot, "Cargo.toml"));
+  const hasPyproject = existsSync(join(appRoot, "pyproject.toml"));
+  const hasGoMod = existsSync(join(appRoot, "go.mod"));
 
   let projectType = "unknown";
   let sourceExt = "*.ts";
-  let testPattern = "*.test.*";
   if (hasPackageJson) {
     projectType = "node";
-    sourceExt = "*.{ts,tsx,js,jsx}";
-    testPattern = "*.{test,spec}.{ts,tsx,js,jsx}";
+    sourceExt = "*.{ts,tsx,js,jsx,mjs,cjs,mts,cts}";
   } else if (hasCargoToml) {
     projectType = "rust";
     sourceExt = "*.rs";
   } else if (hasPyproject) {
     projectType = "python";
     sourceExt = "*.py";
-    testPattern = "test_*.py";
   } else if (hasGoMod) {
     projectType = "go";
     sourceExt = "*.go";
-    testPattern = "*_test.go";
   }
 
-  // Build find name predicates — brace expansion is not supported by find -name,
-  // so we use -o (OR) form for multi-extension matching.
-  let sourceNamePred;
-  let sourceLinesNamePred;
-  if (hasPackageJson) {
-    sourceNamePred = "\\( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \\)";
-    sourceLinesNamePred = sourceNamePred;
-  } else if (hasCargoToml) {
-    sourceNamePred = "-name '*.rs'";
-    sourceLinesNamePred = sourceNamePred;
-  } else if (hasPyproject) {
-    sourceNamePred = "-name '*.py'";
-    sourceLinesNamePred = sourceNamePred;
-  } else if (hasGoMod) {
-    sourceNamePred = "-name '*.go'";
-    sourceLinesNamePred = sourceNamePred;
-  } else {
-    sourceNamePred = "-name '*.ts'";
-    sourceLinesNamePred = "-name '*.ts'";
+  // Expand brace patterns into find -o syntax (find doesn't support shell brace expansion)
+  function findNameExpr(pattern) {
+    if (!pattern.includes("{")) return `-name "${pattern}"`;
+    const base = pattern.replace(/^\*\./, "");
+    const exts = base.replace(/[{}]/g, "").split(",");
+    return "\\( " + exts.map((e) => `-name "*.${e}"`).join(" -o ") + " \\)";
   }
 
-  // Count source files
+  // Count source files (BUG-03: exclude *.config.*, BUG-05: exclude build artifacts)
   const sourceFiles = run(
-    `find . ${sourceNamePred} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" 2>/dev/null | wc -l`,
-    { cwd: root, shell: "/bin/bash" }
+    `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" -not -name "*.config.*" 2>/dev/null | wc -l`,
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Count test files
   const testFiles = run(
-    `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -path "*/__tests__/*" \\) -not -path "*/node_modules/*" -not -path "*/dist/*" 2>/dev/null | wc -l`,
-    { cwd: root, shell: "/bin/bash" }
+    `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -path "*/__tests__/*" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | wc -l`,
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Count total lines
   const totalLines = run(
-    `find . ${sourceLinesNamePred} -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
-    { cwd: root, shell: "/bin/bash" }
+    `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Large files (>300 lines)
   const largeFiles = run(
-    `find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.py" -o -name "*.rs" -o -name "*.go" 2>/dev/null | grep -v node_modules | grep -v dist | grep -v .git | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
-    { cwd: root, shell: "/bin/bash" }
+    `find . \\( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
+    { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Dependencies
   let deps = 0;
   let devDeps = 0;
   if (hasPackageJson) {
-    const pkg = readJson(join(root, "package.json"));
+    const pkg = readJson(join(appRoot, "package.json"));
     if (pkg) {
       deps = Object.keys(pkg.dependencies || {}).length;
       devDeps = Object.keys(pkg.devDependencies || {}).length;
     }
   }
 
+  // Real line coverage from Istanbul/c8/nyc report (null = no report found)
+  const testCoverage = (() => {
+    const coveragePaths = [
+      join(appRoot, "coverage", "coverage-summary.json"),
+      join(appRoot, ".nyc_output", "coverage-summary.json"),
+    ];
+    for (const p of coveragePaths) {
+      if (existsSync(p)) {
+        const cov = readJson(p);
+        if (cov?.total?.lines?.pct !== undefined) {
+          return Math.round(cov.total.lines.pct);
+        }
+      }
+    }
+    return null;
+  })();
+
+  const srcCount = parseInt(sourceFiles) || 0;
+  const tstCount = parseInt(testFiles) || 0;
+
   return {
     projectType,
-    sourceFiles: parseInt(sourceFiles) || 0,
-    testFiles: parseInt(testFiles) || 0,
-    testCoverage: parseInt(testFiles) && parseInt(sourceFiles)
-      ? Math.round((parseInt(testFiles) / parseInt(sourceFiles)) * 100)
-      : 0,
+    sourceFiles: srcCount,
+    testFiles: tstCount,
+    // testFileRatio: test files / source files (proxy metric, not real line coverage)
+    testFileRatio: tstCount && srcCount ? Math.round((tstCount / srcCount) * 100) : 0,
+    // testCoverage: actual line coverage % from Istanbul/c8 report, null if unavailable
+    testCoverage,
     totalLines: totalLines ? totalLines.trim() : "unknown",
     largeFiles: largeFiles ? largeFiles.split("\n").map((l) => l.trim()).filter(Boolean) : [],
     dependencies: deps,
@@ -184,7 +233,8 @@ export function getCodeMetrics(root = process.cwd()) {
   };
 }
 
-export function getHealthScore(root = process.cwd()) {
+export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
+  const appRoot = findApplicationRoot(root);
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
   const metrics = getCodeMetrics(root);
@@ -192,7 +242,7 @@ export function getHealthScore(root = process.cwd()) {
   let score = 0;
   const checks = [];
 
-  // Governance initialized (20 pts)
+  // Governance initialized (20 pts) — always at governance root
   if (gov.initialized) {
     score += 20;
     checks.push({ name: "Governance", status: "pass", points: 20 });
@@ -209,24 +259,27 @@ export function getHealthScore(root = process.cwd()) {
     checks.push({ name: "Git Clean", status: "warn", points: 5, note: `${git.modified} modified, ${git.untracked} untracked` });
   }
 
-  // Has tests (20 pts)
+  // Has tests (20 pts) — score by file ratio; show real coverage if available
   if (metrics.testFiles > 0) {
-    const testScore = Math.min(20, Math.round((metrics.testCoverage / 100) * 20));
+    const testScore = Math.min(20, Math.round((metrics.testFileRatio / 100) * 20));
     score += testScore;
-    checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: `${metrics.testCoverage}% file coverage` });
+    const coverageNote = metrics.testCoverage !== null
+      ? `${metrics.testCoverage}% line coverage`
+      : `${metrics.testFileRatio}% file ratio`;
+    checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: coverageNote });
   } else {
     checks.push({ name: "Test Coverage", status: "fail", points: 0, note: "No tests found" });
   }
 
-  // Has README (10 pts)
-  if (existsSync(join(root, "README.md"))) {
+  // Has README (10 pts) — check appRoot (may be in subdirectory)
+  if (existsSync(join(appRoot, "README.md"))) {
     score += 10;
     checks.push({ name: "README", status: "pass", points: 10 });
   } else {
     checks.push({ name: "README", status: "fail", points: 0 });
   }
 
-  // Has CLAUDE.md (10 pts)
+  // Has CLAUDE.md (10 pts) — always at governance root
   if (existsSync(join(root, "CLAUDE.md"))) {
     score += 10;
     checks.push({ name: "CLAUDE.md", status: "pass", points: 10 });
@@ -234,13 +287,26 @@ export function getHealthScore(root = process.cwd()) {
     checks.push({ name: "CLAUDE.md", status: "warn", points: 0, note: "Recommended for AI-assisted development" });
   }
 
-  // TypeScript / type checking (10 pts)
-  if (existsSync(join(root, "tsconfig.json"))) {
-    score += 10;
-    checks.push({ name: "Type Safety", status: "pass", points: 10 });
-  } else {
-    checks.push({ name: "Type Safety", status: "info", points: 0 });
-  }
+  // TypeScript / type checking (0-10 pts, tiered) — BUG-04: nuanced scoring
+  const tsTypeSafety = (() => {
+    const tsConfig = readJson(join(appRoot, "tsconfig.json"));
+    if (tsConfig) {
+      const co = tsConfig.compilerOptions || {};
+      const strictFlags = ["noImplicitAny", "strictNullChecks", "strictFunctionTypes",
+        "strictBindCallApply", "strictPropertyInitialization", "noImplicitThis", "alwaysStrict"];
+      const activeStrictFlags = strictFlags.filter((f) => co[f] === true).length;
+      if (co.strict === true || activeStrictFlags >= 3) {
+        return { points: 10, status: "pass", note: "strict TypeScript" };
+      }
+      return { points: 7, status: "pass", note: "TypeScript (not strict)" };
+    }
+    if (existsSync(join(appRoot, "jsconfig.json"))) {
+      return { points: 4, status: "info", note: "jsconfig only" };
+    }
+    return { points: 0, status: "info", note: "no type config" };
+  })();
+  score += tsTypeSafety.points;
+  checks.push({ name: "Type Safety", status: tsTypeSafety.status, points: tsTypeSafety.points, note: tsTypeSafety.note });
 
   // No large files (10 pts)
   const largeCount = metrics.largeFiles.filter((f) => {
@@ -273,11 +339,12 @@ export function getHealthScore(root = process.cwd()) {
   return { score, grade, maxScore: 100, checks };
 }
 
-export function getTestResults(root = process.cwd()) {
-  const hasVitest = existsSync(join(root, "node_modules", ".bin", "vitest"));
-  const hasJest = existsSync(join(root, "node_modules", ".bin", "jest"));
-  // Only check local .venv — system-level pytest is not a reliable project indicator
-  const hasPytest = existsSync(join(root, ".venv", "bin", "pytest"));
+export function getTestResults(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
+  const appRoot = findApplicationRoot(root);
+  const hasVitest = existsSync(join(appRoot, "node_modules", ".bin", "vitest"));
+  const hasJest = existsSync(join(appRoot, "node_modules", ".bin", "jest"));
+  const hasPytest = existsSync(join(appRoot, ".venv", "bin", "pytest")) ||
+    run("which pytest", { cwd: appRoot });
 
   let runner = null;
   let result = null;
@@ -285,18 +352,18 @@ export function getTestResults(root = process.cwd()) {
   if (hasVitest) {
     runner = "vitest";
     result = run("npx vitest run --reporter=json 2>/dev/null | tail -1", {
-      cwd: root,
+      cwd: appRoot,
       timeout: 60000,
     });
   } else if (hasJest) {
     runner = "jest";
     result = run("npx jest --json 2>/dev/null | tail -1", {
-      cwd: root,
+      cwd: appRoot,
       timeout: 60000,
     });
   } else if (hasPytest) {
     runner = "pytest";
-    result = run("pytest --tb=short -q 2>&1 | tail -5", { cwd: root, timeout: 60000 });
+    result = run("pytest --tb=short -q 2>&1 | tail -5", { cwd: appRoot, timeout: 60000 });
   }
 
   if (!runner) {
@@ -326,7 +393,7 @@ export function getTestResults(root = process.cwd()) {
   };
 }
 
-export function listCheckpoints(root = process.cwd()) {
+export function listCheckpoints(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const checkpointDir = join(root, ".claude", "checkpoints");
   if (!existsSync(checkpointDir)) {
     return { checkpoints: [], message: "No checkpoints found. Use /forge:checkpoint to create one." };
@@ -348,7 +415,8 @@ export function listCheckpoints(root = process.cwd()) {
   return { checkpoints: files, count: files.length };
 }
 
-export function getSecurityScan(root = process.cwd()) {
+export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
+  const appRoot = findApplicationRoot(root);
   const findings = [];
 
   // Check for hardcoded secrets
@@ -361,7 +429,7 @@ export function getSecurityScan(root = process.cwd()) {
   for (const { pattern, label } of secretPatterns) {
     const matches = run(
       `grep -rnI "${pattern}" --include="*.ts" --include="*.js" --include="*.py" . 2>/dev/null | grep -v node_modules | grep -v dist | head -5`,
-      { cwd: root }
+      { cwd: appRoot }
     );
     if (matches) {
       findings.push({
@@ -377,7 +445,7 @@ export function getSecurityScan(root = process.cwd()) {
   // Check for eval
   const evalMatches = run(
     `grep -rn "eval(" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v node_modules | grep -v dist | wc -l`,
-    { cwd: root }
+    { cwd: appRoot }
   );
   if (parseInt(evalMatches) > 0) {
     findings.push({
@@ -388,7 +456,7 @@ export function getSecurityScan(root = process.cwd()) {
     });
   }
 
-  // Check for .env in git
+  // Check for .env in git (use governance root for git commands)
   const envInGit = run("git ls-files | grep -i '\\.env$'", { cwd: root });
   if (envInGit) {
     findings.push({
@@ -399,10 +467,10 @@ export function getSecurityScan(root = process.cwd()) {
     });
   }
 
-  // npm audit (if available)
+  // npm audit (if available) — use appRoot where package-lock.json lives
   let audit = null;
-  if (existsSync(join(root, "package-lock.json"))) {
-    const auditRaw = run("npm audit --json 2>/dev/null", { cwd: root, timeout: 30000 });
+  if (existsSync(join(appRoot, "package-lock.json"))) {
+    const auditRaw = run("npm audit --json 2>/dev/null", { cwd: appRoot, timeout: 30000 });
     if (auditRaw) {
       try {
         const auditData = JSON.parse(auditRaw);
@@ -421,7 +489,7 @@ export function getSecurityScan(root = process.cwd()) {
   return { findings, audit, totalFindings: findings.length };
 }
 
-export function generateDashboard(root = process.cwd()) {
+export function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
   const metrics = getCodeMetrics(root);
@@ -503,7 +571,7 @@ export function generateDashboard(root = process.cwd()) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="1.5"/><polygon points="12,6 16,8.5 16,15.5 12,18 8,15.5 8,8.5" fill="white" opacity="0.9"/><path d="M12,3 L12,1 L10.5,2.5 L12,1 L13.5,2.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
         </div>
         <h1 class="text-lg font-semibold">Forge</h1>
-        <span class="text-xs text-slate-500 font-mono">v3.1.0</span>
+        <span class="text-xs text-slate-500 font-mono">v${serverVersion}</span>
       </div>
       <div class="flex items-center gap-4 text-sm text-slate-400">
         <span class="flex items-center gap-1.5">
@@ -833,6 +901,11 @@ export function generateDashboard(root = process.cwd()) {
   // Write to temp file
   const tmpPath = join(tmpdir(), `forge-dashboard-${Date.now()}.html`);
   writeFileSync(tmpPath, html);
+
+  // Skip browser launch in test mode — return immediately with file path
+  if (process.env.FORGE_TEST_MODE) {
+    return { path: tmpPath, projectName, healthScore: health.score, healthGrade: health.grade };
+  }
 
   // Try to open in browser (non-blocking, best-effort — failures are silent)
   try {
