@@ -495,6 +495,26 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 - The functions exist in `tools.mjs` — this is purely a re-export issue.
 
 **Response** (filled by project team):
+> **COMPLETED** — 2026-03-08 | Commit: 38c0951
+>
+> All 5 root causes fixed. Tests: **43/43 node:test GREEN, 20/20 vitest GREEN**.
+>
+> 1. **findApplicationRoot** — Implemented in `tools.mjs` (exported). Checks root first, walks one level deep, skips node_modules/.git/.claude/.forge. Exported from `index.mjs`.
+> 2. **appRoot dual-root pattern** — All functions now use `findApplicationRoot(root)` for app-level checks. Governance root used for CLAUDE.md and git commands. Fixes subdirectory project layout (12 previously failing tests now pass).
+> 3. **Re-exports** — `index.mjs` re-exports all 9 tool functions including `findApplicationRoot` via `export { ... } from "./tools.mjs"`.
+> 4. **Dynamic dashboard version** — `serverVersion` constant reads `package.json` at import time. v3.1.0 hardcode eliminated.
+> 5. **FORGE_TEST_MODE guard in generateDashboard** — Returns immediately before browser launch when `FORGE_TEST_MODE` is set.
+>
+> **Additional fixes restored** (lost during tools.mjs extraction, diagnosed from original 9ac6d24 commit):
+> - BUG-01: getGitStatus filters `.claude/` from dirty state
+> - BUG-02: `testFileRatio` field returned (separate from `testCoverage` which is null when no report)
+> - BUG-03: `-not -name "*.config.*"` excludes vite/eslint config files from source count
+> - BUG-04: Tiered tsconfig scoring (10 strict / 7 basic / 4 jsconfig / 0 none)
+> - BUG-05: `BUILD_ARTIFACT_EXCLUDES` constant covers all artifact dirs
+> - Default root uses `FORGE_PROJECT_ROOT || process.cwd()` for all functions
+> - `vitest.config.mjs` now includes only `tests/` to prevent `__tests__/` from being collected by vitest
+>
+> **Started**: 2026-03-08 | **Completed**: 2026-03-08 | **Actual**: S
 
 ---
 
