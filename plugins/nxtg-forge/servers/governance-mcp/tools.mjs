@@ -955,23 +955,22 @@ export function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || proce
     let child;
     if (existsSync("/mnt/c/Windows")) {
       // WSL2: copy to Windows-accessible path and open with Windows browser
+      const fileName = tmpPath.split("/").pop();
       try {
         execSync(`cp "${tmpPath}" /mnt/c/Users/Public/ 2>/dev/null`, { timeout: 3000 });
       } catch {
         // Copy failed — skip browser open
-        child = null;
       }
-      if (child !== null) {
-        const winFile = `C:\\Users\\Public\\${tmpPath.split("/").pop()}`;
-        child = spawnProcess("cmd.exe", ["/c", "start", "", winFile], { detached: true, stdio: "ignore" });
-      }
+      const winFile = `C:\\Users\\Public\\${fileName}`;
+      // Use PowerShell Start-Process — more reliable than cmd.exe /c start
+      // which can fall through to Linux Firefox via WSLg ("Couldn't load XPCOM")
+      child = spawnProcess("powershell.exe", ["-NoProfile", "-Command", `Start-Process "${winFile}"`], { detached: true, stdio: "ignore" });
     } else if (process.platform === "darwin") {
       child = spawnProcess("open", [tmpPath], { detached: true, stdio: "ignore" });
     } else {
       child = spawnProcess("xdg-open", [tmpPath], { detached: true, stdio: "ignore" });
     }
     if (child) {
-      // Attach error listener to prevent unhandled ENOENT from leaking
       child.on("error", () => {});
       child.unref();
     }
