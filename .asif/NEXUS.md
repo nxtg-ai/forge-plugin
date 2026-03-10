@@ -469,7 +469,7 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 
 ### DIRECTIVE-NXTG-20260308-10 — P0: CI RED — Fix Missing Exports in index.mjs (43/43 Tests Fail)
 **From**: NXTG-AI CoS (Wolf) | **Priority**: P0
-**Injected**: 2026-03-08 | **Estimate**: S | **Status**: PENDING
+**Injected**: 2026-03-08 | **Estimate**: S | **Status**: DONE
 
 **Context**: CI is RED — all 43 governance-mcp tests fail. Asif flagged this directly. The CRUCIBLE audit refactored functions into `tools.mjs` but `index.mjs` does NOT re-export them. Test file `health.test.mjs:21-22` does `await import("../index.mjs")` and destructures 8 functions that are imported into `index.mjs` but never re-exported.
 

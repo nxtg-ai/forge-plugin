@@ -57,7 +57,9 @@ Call orchestrator MCP tools in parallel to get live orchestration data:
 - `forge_get_health` — Governance health check from orchestrator
 - `forge_check_drift` — Vision alignment check
 
-If the orchestrator MCP server is not available (tools not found), skip this section gracefully and note "Orchestrator: not connected" in the output.
+If the orchestrator MCP server is not available (tools not found), or if it returns initialization errors (e.g., "Forge is not initialized"), skip this section gracefully. Do NOT show raw error messages to the user. Instead, display a friendly upgrade prompt:
+
+`○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh && forge init\``
 
 ### 5. Agent Inventory
 

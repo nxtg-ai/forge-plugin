@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdtempSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
+import { execSync } from 'child_process';
 import { getGitStatus } from '../tools.mjs';
 import { setupFixture, teardownFixture, getFixturePath } from './setup.mjs';
 
@@ -46,5 +48,31 @@ describe('getGitStatus', () => {
     import('fs').then(({ unlinkSync }) => {
       try { unlinkSync(join(root, 'untracked-temp.txt')); } catch {}
     });
+  });
+
+  it('finds .git in subdirectory when root has no .git (Bug B)', () => {
+    // Create parent dir without .git, child dir with .git
+    const parent = mkdtempSync(join(tmpdir(), 'forge-gitroot-'));
+    const child = join(parent, 'myapp');
+    mkdirSync(child, { recursive: true });
+
+    // Init git in child, create a commit
+    execSync('git init', { cwd: child, stdio: 'pipe' });
+    execSync('git config user.email "test@forge.test"', { cwd: child, stdio: 'pipe' });
+    execSync('git config user.name "Forge Test"', { cwd: child, stdio: 'pipe' });
+    writeFileSync(join(child, 'package.json'), '{"name":"subdir-app"}');
+    execSync('git add .', { cwd: child, stdio: 'pipe' });
+    execSync('git commit -m "init subdir project"', { cwd: child, stdio: 'pipe' });
+
+    // Call getGitStatus with PARENT dir (no .git there) — should find child's .git
+    const result = getGitStatus(parent);
+
+    expect(result.commitCount).toBeGreaterThanOrEqual(1);
+    expect(result.lastCommit).toMatch(/init subdir project/);
+    expect(typeof result.branch).toBe('string');
+    expect(result.branch.length).toBeGreaterThan(0);
+
+    // Cleanup
+    rmSync(parent, { recursive: true, force: true });
   });
 });

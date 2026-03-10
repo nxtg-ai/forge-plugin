@@ -103,11 +103,20 @@ export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || proc
 }
 
 export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
-  const branch = run("git rev-parse --abbrev-ref HEAD", { cwd: root });
-  const commitCount = run("git rev-list --count HEAD", { cwd: root });
-  const lastCommit = run('git log -1 --format="%h %s (%cr)"', { cwd: root });
-  const status = run("git status --porcelain", { cwd: root });
-  const contributors = run("git shortlog -sn --no-merges HEAD | head -5", { cwd: root });
+  // Bug B: If root doesn't have .git, check subdirectory via findApplicationRoot
+  let gitRoot = root;
+  if (!existsSync(join(root, ".git"))) {
+    const appRoot = findApplicationRoot(root);
+    if (existsSync(join(appRoot, ".git"))) {
+      gitRoot = appRoot;
+    }
+  }
+
+  const branch = run("git rev-parse --abbrev-ref HEAD", { cwd: gitRoot });
+  const commitCount = run("git rev-list --count HEAD", { cwd: gitRoot });
+  const lastCommit = run('git log -1 --format="%h %s (%cr)"', { cwd: gitRoot });
+  const status = run("git status --porcelain", { cwd: gitRoot });
+  const contributors = run("git shortlog -sn --no-merges HEAD | head -5", { cwd: gitRoot });
 
   const lines = status ? status.split("\n").filter(Boolean) : [];
   // BUG-01: Exclude .claude/ paths — governance writes should not penalize git cleanliness
@@ -242,18 +251,18 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
   let score = 0;
   const checks = [];
 
-  // Governance initialized (20 pts) — always at governance root
+  // Governance initialized (15 pts) — always at governance root
   if (gov.initialized) {
-    score += 20;
-    checks.push({ name: "Governance", status: "pass", points: 20 });
+    score += 15;
+    checks.push({ name: "Governance", status: "pass", points: 15 });
   } else {
     checks.push({ name: "Governance", status: "fail", points: 0, note: "Not initialized" });
   }
 
-  // Git clean (15 pts)
+  // Git clean (10 pts)
   if (git.clean) {
-    score += 15;
-    checks.push({ name: "Git Clean", status: "pass", points: 15 });
+    score += 10;
+    checks.push({ name: "Git Clean", status: "pass", points: 10 });
   } else {
     score += 5;
     checks.push({ name: "Git Clean", status: "warn", points: 5, note: `${git.modified} modified, ${git.untracked} untracked` });
@@ -321,14 +330,47 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
     checks.push({ name: "File Size", status: "warn", points: 5, note: `${largeCount} files over 500 lines` });
   }
 
-  // Security: no .env committed (5 pts)
-  const envInGit = run("git ls-files | grep -i '\\.env$'", { cwd: root });
-  if (!envInGit) {
-    score += 5;
-    checks.push({ name: "No .env in Git", status: "pass", points: 5 });
-  } else {
-    checks.push({ name: "No .env in Git", status: "fail", points: 0, note: "Secrets may be committed!" });
+  // Security (15 pts) — npm audit, secrets in git, hardcoded secrets, eval usage
+  const security = getSecurityScan(root);
+  let securityPoints = 15;
+  const securityNotes = [];
+
+  // .env in git: -5
+  if (security.findings.some((f) => f.label === ".env file committed to git")) {
+    securityPoints -= 5;
+    securityNotes.push("secrets in git");
   }
+
+  // npm audit vulnerabilities: -10 for critical/high, -5 for moderate
+  if (security.audit?.total > 0) {
+    const v = security.audit.vulnerabilities;
+    if ((v.critical || 0) > 0 || (v.high || 0) > 0) {
+      securityPoints -= 10;
+      securityNotes.push(`${(v.critical || 0) + (v.high || 0)} critical/high vulns`);
+    } else if ((v.moderate || 0) > 0) {
+      securityPoints -= 5;
+      securityNotes.push(`${v.moderate} moderate vulns`);
+    }
+  }
+
+  // Hardcoded secrets or eval: -5
+  const hasSecretFindings = security.findings.some(
+    (f) => f.category === "secrets" && f.label !== ".env file committed to git"
+  );
+  const hasEval = security.findings.some((f) => f.category === "injection");
+  if (hasSecretFindings || hasEval) {
+    securityPoints -= 5;
+    securityNotes.push(hasSecretFindings ? "hardcoded secrets" : "eval() usage");
+  }
+
+  securityPoints = Math.max(0, securityPoints);
+  score += securityPoints;
+  checks.push({
+    name: "Security",
+    status: securityPoints >= 12 ? "pass" : securityPoints >= 5 ? "warn" : "fail",
+    points: securityPoints,
+    note: securityNotes.length ? securityNotes.join(", ") : "clean",
+  });
 
   const grade =
     score >= 90 ? "A" :
@@ -470,7 +512,8 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
   // npm audit (if available) — use appRoot where package-lock.json lives
   let audit = null;
   if (existsSync(join(appRoot, "package-lock.json"))) {
-    const auditRaw = run("npm audit --json 2>/dev/null", { cwd: appRoot, timeout: 30000 });
+    // npm audit exits non-zero when vulns exist — || true prevents run() from dropping output
+    const auditRaw = run("npm audit --json 2>/dev/null || true", { cwd: appRoot, timeout: 30000 });
     if (auditRaw) {
       try {
         const auditData = JSON.parse(auditRaw);

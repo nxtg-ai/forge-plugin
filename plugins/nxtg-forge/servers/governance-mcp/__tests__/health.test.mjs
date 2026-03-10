@@ -98,15 +98,15 @@ describe("forge_get_health", () => {
     assert.equal(result.maxScore, 100);
     assert.ok(Array.isArray(result.checks));
 
-    // Governance initialized = 20pts
+    // Governance initialized = 15pts
     const govCheck = result.checks.find((c) => c.name === "Governance");
     assert.equal(govCheck.status, "pass");
-    assert.equal(govCheck.points, 20);
+    assert.equal(govCheck.points, 15);
 
-    // Git clean = 15pts
+    // Git clean = 10pts
     const gitCheck = result.checks.find((c) => c.name === "Git Clean");
     assert.equal(gitCheck.status, "pass");
-    assert.equal(gitCheck.points, 15);
+    assert.equal(gitCheck.points, 10);
 
     // README = 10pts
     const readmeCheck = result.checks.find((c) => c.name === "README");
@@ -154,7 +154,7 @@ describe("forge_get_health", () => {
     const gitCheck = result.checks.find((c) => c.name === "Git Clean");
 
     assert.equal(gitCheck.status, "pass", "Untracked .claude/ files should not make git dirty");
-    assert.equal(gitCheck.points, 15);
+    assert.equal(gitCheck.points, 10);
 
     cleanup(dir);
   });
@@ -208,7 +208,7 @@ describe("forge_get_health", () => {
 
     const result = getHealthScore();
 
-    assert.equal(result.score, 40, `Empty project should score exactly 40 (git+readme+filesize+security), got ${result.score}`);
+    assert.equal(result.score, 45, `Empty project should score exactly 45 (git:10+readme:10+filesize:10+security:15), got ${result.score}`);
     assert.equal(result.grade, "F", `Empty project should be grade F, got ${result.grade}`);
     assert.ok(Array.isArray(result.checks));
     // Should not crash
@@ -437,33 +437,31 @@ describe("BUG-06: Scoring architecture", () => {
     writeFile(dir, "CLAUDE.md", "# Instructions");
     writeFile(dir, "tsconfig.json", JSON.stringify({ compilerOptions: { strict: true } }));
     writeFile(dir, ".claude/governance.json", JSON.stringify({ version: "1.0", project: { name: "test" } }));
-    // No source files, no tests → Test Coverage = 0, Git Clean = 15
+    // No source files, no tests → Test Coverage = 0, Git Clean = 10
     gitCommitAll(dir, "init");
     withProject(dir);
 
     const result = getHealthScore();
 
-    // Max achievable: governance(20) + git(15) + tests(0) + readme(10) + claude(10)
-    //                 + types(10) + filesize(10) + security(5) = 80 → B
+    // Max achievable: governance(15) + git(10) + tests(0) + readme(10) + claude(10)
+    //                 + types(10) + filesize(10) + security(15) = 80 → B
     assert.ok(result.score <= 80, `Boilerplate project scored ${result.score}, should be ≤80`);
     assert.ok(result.grade !== "A", `Boilerplate project graded ${result.grade}, should not be A`);
 
     cleanup(dir);
   });
 
-  it("file-existence checks total exactly 52 points", () => {
-    // Document the architectural fact: 52 of 100 points come from file existence alone
+  it("file-existence checks total exactly 45 points", () => {
+    // Document the architectural fact: 45 of 100 points come from file existence alone
     // This test forces a conscious decision if scoring weights change
     const fileExistenceChecks = {
-      "Governance": 20,     // governance.json exists
+      "Governance": 15,     // governance.json exists
       "README": 10,         // README.md exists
       "CLAUDE.md": 10,      // CLAUDE.md exists
       "Type Safety": 10,    // tsconfig/jsconfig exists (max tier)
-      "No .env in Git": 2,  // absence of .env (existence-based)
     };
-    // Note: "No .env in Git" scores 5 total, but 2pts are "absence-based" attribution
-    // The actual architectural concern: governance(20) + readme(10) + claude(10) + types(10) = 50
-    // These 4 checks award 50 points for file existence alone.
+    // governance(15) + readme(10) + claude(10) + types(10) = 45
+    // These 4 checks award 45 points for file existence alone.
 
     writeFile(dir, "package.json", JSON.stringify({ name: "arch-test" }));
     writeFile(dir, "README.md", "# Test");
@@ -480,7 +478,7 @@ describe("BUG-06: Scoring architecture", () => {
       return sum + (check ? check.points : 0);
     }, 0);
 
-    assert.equal(filePoints, 50, `File-existence checks should total 50pts, got ${filePoints}`);
+    assert.equal(filePoints, 45, `File-existence checks should total 45pts, got ${filePoints}`);
 
     cleanup(dir);
   });
