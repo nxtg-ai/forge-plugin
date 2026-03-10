@@ -170,10 +170,11 @@ What was created:
 
 Your Next Steps:
 
-1. Check project status:  /forge:status
-2. Plan a feature:        /forge:feature "feature name"
-3. Run gap analysis:      /forge:gap-analysis
-4. Command center:        /forge:command-center
+1. Open your dashboard:   /forge:dashboard
+2. Check project status:  /forge:status
+3. Plan a feature:        /forge:feature "feature name"
+4. Run gap analysis:      /forge:gap-analysis
+5. Command center:        /forge:command-center
 
 Quick Tips:
   - Forge tracks all work in .claude/governance.json
