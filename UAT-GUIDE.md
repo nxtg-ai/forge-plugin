@@ -640,6 +640,87 @@ After running through the UAT, please capture your feedback:
 
 ---
 
+## 13. Pre-Release Testing Protocol
+
+Before cutting a release, test plugin changes on a separate machine (CLX9) without publishing to GitHub or the marketplace.
+
+### Method: `--plugin-dir` (Recommended)
+
+Claude Code supports loading a plugin from any local directory using `--plugin-dir`. This bypasses the marketplace entirely — no git push, no release, no remove/re-add.
+
+### Step 1: Package the plugin on the dev machine (NXTG-AI)
+
+```bash
+# Create a tarball excluding node_modules and .git
+cd ~/projects/NXTG-Forge/forge-plugin
+tar czf /tmp/forge-plugin-test.tar.gz \
+  --exclude='node_modules' --exclude='.git' \
+  -C plugins/nxtg-forge .
+
+# Host it via HTTP (same pattern as binary hosting)
+cd /tmp && python3 -m http.server 9999
+```
+
+The tarball is now available at `http://<dev-machine-ip>:9999/forge-plugin-test.tar.gz`.
+
+### Step 2: Download and extract on the test machine (CLX9)
+
+```bash
+# Download and extract
+mkdir -p ~/forge-plugin-test && cd ~/forge-plugin-test
+curl -fsSL http://<dev-machine-ip>:9999/forge-plugin-test.tar.gz | tar xz
+
+# Install MCP server dependencies (governance-mcp needs node_modules)
+cd ~/forge-plugin-test/servers/governance-mcp && npm install --silent
+```
+
+### Step 3: Launch Claude Code with the test plugin
+
+```bash
+# Navigate to the test project and load the plugin from the local directory
+cd ~/projects/POC/forge-demo/L1 && claude --plugin-dir ~/forge-plugin-test
+```
+
+This loads the patched plugin directly. The marketplace-installed version is ignored for this session.
+
+### Step 4: Run the UAT flow
+
+Execute the standard test sequence:
+```
+/forge:init → /forge:status → /forge:dashboard
+```
+
+Verify fixes against the acceptance criteria in the relevant directive.
+
+### Step 5: Confirm or reject
+
+- **If tests pass**: Proceed with the release (push, tag, version bump, GitHub release).
+- **If tests fail**: Fix on dev machine, re-package (`tar czf`), re-download on CLX9, re-test. No git noise.
+
+### After Release: Updating on Other Machines
+
+Once the release is pushed to GitHub, use `/forge:update` on the target machine:
+
+```
+/forge:update
+```
+
+This command works around [Claude Code #29071](https://github.com/anthropics/claude-code/issues/29071) (stale marketplace cache) by running `git pull --ff-only` on the marketplace clone before triggering `claude plugin update`. It also validates governance config and hooks after updating.
+
+After `/forge:update` completes, **restart Claude Code** to load the new MCP server code.
+
+**Do NOT use `claude plugin update forge` directly** — it fetches without merging, leaving you on the old version.
+
+### Notes
+
+- `--plugin-dir` loads the plugin for that session only. It does not modify the installed plugin.
+- Multiple `--plugin-dir` flags can be passed to load several test plugins simultaneously.
+- MCP servers still need `node_modules` installed locally — the tarball excludes them to keep the download small.
+- The HTTP server can remain running across sessions (check with `lsof -i :9999`).
+- After a formal release, always use `/forge:update` (not raw `git pull`) on target machines.
+
+---
+
 ## Architecture Reference
 
 ```
