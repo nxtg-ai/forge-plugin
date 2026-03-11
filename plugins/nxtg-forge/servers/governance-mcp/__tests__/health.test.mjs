@@ -851,9 +851,9 @@ describe("Subdirectory project layout", () => {
     assert.notEqual(result.audit, undefined, "audit should be defined (npm audit was attempted via subdirectory package-lock.json)");
   });
 
-  it("server version in dashboard matches package.json version", () => {
+  it("server version in dashboard matches package.json version", async () => {
     const pkg = JSON.parse(readFileSync(join(import.meta.dirname, "..", "package.json"), "utf-8"));
-    const result = generateDashboard();
+    const result = await generateDashboard();
     const html = readFileSync(result.path, "utf-8");
 
     // Dashboard must contain the actual version from package.json
@@ -863,8 +863,8 @@ describe("Subdirectory project layout", () => {
     assert.ok(!html.includes("v3.2.0"), "Dashboard must not contain hardcoded v3.2.0");
   });
 
-  it("dashboard renders project data from subdirectory, not garbage", () => {
-    const result = generateDashboard();
+  it("dashboard renders project data from subdirectory, not garbage", async () => {
+    const result = await generateDashboard();
     const html = readFileSync(result.path, "utf-8");
 
     // Dashboard should show the governance project name, not "Project" fallback

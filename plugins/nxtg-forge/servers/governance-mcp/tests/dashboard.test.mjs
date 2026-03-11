@@ -7,9 +7,9 @@ beforeAll(setupFixture);
 afterAll(teardownFixture);
 
 describe('generateDashboard', () => {
-  it('returns an object with a path property pointing to an HTML file', () => {
+  it('returns an object with a path property pointing to an HTML file', async () => {
     const root = getFixturePath();
-    const result = generateDashboard(root);
+    const result = await generateDashboard(root);
 
     expect(typeof result.path).toBe('string');
     expect(result.path.endsWith('.html')).toBe(true);
@@ -21,9 +21,9 @@ describe('generateDashboard', () => {
     expect(typeof result.healthGrade).toBe('string');
   });
 
-  it('the generated HTML contains the project name from governance.json', () => {
+  it('the generated HTML contains the project name from governance.json', async () => {
     const root = getFixturePath();
-    const result = generateDashboard(root);
+    const result = await generateDashboard(root);
 
     const html = readFileSync(result.path, 'utf-8');
 

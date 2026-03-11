@@ -8,10 +8,11 @@
  * process.cwd(), allowing tests to point at a fixture directory.
  */
 
-import { execSync, spawn as spawnProcess } from "child_process";
+import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import open from "open";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -532,7 +533,7 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
   return { findings, audit, totalFindings: findings.length };
 }
 
-export function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
+export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
   const metrics = getCodeMetrics(root);
@@ -950,32 +951,12 @@ export function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || proce
     return { path: tmpPath, projectName, healthScore: health.score, healthGrade: health.grade };
   }
 
-  // Try to open in browser (non-blocking, best-effort — failures are silent)
+  // Open in browser — uses `open` package which handles WSL2, macOS, Linux, Windows
+  // WSL2: resolves full PowerShell path + wslpath conversion (no XPCOM errors)
   try {
-    let child;
-    if (existsSync("/mnt/c/Windows")) {
-      // WSL2: copy to Windows-accessible path and open with Windows browser
-      const fileName = tmpPath.split("/").pop();
-      try {
-        execSync(`cp "${tmpPath}" /mnt/c/Users/Public/ 2>/dev/null`, { timeout: 3000 });
-      } catch {
-        // Copy failed — skip browser open
-      }
-      const winFile = `C:\\Users\\Public\\${fileName}`;
-      // Use PowerShell Start-Process — more reliable than cmd.exe /c start
-      // which can fall through to Linux Firefox via WSLg ("Couldn't load XPCOM")
-      child = spawnProcess("powershell.exe", ["-NoProfile", "-Command", `Start-Process "${winFile}"`], { detached: true, stdio: "ignore" });
-    } else if (process.platform === "darwin") {
-      child = spawnProcess("open", [tmpPath], { detached: true, stdio: "ignore" });
-    } else {
-      child = spawnProcess("xdg-open", [tmpPath], { detached: true, stdio: "ignore" });
-    }
-    if (child) {
-      child.on("error", () => {});
-      child.unref();
-    }
+    await open(tmpPath);
   } catch {
-    // Browser open failed — user can open manually
+    // Browser open failed — user can open manually via the returned path
   }
 
   return {

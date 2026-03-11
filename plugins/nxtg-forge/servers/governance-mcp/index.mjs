@@ -134,7 +134,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = getSecurityScan();
         break;
       case "forge_open_dashboard":
-        result = generateDashboard();
+        result = await generateDashboard();
         break;
       default:
         return {
