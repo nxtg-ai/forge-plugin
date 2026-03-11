@@ -121,17 +121,29 @@ Here is the EXACT structure to output (substitute real values for placeholders):
 
 `| Dimension | Bar | Score |`
 
-For each health dimension, generate a progress bar using Unicode block characters. Calculate filled blocks as `round(score / max * 20)`. Use `█` for filled and `░` for empty, always 20 characters wide total. Example rows:
+For each health dimension, generate a progress bar using Unicode block characters. Calculate filled blocks as `round(score / max * 20)`. Use `█` for filled and `░` for empty, always 20 characters wide total.
+
+The health checks from the MCP tool map to these dimensions with their ACTUAL point maximums:
+
+- **Tests** (max 20): "Test Coverage" check
+- **Types** (max 10): "Type Safety" check
+- **Security** (max 15): "Security" check
+- **Docs** (max 20): "README" (10) + "CLAUDE.md" (10)
+- **Project** (max 35): "Governance" (15) + "Git Clean" (10) + "File Size" (10)
+- **Overall** (max 100): total score with letter grade
+
+Use each check's `points` and its actual maximum from above. Do NOT hardcode all dimensions to /20. Example:
 
 `| Tests | ████████████████░░░░ | 16/20 |`
-`| Types | ██████████████████░░ | 18/20 |`
-`| Security | █████████████░░░░░░░ | 13/20 |`
-`| Quality | ██████████░░░░░░░░░░ | 10/20 |`
-`| **Overall** | **████████████████░░░░** | **B (57/100)** |`
+`| Types | ██████████████████░░ | 8/10 |`
+`| Security | ██████████████████░░ | 15/15 |`
+`| Docs | ████████████████████ | 20/20 |`
+`| Project | ████████████████░░░░ | 30/35 |`
+`| **Overall** | **████████████████░░░░** | **B (89/100)** |`
 
-Map total score to letter grade: A (90-100), B (75-89), C (60-74), D (40-59), F (0-39).
+Map total score to letter grade: A (90-100), B (80-89), C (70-79), D (60-69), F (0-59).
 
-If the MCP health tool returns individual check results instead of dimension scores, group the checks into these 4 dimensions and calculate sub-totals.
+Read the individual checks from the MCP health result and group them into these dimensions by check name.
 
 **6. Tests section:** Output `## Tests` then `| Metric | Value |` table with Test files, Passing, Coverage rows.
 
