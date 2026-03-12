@@ -228,10 +228,25 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
   const srcCount = parseInt(sourceFiles) || 0;
   const tstCount = parseInt(testFiles) || 0;
 
+  // Count individual test cases by grepping for test declarations (~50ms)
+  // Covers: JS/TS (it/test), Python (def test_), Rust (#[test]), Go (func Test)
+  const testCaseCount = (() => {
+    const patterns = {
+      node: `grep -rE "^\\s*(it|test)\\s*\\(" --include="*.test.*" --include="*.spec.*" . 2>/dev/null | wc -l`,
+      rust: `grep -rE "#\\[test\\]" --include="*.rs" . 2>/dev/null | wc -l`,
+      python: `grep -rE "^\\s*def test_" --include="*.py" . 2>/dev/null | wc -l`,
+      go: `grep -rE "^func Test" --include="*_test.go" . 2>/dev/null | wc -l`,
+    };
+    const cmd = patterns[projectType];
+    if (!cmd) return 0;
+    return parseInt(run(cmd, { cwd: appRoot, shell: "/bin/bash" })) || 0;
+  })();
+
   return {
     projectType,
     sourceFiles: srcCount,
     testFiles: tstCount,
+    testCaseCount,
     // testFileRatio: test files / source files (proxy metric, not real line coverage)
     testFileRatio: tstCount && srcCount ? Math.round((tstCount / srcCount) * 100) : 0,
     // testCoverage: actual line coverage % from Istanbul/c8 report, null if unavailable
@@ -269,18 +284,27 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
     checks.push({ name: "Git Clean", status: "warn", points: 5, note: `${git.modified} modified, ${git.untracked} untracked` });
   }
 
-  // Has tests (20 pts) — prefer real line coverage, fall back to file ratio proxy
+  // Has tests (20 pts) — tiered: real coverage → test density → file ratio
   if (metrics.testFiles > 0) {
     let testScore;
     let coverageNote;
     if (metrics.testCoverage !== null) {
-      // Real line coverage from Istanbul/c8/nyc — use directly
+      // Tier 1: Real line coverage from Istanbul/c8/nyc
       testScore = Math.min(20, Math.round((metrics.testCoverage / 100) * 20));
       coverageNote = `${metrics.testCoverage}% line coverage`;
+    } else if (metrics.testCaseCount > 0 && metrics.sourceFiles > 0) {
+      // Tier 2: Test density — test cases per source file
+      // Benchmarks: <1 = sparse, 1-3 = basic, 3-5 = solid, 5+ = thorough
+      const density = metrics.testCaseCount / metrics.sourceFiles;
+      if (density >= 5) testScore = 20;
+      else if (density >= 3) testScore = 15;
+      else if (density >= 1) testScore = 10;
+      else testScore = 5;
+      coverageNote = `${metrics.testCaseCount} tests across ${metrics.sourceFiles} files (${density.toFixed(1)}/file)`;
     } else {
-      // File ratio proxy: 5 pts floor (has tests) + up to 15 scaled by ratio
-      testScore = Math.min(20, 5 + Math.round((metrics.testFileRatio / 100) * 15));
-      coverageNote = `${metrics.testFileRatio}% file ratio (run with --coverage for accurate scoring)`;
+      // Tier 3: File ratio fallback
+      testScore = Math.min(20, Math.round((metrics.testFileRatio / 100) * 20));
+      coverageNote = `${metrics.testFileRatio}% file ratio`;
     }
     score += testScore;
     checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: coverageNote });

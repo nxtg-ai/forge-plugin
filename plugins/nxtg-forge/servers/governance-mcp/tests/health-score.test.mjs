@@ -105,16 +105,44 @@ describe('getHealthScore', () => {
     try { unlinkSync(join(root, '.env')); } catch {}
   });
 
-  it('test scoring uses real coverage when available, falls back to file ratio with 5pt floor', () => {
+  it('test scoring uses test density when no coverage report exists', () => {
     const root = getFixturePath();
     const result = getHealthScore(root);
     const testCheck = result.checks.find((c) => c.name === 'Test Coverage');
 
-    // Fixture: 2 source files, 1 test file → 50% file ratio, no coverage report
-    // Formula: 5 (floor) + round(50/100 * 15) = 5 + 8 = 13
-    expect(testCheck.points).toBe(13);
-    expect(testCheck.note).toContain('file ratio');
-    expect(testCheck.note).toContain('--coverage');
+    // Fixture: 2 source files, 1 test file with 4 test cases (it() calls)
+    // Density: 4 / 2 = 2.0 tests/file → tier "1-3 = basic" → 10/20
+    expect(testCheck.points).toBe(10);
+    expect(testCheck.note).toContain('4 tests');
+    expect(testCheck.note).toContain('/file');
+  });
+
+  it('test density scoring rewards adding more tests to the same file', () => {
+    const root = getFixturePath();
+
+    // Add more test cases to push density from 2.0 to 5.5 tests/file (thorough tier)
+    const extraTests = join(root, 'tests', 'extra.test.ts');
+    writeFileSync(extraTests, `import { describe, it, expect } from 'vitest';
+describe('extra', () => {
+  it('test a', () => { expect(1).toBe(1); });
+  it('test b', () => { expect(2).toBe(2); });
+  it('test c', () => { expect(3).toBe(3); });
+  it('test d', () => { expect(4).toBe(4); });
+  it('test e', () => { expect(5).toBe(5); });
+  it('test f', () => { expect(6).toBe(6); });
+  it('test g', () => { expect(7).toBe(7); });
+});
+`);
+
+    const result = getHealthScore(root);
+    const testCheck = result.checks.find((c) => c.name === 'Test Coverage');
+
+    // 4 original + 7 new = 11 test cases, 2 source files → density 5.5 → 20/20
+    expect(testCheck.points).toBe(20);
+    expect(testCheck.status).toBe('pass');
+
+    // Cleanup
+    try { unlinkSync(extraTests); } catch {}
   });
 
   it('grade letter matches score boundaries', () => {

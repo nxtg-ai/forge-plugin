@@ -6,17 +6,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.4] — 2026-03-12
+
+### Fixed
+
+- **Test scoring measures real test quality** — Replaced the file ratio proxy (which counted test FILES, not tests) with a 3-tier scoring system:
+  1. **Real line coverage** from Istanbul/c8/nyc when a coverage report exists (gold standard)
+  2. **Test density** — counts actual `it()`/`test()`/`def test_`/`#[test]` declarations via grep (~50ms), scores by tests-per-source-file: <1 sparse (5pts), 1-3 basic (10pts), 3-5 solid (15pts), 5+ thorough (20pts)
+  3. **File ratio** as last resort when test case patterns can't be detected
+- Adding tests now moves the score. A project with 37 tests across 3 source files (12.3/file) scores **20/20** instead of the old 7/20. Previously, adding 16 tests to the same file changed the score by exactly zero.
+
+### Tests
+
+- **27/27 vitest** (was 26 — 1 new test for density tier scoring)
+- **43/43 node:test** (unchanged)
+
+---
+
 ## [3.4.3] — 2026-03-12
 
 ### Fixed
 
-- **Test scoring accuracy** — Health score now uses real line coverage (Istanbul/c8/nyc) for the Tests dimension when a coverage report exists. Previously, real coverage was displayed in the note but ignored for scoring — the score always used the file ratio proxy. Projects with 80% real coverage now score 16/20 instead of whatever the file ratio happened to be.
-- **File ratio proxy too punishing** — When no coverage report exists, the file ratio proxy now awards a 5-point floor for "has tests at all" plus up to 15 scaled by ratio. A project with 1 test file and 3 source files now scores 10/20 (was 7/20). The note tells users to run `--coverage` for accurate scoring.
+- **Test scoring accuracy (patch, superseded by v3.4.4)** — Added 5-point floor for file ratio proxy and real coverage preference. This was an incremental patch; v3.4.4 replaces it with proper test density scoring.
 
 ### Tests
 
-- **26/26 vitest** (was 25 — 1 new test for scoring accuracy)
-- **43/43 node:test** (unchanged)
+- **26/26 vitest**
+- **43/43 node:test**
 
 ---
 
@@ -121,6 +137,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.4]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.3...v3.4.4
 [3.4.3]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.2...v3.4.3
 [3.4.2]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.1...v3.4.2
 [3.4.1]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.0...v3.4.1
