@@ -698,7 +698,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Test Files</div>
         <div class="text-2xl font-bold text-slate-100">${metrics.testFiles}</div>
-        <div class="text-xs ${metrics.testCoverage >= 50 ? "text-emerald-400" : "text-amber-400"} mt-1">${metrics.testCoverage}% coverage</div>
+        <div class="text-xs ${(metrics.testCoverage ?? 0) >= 50 ? "text-emerald-400" : "text-amber-400"} mt-1">${metrics.testCoverage !== null ? `${metrics.testCoverage}% coverage` : metrics.testCaseCount > 0 ? `${metrics.testCaseCount} test cases` : `${metrics.testFileRatio}% file ratio`}</div>
       </div>
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Commits</div>

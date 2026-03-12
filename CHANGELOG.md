@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.6] — 2026-03-12
+
+### Fixed
+
+- **Dashboard "null% coverage"** — HTML dashboard displayed `null% coverage` when no Istanbul/c8 coverage report exists. Now shows test case count (from density tier) or file ratio as fallback. Color coding also fixed (`null >= 50` always evaluated false).
+- **Sisyphean score cycle verified** — The `.claude/governance.json` git filter (BUG-01, v3.2.0) already handles both untracked AND modified files. The 80→75 bouncing seen on CLX9 was due to stale MCP server (MCP doesn't hot-reload — requires Claude Code restart after `/forge:update`).
+
+### Tests
+
+- **27/27 vitest** (unchanged)
+- **43/43 node:test** (unchanged)
+
+---
+
 ## [3.4.5] — 2026-03-12
 
 ### Fixed
@@ -160,6 +174,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.6]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.5...v3.4.6
 [3.4.5]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.4...v3.4.5
 [3.4.4]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.3...v3.4.4
 [3.4.3]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.2...v3.4.3
