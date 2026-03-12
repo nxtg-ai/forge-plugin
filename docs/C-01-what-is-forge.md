@@ -22,7 +22,7 @@ Forge is designed as a graduated system. Start with what you need. Go deeper whe
 
 | Level | Name | What You Get | Install Time |
 |-------|------|-------------|-------------|
-| **L1** | Vibe Coder | 22 AI agents, 21 slash commands, automated quality checks inside Claude Code | 30 seconds |
+| **L1** | Vibe Coder | 23 AI agents, 23 slash commands, automated quality checks inside Claude Code | 30 seconds |
 | **L2** | Pro Builder | Multi-tool orchestration, file locking, task planning, knowledge capture, TUI dashboard | 60 seconds |
 | **L3** | Ship Lord | Visual web dashboard, Infinity Terminal (sessions that survive browser close), full mission control | 2 minutes |
 

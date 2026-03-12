@@ -9,7 +9,7 @@ claude plugin marketplace add nxtg-ai/forge-plugin
 claude plugin install forge
 ```
 
-That's it. The plugin loads 22 agents, 21 slash commands, 29 knowledge skills, and 6 governance hooks. Everything is pure markdown — no build step, no compilation.
+That's it. The plugin loads 23 agents, 23 slash commands, 32 knowledge skills, and 7 governance hooks. Everything is pure markdown — no build step, no compilation.
 
 ## Your First Command
 
@@ -105,5 +105,5 @@ Signs you need L2:
 ## Next Steps
 
 - [Upgrade to Pro Builder (L2)](C-03-upgrade-to-pro-builder.md) — Multi-tool orchestration
-- [Slash Commands Reference](C-11-slash-commands.md) — All 21 commands in detail
-- [Agents Reference](C-13-agents-skills.md) — When to use each of the 22 agents
+- [Slash Commands Reference](C-11-slash-commands.md) — All 23 commands in detail
+- [Agents Reference](C-13-agents-skills.md) — When to use each of the 23 agents

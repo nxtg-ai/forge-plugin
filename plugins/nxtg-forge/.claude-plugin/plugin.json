@@ -1,6 +1,6 @@
 {
   "name": "forge",
-  "version": "3.4.6",
+  "version": "3.4.7",
   "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code",
   "author": {
     "name": "NXTG AI",

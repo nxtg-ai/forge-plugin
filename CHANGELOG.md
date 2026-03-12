@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.7] — 2026-03-12
+
+### Changed
+
+- **Agent file naming** — Renamed all 23 agent files from legacy prefixed names (`[AFRG]-database.md`, `[NXTG-CEO]-LOOP.md`, `forge-oracle.md`) to clean names (`database.md`, `ceo-loop.md`, `oracle.md`). Claude Code `/plugin` TUI now shows clean agent names.
+- **Component counts corrected everywhere** — Audited and fixed counts across 15+ files: 23 commands (was 21), 23 agents (was 22), 32 skills (was 29), 7 hooks (was 6). Updated in CLAUDE.md, UAT-Guide, 4 docs pages, 3 commands, 2 skills.
+- **CEO-LOOP internal references** — Updated `[AFRG]-` prefixes to `forge:` inside ceo-loop agent and skill.
+
+---
+
 ## [3.4.6] — 2026-03-12
 
 ### Fixed

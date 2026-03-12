@@ -1,6 +1,6 @@
 # Slash Commands Reference
 
-All 21 slash commands provided by the forge-plugin. These are available inside Claude Code after installing the plugin.
+All 23 slash commands provided by the forge-plugin. These are available inside Claude Code after installing the plugin.
 
 ## Governance
 

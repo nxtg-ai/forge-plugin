@@ -178,8 +178,8 @@ Your Next Steps:
 
 Quick Tips:
   - Forge tracks all work in .claude/governance.json
-  - 22 specialized agents are available automatically
-  - 29 skills provide context-aware guidance
+  - 23 specialized agents are available automatically
+  - 32 skills provide context-aware guidance
   - All hooks run advisory governance checks
 ```
 

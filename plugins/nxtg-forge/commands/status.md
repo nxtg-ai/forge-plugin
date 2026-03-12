@@ -63,15 +63,15 @@ If the orchestrator MCP server is not available (tools not found), or if it retu
 
 ### 5. Agent Inventory
 
-Agents are loaded from the Forge plugin (22 built-in). No need to check `.claude/agents/` — the plugin provides them automatically.
+Agents are loaded from the Forge plugin (23 built-in). No need to check `.claude/agents/` — the plugin provides them automatically.
 
-Report: **Agents: 22 available (from Forge plugin)**
+Report: **Agents: 23 available (from Forge plugin)**
 
 ### 6. Command Inventory
 
-Commands are loaded from the Forge plugin (21 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
+Commands are loaded from the Forge plugin (23 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
 
-Report: **Commands: 21 available (from Forge plugin)**
+Report: **Commands: 23 available (from Forge plugin)**
 
 ### 7. Build Status
 
@@ -85,17 +85,18 @@ IMPORTANT: Do NOT run `npx tsc` if there is no `tsconfig.json`. It will produce 
 
 ### 8. Hook Status
 
-Hooks are loaded from the Forge plugin (6 built-in). They are defined in the plugin's `hooks/hooks.json` and run automatically — they do NOT require `.claude/settings.json`.
+Hooks are loaded from the Forge plugin (7 built-in). They are defined in the plugin's `hooks/hooks.json` and run automatically — they do NOT require `.claude/settings.json`.
 
-The 6 hooks are:
+The 7 hooks are:
 - **UserPromptSubmit**: `pre-task.sh` — sync governance state, initialize context
+- **Stop**: `ceo-loop-stop.sh` — CEO-LOOP ORBIT continuation between iterations
 - **Stop**: `post-task.sh` — quality checks on completed work
 - **Stop**: `audit-root-cleanliness.sh` — flag unnecessary root files
 - **Stop**: `smoke-test-reminder.sh` — remind to test after server/test changes
 - **PostToolUse (Write)**: `enforce-file-placement.sh` — enforce file organization
 - **PostToolUse (Edit/Write)**: `governance-check.sh` — advisory code quality check
 
-Report: **Hooks: 6 active (from Forge plugin)**
+Report: **Hooks: 7 active (from Forge plugin)**
 
 ## Display Format — MANDATORY
 
@@ -153,7 +154,7 @@ Read the individual checks from the MCP health result and group them into these 
 
 **9. Orchestrator section:** Output `## Orchestrator`. If connected: `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. If NOT connected: output `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\``
 
-**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (22, Forge plugin), Commands (21, Forge plugin), Hooks (6, Forge plugin).
+**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (23, Forge plugin), Commands (23, Forge plugin), Hooks (7, Forge plugin).
 
 **11. Recovery section (conditional):** If git has uncommitted changes (modified or untracked files from Step 2), output `## Recovery Needed` with a table of uncommitted files and their status.
 

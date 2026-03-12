@@ -23,9 +23,9 @@ plugins/nxtg-forge/
 ├── .claude-plugin/
 │   └── plugin.json           # Manifest (name, version, description)
 ├── .mcp.json                 # MCP server config (governance-mcp via stdio)
-├── commands/                 # 21 slash commands (*.md (slash commands))
-├── agents/                   # 22 agent definitions ([AFRG]-*.md)
-├── skills/                   # 29 skill directories (*/SKILL.md)
+├── commands/                 # 23 slash commands (*.md)
+├── agents/                   # 23 agent definitions (*.md)
+├── skills/                   # 32 skill directories (*/SKILL.md)
 ├── hooks/                    # 6 governance hooks (bash scripts)
 │   ├── hooks.json            # Hook trigger definitions
 │   └── scripts/lib.sh        # Shared utilities
@@ -161,7 +161,7 @@ description: "Short description shown in /help"
 Instructions for Claude Code to execute...
 ```
 
-### Agents (`[AFRG]-*.md`)
+### Agents (`*.md`)
 ```markdown
 ---
 name: forge-agent-name
@@ -196,8 +196,8 @@ Contextual knowledge, patterns, best practices...
 
 ## Key Dimensions
 
-- **Version:** 3.4.6
-- **Components:** 21 commands, 22 agents, 29 skills, 6 hooks, 8 MCP tools
+- **Version:** 3.4.7
+- **Components:** 23 commands, 23 agents, 32 skills, 7 hooks, 8 MCP tools
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
 - **MCP Server:** Node.js ES module (`@modelcontextprotocol/sdk@^1.12.1`)
 - **Repo:** github.com/nxtg-ai/forge-plugin

@@ -14,7 +14,7 @@ skills: nxtg-forge:ceo-loop
 tools: Read, Grep, Glob, TodoWrite, Task, Write, Edit
 ---
 
-# [NXTG-CEO]-LOOP Agent
+# ceo-loop Agent
 
 ## IDENTITY
 
@@ -366,12 +366,12 @@ Next Actions:
 ### Agent Hierarchy
 
 ```
-[NXTG-CEO]-LOOP (You)
-    ├─ [AFRG]-orchestrator (Coordinates all agents)
-    │   ├─ [AFRG]-planner (Plans features)
-    │   ├─ [AFRG]-builder (Implements code)
-    │   ├─ [AFRG]-guardian (Quality assurance)
-    │   ├─ [AFRG]-detective (Analysis)
+ceo-loop (You)
+    ├─ forge:orchestrator (Coordinates all agents)
+    │   ├─ forge:planner (Plans features)
+    │   ├─ forge:builder (Implements code)
+    │   ├─ forge:guardian (Quality assurance)
+    │   ├─ forge:detective (Analysis)
     │   └─ release-sentinel (Documentation)
     └─ Forge Commands (User-facing slash commands)
 ```
@@ -477,10 +477,10 @@ Next Actions:
 To summon the CEO when decisions are needed:
 
 ```
-@[NXTG-CEO]-LOOP <brief context>
+@ceo-loop <brief context>
 
 Example:
-@[NXTG-CEO]-LOOP Need approval for implementing WebSocket-based
+@ceo-loop Need approval for implementing WebSocket-based
 real-time agent communication vs polling. Impact: Medium, Risk: Low.
 ```
 

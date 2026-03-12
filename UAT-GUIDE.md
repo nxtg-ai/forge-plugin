@@ -77,10 +77,10 @@ claude plugin install nxtg-forge
 │               └── nxtg-forge/
 │                   ├── .claude-plugin/
 │                   │   └── plugin.json
-│                   ├── commands/     # 21 slash commands
-│                   ├── agents/       # 22 agent definitions
-│                   ├── skills/       # 29 skill modules
-│                   ├── hooks/        # 6 governance hooks
+│                   ├── commands/     # 23 slash commands
+│                   ├── agents/       # 23 agent definitions
+│                   ├── skills/       # 32 skill modules
+│                   ├── hooks/        # 7 governance hooks
 │                   ├── .mcp.json     # MCP server config
 │                   └── servers/      # MCP dashboard server
 └── settings.json                     # Plugin listed in enabledPlugins
@@ -117,7 +117,7 @@ In a new Claude Code session, verify components loaded.
 
 ### 3a: Commands Available
 
-Type `/forge:` and you should see autocomplete suggestions for all 21 commands:
+Type `/forge:` and you should see autocomplete suggestions for all 23 commands:
 
 | Command | What It Does |
 |---------|-------------|
@@ -149,7 +149,7 @@ Type `/forge:` and you should see autocomplete suggestions for all 21 commands:
 
 Ask Claude: "What agents are available from the forge plugin?"
 
-You should see references to 22 agents including:
+You should see references to 23 agents including:
 - `planner`, `builder`, `guardian`, `security`
 - `testing`, `performance`, `detective`, `refactor`
 - `orchestrator`, `devops`, `api`, `database`
@@ -331,7 +331,7 @@ Claude will:
 
 | Location | What's There | Why |
 |----------|-------------|-----|
-| `~/.claude/plugins/.../nxtg-forge/agents/` | 22 agent .md files | Plugin auto-discovery |
+| `~/.claude/plugins/.../nxtg-forge/agents/` | 23 agent .md files | Plugin auto-discovery |
 | `project/.claude/agents/` | Should be EMPTY for plugin users | Agents come from plugin |
 | `~/.claude/agents/` | EMPTY unless you put your own agents here | Global user agents (not from plugin) |
 
@@ -440,10 +440,10 @@ These come from the plugin and are available in every project:
 
 ```
 ~/.claude/plugins/marketplaces/nxtg-forge/plugins/nxtg-forge/
-├── commands/     → 21 slash commands (loaded globally)
-├── agents/       → 22 agent definitions (loaded globally)
-├── skills/       → 29 knowledge modules (loaded globally)
-├── hooks/        → 6 governance hooks (run globally)
+├── commands/     → 23 slash commands (loaded globally)
+├── agents/       → 23 agent definitions (loaded globally)
+├── skills/       → 32 knowledge modules (loaded globally)
+├── hooks/        → 7 governance hooks (run globally)
 └── servers/      → MCP server (available globally)
 ```
 
@@ -589,7 +589,7 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 | 7.1 | Open project A | `/forge:init` + `/forge:status` works | | |
 | 7.2 | Open project B | `/forge:init` + `/forge:status` works | | |
 | 7.3 | Projects are isolated | governance.json is different per project | | |
-| 7.4 | Commands are shared | Same 21 commands available in both projects | | |
+| 7.4 | Commands are shared | Same 23 commands available in both projects | | |
 
 ### Phase 8: Edge Cases
 
@@ -727,10 +727,10 @@ After `/forge:update` completes, **restart Claude Code** to load the new MCP ser
 Plugin Install Location (GLOBAL):
 ~/.claude/plugins/marketplaces/{marketplace}/plugins/nxtg-forge/
   ├── .claude-plugin/plugin.json   ← Manifest (auto-discovered)
-  ├── commands/*.md                ← 21 slash commands (auto-discovered)
-  ├── agents/*.md                  ← 22 agent specs (auto-discovered)
-  ├── skills/*/SKILL.md            ← 29 knowledge modules (auto-discovered)
-  ├── hooks/hooks.json             ← 6 advisory hooks (auto-registered)
+  ├── commands/*.md                ← 23 slash commands (auto-discovered)
+  ├── agents/*.md                  ← 23 agent specs (auto-discovered)
+  ├── skills/*/SKILL.md            ← 32 knowledge modules (auto-discovered)
+  ├── hooks/hooks.json             ← 7 advisory hooks (auto-registered)
   ├── .mcp.json                    ← MCP server config (auto-registered)
   └── servers/governance-mcp/      ← MCP dashboard server (starts on demand)
 

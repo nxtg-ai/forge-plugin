@@ -162,7 +162,7 @@ Is this feature implementation?
 
 ## 5. COMPLETE AGENT ROUTING GUIDE
 
-### Full Roster (22 agents)
+### Full Roster (23 agents)
 
 | Agent | Model | Specialty | Delegate when... |
 |-------|-------|-----------|-----------------|

@@ -93,7 +93,7 @@ Agents write here to submit decisions for review:
   {
     "id": "req-001",
     "submitted_at": "2026-03-08T10:01:00Z",
-    "requestor": "[AFRG]-builder",
+    "requestor": "forge:builder",
     "category": "architecture",
     "title": "WebSocket vs polling for agent communication",
     "description": "Should we implement WebSocket-based real-time agent communication or keep polling?",
@@ -200,16 +200,16 @@ Append each to the decision journal (JSONL format, one per line).
 **Deep mode** (selected light/medium/heavy item):
 
 - **light**: Decide with full reasoning chain logged. One Agent Team optional.
-- **medium**: Research before deciding. Spawn `[AFRG]-detective` or `[AFRG]-planner` to gather context:
+- **medium**: Research before deciding. Spawn `forge:detective` or `forge:planner` to gather context:
   ```
-  Spawn [AFRG]-detective: "Gather context on [decision topic]: check codebase state,
+  Spawn forge:detective: "Gather context on [decision topic]: check codebase state,
   relevant files, test coverage, and technical constraints. Report back in 3 minutes."
   ```
   Then decide with that context.
 - **heavy**: Full Agent Team:
-  - `[AFRG]-detective` → gather context, identify risks
-  - `[AFRG]-planner` → draft architecture recommendation
-  - `[AFRG]-guardian` → check vision alignment and quality gates
+  - `forge:detective` → gather context, identify risks
+  - `forge:planner` → draft architecture recommendation
+  - `forge:guardian` → check vision alignment and quality gates
   - CEO-LOOP synthesises all inputs and issues final decision
 
 ---
