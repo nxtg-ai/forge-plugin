@@ -39,13 +39,15 @@ export function readJson(filePath) {
 // Dynamic version from package.json (replaces hardcoded string in dashboard)
 export const serverVersion = readJson(join(import.meta.dirname, "package.json"))?.version ?? "unknown";
 
-// BUG-05: Build artifact directories to exclude from all find commands.
-const BUILD_ARTIFACT_EXCLUDES = [
+// BUG-05: Build artifact directories to exclude from all find AND grep commands.
+const EXCLUDED_DIRS = [
   "node_modules", "dist", ".git",
   ".next", "build", "out", "target",
   "coverage", ".nyc_output", "__pycache__", ".pytest_cache",
-  "vendor", ".venv", ".turbo", ".vite",
-].map((d) => `-not -path "*/${d}/*"`).join(" ");
+  "vendor", ".venv", ".turbo", ".vite", ".stryker-tmp", "dist-ui",
+];
+const BUILD_ARTIFACT_EXCLUDES = EXCLUDED_DIRS.map((d) => `-not -path "*/${d}/*"`).join(" ");
+const GREP_EXCLUDE_DIRS = EXCLUDED_DIRS.map((d) => `--exclude-dir=${d}`).join(" ");
 
 /**
  * Find the directory that contains the project manifest (package.json, Cargo.toml, etc.).
@@ -229,13 +231,18 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
   const tstCount = parseInt(testFiles) || 0;
 
   // Count individual test cases by grepping for test declarations (~50ms)
-  // Covers: JS/TS (it/test), Python (def test_), Rust (#[test]), Go (func Test)
+  // Uses find to locate test files (avoids node_modules/dist inflation) then greps for patterns.
+  // Covers: JS/TS (it/test + .each/.skip/.only), Python (def test_), Rust (#[test] + async), Go (func Test)
   const testCaseCount = (() => {
+    const excl = BUILD_ARTIFACT_EXCLUDES;
     const patterns = {
-      node: `grep -rE "^\\s*(it|test)\\s*\\(" --include="*.test.*" --include="*.spec.*" . 2>/dev/null | wc -l`,
-      rust: `grep -rE "#\\[test\\]" --include="*.rs" . 2>/dev/null | wc -l`,
-      python: `grep -rE "^\\s*def test_" --include="*.py" . 2>/dev/null | wc -l`,
-      go: `grep -rE "^func Test" --include="*_test.go" . 2>/dev/null | wc -l`,
+      // find all test files (*.test.*, *.spec.*, *.cy.*, plus files inside __tests__/ dirs)
+      // then grep for it(, test(, it.each(, test.skip(, etc.
+      node: `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "*.cy.*" -o -path "*/__tests__/*" \\) ${excl} 2>/dev/null | xargs grep -E "^\\s*(it|test)(\\.(each|skip|only|todo|concurrent))?\\s*\\(" 2>/dev/null | wc -l`,
+      // #[test], #[tokio::test], #[actix_web::test], #[rstest], #[test_case]
+      rust: `find . -name "*.rs" ${excl} 2>/dev/null | xargs grep -E "#\\[(tokio::)?test\\]|#\\[rstest\\]|#\\[test_case\\]|#\\[actix_web::test\\]" 2>/dev/null | wc -l`,
+      python: `find . -name "*.py" ${excl} 2>/dev/null | xargs grep -E "^\\s*def test_" 2>/dev/null | wc -l`,
+      go: `find . -name "*_test.go" ${excl} 2>/dev/null | xargs grep -E "^func Test" 2>/dev/null | wc -l`,
     };
     const cmd = patterns[projectType];
     if (!cmd) return 0;

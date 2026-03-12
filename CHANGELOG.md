@@ -6,6 +6,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.5] — 2026-03-12
+
+### Fixed
+
+- **P0: node_modules inflation in test counting** — The grep for test case counting scanned `node_modules`, `dist`, `.stryker-tmp`, and all build artifact directories. On forge-ui this inflated from 4,187 real matches to 14,130 phantom matches (237% over-count). Now uses `find` with the same `BUILD_ARTIFACT_EXCLUDES` as source file counting, ensuring grep and find exclude identical directories.
+- **Missing test patterns** — Expanded grep patterns to cover real-world conventions: `it.each()`/`test.skip()`/`test.only()` variants, `__tests__/` directory convention (Jest), `*.cy.*` (Cypress), `#[tokio::test]`/`#[rstest]`/`#[actix_web::test]` (async Rust).
+- **Double-counting in two-pass grep** — v3.4.4's Node.js grep used two passes (filename match + directory match) that double-counted files matching both. Replaced with single `find | xargs grep` pipeline.
+
+### Validated against real projects
+
+| Project | Tests found | Source files | Density | Score | Feels right? |
+|---------|------------|-------------|---------|-------|-------------|
+| forge-ui (React) | 4,187 | 851 | 4.9/file | 15/20 | Yes — large app, solid coverage |
+| forge-orchestrator (Rust) | 362 | 43 | 8.4/file | 20/20 | Yes — well-tested CLI |
+| game.clicker (React) | 37 | 3 | 12.3/file | 20/20 | Yes — small app, many tests |
+
+### Tests
+
+- **27/27 vitest** (unchanged)
+- **43/43 node:test** (unchanged)
+
+---
+
 ## [3.4.4] — 2026-03-12
 
 ### Fixed
@@ -137,6 +160,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.5]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.4...v3.4.5
 [3.4.4]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.3...v3.4.4
 [3.4.3]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.2...v3.4.3
 [3.4.2]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.1...v3.4.2
