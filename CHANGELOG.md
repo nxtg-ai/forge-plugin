@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.3] — 2026-03-12
+
+### Fixed
+
+- **Test scoring accuracy** — Health score now uses real line coverage (Istanbul/c8/nyc) for the Tests dimension when a coverage report exists. Previously, real coverage was displayed in the note but ignored for scoring — the score always used the file ratio proxy. Projects with 80% real coverage now score 16/20 instead of whatever the file ratio happened to be.
+- **File ratio proxy too punishing** — When no coverage report exists, the file ratio proxy now awards a 5-point floor for "has tests at all" plus up to 15 scaled by ratio. A project with 1 test file and 3 source files now scores 10/20 (was 7/20). The note tells users to run `--coverage` for accurate scoring.
+
+### Tests
+
+- **26/26 vitest** (was 25 — 1 new test for scoring accuracy)
+- **43/43 node:test** (unchanged)
+
+---
+
 ## [3.4.2] — 2026-03-12
 
 ### Fixed
@@ -107,6 +121,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.3]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.2...v3.4.3
 [3.4.2]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.1...v3.4.2
 [3.4.1]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.0...v3.4.1
 [3.4.0]: https://github.com/nxtg-ai/forge-plugin/compare/v3.3.2...v3.4.0

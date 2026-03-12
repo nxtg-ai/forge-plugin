@@ -105,6 +105,18 @@ describe('getHealthScore', () => {
     try { unlinkSync(join(root, '.env')); } catch {}
   });
 
+  it('test scoring uses real coverage when available, falls back to file ratio with 5pt floor', () => {
+    const root = getFixturePath();
+    const result = getHealthScore(root);
+    const testCheck = result.checks.find((c) => c.name === 'Test Coverage');
+
+    // Fixture: 2 source files, 1 test file → 50% file ratio, no coverage report
+    // Formula: 5 (floor) + round(50/100 * 15) = 5 + 8 = 13
+    expect(testCheck.points).toBe(13);
+    expect(testCheck.note).toContain('file ratio');
+    expect(testCheck.note).toContain('--coverage');
+  });
+
   it('grade letter matches score boundaries', () => {
     const root = getFixturePath();
     const result = getHealthScore(root);

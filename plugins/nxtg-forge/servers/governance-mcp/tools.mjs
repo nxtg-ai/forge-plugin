@@ -269,13 +269,20 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
     checks.push({ name: "Git Clean", status: "warn", points: 5, note: `${git.modified} modified, ${git.untracked} untracked` });
   }
 
-  // Has tests (20 pts) — score by file ratio; show real coverage if available
+  // Has tests (20 pts) — prefer real line coverage, fall back to file ratio proxy
   if (metrics.testFiles > 0) {
-    const testScore = Math.min(20, Math.round((metrics.testFileRatio / 100) * 20));
+    let testScore;
+    let coverageNote;
+    if (metrics.testCoverage !== null) {
+      // Real line coverage from Istanbul/c8/nyc — use directly
+      testScore = Math.min(20, Math.round((metrics.testCoverage / 100) * 20));
+      coverageNote = `${metrics.testCoverage}% line coverage`;
+    } else {
+      // File ratio proxy: 5 pts floor (has tests) + up to 15 scaled by ratio
+      testScore = Math.min(20, 5 + Math.round((metrics.testFileRatio / 100) * 15));
+      coverageNote = `${metrics.testFileRatio}% file ratio (run with --coverage for accurate scoring)`;
+    }
     score += testScore;
-    const coverageNote = metrics.testCoverage !== null
-      ? `${metrics.testCoverage}% line coverage`
-      : `${metrics.testFileRatio}% file ratio`;
     checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: coverageNote });
   } else {
     checks.push({ name: "Test Coverage", status: "fail", points: 0, note: "No tests found" });

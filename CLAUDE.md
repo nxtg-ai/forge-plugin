@@ -196,7 +196,7 @@ Contextual knowledge, patterns, best practices...
 
 ## Key Dimensions
 
-- **Version:** 3.4.2
+- **Version:** 3.4.3
 - **Components:** 21 commands, 22 agents, 29 skills, 6 hooks, 8 MCP tools
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
 - **MCP Server:** Node.js ES module (`@modelcontextprotocol/sdk@^1.12.1`)
