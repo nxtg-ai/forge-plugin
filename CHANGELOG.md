@@ -6,6 +6,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.2] — 2026-03-12
+
+### Fixed
+
+- **Status dimension grouping** — `/forge:status` now correctly displays 5 health dimensions with actual maximums (Tests 20, Types 10, Security 15, Docs 20, Project 35) instead of 4 dimensions with hardcoded /20 maximums. Previously showed misleading "Quality: 50/40" after the v3.4.1 health rebalance.
+- **Cross-platform browser launch** — Dashboard now uses the `open` npm package (sindresorhus, 18.7M dependents) for reliable cross-platform browser opening. Fixes ENOENT errors on WSL2 systems where `powershell.exe` is not in the Linux PATH. Works on macOS, Linux, Windows, and WSL2.
+
+### Changed
+
+- `/forge:init` next steps now lead with `/forge:dashboard` instead of `/forge:status`, giving users the visual experience first.
+
+---
+
 ## [3.4.1] — 2026-03-10
 
 ### Fixed
@@ -94,6 +107,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.2]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.1...v3.4.2
 [3.4.1]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.0...v3.4.1
 [3.4.0]: https://github.com/nxtg-ai/forge-plugin/compare/v3.3.2...v3.4.0
 [3.3.2]: https://github.com/nxtg-ai/forge-plugin/compare/v3.2.0...v3.3.2
