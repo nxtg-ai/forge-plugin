@@ -2,8 +2,8 @@
 
 > **Owner**: Asif Waliuddin
 > **Program**: NXTG-Forge (P-03c) | **Program Lead**: FPL
-> **Last Updated**: 2026-03-03
-> **North Star**: The smartest Claude Code plugin ecosystem — 22 agents that actually know how to work together.
+> **Last Updated**: 2026-03-12
+> **North Star**: The smartest Claude Code plugin ecosystem — 23 agents that actually know how to work together.
 
 ---
 
@@ -22,9 +22,9 @@
 
 ## Vision Pillars
 
-### PILLAR-1 — AGENT ECOSYSTEM: "22 agents that route, delegate, and never hallucinate a teammate"
-- The full agent roster: planner, builder, guardian, detective, oracle, compliance, governance-verifier, learning, orchestrator, refactor, release-sentinel, performance, and 10 more domain specialists.
-- Skills (29) and commands (21) provide the user-facing surface.
+### PILLAR-1 — AGENT ECOSYSTEM: "23 agents that route, delegate, and never hallucinate a teammate"
+- The full agent roster: planner, builder, guardian, detective, oracle, compliance, governance-verifier, learning, orchestrator, refactor, release-sentinel, performance, crucible-detective, ceo-loop, and 9 more domain specialists.
+- Skills (32) and commands (23) provide the user-facing surface.
 - **Shipped**: N-01 (14 bugs fixed), N-03 (35 files aligned to Anthropic spec), N-04 (ghost agent eliminated)
 
 ### PILLAR-2 — GOVERNANCE: "Health tools and MCP integration that keep projects honest"
@@ -528,6 +528,51 @@ Verdict: {PASS / FAIL / CRITICAL FAIL}
 
 ---
 
+## Team Feedback
+
+### Check-in: 2026-03-12
+
+**1. What did we ship since last check-in?**
+
+6 releases in 2 days (v3.4.2 → v3.4.7):
+- **v3.4.2**: Status dimension fix (4→5 dimensions) + cross-platform browser opening (`open` npm package replacing hand-rolled WSL2 code)
+- **v3.4.3**: 5-point floor for file ratio proxy (interim patch, superseded by v3.4.4)
+- **v3.4.4**: Test density scoring — 3-tier system (real coverage → grep density → file ratio) replacing broken file-ratio-only metric
+- **v3.4.5**: P0 node_modules inflation fix (237% over-count on forge-ui), expanded test patterns (Cypress, async Rust, Jest `__tests__/`), eliminated double-counting from two-pass grep
+- **v3.4.6**: Dashboard null% coverage fix, Sisyphean score cycle verified (BUG-01 filter was correct — stale MCP was the real issue)
+- **v3.4.7**: 23 agent file renames (`[AFRG]-*` → clean names), component count audit across 15+ files (23 cmds, 23 agents, 32 skills, 7 hooks)
+
+Test counts: 27/27 vitest + 43/43 node:test = **70 tests, 0 failures**. No tests deleted.
+
+Commits since last check-in: 7 (all tagged and released).
+
+**2. What surprised us?**
+
+- **grep vs find asymmetry was a hidden P0.** `BUILD_ARTIFACT_EXCLUDES` only applied to `find` commands but not `grep -r`. On real projects (forge-ui: 851 source files), grep scanned node_modules and inflated test counts by 237%. We'd never caught this testing against small fixture projects. Lesson: always validate scoring against large real projects.
+- **No SOTA exists for "fast test quality estimation without running tests."** Researched SonarQube, CodeClimate, DeepSource, Codacy — they all require CI-generated coverage reports. Our test density via grep approach is genuinely novel for the "no coverage report" case.
+- **Plugin marketplace caching is stickier than expected.** `claude plugin update forge` pulled stale v3.4.0 even after v3.4.7 was tagged. Had to delete `~/.claude/plugins/marketplaces/forge/`, remove from `known_marketplaces.json`, and re-add. This is the same N-06 blocker from a different angle.
+
+**3. Cross-project signals**
+
+- **Test density scoring could benefit forge-orchestrator and forge-ui.** The 3-tier scoring system (coverage report → test density → file ratio) is project-agnostic. If forge-ui ever runs `/forge:status`, it'll get accurate scoring now.
+- **`EXCLUDED_DIRS` array should be a shared constant or config.** Currently hardcoded in `tools.mjs`. If forge-orchestrator's health check (`governance.rs`) needs the same exclusions, they should agree on the list. Current list: `node_modules, dist, .git, .next, build, out, target, coverage, .nyc_output, __pycache__, .pytest_cache, vendor, .venv, .turbo, .vite, .stryker-tmp, dist-ui`.
+- **Plugin update mechanism (N-06) affects CLX9 demos.** Asif hit this during the L1 demo — stale MCP server caused the Sisyphean bounce. The workaround (restart Claude Code) works but isn't intuitive. Worth documenting in the install guide.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **CRUCIBLE remediation (P0)**: `index.mjs` at 0% coverage, 17.1% hollow assertions, security scan catch block silently dropping vulns. The CRUCIBLE audit identified these — they should be fixed.
+2. **Plugin update mechanism (N-06)**: The marketplace caching issue is confusing for users. At minimum, `/forge:update` should detect version mismatches and guide users through the workaround.
+3. **BUG B (tool rename)**: `forge_get_health` → `forge_get_health_score` to avoid collision with orchestrator's `forge_get_health`. 6 files affected. Low effort, high consistency value.
+4. **Fumadocs integration**: PROPOSAL in commit 296f1bf. Would give forge.nxtg.ai/docs a proper docs site from the 15 pages already written.
+
+**5. Blockers or questions for the CoS?**
+
+- **N-06 (plugin update)** remains blocked on Anthropic's plugin infrastructure. No workaround discovered beyond manual reinstall. Should we file an issue on the Claude Code repo?
+- **CRUCIBLE remediation scope**: The audit found `index.mjs` at 0% coverage. Fixing this requires an `if (FORGE_TEST_MODE)` guard before `server.connect()`. Is this approved, or should we wait for a directive?
+- **Agent naming convention settled?** We renamed from `[AFRG]-*` to clean names. The CRUCIBLE audit report (Gate 8a) still references old names. Should we update the audit report to reflect the rename, or leave it as historical record?
+
+---
+
 ## Team Questions
 
 _(Add questions for FPL / ASIF CoS here.)_
@@ -538,6 +583,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-03-12 | Team Feedback check-in. 6 releases (v3.4.2→v3.4.7). Agent naming audit, test density scoring, node_modules inflation fix. 70 tests, 0 failures. Pillar counts updated to 23 agents/32 skills/23 commands. |
 | 2026-03-08 | DIRECTIVE-NXTG-20260307-05 COMPLETED — CEO-LOOP ORBIT Upgrade. v3.4.0. 6 files created/modified. Integration test: 4/4 conditions pass. |
 | 2026-03-08 | DIRECTIVE-FPL-20260307-03 RE-RUN (post-688ea23) — Structured template filled with verified metrics. Verdict: FAIL. 23/23 agents CLEAN. index.mjs 0% coverage (P0). 12/70 hollow assertions (17.1%). 2/3 mutations caught. 6 silent catch blocks. |
 | 2026-03-07 | DIRECTIVE-FPL-20260307-03 initial audit — free-form report (superseded by 2026-03-08 structured template). |
