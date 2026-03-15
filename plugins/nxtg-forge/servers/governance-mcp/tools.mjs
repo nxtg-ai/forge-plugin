@@ -18,6 +18,12 @@ import open from "open";
 // Shared helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Run a shell command and return trimmed stdout, or null on failure.
+ * @param {string} cmd - Shell command to execute
+ * @param {object} [opts] - execSync options override (cwd, timeout, shell, etc.)
+ * @returns {string|null} Trimmed stdout, or null if the command exits non-zero or throws
+ */
 export function run(cmd, opts = {}) {
   try {
     return execSync(cmd, { encoding: "utf-8", timeout: 15000, ...opts }).trim();
@@ -27,6 +33,11 @@ export function run(cmd, opts = {}) {
   }
 }
 
+/**
+ * Parse a JSON file from disk and return the parsed object, or null on failure.
+ * @param {string} filePath - Absolute path to the JSON file
+ * @returns {object|null} Parsed JSON object, or null if the file is missing or malformed
+ */
 export function readJson(filePath) {
   try {
     return JSON.parse(readFileSync(filePath, "utf-8"));
@@ -36,7 +47,11 @@ export function readJson(filePath) {
   }
 }
 
-// Dynamic version from package.json (replaces hardcoded string in dashboard)
+/**
+ * MCP server version string, read dynamically from package.json at module load time.
+ * Falls back to "unknown" if package.json is missing or unreadable.
+ * @type {string}
+ */
 export const serverVersion = readJson(join(import.meta.dirname, "package.json"))?.version ?? "unknown";
 
 // BUG-05: Build artifact directories to exclude from all find AND grep commands.
@@ -85,6 +100,11 @@ export function findApplicationRoot(startDir) {
 // Tool implementations
 // ---------------------------------------------------------------------------
 
+/**
+ * Read the Forge governance state from `.claude/governance.json`.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ initialized: boolean, version?: string, project?: object, workstreams?: number, qualityGates?: object, metrics?: object, message?: string, path?: string }}
+ */
 export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const govPath = join(root, ".claude", "governance.json");
   const gov = readJson(govPath);
@@ -107,6 +127,12 @@ export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || proc
   };
 }
 
+/**
+ * Return git working-tree status for the project.
+ * `.claude/` paths are excluded from dirty-state counts (BUG-01).
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ branch: string|null, commitCount: number, lastCommit: string|null, clean: boolean, modified: number, untracked: number, staged: number, contributors: string[] }}
+ */
 export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   // Bug B: If root doesn't have .git, check subdirectory via findApplicationRoot
   let gitRoot = root;
@@ -144,6 +170,12 @@ export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cw
   };
 }
 
+/**
+ * Collect code metrics for the project: file counts, test ratios, line counts, and dependencies.
+ * Uses `findApplicationRoot` to locate the manifest; build artifact directories are excluded.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ projectType: string, sourceFiles: number, testFiles: number, testCaseCount: number, testFileRatio: number, testCoverage: number|null, totalLines: string, largeFiles: string[], dependencies: number, devDependencies: number }}
+ */
 export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
 
@@ -267,6 +299,11 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
   };
 }
 
+/**
+ * Compute the overall project health score across governance, git, testing, docs, and security dimensions.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ score: number, grade: string, maxScore: number, checks: Array<{ name: string, status: string, points: number, note?: string }> }}
+ */
 export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
   const gov = getGovernanceState(root);
@@ -422,6 +459,11 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
   return { score, grade, maxScore: 100, checks };
 }
 
+/**
+ * Auto-detect the test runner (vitest, jest, or pytest) and execute the test suite.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ runner: string|null, raw: string|null, parsed: { numPassed: number, numFailed: number, numTotal: number, success: boolean }|null, message?: string }}
+ */
 export function getTestResults(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
   const hasVitest = existsSync(join(appRoot, "node_modules", ".bin", "vitest"));
@@ -476,6 +518,11 @@ export function getTestResults(root = process.env.FORGE_PROJECT_ROOT || process.
   };
 }
 
+/**
+ * List all saved governance checkpoints from `.claude/checkpoints/`, sorted newest-first.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ checkpoints: Array<{ name: string, created: string, description: string }>, count?: number, message?: string }}
+ */
 export function listCheckpoints(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const checkpointDir = join(root, ".claude", "checkpoints");
   if (!existsSync(checkpointDir)) {
@@ -498,6 +545,12 @@ export function listCheckpoints(root = process.env.FORGE_PROJECT_ROOT || process
   return { checkpoints: files, count: files.length };
 }
 
+/**
+ * Scan the project for common security issues: hardcoded secrets, eval() usage,
+ * `.env` files committed to git, and npm audit vulnerabilities.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {{ findings: Array<{ severity: string, category: string, label: string, count?: number, sample?: string, files?: string[] }>, audit: { vulnerabilities: object, total: number }|null, totalFindings: number }}
+ */
 export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
   const findings = [];
@@ -573,6 +626,12 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
   return { findings, audit, totalFindings: findings.length };
 }
 
+/**
+ * Generate an HTML governance dashboard, write it to a temp file, and open it in the default browser.
+ * In FORGE_TEST_MODE the browser launch is skipped and the file path is returned immediately.
+ * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
+ * @returns {Promise<{ path: string, projectName: string, healthScore: number, healthGrade: string }>}
+ */
 export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
