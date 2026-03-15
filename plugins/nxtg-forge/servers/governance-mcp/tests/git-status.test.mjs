@@ -15,7 +15,7 @@ describe('getGitStatus', () => {
     const result = getGitStatus(root);
 
     // git init creates 'master' or 'main' depending on git config
-    expect(typeof result.branch).toBe('string');
+    expect(result.branch).toMatch(/\S+/);
     expect(result.branch.length).toBeGreaterThan(0);
 
     // Fixture has at least 1 commit
@@ -69,7 +69,7 @@ describe('getGitStatus', () => {
 
     expect(result.commitCount).toBeGreaterThanOrEqual(1);
     expect(result.lastCommit).toMatch(/init subdir project/);
-    expect(typeof result.branch).toBe('string');
+    expect(result.branch).toMatch(/\S+/);
     expect(result.branch.length).toBeGreaterThan(0);
 
     // Cleanup

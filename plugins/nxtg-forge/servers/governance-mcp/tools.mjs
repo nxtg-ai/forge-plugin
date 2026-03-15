@@ -74,7 +74,9 @@ export function findApplicationRoot(startDir) {
         if (existsSync(join(candidate, m))) return candidate;
       }
     }
-  } catch { /* skip unreadable root */ }
+  } catch (err) {
+    console.warn('[governance-mcp] findApplicationRoot() could not read directory, using startDir fallback:', err.message);
+  }
 
   return startDir; // fallback — no manifest found
 }
@@ -993,8 +995,9 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
   // WSL2: resolves full PowerShell path + wslpath conversion (no XPCOM errors)
   try {
     await open(tmpPath);
-  } catch {
-    // Browser open failed — user can open manually via the returned path
+  } catch (err) {
+    // Browser open failed — user can still open manually via the returned path
+    console.warn('[governance-mcp] generateDashboard() browser open failed (open manually):', err.message);
   }
 
   return {

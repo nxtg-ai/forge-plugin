@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * NXTG-Forge Governance MCP Server
  *
@@ -39,10 +38,10 @@ export {
 } from "./tools.mjs";
 
 // ---------------------------------------------------------------------------
-// Tool definitions
+// Tool definitions (exported for testing)
 // ---------------------------------------------------------------------------
 
-const TOOLS = [
+export const TOOLS = [
   {
     name: "forge_get_health",
     description:
@@ -106,54 +105,40 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: TOOLS,
 }));
 
+// ---------------------------------------------------------------------------
+// Tool dispatch (exported for testing — called by the request handler)
+// ---------------------------------------------------------------------------
+
+export async function dispatchToolCall(name) {
+  switch (name) {
+    case "forge_get_health":        return getHealthScore();
+    case "forge_get_governance_state": return getGovernanceState();
+    case "forge_get_git_status":    return getGitStatus();
+    case "forge_get_code_metrics":  return getCodeMetrics();
+    case "forge_run_tests":         return getTestResults();
+    case "forge_list_checkpoints":  return listCheckpoints();
+    case "forge_security_scan":     return getSecurityScan();
+    case "forge_open_dashboard":    return await generateDashboard();
+    default: throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name } = request.params;
-
   try {
-    let result;
-    switch (name) {
-      case "forge_get_health":
-        result = getHealthScore();
-        break;
-      case "forge_get_governance_state":
-        result = getGovernanceState();
-        break;
-      case "forge_get_git_status":
-        result = getGitStatus();
-        break;
-      case "forge_get_code_metrics":
-        result = getCodeMetrics();
-        break;
-      case "forge_run_tests":
-        result = getTestResults();
-        break;
-      case "forge_list_checkpoints":
-        result = listCheckpoints();
-        break;
-      case "forge_security_scan":
-        result = getSecurityScan();
-        break;
-      case "forge_open_dashboard":
-        result = await generateDashboard();
-        break;
-      default:
-        return {
-          content: [{ type: "text", text: `Unknown tool: ${name}` }],
-          isError: true,
-        };
-    }
-
+    const result = await dispatchToolCall(name);
     return {
-      content: [
-        { type: "text", text: JSON.stringify(result, null, 2) },
-      ],
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
     };
   } catch (error) {
+    const isUnknown = error.message.startsWith("Unknown tool:");
     return {
       content: [
         {
           type: "text",
-          text: `Error in ${name}: ${error.message}\n${error.stack}`,
+          text: isUnknown
+            ? error.message
+            : `Error in ${name}: ${error.message}\n${error.stack}`,
         },
       ],
       isError: true,

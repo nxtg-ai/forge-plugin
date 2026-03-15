@@ -11,14 +11,16 @@ describe('generateDashboard', () => {
     const root = getFixturePath();
     const result = await generateDashboard(root);
 
-    expect(typeof result.path).toBe('string');
-    expect(result.path.endsWith('.html')).toBe(true);
+    expect(result.path).toMatch(/\.html$/);
     expect(existsSync(result.path)).toBe(true);
 
-    // Also returns useful metadata
-    expect(typeof result.projectName).toBe('string');
-    expect(typeof result.healthScore).toBe('number');
-    expect(typeof result.healthGrade).toBe('string');
+    // Fixture project name is known
+    expect(result.projectName).toBe('Forge Test Project');
+    // Health score is a number in 0-100
+    expect(result.healthScore).toBeGreaterThanOrEqual(0);
+    expect(result.healthScore).toBeLessThanOrEqual(100);
+    // Grade is a valid letter
+    expect(['A', 'B', 'C', 'D', 'F']).toContain(result.healthGrade);
   });
 
   it('the generated HTML contains the project name from governance.json', async () => {

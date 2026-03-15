@@ -13,10 +13,9 @@ describe('getSecurityScan', () => {
     const root = getFixturePath();
     const result = getSecurityScan(root);
 
-    expect(typeof result.totalFindings).toBe('number');
     expect(result.totalFindings).toBe(0);
-    expect(Array.isArray(result.findings)).toBe(true);
     expect(result.findings).toHaveLength(0);
+    expect(Array.isArray(result.findings)).toBe(true);
   });
 
   it('a committed .env file is detected as a critical finding', () => {
@@ -32,8 +31,11 @@ describe('getSecurityScan', () => {
     const envFinding = result.findings.find(
       (f) => f.label === '.env file committed to git'
     );
-    expect(envFinding).toBeDefined();
-    expect(envFinding.severity).toBe('critical');
+    expect(envFinding).toEqual(expect.objectContaining({
+      label: '.env file committed to git',
+      severity: 'critical',
+      category: 'secrets',
+    }));
     expect(result.totalFindings).toBeGreaterThanOrEqual(1);
 
     // Cleanup: remove from git history by reverting the commit
@@ -57,8 +59,12 @@ describe('getSecurityScan', () => {
     const evalFinding = result.findings.find(
       (f) => f.label === 'eval() usage' && f.category === 'injection'
     );
-    expect(evalFinding).toBeDefined();
-    expect(evalFinding.severity).toBe('high');
+    expect(evalFinding).toEqual(expect.objectContaining({
+      label: 'eval() usage',
+      category: 'injection',
+      severity: 'high',
+      count: expect.any(Number),
+    }));
     expect(evalFinding.count).toBeGreaterThanOrEqual(1);
 
     // Cleanup

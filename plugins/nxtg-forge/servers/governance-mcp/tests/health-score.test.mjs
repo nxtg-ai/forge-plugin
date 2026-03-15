@@ -13,13 +13,9 @@ describe('getHealthScore', () => {
     const root = getFixturePath();
     const result = getHealthScore(root);
 
-    expect(typeof result.score).toBe('number');
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
-
-    expect(typeof result.grade).toBe('string');
     expect(['A', 'B', 'C', 'D', 'F']).toContain(result.grade);
-
     expect(result.maxScore).toBe(100);
   });
 
@@ -64,7 +60,10 @@ describe('getHealthScore', () => {
     const result = getHealthScore(root);
     const secCheck = result.checks.find((c) => c.name === 'Security');
 
-    expect(secCheck).toBeDefined();
+    expect(secCheck).toEqual(expect.objectContaining({
+      name: 'Security',
+      points: expect.any(Number),
+    }));
     expect(secCheck.points).toBeLessThan(15);
     expect(secCheck.note).toMatch(/eval|code security/i);
 
@@ -79,9 +78,11 @@ describe('getHealthScore', () => {
     const result = getHealthScore(root);
     const secCheck = result.checks.find((c) => c.name === 'Security');
 
-    expect(secCheck).toBeDefined();
-    expect(secCheck.points).toBe(15);
-    expect(secCheck.status).toBe('pass');
+    expect(secCheck).toEqual(expect.objectContaining({
+      name: 'Security',
+      points: 15,
+      status: 'pass',
+    }));
   });
 
   it('Security check deducts points when .env is committed to git (Bug A)', () => {
@@ -95,7 +96,10 @@ describe('getHealthScore', () => {
     const result = getHealthScore(root);
     const secCheck = result.checks.find((c) => c.name === 'Security');
 
-    expect(secCheck).toBeDefined();
+    expect(secCheck).toEqual(expect.objectContaining({
+      name: 'Security',
+      points: expect.any(Number),
+    }));
     expect(secCheck.points).toBeLessThan(15);
     expect(secCheck.note).toMatch(/secrets in git/);
 
