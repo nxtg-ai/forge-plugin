@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.8] — 2026-03-14
+
+### Fixed
+
+- **CRUCIBLE remediation** — Resolved three test quality failures from the March 2026 audit:
+  - `index.mjs` coverage: removed shebang (blocked vitest ESM transform), exported `TOOLS` constant and `dispatchToolCall()` function. Added `tests/index.test.mjs` with 17 new tests covering tool definitions, re-exports, and dispatch layer.
+  - Hollow assertions: replaced 14 `toBeDefined()`/`typeof` checks with `expect.objectContaining()` and specific value assertions across `dashboard.test.mjs`, `git-status.test.mjs`, `health-score.test.mjs`, and `security-scan.test.mjs`. Hollow rate: 0%.
+  - Silent catch blocks: `findApplicationRoot()` and `generateDashboard()` browser-open catches now log via `console.warn` instead of silently swallowing errors.
+- **vitest config**: Added `env: { FORGE_TEST_MODE: '1' }` to `vitest.config.mjs` so `index.mjs` can be imported in tests without blocking on `server.connect()`.
+
+### Test counts
+
+- Vitest (primary): 44/44 pass (was 27/27)
+- Node:test (full): 43/43 pass
+- Combined: 87 tests, 0 failures
+
+---
+
 ## [3.4.7] — 2026-03-12
 
 ### Changed
@@ -184,6 +202,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.8]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.7...v3.4.8
 [3.4.6]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.5...v3.4.6
 [3.4.5]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.4...v3.4.5
 [3.4.4]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.3...v3.4.4
