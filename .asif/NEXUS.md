@@ -583,6 +583,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-03-14 | v3.4.8: CRUCIBLE remediation complete. index.mjs: FORGE_TEST_MODE guard existed, added TOOLS export + dispatchToolCall() + 17 tests → 0% → 60%+ coverage. Hollow assertions: 14 fixed across 4 test files, hollow rate 0%. Silent catches: 2 remaining empty catches now log via console.warn. Shebang removed from index.mjs (blocked vitest ESM transform). 44 vitest + 43 node:test = 87 tests, 0 failures. |
 | 2026-03-12 | Team Feedback check-in. 6 releases (v3.4.2→v3.4.7). Agent naming audit, test density scoring, node_modules inflation fix. 70 tests, 0 failures. Pillar counts updated to 23 agents/32 skills/23 commands. |
 | 2026-03-08 | DIRECTIVE-NXTG-20260307-05 COMPLETED — CEO-LOOP ORBIT Upgrade. v3.4.0. 6 files created/modified. Integration test: 4/4 conditions pass. |
 | 2026-03-08 | DIRECTIVE-FPL-20260307-03 RE-RUN (post-688ea23) — Structured template filled with verified metrics. Verdict: FAIL. 23/23 agents CLEAN. index.mjs 0% coverage (P0). 12/70 hollow assertions (17.1%). 2/3 mutations caught. 6 silent catch blocks. |
