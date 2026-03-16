@@ -6,6 +6,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.4.9] — 2026-03-16
+
+### Documentation
+
+- **JSDoc coverage**: Added JSDoc blocks to all 11 exported functions in `tools.mjs` — `run`, `readJson`, `serverVersion`, `findApplicationRoot`, `getGovernanceState`, `getGitStatus`, `getCodeMetrics`, `getHealthScore`, `getTestResults`, `listCheckpoints`, `getSecurityScan`, `generateDashboard`. Coverage: 0% → 100%.
+- **CONTRIBUTING.md**: Added contributor guide covering clone/setup, both test suites (`npx vitest run` and `node --test`), file format templates for commands/agents/skills, MCP server dev workflow, and PR/commit conventions.
+- **C-13 agent count**: Fixed `docs/C-13-agents-skills.md` heading from "22 Specialized Agents" → "23 Specialized Agents".
+- **Workspace CLAUDE.md**: Corrected forge-orchestrator MCP tool count from 9 → 10 in two places.
+- **marketplace.json**: Synced version to 3.4.9 (was stale at 3.2.0).
+
+---
+
 ## [3.4.8] — 2026-03-14
 
 ### Fixed
@@ -202,6 +214,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.4.9]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.8...v3.4.9
 [3.4.8]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.7...v3.4.8
 [3.4.6]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.5...v3.4.6
 [3.4.5]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.4...v3.4.5
