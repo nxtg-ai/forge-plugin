@@ -412,7 +412,7 @@ Do **not** lower the threshold to fix this. Add real tests.
 
 - **GitHub Issues**: https://github.com/nxtg-ai/forge-ui/issues
 - **Discord**: https://discord.gg/nxtg-ai (coming soon)
-- **Docs**: https://forge.nxtg.ai/docs
+- **Docs**: https://forge.nxtg.ai/forge/docs
 
 When filing a bug report, include:
 1. `forge --version` output
