@@ -78,6 +78,7 @@ Each depth builds on the last. Nothing forces you to go deeper. Adoption follows
 
 ## Links
 
+- [Documentation](https://forge.nxtg.ai/docs) — Quick Start, commands, agents, skills
 - [Forge Product Page](https://forge.nxtg.ai)
 - [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: Pro Builder)
 - [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Ship Lord)
