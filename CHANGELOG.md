@@ -6,6 +6,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.5.0] — 2026-03-18
+
+### Added
+
+- **CLA enforcement** — `contributor-assistant/github-action@v2` workflow in `.github/workflows/cla.yml`. All PR contributors must sign before merge. Bots and Dependabot auto-allowlisted.
+- **CLA.md** — Contributor License Agreement document (Apache ICLA terms) hosted in repo root. Signatures stored in `.github/cla-signatures.json`.
+- **CONTRIBUTING.md** — Updated with CLA signing instructions and requirement notice.
+
+### Notes
+
+- License unchanged: MIT.
+- `CLA_PERSONAL_ACCESS_TOKEN` repository secret must be set for the CLA bot to commit signatures back to the repo.
+
+---
+
 ## [3.4.9] — 2026-03-16
 
 ### Documentation
@@ -214,6 +229,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.5.0]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.9...v3.5.0
 [3.4.9]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.8...v3.4.9
 [3.4.8]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.7...v3.4.8
 [3.4.6]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.5...v3.4.6

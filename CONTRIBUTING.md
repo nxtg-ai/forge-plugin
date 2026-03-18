@@ -136,9 +136,26 @@ Three files must stay in sync on every release:
 - `.claude-plugin/marketplace.json`
 - `plugins/nxtg-forge/servers/governance-mcp/package.json`
 
+### Contributor License Agreement (CLA)
+
+All contributors must sign the CLA before a pull request can be merged.
+
+When you open a PR, the CLA bot will post a comment. Reply with:
+
+```
+I have read the CLA Document and I hereby sign the CLA
+```
+
+This records your agreement in `.github/cla-signatures.json`. You only need to sign once — subsequent PRs will be recognized automatically.
+
+The CLA document is in [`CLA.md`](./CLA.md) (based on Apache ICLA terms). Bots and `dependabot[bot]` are automatically allowlisted.
+
+> **Note:** The `CLA_PERSONAL_ACCESS_TOKEN` repository secret must be set for the bot to commit signatures. Contact a maintainer if the bot fails to record your signature.
+
 ### Before Submitting
 
-1. Both test suites pass (vitest + node:test)
+1. CLA signed (first-time contributors only)
+2. Both test suites pass (vitest + node:test)
 2. YAML frontmatter is present on any new agent/skill/command
 3. No absolute paths in plugin content — use `${CLAUDE_PLUGIN_ROOT}` instead
 4. No blocking logic added to hooks (all hooks are advisory/non-blocking)
