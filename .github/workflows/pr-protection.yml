@@ -1,0 +1,166 @@
+name: PR Protection
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for suspicious patterns
+        id: patterns
+        run: |
+          echo "## Security Pattern Scan" > security-report.txt
+          FOUND=0
+          for pattern in "eval(" "new Function(" "child_process" "Buffer.from.*base64" "atob(" "btoa(" "\.exec(" "obfuscated"; do
+            HITS=$(grep -rn "$pattern" --include='*.mjs' --include='*.js' --include='*.ts' plugins/ || true)
+            if [ -n "$HITS" ]; then
+              echo "### Pattern: \`$pattern\`" >> security-report.txt
+              echo '```' >> security-report.txt
+              echo "$HITS" >> security-report.txt
+              echo '```' >> security-report.txt
+              FOUND=$((FOUND + 1))
+            fi
+          done
+          echo "found=$FOUND" >> "$GITHUB_OUTPUT"
+          if [ "$FOUND" -gt 0 ]; then
+            echo "::warning::Found $FOUND suspicious patterns — review required"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.txt
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and test
+        id: tests
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        env:
+          FORGE_TEST_MODE: '1'
+        run: |
+          npm install
+          npm test 2>&1 | tee test-output.txt
+          TEST_COUNT=$(grep -oP '\d+ tests?' test-output.txt | head -1 | grep -oP '\d+' || echo "0")
+          echo "test_count=$TEST_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Check for hollow assertions
+        run: |
+          HOLLOW=$(grep -rn "assert(true\|assert\.ok(true\|expect(true)\.toBe(true)" --include='*.mjs' --include='*.js' --include='*.ts' plugins/ || true)
+          if [ -n "$HOLLOW" ]; then
+            echo "::warning::Hollow assertions detected:"
+            echo "$HOLLOW"
+          fi
+
+      - name: Verify test count didn't decrease
+        env:
+          FORGE_TEST_MODE: '1'
+        run: |
+          git checkout ${{ github.event.pull_request.base.sha }} -- plugins/nxtg-forge/servers/governance-mcp/__tests__ plugins/nxtg-forge/servers/governance-mcp/tests 2>/dev/null || true
+          cd plugins/nxtg-forge/servers/governance-mcp
+          BASE_COUNT=$(npm test 2>&1 | grep -oP '\d+ tests?' | head -1 | grep -oP '\d+' || echo "0")
+          git checkout ${{ github.sha }} -- . 2>/dev/null || git checkout HEAD -- .
+          echo "Base test count: $BASE_COUNT, PR test count: ${{ steps.tests.outputs.test_count }}"
+          if [ "${{ steps.tests.outputs.test_count }}" -lt "$BASE_COUNT" ]; then
+            echo "::error::Test count decreased from $BASE_COUNT to ${{ steps.tests.outputs.test_count }}"
+            exit 1
+          fi
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        run: npm install
+
+      - name: Run npm audit
+        id: audit
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+        run: |
+          npm audit --json > audit.json 2>/dev/null || true
+          HIGHS=$(jq '[.vulnerabilities // {} | to_entries[] | select(.value.severity == "high" or .value.severity == "critical")] | length' audit.json)
+          echo "high_critical=$HIGHS" >> "$GITHUB_OUTPUT"
+          if [ "$HIGHS" -gt 0 ]; then
+            echo "::error::Found $HIGHS high/critical vulnerabilities"
+            npm audit --omit=dev 2>/dev/null || true
+            exit 1
+          fi
+
+      - name: Check for new dependencies
+        id: deps
+        run: |
+          NEW_DEPS=$(git diff ${{ github.event.pull_request.base.sha }}..HEAD -- '**/package.json' | grep '^\+.*":\s*"\^' | grep -v '^\+\+\+' || true)
+          if [ -n "$NEW_DEPS" ]; then
+            echo "::notice::New dependencies added — review required"
+            echo "$NEW_DEPS"
+          fi
+
+  # Note: CLA check handled by cla.yml
+
+  summary:
+    name: PR Summary
+    needs: [security-scan, quality-gate, dependency-audit]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post summary comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.NXTG_SENTINEL_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const jobs = ${{ toJSON(needs) }};
+            const status = (j) => jobs[j]?.result === 'success' ? ':white_check_mark:' : ':x:';
+            const body = [
+              '## PR Protection Summary',
+              `| Check | Status |`,
+              `|-------|--------|`,
+              `| Security Scan | ${status('security-scan')} ${jobs['security-scan']?.result} |`,
+              `| Quality Gate | ${status('quality-gate')} ${jobs['quality-gate']?.result} |`,
+              `| Dependency Audit | ${status('dependency-audit')} ${jobs['dependency-audit']?.result} |`,
+              `| CLA | _handled by cla.yml_ |`,
+              '',
+              '_Generated by PR Protection workflow_'
+            ].join('\n');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number
+            });
+            const existing = comments.find(c => c.body?.includes('PR Protection Summary'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body
+              });
+            }
