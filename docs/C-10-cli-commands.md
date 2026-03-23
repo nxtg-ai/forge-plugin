@@ -203,7 +203,7 @@ Generate verification subtasks for completed build tasks. Creates V-xxx tasks th
 forge verify
 ```
 
-Part of the three-tier validation pipeline: BUILD (T-xxx) → VERIFY (V-xxx) → UAT (U-xxx).
+Part of the full lifecycle pipeline: BUILD (T-xxx) → VERIFY (V-xxx) → UAT (U-xxx) → SHIP.
 
 ---
 
@@ -221,6 +221,37 @@ forge uat "Button color is wrong"  # Quick capture: inline finding
 | `<finding>` | Quick-capture a finding inline without opening the TUI |
 
 Findings are stored in `.forge/findings/` as JSON with severity classification.
+
+---
+
+## forge ship
+
+Post-UAT wrap-up. Completes the development lifecycle by generating a changelog, archiving build artifacts, sorting knowledge, suggesting a version bump, and cleaning state for the next cycle.
+
+```bash
+forge ship                         # Interactive — walks through each step
+forge ship --auto                  # Non-interactive — auto-approve all steps
+forge ship --dry-run               # Show what would happen, don't execute
+forge ship --skip-release          # Everything except version bump + release
+```
+
+| Flag | Description |
+|------|------------|
+| `--auto` | Auto-approve all steps (non-interactive) |
+| `--dry-run` | Preview without executing |
+| `--skip-release` | Skip version bump and release preparation |
+
+**What it does (in order):**
+
+1. **Changelog** — generates entries from completed tasks in Keep-a-Changelog format
+2. **Archive** — moves `.forge/tasks/`, `results/`, `signals/` to `.forge/archive/{date}/`
+3. **Knowledge sort** — promotes high-value learnings to `LEARNINGS.md`, archives the rest
+4. **Health check** — runs quality gates one final time
+5. **Version bump** — suggests semver bump (feature=minor, fix=patch), you confirm
+6. **Release prep** — stages files, generates commit message, outputs tag commands
+7. **Clean state** — resets `state.json`, clears completed tasks, keeps plan + knowledge
+
+After `forge ship`, your project is clean and ready for the next `forge plan --generate` cycle.
 
 ---
 
