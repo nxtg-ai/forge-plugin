@@ -7,12 +7,15 @@ beforeAll(setupFixture);
 afterAll(teardownFixture);
 
 describe('generateDashboard', () => {
-  it('returns an object with a path property pointing to an HTML file', async () => {
+  it('returns an object with path, browserUrl, and metadata', async () => {
     const root = getFixturePath();
     const result = await generateDashboard(root);
 
     expect(result.path).toMatch(/\.html$/);
     expect(existsSync(result.path)).toBe(true);
+
+    // browserUrl must be a file:// URL (Linux or WSL2 format)
+    expect(result.browserUrl).toMatch(/^file:\/\//);
 
     // Fixture project name is known
     expect(result.projectName).toBe('Forge Test Project');

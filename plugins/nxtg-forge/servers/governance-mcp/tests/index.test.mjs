@@ -155,9 +155,10 @@ describe('dispatchToolCall', () => {
     expect(result.totalFindings).toBe(result.findings.length);
   });
 
-  it('dispatches forge_open_dashboard and returns a path to an HTML file', async () => {
+  it('dispatches forge_open_dashboard and returns path, browserUrl, and projectName', async () => {
     const result = await dispatchToolCall('forge_open_dashboard');
     expect(result.path).toMatch(/\.html$/);
+    expect(result.browserUrl).toMatch(/^file:\/\//);
     expect(typeof result.projectName).toBe('string');
   });
 

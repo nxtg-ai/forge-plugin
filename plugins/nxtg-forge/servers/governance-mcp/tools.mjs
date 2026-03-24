@@ -1045,24 +1045,57 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
   const tmpPath = join(tmpdir(), `forge-dashboard-${Date.now()}.html`);
   writeFileSync(tmpPath, html);
 
+  // Detect WSL2 — tmux sessions strip WSL_DISTRO_NAME, so also check the interop file
+  const isWSL = !!process.env.WSL_DISTRO_NAME || existsSync('/proc/sys/fs/binfmt_misc/WSLInterop');
+  const distro = process.env.WSL_DISTRO_NAME || 'Ubuntu';
+
+  // Build the URL the user's Windows browser can actually open.
+  // Linux path /tmp/foo.html → file://///wsl.localhost/Ubuntu/tmp/foo.html
+  const browserUrl = isWSL
+    ? `file://///wsl.localhost/${distro}${tmpPath}`
+    : `file://${tmpPath}`;
+
   // Skip browser launch in test mode — return immediately with file path
   if (process.env.FORGE_TEST_MODE) {
-    return { path: tmpPath, projectName, healthScore: health.score, healthGrade: health.grade };
+    return { path: tmpPath, browserUrl, projectName, healthScore: health.score, healthGrade: health.grade };
   }
 
-  // Open in browser — uses `open` package which handles WSL2, macOS, Linux, Windows
-  // WSL2: resolves full PowerShell path + wslpath conversion (no XPCOM errors)
+  // Attempt auto-open. In WSL2 tmux sessions, the `open` package may fail because
+  // DISPLAY and WSL_INTEROP env vars are not forwarded. Try two fallbacks before giving up.
+  let opened = false;
   try {
-    await open(tmpPath);
+    await open(isWSL ? browserUrl : tmpPath);
+    opened = true;
   } catch (err) {
-    // Browser open failed — user can still open manually via the returned path
-    console.warn('[governance-mcp] generateDashboard() browser open failed (open manually):', err.message);
+    console.warn('[governance-mcp] generateDashboard() open() failed:', err.message);
+  }
+
+  if (!opened && isWSL) {
+    // Fallback 1: powershell.exe Start (works in tmux, no DISPLAY needed)
+    try {
+      execSync(`powershell.exe Start "${browserUrl}"`, { stdio: 'ignore' });
+      opened = true;
+    } catch (err) {
+      console.warn('[governance-mcp] generateDashboard() powershell.exe fallback failed:', err.message);
+    }
+  }
+
+  if (!opened && isWSL) {
+    // Fallback 2: wslview (installed by wslu package)
+    try {
+      execSync(`wslview "${tmpPath}"`, { stdio: 'ignore' });
+      opened = true;
+    } catch (err) {
+      console.warn('[governance-mcp] generateDashboard() wslview fallback failed:', err.message);
+    }
   }
 
   return {
     path: tmpPath,
+    browserUrl,
     projectName,
     healthScore: health.score,
     healthGrade: health.grade,
+    ...(isWSL && !opened ? { hint: `Paste this URL into your Windows browser: ${browserUrl}` } : {}),
   };
 }
