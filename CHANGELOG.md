@@ -6,6 +6,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.5.1] — 2026-03-24
+
+### Fixed
+
+- **WSL2 tmux dashboard (BUG 1 — auto-open)** — `open()` fails silently in tmux sessions where `DISPLAY`/`WSL_INTEROP` env vars are not forwarded. Now tries two fallbacks: `powershell.exe Start` (no DISPLAY needed), then `wslview` (wslu package). If all fail, returns `hint:` with a pasteable Windows browser URL.
+- **WSL2 tmux dashboard (BUG 2 — wrong path)** — Returned `file:///tmp/...` is not openable in Windows browsers. Now detects WSL2 via `WSL_DISTRO_NAME` or `/proc/sys/fs/binfmt_misc/WSLInterop` and constructs the correct Windows-accessible URL: `file://///wsl.localhost/<distro>/tmp/forge-dashboard-xxx.html`. Both `path` (Linux) and `browserUrl` (Windows-ready) are now returned.
+
+---
+
 ## [3.5.0] — 2026-03-18
 
 ### Added
@@ -229,6 +238,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+[3.5.1]: https://github.com/nxtg-ai/forge-plugin/compare/v3.5.0...v3.5.1
 [3.5.0]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.9...v3.5.0
 [3.4.9]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.8...v3.4.9
 [3.4.8]: https://github.com/nxtg-ai/forge-plugin/compare/v3.4.7...v3.4.8
