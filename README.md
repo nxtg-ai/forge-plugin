@@ -30,10 +30,10 @@ That's it. No build step. No config files. No runtime dependencies.
 
 | Component | Count | What It Does |
 |-----------|-------|-------------|
-| Slash commands | 21 | Project health, gap analysis, feature planning, checkpoints, deployment, testing |
-| Specialized agents | 22 | Builder, guardian, planner, detective, security, testing, refactor, docs, and more |
-| Knowledge skills | 29 | Architecture, coding standards, testing strategy, git workflow, domain knowledge |
-| Governance hooks | 6 | Pre-task validation, post-task quality checks, file placement rules |
+| Slash commands | 23 | Project health, gap analysis, feature planning, checkpoints, deployment, testing |
+| Specialized agents | 33 | Builder, guardian, planner, detective, security, testing, refactor, docs, and more |
+| Knowledge skills | 32 | Architecture, coding standards, testing strategy, git workflow, domain knowledge |
+| Governance hooks | 8 | Pre-task validation, post-task quality checks, file placement rules |
 | MCP governance tools | 8 | Health scoring, git status, code metrics, security scanning |
 
 ## Key Commands
@@ -64,7 +64,7 @@ curl -fsSL https://forge.nxtg.ai/install.sh | sh
 forge init
 ```
 
-One Rust binary. 4MB. 293 tests. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
+One Rust binary. 4MB. 356 tests. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
 
 For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add Forge UI:
 
@@ -72,7 +72,7 @@ For visual dashboards and the Infinity Terminal (sessions that survive browser c
 git clone https://github.com/nxtg-ai/forge-ui && npm install && npm run dev
 ```
 
-58 components. 4,146 tests. 87% coverage.
+58 components. 4,165 tests. 87% coverage.
 
 Each depth builds on the last. Nothing forces you to go deeper. Adoption follows the pain.
 
