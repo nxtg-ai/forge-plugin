@@ -4,6 +4,8 @@
 
 # forge-plugin
 
+[![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
+
 **Zero-dependency governance for Claude Code.**
 
 This is L1: Vibe Coder.
