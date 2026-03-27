@@ -909,7 +909,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
             <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 22 specialized agents on demand</div>
           </div>
           <div class="mt-3 pt-3 border-t border-slate-700/50">
-            <code class="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded block whitespace-pre-wrap">claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install forge</code>
+            <code class="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded block whitespace-pre-wrap">claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge</code>
           </div>
         </div>
 

@@ -6,7 +6,7 @@ Get AI-powered governance inside Claude Code in 30 seconds. No dependencies. No 
 
 ```bash
 claude plugin marketplace add nxtg-ai/forge-plugin
-claude plugin install forge
+claude plugin install nxtg-forge
 ```
 
 That's it. The plugin loads 23 agents, 23 slash commands, 32 knowledge skills, and 7 governance hooks. Everything is pure markdown — no build step, no compilation.

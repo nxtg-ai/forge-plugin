@@ -69,16 +69,16 @@ claude plugin update forge --scope local 2>&1 || claude plugin update forge --sc
 
 **Method C** — If Methods A and B both fail, do a full reinstall:
 ```bash
-claude plugin uninstall forge --scope local 2>&1
-claude plugin uninstall forge --scope user 2>&1
-claude plugin uninstall forge 2>&1
-claude plugin install forge 2>&1
+claude plugin uninstall nxtg-forge --scope local 2>&1
+claude plugin uninstall nxtg-forge --scope user 2>&1
+claude plugin uninstall nxtg-forge 2>&1
+claude plugin install nxtg-forge 2>&1
 ```
 
 **Method D** — If everything above fails (nuclear option):
 ```bash
 claude plugin marketplace add nxtg-ai/forge-plugin 2>&1
-claude plugin install forge 2>&1
+claude plugin install nxtg-forge 2>&1
 ```
 
 After any successful method, tell the user:
@@ -120,11 +120,11 @@ If all update methods fail, show:
 **Update failed.** Run these commands from your terminal (outside Claude Code):
 
   cd ~/.claude/plugins/marketplaces/nxtg-ai-forge-plugin/ && git pull
-  claude plugin uninstall forge
-  claude plugin install forge
+  claude plugin uninstall nxtg-forge
+  claude plugin install nxtg-forge
 
 If that doesn't work, full clean install:
   rm -rf ~/.claude/plugins/marketplaces/*forge*
   claude plugin marketplace add nxtg-ai/forge-plugin
-  claude plugin install forge
+  claude plugin install nxtg-forge
 ```

@@ -374,7 +374,7 @@ Claude Code spawns the MCP server using the PATH it inherits. If forge isn't fin
 **Fix**: The forge plugin must be installed in Claude Code:
 ```bash
 claude plugin marketplace add nxtg-ai/forge-plugin
-claude plugin install forge
+claude plugin install nxtg-forge
 ```
 
 After installation, restart Claude Code and the commands will be available.

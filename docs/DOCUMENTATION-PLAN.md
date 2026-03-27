@@ -108,7 +108,7 @@ This is the **single source of truth** for the user journey. All docs, demos, GI
 ```bash
 # Step 1: Install the plugin (L1 — Vibe Coder)
 claude plugin marketplace add nxtg-ai/forge-plugin
-claude plugin install forge
+claude plugin install nxtg-forge
 
 # Step 2: Install the orchestrator (L2 — Pro Builder)
 brew install nxtg-ai/tap/forge

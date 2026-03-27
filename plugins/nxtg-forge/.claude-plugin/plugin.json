@@ -1,5 +1,5 @@
 {
-  "name": "forge",
+  "name": "nxtg-forge",
   "version": "3.5.1",
   "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code",
   "author": {

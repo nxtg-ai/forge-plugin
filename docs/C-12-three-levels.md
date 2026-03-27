@@ -9,7 +9,7 @@ Forge is structured as three independent products that snap together. Each level
 ### L1: Vibe Coder
 
 **Product**: forge-plugin (Claude Code plugin)
-**Install**: `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install forge`
+**Install**: `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge`
 **What it adds**: 23 specialized agents, 23 slash commands, 32 knowledge skills, 7 governance hooks, 8 MCP tools
 
 L1 gives you governance inside Claude Code. Health scoring, gap analysis, quality gates, and specialized agents for building, testing, security review, and documentation — all running automatically through hooks and on-demand through slash commands.

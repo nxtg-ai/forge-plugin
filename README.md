@@ -17,11 +17,11 @@ Every governance feature traces to a real failure mode. Hooks that validate befo
 ## Install
 
 ```bash
-# Add the Forge marketplace
+# Add the NXTG-Forge marketplace
 claude plugin marketplace add nxtg-ai/forge-plugin
 
 # Install the plugin
-claude plugin install forge
+claude plugin install nxtg-forge
 ```
 
 That's it. No build step. No config files. No runtime dependencies.
@@ -53,11 +53,11 @@ The plugin installs as agent definitions, command templates, skill documents, an
 
 Governance hooks run automatically. Before every task, pre-task hooks validate that the work aligns with project constraints. After every task, post-task hooks check output quality. Governance becomes a background process, not a checklist item.
 
-8 MCP governance tools expose health scoring, code metrics, and security scanning through the Model Context Protocol. Any tool in your workflow that speaks MCP can query Forge's governance state.
+8 MCP governance tools expose health scoring, code metrics, and security scanning through the Model Context Protocol. Any tool in your workflow that speaks MCP can query NXTG-Forge's governance state.
 
 ## Upgrade Path
 
-For multi-tool orchestration across Claude Code, Codex CLI, and Gemini CLI (file locking, shared knowledge, task boards), add the Forge Orchestrator:
+For multi-tool orchestration across Claude Code, Codex CLI, and Gemini CLI (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator:
 
 ```bash
 curl -fsSL https://forge.nxtg.ai/install.sh | sh
@@ -66,7 +66,7 @@ forge init
 
 One Rust binary. 4MB. 356 tests. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
 
-For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add Forge UI:
+For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add NXTG-Forge UI:
 
 ```bash
 git clone https://github.com/nxtg-ai/forge-ui && npm install && npm run dev
@@ -79,9 +79,9 @@ Each depth builds on the last. Nothing forces you to go deeper. Adoption follows
 ## Links
 
 - [Documentation](https://forge.nxtg.ai/forge/docs) — Quick Start, commands, agents, skills
-- [Forge Product Page](https://forge.nxtg.ai)
-- [Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: Pro Builder)
-- [Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Ship Lord)
+- [NXTG-Forge Product Page](https://forge.nxtg.ai)
+- [NXTG-Forge Orchestrator](https://github.com/nxtg-ai/forge-orchestrator) (L2: Pro Builder)
+- [NXTG-Forge UI](https://github.com/nxtg-ai/forge-ui) (L3: Ship Lord)
 
 ## License
 
