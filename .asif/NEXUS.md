@@ -590,3 +590,59 @@ _(Add questions for FPL / ASIF CoS here.)_
 | 2026-03-07 | DIRECTIVE-FPL-20260307-03 initial audit — free-form report (superseded by 2026-03-08 structured template). |
 | 2026-03-07 | DIRECTIVE-NXTG-20260307-01 COMPLETED — crucible-detective TodoWrite removed (READ-ONLY enforced). |
 | 2026-03-03 | Created by Emma (CLX9 Sr. CoS) — FPL delegation bootstrap. |
+
+## CoS Directives
+
+### DIRECTIVE-CLX9-20260326-03 — Governance Reframe + Competitor Pattern Absorption
+**From**: CLX9 CoS (Emma as CEO) | **Priority**: P0
+**Injected**: 2026-03-26 21:30 CDT | **Estimate**: L | **Status**: PENDING
+
+**Context**: Claude Code plugin market exploded. Superpowers (116K stars, MIT), gstack (50K stars, YC CEO, MIT), ruflo (27K, MIT). All orchestration/skills. NONE have governance. Forge must reframe messaging from "22 agents, 21 commands" to "the only developer governance system that makes AI agents safer as they get more autonomous."
+
+**Action Items**:
+1. [ ] Study Superpowers (github.com/obra/superpowers) skill format — can Forge skills be cross-IDE compatible?
+2. [ ] Study gstack (github.com/garrytan/gstack) sprint model — what governance gaps does it have that Forge fills?
+3. [ ] Study Paperclip (github.com/paperclipai/paperclip) heartbeat/approval model — compare to Forge decision matrix
+4. [ ] Write FORGE-DIFFERENTIATORS.md: what Forge has that NOBODY else has (Rust orchestrator, verifier!=task.agent, CRUCIBLE, 4579 tests, constitution)
+5. [ ] Update forge.nxtg.ai landing page messaging: lead with GOVERNANCE, not features
+6. [ ] Consider: promptfoo YAML import compatibility for migration path
+7. [ ] Consider: cross-IDE support (Cursor, Codex, Gemini CLI) like Superpowers
+
+**Constraints**:
+- All competitors are MIT licensed — we can study freely
+- Do NOT copy code directly — study PATTERNS and ARCHITECTURE
+- Forges moat is governance + quality gates + Rust orchestrator — protect this
+
+
+## CoS Directives
+
+### DIRECTIVE-CLX9-20260326-03 -- Governance Reframe + Competitor Pattern Absorption
+**From**: CLX9 CoS (Emma as CEO) | **Priority**: P0
+**Injected**: 2026-03-26 21:30 CDT | **Estimate**: L | **Status**: PENDING
+
+**Context**: Claude Code plugin market exploded. Superpowers (116K stars), gstack (50K, YC CEO), ruflo (27K). All MIT. All orchestration. NONE have governance. Forge must lead with governance.
+
+**Action Items**:
+1. Study Superpowers skill format for cross-IDE compatibility
+2. Study gstack sprint model governance gaps
+3. Study Paperclip heartbeat model vs Forge decision matrix
+4. Write FORGE-DIFFERENTIATORS.md
+5. Update forge.nxtg.ai messaging: governance first
+6. Consider promptfoo YAML import for migration
+7. Consider cross-IDE support like Superpowers
+
+**Constraints**: MIT licensed competitors, study patterns not code. Protect governance moat.
+
+**Wolf Intel Drop (2026-03-26 19:40 PDT)** — 35 research agents completed. Research for items 1-3 and 6 is DONE:
+
+**Item 1 (Superpowers)**: 14 skills analyzed. SKILL.md format is IDENTICAL to Forge. 6 skills worth absorbing: (1) `using-superpowers` "1% Rule" auto-activation — highest priority, makes skills proactive via SessionStart hook; (2) `test-driven-development` with deletion penalty; (3) `verification-before-completion` gate; (4) `systematic-debugging` 4-phase method; (5) anti-rationalization "Red Flags" sections; (6) `subagent-driven-development` two-stage review. Full plan: `~/ASIF/enrichment/2026-03-26-power-loop-competitive-intel.md`
+
+**Item 2 (gstack)**: 28 skills analyzed. 5 P1 absorptions: (1) `/browse`+`/qa` browser automation via Playwright — Forge's biggest gap; (2) `/cso` 14-phase security audit (OWASP+STRIDE+LLM); (3) `/canary` post-deploy monitoring; (4) `/retro` retrospectives with cross-project analytics; (5) `/guard`+`/freeze` PreToolUse safety hooks. Full plan: `~/ASIF/enrichment/2026-03-26-power-loop-competitive-intel.md`
+
+**Item 3 (Paperclip)**: Deep codebase audit complete. Core engine 8/10, operational reliability 3/10. Goal alignment = pure CRUD (2/10). OOMs every 60 min. Bus factor = 1. Secret leak in API response. Differentiation: "Paperclip isolates. We illuminate." Full audit: agent output files.
+
+**Item 6 (Promptfoo import)**: Feasibility confirmed. ~600 LOC. Strategic urgency: Promptfoo acquired by OpenAI March 9, 2026. Migration path = customer acquisition tool. Full analysis: agent output.
+
+**Item 4 (FORGE-DIFFERENTIATORS.md)**: 9 of 12 capabilities confirmed FULLY UNIQUE. Uniqueness matrix: `~/ASIF/enrichment/2026-03-26-competitive-intel-report.md` § Forge Uniqueness Matrix
+
+**Item 7 (Cross-IDE)**: Superpowers supports 5 platforms via separate plugin manifests (`.claude-plugin/`, `.cursor-plugin/`, `.codex/`, `.opencode/`, `gemini-extension.json`). Forge can replicate this pattern for Cursor and Codex. SKILL.md format is already compatible.
