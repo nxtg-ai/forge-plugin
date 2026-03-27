@@ -41,6 +41,14 @@ export {
 // Tool definitions (exported for testing)
 // ---------------------------------------------------------------------------
 
+/**
+ * MCP tool definitions for the forge-governance server.
+ * Each entry describes one callable tool: its name, description, and JSON
+ * Schema for its input parameters. Exported so test suites can assert on
+ * the tool list without starting the server.
+ *
+ * @type {Array<{name: string, description: string, inputSchema: object}>}
+ */
 export const TOOLS = [
   {
     name: "forge_get_health",
@@ -109,6 +117,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // Tool dispatch (exported for testing — called by the request handler)
 // ---------------------------------------------------------------------------
 
+/**
+ * Dispatch a tool call by name and return its result.
+ * Exported so test suites can invoke tools directly without going through
+ * the MCP request handler.
+ *
+ * @param {string} name - The tool name (must match a key in TOOLS).
+ * @returns {Promise<object>} The tool's result object.
+ * @throws {Error} If the tool name is not recognised.
+ */
 export async function dispatchToolCall(name) {
   switch (name) {
     case "forge_get_health":        return getHealthScore();

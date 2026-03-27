@@ -348,5 +348,4 @@ Both ports bind to `0.0.0.0` so they're reachable from any device on the network
 ## Next Steps
 
 - **Troubleshooting**: [C-15-troubleshooting.md](C-15-troubleshooting.md)
-- **MCP Tools Reference**: [C-11-mcp-tools.md](C-11-mcp-tools.md)
-- **Pro Subscription Setup**: [C-15-pro-subscription.md](C-15-pro-subscription.md)
+- **MCP Tools Reference**: [C-12-mcp-tools.md](C-12-mcp-tools.md)
