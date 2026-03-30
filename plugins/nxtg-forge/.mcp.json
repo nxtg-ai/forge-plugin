@@ -8,5 +8,10 @@
     "type": "stdio",
     "command": "bash",
     "args": ["-c", "command -v forge >/dev/null 2>&1 && exec forge mcp || exit 0"]
+  },
+  "semgrep-mcp": {
+    "type": "stdio",
+    "command": "bash",
+    "args": ["-c", "command -v semgrep-mcp >/dev/null 2>&1 && exec semgrep-mcp || (command -v uvx >/dev/null 2>&1 && exec uvx semgrep-mcp || exit 0)"]
   }
 }

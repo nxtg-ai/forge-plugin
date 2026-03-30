@@ -94,18 +94,23 @@ plugins/nxtg-forge/
 
 **Format:** `SKILL.md` with YAML frontmatter (`name`, `description`). Body is contextual knowledge auto-loaded when relevant.
 
-### 6 Hooks
+### 13 Hook Scripts
 
 | Trigger | Script | Purpose |
 |---------|--------|---------|
+| **PreToolUse (Bash)** | `security-command-guard.sh` | **BLOCKS** dangerous commands: `rm -rf /`, `chmod 777`, `curl\|sh`, fork bombs, force push to main |
+| **PreToolUse (Read/Write/Edit)** | `security-secret-shield.sh` | **BLOCKS** access to `.env`, `*.pem`, `*.key`, credentials, `~/.ssh/` |
+| **PreToolUse (Write/Edit)** | `security-injection-guard.sh` | **BLOCKS** `eval()`, `os.system()`, `subprocess(shell=True)`, `child_process.exec()` |
+| **PreToolUse (Write/Edit)** | `security-sql-guard.sh` | **BLOCKS** string concatenation with SQL keywords (CWE-89) |
 | UserPromptSubmit | `pre-task.sh` | Sync governance state, initialize context |
 | Stop | `post-task.sh` | Quality checks on completed work |
 | Stop | `audit-root-cleanliness.sh` | Flag unnecessary root files |
 | Stop | `smoke-test-reminder.sh` | Remind to test after server/test changes |
 | PostToolUse (Write) | `enforce-file-placement.sh` | Enforce file organization |
 | PostToolUse (Edit/Write) | `governance-check.sh` | Advisory code quality check |
+| **PostToolUse (Write/Edit)** | `security-semgrep-scan.sh` | Auto-runs Semgrep SAST on every file write/edit |
 
-All hooks are **non-blocking** — they observe and advise, never prevent actions.
+PreToolUse security hooks are **BLOCKING** (exit 2 = deny tool call). All other hooks are **advisory** (non-blocking).
 
 ## MCP Server (Plugin-Side)
 
@@ -135,14 +140,15 @@ forge-plugin                ──spawns──►     forge-ui (http://localhost
 - **forge-ui** (`../v3/`): React dashboard + Infinity Terminal. The `/forge:dashboard` command opens it in a browser.
 - **MCP is the only integration layer.** No direct imports or shared code between repos.
 
-### Two MCP Servers
+### Three MCP Servers
 
 | Server | Location | Runtime | Tools | Use Case |
 |--------|----------|---------|-------|----------|
 | **Orchestrator MCP** | forge-orchestrator | Rust (stdio) | 9 task/knowledge tools | Multi-agent task orchestration |
 | **Plugin MCP** | forge-plugin | Node.js (stdio) | 8 governance tools | Project health, metrics, dashboard |
+| **Semgrep MCP** | pip/uvx | Python (stdio) | SAST scanning tools | Static analysis via Semgrep |
 
-Both run as stdio MCP servers. Claude Code connects to both simultaneously when the plugin is installed and `forge` binary is in PATH.
+All three run as stdio MCP servers. Claude Code connects to all simultaneously. Orchestrator-mcp requires `forge` binary; semgrep-mcp requires `pip install semgrep-mcp` or `uvx`. Both degrade gracefully if not installed.
 
 **The Lego Snap (N-12):** As of v3.5.1, the plugin's `.mcp.json` registers BOTH MCP servers. When Claude Code loads the plugin, it automatically connects to:
 1. `governance-mcp` — always available (Node.js, ships with plugin)
@@ -197,9 +203,10 @@ Contextual knowledge, patterns, best practices...
 ## Key Dimensions
 
 - **Version:** 3.5.1
-- **Components:** 23 commands, 23 agents, 32 skills, 7 hooks, 8 MCP tools
+- **Components:** 23 commands, 33 agents, 33 skills, 13 hook scripts (8 PreToolUse + 5 PostToolUse + 4 Stop + 1 UserPromptSubmit), 8 MCP tools
+- **MCP Servers:** 3 (governance-mcp Node.js, orchestrator-mcp Rust, semgrep-mcp Python)
+- **Security Hooks:** 4 PreToolUse guards (command, secret, injection, SQL) + 1 PostToolUse Semgrep auto-scan
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
-- **MCP Server:** Node.js ES module (`@modelcontextprotocol/sdk@^1.12.1`)
 - **Repo:** github.com/nxtg-ai/forge-plugin
 
 ## ASIF Governance

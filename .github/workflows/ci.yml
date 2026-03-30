@@ -42,6 +42,43 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep scan
+        run: semgrep scan --config auto --json --output semgrep-results.json plugins/nxtg-forge/servers/governance-mcp/ || true
+
+      - name: Check for high/critical findings
+        run: |
+          if [ -f semgrep-results.json ]; then
+            HIGH_COUNT=$(jq '[.results[] | select(.extra.severity == "ERROR" or .extra.severity == "WARNING")] | length' semgrep-results.json 2>/dev/null || echo "0")
+            echo "Semgrep findings (high+critical): $HIGH_COUNT"
+            if [ "$HIGH_COUNT" -gt 0 ]; then
+              jq '.results[] | select(.extra.severity == "ERROR" or .extra.severity == "WARNING") | "\(.extra.severity) \(.check_id) \(.path):\(.start.line)"' semgrep-results.json
+            fi
+          fi
+
+      - name: Upload Semgrep results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+          retention-days: 30
+
+      - name: Create issue on CI failure
+        uses: jayqi/failed-build-issue-action@v1
+        if: failure() && github.event.pull_request == null
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
   mcp-server:
     name: MCP Server
     runs-on: ubuntu-latest
