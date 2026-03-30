@@ -117,6 +117,17 @@ Security:
 | **L2 Pro Builder** | Security findings recorded via `forge_capture_knowledge` for cross-session tracking. Past findings recalled via `forge_get_knowledge` to verify regressions are fixed. |
 | **L3 Ship Lord** | Security scan results visible in the forge-ui dashboard governance panel. Vulnerability counts displayed on the health score card. |
 
+## Common Rationalizations (Don't Fall For These)
+
+| What You Tell Yourself | Why It's Wrong |
+|----------------------|---------------|
+| "We're an internal tool, security doesn't matter" | Internal tools get compromised first. They often have weaker auth, more privilege, and direct database access. Internal ≠ safe. |
+| "npm audit says 0 vulnerabilities" | `npm audit` only checks *known CVEs in dependencies*. It doesn't find hardcoded secrets, weak JWT config, SQL injection in your code, or missing rate limiting. |
+| "I removed the secret from the code" | It's still in git history. Anyone with repo access can find it. Secrets must be rotated after accidental commit, not just deleted. |
+| "We'll do a security review before launch" | Pre-launch reviews find 10x more issues than you budgeted time to fix. Run Security incrementally — after auth changes, after new endpoints, after dependency updates. |
+| "It's just a Low severity finding" | Five Lows can chain into a Critical. Missing rate limiting + verbose errors + no CSRF + weak session + exposed debug endpoint = account takeover. |
+| "HTTPS handles our security" | HTTPS encrypts transport. It doesn't prevent XSS, CSRF, SQL injection, broken auth, or any of the OWASP Top 10 application-level attacks. |
+
 ## Tips & Gotchas
 
 - **Do**: Run the Security agent after implementing authentication, authorization, or any feature that handles sensitive data. These are the highest-risk areas.

@@ -10,6 +10,24 @@ Agents are autonomous specialists that Claude Code delegates to when it recogniz
 
 But you *can* invoke them directly through commands like `/forge:feature` (which orchestrates Planner → Builder → Testing → Guardian) or through the [/forge:agent-assign](../commands/agent-assign.md) command.
 
+```mermaid
+graph TD
+    subgraph "Core Workflow"
+        P[Planner] -->|plan| B[Builder]
+        B -->|code| T[Testing]
+        T -->|tests| G[Guardian]
+        O[Orchestrator] -.->|coordinates| P & B & T & G
+    end
+    subgraph "Domain Specialists"
+        SEC[Security] & PERF[Performance] & API[API] & DB[Database] & UI[UI]
+    end
+    subgraph "Governance"
+        DET[Detective] & COMP[Compliance] & RS[Release Sentinel] & CRUC[Crucible]
+    end
+    G -.->|spawns| SEC & T
+    DET -.->|spawns| SEC & T & PERF
+```
+
 Every agent runs at **L1** (plugin only). Some gain enhanced capabilities at L2 (orchestrator) and L3 (dashboard).
 
 ---

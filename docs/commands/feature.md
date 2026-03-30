@@ -10,6 +10,19 @@
 
 ---
 
+## The Pipeline
+
+```mermaid
+graph LR
+    A["/forge:feature 'add auth'"] --> B["Phase A: Planner"]
+    B -->|approved spec| C["Phase B: Builder"]
+    B -->|approved spec| D["Phase B: Testing"]
+    C & D -->|code + tests| E["Phase C: Guardian"]
+    E -->|all gates pass| F[Done]
+    style C fill:#4a9,color:#fff
+    style D fill:#4a9,color:#fff
+```
+
 ## What It Does
 
 `/forge:feature` is the full-lifecycle feature builder. It takes a feature idea from description through codebase analysis, spec generation, implementation, testing, and validation -- all in one command. The intelligence behind it is a three-phase agent pipeline: Phase A locks interface contracts via the planner agent, Phase B spawns builder and testing agents in parallel to write code and tests simultaneously, and Phase C runs a guardian agent quality gate to catch type errors, test failures, and security issues before you commit.

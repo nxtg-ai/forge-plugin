@@ -116,6 +116,16 @@ Guardian:
 | **L2 Pro Builder** | Validates tasks from the orchestrator task board via `forge_get_tasks`. Records quality findings and security issues via `forge_capture_knowledge`. Marks validated tasks complete via `forge_complete_task`. Recalls past quality patterns via `forge_get_knowledge`. |
 | **L3 Ship Lord** | Quality gate results visible in the forge-ui dashboard. Health score trends displayed over time. Security findings surfaced in the governance panel. |
 
+## Common Rationalizations (Don't Fall For These)
+
+| What You Tell Yourself | Why It's Wrong |
+|----------------------|---------------|
+| "Tests pass, so it's fine to ship" | Tests passing means your *known* scenarios work. Guardian checks for *unknown* gaps: missing coverage, type drift, unhandled error paths, mock shape mismatches. "Tests pass" ≠ "code is correct." |
+| "I'll add tests later" | You won't. Technical debt compounds. Guardian's NEW_FILE_NEW_TEST rule exists because every untested file is a future production bug. |
+| "It's just a small change" | Small changes cause big outages. A one-line auth tweak can break every protected route. Guardian catches cascading impact regardless of change size. |
+| "We're in a rush, skip quality gates" | Skipping gates doesn't save time — it moves the time cost to production debugging, which is 10x more expensive. Run the gate. |
+| "The type error is pre-existing, not my fault" | TYPECHECK_ZERO_TOLERANCE doesn't care whose fault it is. Pre-existing type errors mask new ones. Fix it now or it multiplies. |
+
 ## Tips & Gotchas
 
 - **Do**: Run the Guardian after every significant implementation, not just before releases. Catching issues early is cheaper than catching them late.

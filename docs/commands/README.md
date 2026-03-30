@@ -10,6 +10,24 @@ Commands are slash-invoked actions you type directly in Claude Code. Each one is
 
 Commands work at **L1** (plugin only) unless noted otherwise. Some commands pull additional data from the forge-orchestrator at L2, and one command requires forge-ui at L3.
 
+```mermaid
+graph LR
+    subgraph "Daily Workflow"
+        A["/forge:status"] --> B["/forge:feature 'X'"]
+        B --> C["/forge:test"]
+        C --> D["/forge:gap-analysis"]
+    end
+    subgraph "Release"
+        E["/forge:test"] --> F["/forge:compliance"]
+        F --> G["/forge:docs-audit"]
+        G --> H["/forge:deploy"]
+    end
+    subgraph "Safety Net"
+        I["/forge:checkpoint"] --> J["risky work..."]
+        J --> K["/forge:restore"]
+    end
+```
+
 ---
 
 ## Command Selection Guide
