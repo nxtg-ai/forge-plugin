@@ -20,16 +20,36 @@ Every agent runs at **L1** (plugin only). Some gain enhanced capabilities at L2 
 → [Planner](planner.md) designs it, [Builder](builder.md) implements it, [Guardian](guardian.md) validates it
 
 **"Something is broken"**
-→ [Detective](detective.md) diagnoses it, [Incident Commander](incident-commander.md) triages it
+→ Is production down RIGHT NOW? → [Incident Commander](incident-commander.md) (triage, rollback, coordination)
+→ Need to understand why something failed? → [Detective](detective.md) (root cause analysis, health diagnosis)
+→ Tests are failing? → [Testing](testing.md) (flaky test diagnosis, coverage gaps)
 
 **"Is my code good?"**
-→ [Guardian](guardian.md) for quality gates, [Security](security.md) for vulnerabilities, [Crucible Detective](crucible-detective.md) for test quality
+→ [Guardian](guardian.md) for pre-commit quality gates, [Security](security.md) for deep vulnerability audits, [Crucible Detective](crucible-detective.md) for test quality forensics
 
 **"I need to launch this product"**
 → [Product Strategist](product-strategist.md) for positioning, [Growth Engine](growth-engine.md) for distribution, [Wordsmith](wordsmith.md) for copy
 
 **"Make it faster / cleaner / better"**
 → [Performance](performance.md) for speed, [Refactor](refactor.md) for structure, [Master Architect](master-architect.md) for design
+
+---
+
+## Which Quality Agent Do I Use?
+
+The most common confusion: Detective, Guardian, Security, and Compliance all touch "quality." Here's when to use each:
+
+| Agent | Speed | Depth | Use When | What It Finds |
+|-------|-------|-------|----------|---------------|
+| [Detective](detective.md) | Fast (~30s) | Broad (5 dimensions) | Start of session, "what's the health of this project?" | Overview: test gaps, stale docs, architecture smells, security surface |
+| [Guardian](guardian.md) | Medium (~1-2 min) | Medium (tests + types + lint + security) | Before committing or pushing code | Pre-ship gate: test failures, type errors, lint violations, basic security |
+| [Security](security.md) | Slow (~5-10 min) | Deep (OWASP-focused) | Before a release, after auth changes, during security audits | Deep: CVEs, hardcoded secrets, auth flow weaknesses, injection vectors |
+| [Compliance](compliance.md) | Medium (~2 min) | Focused (legal/regulatory) | Before release, after adding dependencies | Legal: license conflicts, GDPR violations, WCAG accessibility gaps |
+| [Crucible Detective](crucible-detective.md) | Slow (~5 min) | Forensic (test quality only) | When tests pass but software doesn't work | Fraud: hollow assertions, coverage gaming, mock proliferation |
+
+**The relationship:** Guardian spawns Security and Testing as parallel subagents during quality gates. Detective spawns Testing, Security, Docs, and Performance for health checks. They're a hierarchy, not competitors.
+
+**Quick rule:** Daily work → Guardian. Pre-release → Security + Compliance. Project health → Detective. Test fraud suspicion → Crucible.
 
 ---
 

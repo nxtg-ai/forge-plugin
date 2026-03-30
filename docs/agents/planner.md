@@ -121,4 +121,6 @@ Planner:
 
 ---
 
-*See also: [Guardian](guardian.md) | [Orchestrator](orchestrator.md) | [/forge:feature](../commands/feature.md)*
+*See also: [Builder](builder.md) | [Guardian](guardian.md) | [Orchestrator](orchestrator.md) | [/forge:feature](../commands/feature.md) | [/forge:spec](../commands/spec.md)*
+
+*Part of the feature pipeline: [/forge:feature](../commands/feature.md) → **Planner** (you are here) → [Builder](builder.md) → [Testing](testing.md) → [Guardian](guardian.md)*

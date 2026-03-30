@@ -2,6 +2,8 @@
 
 > 32 knowledge modules that auto-load when agents need them. Skills are the expertise behind the agents — patterns, conventions, best practices, and anti-patterns that make AI output match senior engineering standards.
 
+**You don't need to configure, invoke, or manage skills. They are 100% automatic.** When an agent works on a task, the relevant skills load silently in the background. There is nothing to install, nothing to enable, nothing to learn. Just use Forge normally — skills do the rest.
+
 ---
 
 ## How Skills Work

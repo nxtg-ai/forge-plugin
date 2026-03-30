@@ -110,4 +110,6 @@ For large features, the parallel agent pipeline (Phase B) can cut implementation
 
 ---
 
-*See also: [spec](../commands/spec.md) | [agent-assign](../commands/agent-assign.md) | [test](../commands/test.md)*
+*See also: [/forge:spec](spec.md) | [/forge:agent-assign](agent-assign.md) | [/forge:test](test.md)*
+
+*Agents in the pipeline: [Planner](../agents/planner.md) (Phase A) | [Builder](../agents/builder.md) + [Testing](../agents/testing.md) (Phase B, parallel) | [Guardian](../agents/guardian.md) (Phase C)*

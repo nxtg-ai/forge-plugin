@@ -1,6 +1,8 @@
 # Agents & Skills Reference
 
-## 23 Specialized Agents
+## 33 Specialized Agents
+
+> For detailed per-agent documentation, see [docs/agents/](agents/README.md).
 
 Forge agents are autonomous AI specialists. Each handles a specific domain. Claude Code selects the right agent based on your request, or you can invoke them directly through commands.
 

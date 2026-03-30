@@ -125,11 +125,22 @@ Autonomous strategic governance — the executive brain.
 ```
 
 ### Before a Release
+
+Run these in order. Each builds confidence for the next.
+
+| Step | Command | What It Checks | If It Fails |
+|------|---------|---------------|-------------|
+| 1 | `/forge:test` | All tests pass, coverage meets threshold | Fix failing tests before proceeding |
+| 2 | `/forge:gap-analysis --scope security` | No critical security gaps | Address CRITICAL/HIGH findings |
+| 3 | `/forge:compliance` | License compatibility, SBOM clean | Replace incompatible deps |
+| 4 | `/forge:docs-audit` | Docs accurate and complete | Update stale sections |
+| 5 | `/forge:deploy` | Pre-flight checks + deployment | Fix blockers, re-run from step 1 |
+
+**Which agents run?** Step 1 uses [Testing](../agents/testing.md). Step 2 uses [Security](../agents/security.md). Step 3 uses [Compliance](../agents/compliance.md). Step 4 uses [Docs](../agents/docs.md). Step 5 runs [Guardian](../agents/guardian.md) pre-flight (which re-runs tests + types + security).
+
 ```
-/forge:test                # All tests pass
-/forge:compliance          # License + security clean
-/forge:docs-audit          # Docs accurate
-/forge:deploy              # Ship it
+# Quick version (for when you trust your pipeline):
+/forge:test && /forge:compliance && /forge:deploy
 ```
 
 ### Deep Analysis

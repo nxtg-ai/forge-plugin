@@ -125,4 +125,6 @@ Guardian:
 
 ---
 
-*See also: [Testing](testing.md) | [Security](security.md) | [/forge:test](../commands/test.md)*
+*See also: [Testing](testing.md) | [Security](security.md) | [Compliance](compliance.md) | [/forge:test](../commands/test.md) | [/forge:deploy](../commands/deploy.md)*
+
+*Part of the feature pipeline: [/forge:feature](../commands/feature.md) → [Planner](planner.md) → [Builder](builder.md) → [Testing](testing.md) → **Guardian** (you are here)*
