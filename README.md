@@ -34,8 +34,9 @@ That's it. No build step. No config files. No runtime dependencies.
 |-----------|-------|-------------|
 | Slash commands | 23 | Project health, gap analysis, feature planning, checkpoints, deployment, testing |
 | Specialized agents | 33 | Builder, guardian, planner, detective, security, testing, refactor, docs, and more |
-| Knowledge skills | 32 | Architecture, coding standards, testing strategy, git workflow, domain knowledge |
-| Governance hooks | 8 | Pre-task validation, post-task quality checks, file placement rules |
+| Knowledge skills | 33 | Architecture, coding standards, OWASP security, testing strategy, git workflow |
+| Security hooks | 4 | PreToolUse guards: block dangerous commands, secrets access, code injection, SQL injection |
+| Governance hooks | 9 | Pre/post-task validation, quality checks, file placement, Semgrep auto-scan |
 | MCP governance tools | 8 | Health scoring, git status, code metrics, security scanning |
 
 ## Key Commands
