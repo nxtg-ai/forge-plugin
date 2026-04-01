@@ -571,6 +571,52 @@ Commits since last check-in: 7 (all tagged and released).
 - **CRUCIBLE remediation scope**: The audit found `index.mjs` at 0% coverage. Fixing this requires an `if (FORGE_TEST_MODE)` guard before `server.connect()`. Is this approved, or should we wait for a directive?
 - **Agent naming convention settled?** We renamed from `[AFRG]-*` to clean names. The CRUCIBLE audit report (Gate 8a) still references old names. Should we update the audit report to reflect the rename, or leave it as historical record?
 
+### Check-in: 2026-03-31
+
+**1. What did we ship since last check-in (2026-03-12)?**
+
+4 commits across 2 sessions (2026-03-30 to 2026-03-31). 29 files changed, +2,462 / -149 lines.
+
+Major deliverables:
+- **CRUCIBLE Security Mega-Agent** (c511fe9, 1,602 lines): 4 PreToolUse blocking hooks (command-guard, secret-shield, injection-guard, sql-guard), 1 PostToolUse Semgrep auto-scan hook, OWASP security skill (822 lines covering Top 10:2025 + API Top 10 + Agentic AI ASI01-10 + CWE Top 25 + ASVS 5.0), security agent rewritten with 3-phase pipeline (PREVENT/DETECT/ASSESS), semgrep-mcp added as 3rd MCP server, Semgrep SAST job added to CI.
+- **FORGE-DIFFERENTIATORS.md**: 9 unique capabilities across 3 tiers. Competitive positioning vs Superpowers/gstack/Paperclip.
+- **CROSS-IDE-FEASIBILITY.md** (434 lines): Full 5-platform analysis (Cursor, OpenCode, Codex, Gemini). Effort/value matrix. Minimal manifests for each platform.
+- **Version sync**: All 4 manifests aligned to v3.6.0. Stale root plugin.json fixed (name: forge → nxtg-forge).
+- **README**: Component counts updated (skills 33, hooks split into 4 security + 9 governance).
+
+Test counts: **44/44 vitest pass**, 0 failures. Security scan on self: **0 findings**. No tests deleted.
+
+Component totals: 33 agents, 33 skills, 23 commands, 13 hook scripts, 3 MCP servers, 8 governance tools.
+
+**2. What surprised us?**
+
+- **PreToolUse hooks are a genuinely unique capability.** After studying Superpowers (116K stars), gstack (50K stars), ruflo (27K), and Paperclip — none have blocking prevention hooks. gstack has `/guard` and `/freeze` but they're advisory. Forge is the only plugin that can block `eval()` or `rm -rf /` before the code is written. This is our strongest differentiator for the "safety" narrative.
+- **Cursor's plugin spec is nearly identical to Claude Code's.** `.cursor-plugin/plugin.json`, `skills/*/SKILL.md`, `agents/*.md`, `hooks/hooks.json` with similar events. A Cursor port is genuinely 1-2 days of work. This was not expected — thought it would be M/L effort.
+- **The root-level `.claude-plugin/plugin.json` was stale since v3.4.7.** It still said `"name": "forge"` and version `3.4.7`. The rename commit (a1a0cb0) only updated the inner plugin.json. This means anyone using claudemarketplaces.com auto-discovery would see the wrong name. Fixed now, but it means we have a version sync gap in our release checklist.
+- **OWASP Agentic AI Security (ASI01-ASI10) is a completely uncovered category.** No competitor addresses risks specific to AI agent systems — excessive agency, prompt injection via tool results, supply chain attacks on MCP servers. Our OWASP skill is the first to cover this. Market signal: nobody is thinking about agent safety yet.
+
+**3. Cross-project signals**
+
+- **forge-orchestrator should know about the OWASP skill.** The orchestrator's `governance.rs` health check could reference the OWASP ASI categories for agent-specific risk scoring. Currently it scores 5 dimensions but none are security-specific.
+- **forge-ui should reflect the 3-MCP-server architecture.** The dashboard's "System Health" view likely still shows 2 MCP servers. The semgrep-mcp addition needs a UI counterpart.
+- **Semgrep CI pattern is reusable across all 3 repos.** The Semgrep SAST job I added to forge-plugin's CI (`pip install semgrep && semgrep scan --config auto --json`) can be copied to forge-orchestrator and forge-ui workflows. This was the CoS's stated intention: "Semgrep Team (free) will be added to CI pipelines across all projects."
+- **The CROSS-IDE-FEASIBILITY.md analysis applies portfolio-wide.** If we port forge-plugin to Cursor, the orchestrator's TUI and the UI dashboard could also get Cursor integration guides. The MCP layer is already platform-standard.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **Cursor port (P1, S effort)**: The feasibility analysis is done. Creating `.cursor-plugin/plugin.json` + `hooks-cursor.json` is 1-2 days. Doubles our addressable market overnight. Superpowers proves this works.
+2. **Dependabot triage (P1)**: GitHub flagged 3 vulnerabilities (1 high, 2 moderate) in governance-mcp dependencies. Need to `npm audit fix` and verify 44 tests still pass.
+3. **Semgrep CI rollout to forge-orchestrator + forge-ui**: Copy the CI job pattern. CoS already approved this.
+4. **Skill absorption from Superpowers**: Wolf Intel identified 6 skills worth absorbing — the "1% Rule" SessionStart hook is highest priority. It makes skills proactive rather than reactive.
+5. **`/browse` + `/qa` browser automation**: gstack's biggest gap-filler for Forge. Playwright-based QA agent. Medium effort but high demo value.
+
+**5. Blockers or questions for the CoS?**
+
+- **DIRECTIVE-CLX9-20260326-03, Item 5 (landing page)**: Blocked on Asif. Need forge.nxtg.ai credentials to update messaging. Proposed copy: "The only developer governance system that makes AI agents safer as they get more autonomous." Available in FORGE-DIFFERENTIATORS.md.
+- **DIRECTIVE-NXTG-20260326-01, Items 4-5 (marketplace)**: Blocked on Asif. Need platform.claude.com credentials for submission. marketplace.json is ready and validated.
+- **Version sync gap**: Root `.claude-plugin/plugin.json` drifted from inner plugin.json. Our release checklist doesn't explicitly include root-level manifests. Should we add a pre-push hook that validates version parity across all 4 files?
+- **Dependabot 3 vulns**: 1 high, 2 moderate in governance-mcp deps. Is this a P1 (fix before feature work) or P2 (fix in next release)?
+
 ---
 
 ## Team Questions
