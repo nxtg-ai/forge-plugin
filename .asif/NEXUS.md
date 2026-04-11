@@ -613,7 +613,7 @@ Component totals: 33 agents, 33 skills, 23 commands, 13 hook scripts, 3 MCP serv
 **5. Blockers or questions for the CoS?**
 
 - **DIRECTIVE-CLX9-20260326-03, Item 5 (landing page)**: Blocked on Asif. Need forge.nxtg.ai credentials to update messaging. Proposed copy: "The only developer governance system that makes AI agents safer as they get more autonomous." Available in FORGE-DIFFERENTIATORS.md.
-- **DIRECTIVE-NXTG-20260326-01, Items 4-5 (marketplace)**: Blocked on Asif. Need platform.claude.com credentials for submission. marketplace.json is ready and validated.
+- ~~**DIRECTIVE-NXTG-20260326-01, Items 4-5 (marketplace)**: Blocked on Asif. Need platform.claude.com credentials for submission. marketplace.json is ready and validated.~~ **RESOLVED** — `nxtg-forge` is LIVE on claudemarketplaces.com/plugins/nxtg-forge (HTTP 200, verified 2026-04-10).
 - **Version sync gap**: Root `.claude-plugin/plugin.json` drifted from inner plugin.json. Our release checklist doesn't explicitly include root-level manifests. Should we add a pre-push hook that validates version parity across all 4 files?
 - **Dependabot 3 vulns**: 1 high, 2 moderate in governance-mcp deps. Is this a P1 (fix before feature work) or P2 (fix in next release)?
 
