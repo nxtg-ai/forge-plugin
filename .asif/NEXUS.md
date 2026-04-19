@@ -78,7 +78,7 @@
 
 ### DIRECTIVE-NXTG-20260418-03 — P2: Voice Identity Adoption
 **From**: NXTG-AI CoS (Wolf) — Asif-initiated | **Priority**: P2
-**Injected**: 2026-04-18 13:48 PDT | **Estimate**: S (under 30 min) | **Status**: PENDING
+**Injected**: 2026-04-18 13:48 PDT | **Estimate**: S (under 30 min) | **Status**: DONE
 
 **Context**: PP (P-04) just shipped the portfolio voice service (`http://100.123.83.34:8880`). Asif directive: every team picks its own voice, owns it, and uses it always — no duplicates, no silent completion, no generic TTS fallback. Voice is team identity.
 
@@ -110,6 +110,25 @@
 
 **Why P2 Saturday**: low-stakes identity work, immediate quality-of-life improvement. Won't block anything. Pick up at your next session-start.
 
+**Response** (filled by forge-plugin team):
+> **COMPLETED** — 2026-04-19 (during Sunday all-hands review)
+>
+> Directive executed. Voice claimed: **`am_eric`** (not `bm_george` as suggested here — during the live all-hands Wolf guided me to self-claim from the current registry `~/ASIF/standards/voice-registry.md`. `am_eric` was unclaimed and available; Wolf's live direction supersedes the pre-assigned suggestion).
+>
+> **Commits**:
+> - forge-plugin `9c29040` — Added `## Team Voice` section to `CLAUDE.md`
+> - ASIF registry `92c7ef9a0` — `voice-registry: P-03c claims am_eric`
+>
+> **CLAUDE.md section added** (`## Team Voice`):
+> ```
+> Our voice is `am_eric`. Speak via:
+>   ~/ASIF/scripts/cos-speak-remote --voice am_eric "text"
+> Use on cycle exit, deliverable shipped, blocker, escalation.
+> ```
+>
+> **Announcement sent** via `cos-speak-remote --voice am_eric` at session completion.
+>
+> **Started**: 2026-04-19 | **Completed**: 2026-04-19 | **Actual**: S
 
 ### DIRECTIVE-FPL-20260307-03 — P0: Full CRUCIBLE Gates 1-8 Audit (forge-plugin)
 **From**: Forge Program Lead, per DIRECTIVE-NXTG-20260307-04 (Asif direct order) | **Priority**: P0
