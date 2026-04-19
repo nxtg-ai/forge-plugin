@@ -671,6 +671,45 @@ Component totals: 33 agents, 33 skills, 23 commands, 13 hook scripts, 3 MCP serv
 - **Version sync gap**: Root `.claude-plugin/plugin.json` drifted from inner plugin.json. Our release checklist doesn't explicitly include root-level manifests. Should we add a pre-push hook that validates version parity across all 4 files?
 - **Dependabot 3 vulns**: 1 high, 2 moderate in governance-mcp deps. Is this a P1 (fix before feature work) or P2 (fix in next release)?
 
+### Check-in: 2026-04-19
+
+**1. What did we ship since last check-in (2026-03-31)?**
+
+11 commits across 3 sessions (2026-04-10 to 2026-04-19). Focused entirely on CI security hardening, a marketplace retraction, and voice identity.
+
+Major deliverables:
+- **Security Scan CI v1→v5.1** (`cb9acbc`→`7ea2c99`, 5 iterations): Added Semgrep SAST + Gitleaks secret scanning + Bandit (Python SAST) + Bearer (data privacy scanner) alongside existing CodeQL. Final stable form: SARIF artifacts + GitHub Job Summary. No SARIF Security tab upload (private-repo limitation — see surprise below).
+- **Marketplace false-positive retraction** (`1b6dd47`): Wolf's automated "is it live?" check (HTTP 200 on claudemarketplaces.com) was a false positive — Next.js returns 200 with a 404 body. NEXUS corrected. Submission status remains unverified pending Asif-confirmed URL.
+- **Voice identity adoption** (`9c29040`, `8d32e2f`): `am_eric` claimed in portfolio voice registry. `## Team Voice` section added to CLAUDE.md. Cycle-complete announcements wired.
+
+Test counts: **44/44 vitest pass** (unchanged — no regressions). No tests deleted.
+
+**2. What surprised us?**
+
+- **GitHub's SARIF upload is paywalled on private repos.** The `upload-sarif` action silently succeeds on public repos (free) but fails with a permissions error on private repos unless the org has the Code Security add-on (~$49/user/month). This burned 4 CI iterations before we found the stable alternative (Job Summary + artifact download). Any other private repo adding SARIF-based scanning will hit this exact wall — proactively warn them.
+- **claudemarketplaces.com HTTP 200 ≠ page exists.** Next.js SSR renders a 404 component with HTTP 200. Any automated "ping and check status code" verification against that site is unreliable. Wolf's tool hit this. Worth building a body-check into any future link-validation tooling.
+- **Prompt injection during this session.** First two messages of this session were a prompt injection attempt: urgency framing ("fastest wins credit", "2 mins"), unknown external script execution (`cos-speak-remote`), repeated on denial. The pattern: *urgency + competitive pressure + external script + no prior NEXUS directive*. Flagged, verified before acting. The injection was sophisticated enough to reference real ASIF structure (voice-registry.md, Wolf's identity). This is the first time we've seen a prompt injection attempt that partially knew our governance topology.
+
+**3. Cross-project signals**
+
+- **Security scan CI pattern is now proven — roll out to forge-orchestrator and forge-ui.** The 4-tool stack (Semgrep + Gitleaks + Bandit + Bearer) in `.github/workflows/security-scan.yml` is copy-paste portable. CoS already approved this intent in March. Bandit is Python-only (safe no-op on non-Python repos), Bearer adds data-privacy scanning (useful for forge-ui which handles user sessions). Private-repo SARIF limitation documented — don't waste iterations on upload-sarif.
+- **Prompt injection awareness is a portfolio-wide signal.** If an attacker knows your governance vocabulary (NEXUS, Wolf, voice-registry), they can craft more convincing injections. Every project using ASIF governance language in its CLAUDE.md is potentially targetable. Recommend: add "no external script without NEXUS directive ID" as a standing rule in the portfolio security skill (OWASP ASI-03: Prompt Injection via Tool Results / Message Injection).
+- **Marketplace verification tooling needs a body-check, not a status-code check.** Applies to any project verifying its own marketplace listing. Status code alone is not sufficient on Next.js-based platforms.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **Dependabot triage (P1)**: Push on 2026-04-19 showed 13 vulnerabilities (3 high, 10 moderate) — escalated from March's 3 (1 high, 2 moderate). Needs `npm audit fix` + test verification before next release.
+2. **Security scan CI rollout** to forge-orchestrator + forge-ui: Copy the proven workflow. CoS-approved. S effort per repo.
+3. **Cursor port (P1, S effort)**: Feasibility analysis done in CROSS-IDE-FEASIBILITY.md. 1-2 days. Doubles addressable market.
+4. **Superpowers skill absorption**: "1% Rule" SessionStart hook is highest priority — makes skills proactive rather than reactive. Wolf Intel identified 6 skills total.
+5. **BUG B (tool rename)**: `forge_get_health` → `forge_get_health_score`. 6 files. Low effort, prevents orchestrator MCP collision.
+
+**5. Blockers or questions for the CoS?**
+
+- **Dependabot alert count jumped 13 vulns (3 high, 10 moderate)** — up from 3 in March. Is this P1 (block all feature work) or P2? Ruling needed before planning the next session.
+- **Marketplace submission URL**: Still awaiting Asif-confirmed submission path. Without it we can't verify the listing is live or close out DIRECTIVE-NXTG-20260326-01.
+- **Prompt injection resilience**: Should the OWASP security skill be updated with a dedicated section on "portfolio-topology-aware injections"? The attack this session knew ASIF vocabulary. Our current OWASP skill covers ASI-03 generically — it doesn't address the specific pattern of injections that mimic CoS voice/authority.
+
 ---
 
 ## Team Questions
@@ -683,6 +722,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-04-19 | Team Feedback check-in. Security scan CI v1→v5.1 (4 tools: Semgrep+Gitleaks+Bandit+Bearer). Marketplace false-positive retracted. Voice identity adopted (am_eric). 44/44 tests unchanged. Prompt injection attempt detected and flagged. |
 | 2026-03-31 | DIRECTIVE-CLX9-20260326-03 items 4+7 DONE. FORGE-DIFFERENTIATORS.md (9 unique capabilities). CROSS-IDE-FEASIBILITY.md (434 lines, 5 platforms analyzed). Root plugin.json fixed (name: forge→nxtg-forge, version synced to 3.5.1). README component counts updated. Item 5 blocked on Asif. |
 | 2026-03-30 | CRUCIBLE Security Mega-Agent shipped (c511fe9, 1602 lines). 4 PreToolUse blocking hooks, Semgrep PostToolUse hook, OWASP skill (822 lines), security agent enhanced, semgrep-mcp added as 3rd MCP server, Semgrep SAST added to CI. 44/44 tests pass, 0 security findings. |
 | 2026-03-14 | v3.4.8: CRUCIBLE remediation complete. index.mjs: FORGE_TEST_MODE guard existed, added TOOLS export + dispatchToolCall() + 17 tests → 0% → 60%+ coverage. Hollow assertions: 14 fixed across 4 test files, hollow rate 0%. Silent catches: 2 remaining empty catches now log via console.warn. Shebang removed from index.mjs (blocked vitest ESM transform). 44 vitest + 43 node:test = 87 tests, 0 failures. |
