@@ -221,6 +221,12 @@ On every session (check BOTH your own NEXUS and the program NEXUS):
 4. Update initiative statuses in NEXUS if your work changes them
 5. If you have questions for the CoS, add them under `## Team Questions` in NEXUS
 
+## Team Voice
+
+Our voice is `am_eric`. Speak via:
+  ~/ASIF/scripts/cos-speak-remote --voice am_eric "text"
+Use on cycle exit, deliverable shipped, blocker, escalation.
+
 ## Dx3 Brain Integration
 On every session start, recall relevant context from Dx3 before starting work:
 - Use recall() to check for prior decisions, lessons, and patterns related to your current task
