@@ -78,7 +78,7 @@
 
 ### DIRECTIVE-NXTG-20260429-06 — P2: Pre-Task Hook Noise Reduction (token diet)
 **From**: NXTG-AI CoS (Wolf), routed from Emma HANDOFF Note 147 | **Priority**: P2
-**Injected**: 2026-04-29 18:40 PDT | **Estimate**: S | **Status**: PENDING
+**Injected**: 2026-04-29 18:40 PDT | **Estimate**: S | **Status**: DONE
 
 **Context**: The forge-plugin UserPromptSubmit hook (`hooks/scripts/pre-task.sh`) currently emits three brackets on every prompt — `[Info] Pre-task hook triggered`, `[Info] You have uncommitted changes. Consider committing before major tasks.` (when working tree is dirty), and `[Success] Pre-task checks complete`. ASIF auto-syncs every 5 min so working trees are briefly dirty constantly across ALL portfolio sessions, meaning the "uncommitted changes" advisory fires hundreds of times/day across every Forge-enabled CoS session (Wolf, Emma, Kestrel, all Forge sub-team panes). Eats ~80-100 input tokens per prompt × every Forge-enabled session × every prompt all day. Material token burn that compounds with the runtime-diet effort already in flight.
 
@@ -778,6 +778,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-04-28 | DIRECTIVE-NXTG-20260429-06 DONE — Pre-task hook noise reduction. FORGE_QUIET_HOOKS=1 silences all log_info/log_success. FORGE_HOOK_VERBOSE=1 restores debug brackets. Uncommitted-changes advisory now requires >10 dirty files OR >30 min stale. 44/44 tests unchanged. Commit f3444f0. |
 | 2026-04-19 | Team Feedback check-in. Security scan CI v1→v5.1 (4 tools: Semgrep+Gitleaks+Bandit+Bearer). Marketplace false-positive retracted. Voice identity adopted (am_eric). 44/44 tests unchanged. Prompt injection attempt detected and flagged. |
 | 2026-03-31 | DIRECTIVE-CLX9-20260326-03 items 4+7 DONE. FORGE-DIFFERENTIATORS.md (9 unique capabilities). CROSS-IDE-FEASIBILITY.md (434 lines, 5 platforms analyzed). Root plugin.json fixed (name: forge→nxtg-forge, version synced to 3.5.1). README component counts updated. Item 5 blocked on Asif. |
 | 2026-03-30 | CRUCIBLE Security Mega-Agent shipped (c511fe9, 1602 lines). 4 PreToolUse blocking hooks, Semgrep PostToolUse hook, OWASP skill (822 lines), security agent enhanced, semgrep-mcp added as 3rd MCP server, Semgrep SAST added to CI. 44/44 tests pass, 0 security findings. |
