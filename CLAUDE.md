@@ -112,6 +112,17 @@ plugins/nxtg-forge/
 
 PreToolUse security hooks are **BLOCKING** (exit 2 = deny tool call). All other hooks are **advisory** (non-blocking).
 
+#### Hook Environment Variables
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `FORGE_QUIET_HOOKS=1` | off | Suppresses all `[Info]` and `[Success]` output from every hook. Set in ORBIT/autonomous loops (Wolf, Emma, Kestrel) to eliminate per-prompt noise. Actionable `[Warning]`/`[Error]` messages still emit. |
+| `FORGE_HOOK_VERBOSE=1` | off | Enables diagnostic brackets (`Pre-task hook triggered`, `Pre-task checks complete`) that are hidden by default. Use when debugging hook behavior. |
+
+**Uncommitted-changes advisory thresholds** (`pre-task.sh`):
+- Fires only when: **>10 dirty files** OR **any tracked modified file is >30 min old**
+- Below both thresholds the working tree is treated as transient sync noise and the advisory is suppressed.
+
 ## MCP Server (Plugin-Side)
 
 The plugin includes its own Node.js MCP server (8 tools) separate from forge-orchestrator's Rust MCP server (9 tools):

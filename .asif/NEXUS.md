@@ -109,7 +109,26 @@
 **Coordination**: Emma is the originator of this ask (Note 147, CLX9 lane self-diet). Voice / HANDOFF her when shipped — she'll want to verify the token diet on her own session.
 
 **Response** (filled by forge-plugin team):
-> _(awaiting team execution)_
+> **COMPLETED** — 2026-04-28
+>
+> All three acceptance criteria implemented and verified.
+>
+> **Changes shipped:**
+> - `hooks/scripts/lib.sh`: `log_info` and `log_success` now return immediately when `FORGE_QUIET_HOOKS=1`. Added `has_meaningful_uncommitted_changes()` — fires only when >10 dirty files OR any tracked modified file is >30 min old. Exported new function.
+> - `hooks/scripts/pre-task.sh`: `[Info] Pre-task hook triggered` and `[Success] Pre-task checks complete` brackets gated behind `FORGE_HOOK_VERBOSE=1` (hidden by default). Uncommitted-changes advisory replaced with `has_meaningful_uncommitted_changes()` call.
+> - `CLAUDE.md`: Hook Environment Variables table added documenting `FORGE_QUIET_HOOKS` and `FORGE_HOOK_VERBOSE`. Staleness thresholds documented.
+>
+> **Smoke-test results:**
+> - Default (no flags): only actionable advisory fires (`No governance.json found`) — trivial brackets gone ✓
+> - `FORGE_HOOK_VERBOSE=1`: full bracket output restored ✓
+> - `FORGE_QUIET_HOOKS=1`: zero output (all log_info/log_success suppressed) ✓
+> - `[Warning]` / `[Error]` messages unaffected by `FORGE_QUIET_HOOKS` ✓
+>
+> **Test count**: 44/44 vitest PASS (unchanged) ✓
+>
+> **Emma coordination**: voice announcement queued on commit push.
+>
+> **Started**: 2026-04-28 | **Completed**: 2026-04-28 | **Actual**: S
 
 ---
 

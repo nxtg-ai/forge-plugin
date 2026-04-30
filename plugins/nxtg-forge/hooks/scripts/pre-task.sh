@@ -21,7 +21,7 @@ if ! hooks_enabled; then
     exit 0
 fi
 
-log_info "Pre-task hook triggered"
+[ "${FORGE_HOOK_VERBOSE:-0}" = "1" ] && log_info "Pre-task hook triggered"
 
 # 1. Validate config.json (skip silently if not present — it's optional)
 if [ -f "$CONFIG_FILE" ]; then
@@ -51,8 +51,9 @@ if [ -n "$TASK_ID" ] && has_command jq && [ -f "$PROJECT_STATE_FILE" ]; then
     log_success "Updated project.json with task info"
 fi
 
-# 4. Check for uncommitted changes
-if has_uncommitted_changes; then
+# 4. Check for uncommitted changes — advisory fires only on meaningful staleness
+# (>10 dirty files or any tracked modified file older than 30 min)
+if has_meaningful_uncommitted_changes; then
     log_info "You have uncommitted changes. Consider committing before major tasks."
 fi
 
@@ -71,5 +72,5 @@ BRANCH=$(get_current_branch)
 UNCOMMITTED=$(count_uncommitted_files)
 post_sentinel_event "INFO" "session-hook" "Session started on branch $BRANCH ($UNCOMMITTED uncommitted files)" "low" &
 
-log_success "Pre-task checks complete"
+[ "${FORGE_HOOK_VERBOSE:-0}" = "1" ] && log_success "Pre-task checks complete"
 exit 0

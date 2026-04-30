@@ -110,10 +110,12 @@ prevent_force_push_main() {
 # ===================================================================
 
 log_info() {
+    [ "${FORGE_QUIET_HOOKS:-0}" = "1" ] && return 0
     echo -e "${BLUE}[Info]${NC} $*"
 }
 
 log_success() {
+    [ "${FORGE_QUIET_HOOKS:-0}" = "1" ] && return 0
     echo -e "${GREEN}[Success]${NC} $*"
 }
 
@@ -453,6 +455,40 @@ count_uncommitted_files() {
     fi
 }
 
+# Returns 0 (true) only when uncommitted changes are meaningfully stale:
+# >10 dirty files OR any modified tracked file is >30 min old.
+# Below both thresholds the working tree is transient ASIF-sync noise.
+has_meaningful_uncommitted_changes() {
+    if ! is_git_repo; then
+        return 1
+    fi
+
+    local dirty_files
+    dirty_files=$(git status --porcelain 2>/dev/null)
+    [ -z "$dirty_files" ] && return 1
+
+    # Threshold 1: more than 10 dirty entries
+    local count
+    count=$(echo "$dirty_files" | grep -c . 2>/dev/null || echo 0)
+    if [ "$count" -gt 10 ]; then
+        return 0
+    fi
+
+    # Threshold 2: any tracked-modified file has mtime >30 min ago
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        local status="${line:0:2}"
+        local file="${line:3}"
+        # Skip untracked entries — they may never be committed
+        [[ "$status" == "??"* ]] && continue
+        if [ -f "$file" ] && find "$file" -mmin +30 2>/dev/null | grep -q .; then
+            return 0
+        fi
+    done <<< "$dirty_files"
+
+    return 1
+}
+
 # ===================================================================
 # Testing Functions
 # ===================================================================
@@ -626,6 +662,7 @@ export -f require_git
 export -f get_current_branch
 export -f has_uncommitted_changes
 export -f count_uncommitted_files
+export -f has_meaningful_uncommitted_changes
 export -f run_quick_tests
 export -f check_coverage
 export -f format_python_file
