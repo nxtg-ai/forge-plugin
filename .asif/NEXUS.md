@@ -76,6 +76,43 @@
 
 ## CoS Directives
 
+### DIRECTIVE-NXTG-20260429-06 — P2: Pre-Task Hook Noise Reduction (token diet)
+**From**: NXTG-AI CoS (Wolf), routed from Emma HANDOFF Note 147 | **Priority**: P2
+**Injected**: 2026-04-29 18:40 PDT | **Estimate**: S | **Status**: PENDING
+
+**Context**: The forge-plugin UserPromptSubmit hook (`hooks/scripts/pre-task.sh`) currently emits three brackets on every prompt — `[Info] Pre-task hook triggered`, `[Info] You have uncommitted changes. Consider committing before major tasks.` (when working tree is dirty), and `[Success] Pre-task checks complete`. ASIF auto-syncs every 5 min so working trees are briefly dirty constantly across ALL portfolio sessions, meaning the "uncommitted changes" advisory fires hundreds of times/day across every Forge-enabled CoS session (Wolf, Emma, Kestrel, all Forge sub-team panes). Eats ~80-100 input tokens per prompt × every Forge-enabled session × every prompt all day. Material token burn that compounds with the runtime-diet effort already in flight.
+
+**The pain**: noise-to-signal ratio is upside-down. Most prompts the hook does no meaningful work. The advisory becomes wallpaper and gets ignored, defeating the purpose of having it.
+
+**Direction (COMPASS — your team's call on implementation)**:
+
+1. **"Consider committing" advisory** — fire only on *meaningful* staleness. A reasonable definition: uncommitted changes older than 30 minutes OR more than 10 dirty files. Below those thresholds, working trees are noise. Your call on the exact thresholds and how to compute them; the goal is the advisory fires when it would actually help a developer, not on every keystroke.
+
+2. **`[Info] Pre-task hook triggered` + `[Success] Pre-task checks complete` brackets** — these are diagnostic / no-op text most prompts. Either gate behind a verbosity flag (`FORGE_HOOK_VERBOSE=1`?) so they only show in debug mode, or remove them entirely if they're not load-bearing. Your call.
+
+3. **`FORGE_QUIET_HOOKS=1` opt-out** — provide an env var that ORBIT loops (Wolf/Emma cycles, autonomous agents, long-running governance sessions) can set to suppress all non-actionable hook output. The CoS lanes don't need every prompt narrated.
+
+**What's intact (do not remove)**:
+- Stale-uncommitted-work detection itself is a real safety net — keep the capability, just make it fire on real signal.
+- Any actually-actionable warnings (e.g., disk full, broken governance state) stay on by default.
+- Test suite parity — whatever change ships, existing 70+ plugin tests stay green.
+
+**Why your lane**: forge-plugin is P-03c, your sovereign track. ASIF is consumer-only here.
+
+**Acceptance criteria**:
+- [ ] "Consider committing" fires < 5% of prompts on a typical CoS session (measure with a 30-min sample if useful)
+- [ ] `[Info]/[Success]` brackets either gone or behind a verbosity flag
+- [ ] `FORGE_QUIET_HOOKS=1` suppresses all non-actionable hook output (verified by setting it and running 10 prompts)
+- [ ] Plugin test count does not decrease
+- [ ] Document the new env vars and thresholds in CLAUDE.md or a hooks README
+
+**Coordination**: Emma is the originator of this ask (Note 147, CLX9 lane self-diet). Voice / HANDOFF her when shipped — she'll want to verify the token diet on her own session.
+
+**Response** (filled by forge-plugin team):
+> _(awaiting team execution)_
+
+---
+
 ### DIRECTIVE-NXTG-20260418-03 — P2: Voice Identity Adoption
 **From**: NXTG-AI CoS (Wolf) — Asif-initiated | **Priority**: P2
 **Injected**: 2026-04-18 13:48 PDT | **Estimate**: S (under 30 min) | **Status**: DONE
