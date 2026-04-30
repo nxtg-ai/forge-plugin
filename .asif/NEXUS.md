@@ -766,6 +766,50 @@ Test counts: **44/44 vitest pass** (unchanged — no regressions). No tests dele
 - **Marketplace submission URL**: Still awaiting Asif-confirmed submission path. Without it we can't verify the listing is live or close out DIRECTIVE-NXTG-20260326-01.
 - **Prompt injection resilience**: Should the OWASP security skill be updated with a dedicated section on "portfolio-topology-aware injections"? The attack this session knew ASIF vocabulary. Our current OWASP skill covers ASI-03 generically — it doesn't address the specific pattern of injections that mimic CoS voice/authority.
 
+### Check-in: 2026-04-28 (addendum — N-06 confirmed + installed cache synced)
+
+**1. What did we ship since last check-in (earlier today)?**
+
+No new source commits. One operational fix: manually synced the updated hook scripts to the installed plugin cache after discovering N-06 was causing our own session to run stale code.
+
+Files copied to `~/.claude/plugins/marketplaces/forge/plugins/nxtg-forge/hooks/scripts/`:
+- `pre-task.sh` — now has FORGE_HOOK_VERBOSE gating and smart staleness check
+- `lib.sh` — now has FORGE_QUIET_HOOKS guards and `has_meaningful_uncommitted_changes()`
+
+Hook output for the rest of this session is now correct (brackets suppressed by default).
+
+**2. What surprised us?**
+
+- **N-06 confirmed: it silently breaks our own dev workflow.** The hook brackets `[Info] Pre-task hook triggered` kept showing in the system reminder even after we committed and pushed the fix. Root cause: Claude Code runs hooks from the installed plugin cache at `~/.claude/plugins/marketplaces/forge/`, NOT from the source repo at `~/projects/NXTG-Forge/forge-plugin/`. Our source edits are invisible to the running session until the installed cache is updated. This is the exact N-06 bug — but until today it was a "user problem." Now it's our own development loop problem too: we cannot validate our own hook changes without a manual sync step.
+
+- **The installed cache path is `~/.claude/plugins/marketplaces/forge/`.** Not `~/.claude/plugins/` directly — it's nested under `marketplaces/forge/`. This is subtle and not documented anywhere we can find. The workaround is a manual `cp` from source to cache. This needs to be codified as a dev workflow step.
+
+- **The gap between commit and effect is invisible without an addendum reflection like this one.** Without noticing the system reminder still showed old brackets, we would have closed DIRECTIVE-NXTG-20260429-06 believing the fix was live when it wasn't. The reflection prompt caught the bug that the commit didn't.
+
+**3. Cross-project signals**
+
+- **Any team developing a Claude Code plugin locally faces this exact problem.** The installed cache is the authoritative source for running hooks — not the git repo. This applies to any plugin developer, not just forge-plugin. If other ASIF projects ever build their own Claude Code plugins, they need to know the `~/.claude/plugins/marketplaces/<name>/` path and the manual sync pattern.
+
+- **N-06 severity just upgraded from "user UX problem" to "developer loop blocker."** Previously we described N-06 as "users can't update the plugin through the standard mechanism." Now it's also: "the plugin developer can't iterate on hooks without a manual sync step that isn't in any docs." This is a P0 for plugin development workflow, not just a P1 UX issue.
+
+- **A `sync-to-installed.sh` dev script would eliminate this class of error.** One script that `cp -r` the source `plugins/nxtg-forge/` to `~/.claude/plugins/marketplaces/forge/plugins/nxtg-forge/` would be the dev-loop equivalent of a hot reload. Should live in the repo root as a developer utility.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **`scripts/sync-to-installed.sh` dev utility (S, P1)**: One script, hot-reload equivalent for hook development. Eliminates the manual sync step. Include a version check that warns if the installed version is behind the source.
+2. **Dependabot triage (P1, 14 vulns — 3 high)**: CoS ruling still pending 9 days. Unblocking this is the highest-value action the CoS can take right now.
+3. **BUG B — tool rename (S, P2)**: `forge_get_health` → `forge_get_health_score`. 6 files. Prevents orchestrator MCP collision.
+4. **N-06 workaround documentation**: Document the manual sync path (`~/.claude/plugins/marketplaces/forge/`) in CLAUDE.md so any team member (or future plugin developer) knows where to look.
+5. **Cursor port (P1, S)**: Feasibility done. 1–2 days, doubles addressable market.
+
+**5. Blockers or questions for the CoS?**
+
+- **N-06 is now a dev loop blocker, not just a user UX issue.** Should we elevate to P0? The manual sync workaround is `cp` — fast but invisible and prone to being forgotten. Requesting priority re-evaluation.
+- **Dependabot ruling**: 14 vulns, 3 high, 9 days pending. Requesting unambiguous P1/P2 call before next session.
+- **FORGE_QUIET_HOOKS adoption**: Does Wolf/Emma/Kestrel export `FORGE_QUIET_HOOKS=1` at session start? If not, the token diet won't materialize even now that the installed cache is synced.
+
+---
+
 ### Check-in: 2026-04-28
 
 **1. What did we ship since last check-in (2026-04-19)?**
@@ -822,7 +866,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
-| 2026-04-28 | DIRECTIVE-NXTG-20260429-06 DONE. Team Feedback check-in. Pre-task hook noise reduction: FORGE_QUIET_HOOKS=1 (suppress all log_info/log_success), FORGE_HOOK_VERBOSE=1 (restore brackets), smart staleness check (>10 files OR >30 min). 44/44 tests unchanged. Commits f3444f0, a2d4ccc. |
+| 2026-04-28 | DIRECTIVE-NXTG-20260429-06 DONE. Hook noise reduction shipped + installed cache synced. N-06 confirmed as dev-loop blocker: installed cache at ~/.claude/plugins/marketplaces/forge/ does not auto-update from source repo. Manual sync required. Addendum check-in written. 44/44 tests unchanged. |
 | 2026-04-19 | Team Feedback check-in. Security scan CI v1→v5.1 (4 tools: Semgrep+Gitleaks+Bandit+Bearer). Marketplace false-positive retracted. Voice identity adopted (am_eric). 44/44 tests unchanged. Prompt injection attempt detected and flagged. |
 | 2026-03-31 | DIRECTIVE-CLX9-20260326-03 items 4+7 DONE. FORGE-DIFFERENTIATORS.md (9 unique capabilities). CROSS-IDE-FEASIBILITY.md (434 lines, 5 platforms analyzed). Root plugin.json fixed (name: forge→nxtg-forge, version synced to 3.5.1). README component counts updated. Item 5 blocked on Asif. |
 | 2026-03-30 | CRUCIBLE Security Mega-Agent shipped (c511fe9, 1602 lines). 4 PreToolUse blocking hooks, Semgrep PostToolUse hook, OWASP skill (822 lines), security agent enhanced, semgrep-mcp added as 3rd MCP server, Semgrep SAST added to CI. 44/44 tests pass, 0 security findings. |
