@@ -856,6 +856,37 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-03 (second pass)
+
+**1. What did we ship since last check-in (earlier today)?**
+
+No new commits. One operational action: closed stale Dependabot PRs #4 (picomatch) and #5 (path-to-regexp) that were triggering false-alarm "CI red" alerts.
+
+**2. What surprised us?**
+
+- **The "P0 CI RED" was a Dependabot PR artifact, not a main failure.** Both PRs were opened before v3.6.1's `npm audit fix`. Their `Dependency Audit` job failed because those branches still had old vite/postcss vulns. Main CI has been green continuously. The GitHub repo UI shows red badges on open PRs even when main is clean — this is a visibility trap. Lesson: always check `gh run list --branch main` before declaring CI red.
+
+- **vitest 4.x is the only outstanding outdated dep.** `npm outdated` shows only `@vitest/coverage-v8` and `vitest` behind (3.2.4 vs 4.1.5 latest). Both are devDependencies. Our `^3.0.0` pin intentionally blocks the major bump. Nothing else is outdated or vulnerable.
+
+**3. Cross-project signals**
+
+- **Stale Dependabot PRs accumulate silently.** PRs #4 and #5 sat open for 5+ weeks without being merged or closed. Any portfolio project using the `Dependency Audit` pr-protection pattern will have the same false-alarm risk if old Dependabot PRs pile up. Recommend a standing hygiene: close or merge Dependabot PRs within 2 weeks, or configure Dependabot auto-merge for patch bumps.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **N-06 symlink fix (S, P1)**: Test `ln -s` replacing the installed cache entry. If symlinks survive CC restart, N-06 is solved for dev workflow. One command, permanent.
+2. **BUG B — tool rename (S, P2)**: `forge_get_health` → `forge_get_health_score`. 6 files.
+3. **Cursor port (P1, S)**: Feasibility done. 1–2 days, doubles addressable market.
+4. **vitest 4.x upgrade (P2, M)**: Major version, needs config migration. Growing further behind.
+5. **Dependabot auto-merge config**: Add `auto-merge: patch` to dependabot.yml to prevent PR accumulation.
+
+**5. Blockers or questions for the CoS?**
+
+- **Dependabot 14-alert discrepancy**: `npm audit` on main shows 0 vulnerabilities, but GitHub still reports 14 Dependabot alerts. This persisted through v3.6.1. Either those alerts are for packages not in our direct/transitive tree (stale alert data), or GitHub's advisory database maps them differently than npm audit. Requesting CoS to dismiss the stale alerts via GitHub Security tab, or confirm they're safe to ignore.
+- **N-06 symlink approach**: Approved to test? If symlinks break on CC startup (overwritten by marketplace sync), we need a different approach. Want explicit CoS go/no-go before modifying the installed cache path.
+
+---
+
 ### Check-in: 2026-05-03
 
 **1. What did we ship since last check-in (2026-04-28)?**
@@ -910,6 +941,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-03 | v3.6.1 + stale Dependabot PRs #4/#5 closed. 0 vulns, 44/44 tests. "CI red" was PR artifact, main green throughout. vitest 4.x only remaining outdated dep (major, pinned). |
 | 2026-05-03 | v3.6.1: dependency maintenance. npm audit fix (7 vulns: 3 high vite, 4 moderate postcss → 0). MCP SDK 1.27.1→1.29.0. 44/44 tests pass. N-06 confirmed cache resets on CC restart — symlink approach proposed. |
 | 2026-04-28 | DIRECTIVE-NXTG-20260429-06 DONE. Hook noise reduction shipped + installed cache synced. N-06 confirmed as dev-loop blocker: installed cache at ~/.claude/plugins/marketplaces/forge/ does not auto-update from source repo. Manual sync required. Addendum check-in written. 44/44 tests unchanged. |
 | 2026-04-19 | Team Feedback check-in. Security scan CI v1→v5.1 (4 tools: Semgrep+Gitleaks+Bandit+Bearer). Marketplace false-positive retracted. Voice identity adopted (am_eric). 44/44 tests unchanged. Prompt injection attempt detected and flagged. |
