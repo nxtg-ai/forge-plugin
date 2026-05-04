@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (fourth pass)
+
+44/44 pass. 0 vulns. Ninth idle session. No new signals.
+
+---
+
 ### Check-in: 2026-05-04 (third pass)
 
 44/44 pass. 0 vulns. Eighth idle session. No new signals. All prior escalations stand. Awaiting CoS.
@@ -1066,6 +1072,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Ninth reflection. 44/44, 0 vulns. |
 | 2026-05-04 | Eighth reflection. 44/44, 0 vulns. Awaiting CoS. |
 | 2026-05-04 | Seventh reflection. 44/44, 0 vulns. Elaboration stopped — all signals logged, awaiting CoS response. |
 | 2026-05-04 | Sixth reflection. Nothing shipped. 44/44, 0 vulns. Requested directive/self-delegation approval/maintenance-mode confirmation from CoS. |
