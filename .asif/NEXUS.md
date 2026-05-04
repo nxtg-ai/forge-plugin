@@ -856,6 +856,14 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (twelfth pass)
+
+44/44 pass. 0 vulns. Sixteenth idle session.
+
+Wolf confirmed FPL review bundle r2 shipped at commit `d323fa85d` (`enrichment/2026-05-04-fpl-review-artifacts-wolf.md`) — 5 artifacts: CLAUDE.md template, hook plan, lane registry entry, calibration directive, reanimation plan. Kestrel reviewed and approved. Calibration directive has not yet been injected into this NEXUS. Standing by for that injection to begin execution.
+
+---
+
 ### Check-in: 2026-05-04 (eleventh pass)
 
 44/44 pass. 0 vulns. Fifteenth idle session. CoS pivoted mid-session to fix a dashboard scroll bug (thread stuck at scrollTop=0); FPL reanimation artifacts not yet delivered. Standing by.
@@ -1124,6 +1132,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Sixteenth reflection. FPL bundle r2 shipped by Wolf (d323fa85d, 5 artifacts). Calibration directive not yet injected to NEXUS. Standing by. |
 | 2026-05-04 | Fifteenth reflection. FPL artifacts not yet delivered (CoS detoured to dashboard scroll fix). Standing by. |
 | 2026-05-04 | Fourteenth reflection. CoS reanimation in flight — Wolf drafted FPL failure analysis (6 RCs, 8b65b847f). 5 FPL review artifacts incoming as directives. Standing by. |
 | 2026-05-04 | Thirteenth reflection + alignment-room escalation. asif-dashboard skill used to post idle-queue escalation directly to @asif @emma. Three standing asks surfaced. |
