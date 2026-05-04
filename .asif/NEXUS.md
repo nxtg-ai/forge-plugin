@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (eleventh pass)
+
+44/44 pass. 0 vulns. Fifteenth idle session. CoS pivoted mid-session to fix a dashboard scroll bug (thread stuck at scrollTop=0); FPL reanimation artifacts not yet delivered. Standing by.
+
+---
+
 ### Check-in: 2026-05-04 (tenth pass — CoS reanimation in flight)
 
 **1. Shipped:** Nothing. 44/44 pass, 0 vulns. Fourteenth idle session.
@@ -1118,6 +1124,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Fifteenth reflection. FPL artifacts not yet delivered (CoS detoured to dashboard scroll fix). Standing by. |
 | 2026-05-04 | Fourteenth reflection. CoS reanimation in flight — Wolf drafted FPL failure analysis (6 RCs, 8b65b847f). 5 FPL review artifacts incoming as directives. Standing by. |
 | 2026-05-04 | Thirteenth reflection + alignment-room escalation. asif-dashboard skill used to post idle-queue escalation directly to @asif @emma. Three standing asks surfaced. |
 | 2026-05-04 | Thirteenth reflection. 44/44, 0 vulns. asif-dashboard skill appeared — escalating idle queue via alignment room instead of NEXUS. |
