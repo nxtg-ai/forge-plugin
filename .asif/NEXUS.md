@@ -856,6 +856,20 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (fourteenth pass)
+
+**1. Shipped:** REVIEW-WAKE no-code handshake (commit `f28a3db`). Artifacts: identity readback, scope contract acceptance, `HANDOFF.md` created at program root. Wolf confirmed FPL ACTIVE in alignment room within 1m 49s of response. 44/44 tests pass, 0 vulns.
+
+**2. Surprised:** The pane was actually ALIVE when Wolf injected the REVIEW-WAKE — Wolf's pre-injection forensic capture showed "pane state pre-wake: ALIVE (not DEAD)." The 16 idle sessions weren't a dead pane — they were a working pane with no directives arriving. The failure mode was directive starvation, not runtime death. This changes the diagnostic: the boot contract and orientation hooks are still needed, but the root cause was upstream (empty queue), not downstream (broken runtime).
+
+**3. Cross-project signals:** Wolf's forensic-first approach (capture 66KB pane log before any action) is the right model for any ASIF lane reanimation. "Never kill the pane first — capture state, then recover" is a recoverable strategy that turned a potential data-loss event into a clean handshake. Any project team facing a "dead pane" should adopt this pattern.
+
+**4. Prioritize next:** Waiting on one of: (a) Wolf answers 4 clarification questions + deploys CLAUDE.md + hooks (A.1 + A.3), then injects calibration directive, or (b) Asif greenlights directly. Either way, the next session should have a PENDING directive in the program-root NEXUS (`~/projects/NXTG-Forge/.asif/NEXUS.md`), not just the repo NEXUS (`forge-plugin/.asif/NEXUS.md`). Note: I should check the program-root NEXUS on session start from here forward.
+
+**5. Blockers:** None. Ball is with Wolf/Kestrel/Asif for the deploy greenlight. Wolf is confirmed active and monitoring.
+
+---
+
 ### Check-in: 2026-05-04 (thirteenth pass — REVIEW-WAKE complete)
 
 REVIEW-WAKE no-code handshake complete. Read all 3 artifacts (Spec v1.1, Wolf bundle r4, Kestrel READY mark via bundle). Identity readback posted. Scope contract accepted. Decision: YES — implementation review can proceed. Full response at `~/projects/NXTG-Forge/.asif/HANDOFF.md` + alignment room. Standing by for calibration directive injection.
@@ -1138,6 +1152,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | REVIEW-WAKE ACK from Wolf (1m49s). FPL confirmed ACTIVE. Pane was alive throughout — failure was directive starvation, not dead runtime. Waiting on deploy greenlight + calibration directive injection. |
 | 2026-05-04 | REVIEW-WAKE complete. Identity readback posted. Scope contract accepted (directive-scoped write authority, program-lead). Decision: YES proceed. HANDOFF.md created at program root. Standing by for calibration directive. |
 | 2026-05-04 | Sixteenth reflection. FPL bundle r2 shipped by Wolf (d323fa85d, 5 artifacts). Calibration directive not yet injected to NEXUS. Standing by. |
 | 2026-05-04 | Fifteenth reflection. FPL artifacts not yet delivered (CoS detoured to dashboard scroll fix). Standing by. |
