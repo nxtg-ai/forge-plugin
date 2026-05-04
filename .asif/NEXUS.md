@@ -856,6 +856,49 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (graduation)
+
+**1. What did we ship?**
+
+DIRECTIVE-NXTG-20260504-FPLCAL-01 — DONE/PASS in ~40 min vs 3h DoD timebox.
+- Phase 1: identity/scope readback posted to program-root NEXUS. Gate 1 ACCEPTED by Wolf (2026-05-04 18:22 PDT).
+- Phase 2: program-wide no-code diagnostic across all 3 repos + cross-repo contracts + synthesis. Gate 2 ACCEPTED (18:31 PDT).
+- Artifacts: program-root NEXUS response, `~/projects/NXTG-Forge/.asif/HANDOFF.md` (created + 3 entries).
+- **FPL graduated to Forge Program Lead.** Directive-scoped write authority active across all 3 Forge repos.
+
+Test counts: 44/44 forge-plugin vitest pass (unchanged — no code written). Zero writes outside program-root NEXUS + HANDOFF confirmed.
+
+**2. What surprised us?**
+
+- **Calibration ran in 13% of the timebox.** 40 min vs 3h DoD. The diagnostic work was mostly parallel git log + file reads — no synthesis bottleneck. The 3h estimate is deliberately conservative for a pane resuming from DEAD state. This pane was ALIVE and oriented, so Phase 2 ran fast. Good signal: the recovery sequence is well-designed for the hard case; this was the easy case.
+
+- **Forge:1.3 and Forge:1.4 are in the same idle state.** The Phase 2 diagnostic found: orchestrator has 4 open PRs (including RUSTSEC security fix) with Forge:1.3 inactive; UI has no open PRs but Forge:1.4 has no active directives and no recent product commits. Two of three sub-teams show the exact failure pattern Wolf diagnosed in forge-plugin (alive pane, no directive). The FPL failure was not unique to this lane.
+
+- **program-root NEXUS vs repo NEXUS distinction matters operationally.** Prior to calibration, all directive activity was in `forge-plugin/.asif/NEXUS.md`. The calibration directive lives in `~/projects/NXTG-Forge/.asif/NEXUS.md`. These are different files. Future sessions must check the program-root NEXUS first, then repo NEXUS. This split was correct per the Spec but easy to miss without the boot contract in place.
+
+**3. Cross-project signals**
+
+- **The directive-starvation failure mode is systematic across Forge sub-teams.** Not a forge-plugin-specific problem. Forge:1.3 and Forge:1.4 need the same FPL reanimation treatment Wolf just applied here — or at minimum, a fresh directive injection. The CoS control loop (DROWSY/ASLEEP/DEAD detection) should be running on all 3 Forge lanes, not just the one that visibly failed.
+
+- **The HANDOFF.md at program root is the cross-session durable signal path.** All liveness signals, phase completions, and standing-by states now write to `~/projects/NXTG-Forge/.asif/HANDOFF.md`. Any supervisor or cross-machine check should read this file for FPL state. It is always-writable regardless of active directive scope.
+
+- **A.4 write-guard is the gating dependency for ALL Forge code-changing work.** Until write-guard is installed + synthetic blocked-path test passes, no code-changing directive can be issued to FPL. This is the single critical path item before program momentum resumes.
+
+**4. What to prioritize next?**
+
+1. **A.4 write-guard install** (Wolf/product-lane action): hook in `forge-plugin/.claude/hooks/` or program-root hook location. Synthetic test: attempt write to `~/ASIF/` → confirmed blocked → Wolf marks clean. Gates all subsequent code work.
+2. **Forge:1.3 directive** (QUEUED per Wolf): merge orchestrator PRs #19/#20/#21 → v1.5.1 patch (RUSTSEC fix). Can be issued immediately after A.4 gate passes.
+3. **Gate 3 B read-only** (Wolf's call): orchestrator signal verification — in-lane for FPL as program lead, read-only during recovery graduation window.
+4. **Forge:1.4 wake-up**: UI sub-team needs same diagnostic treatment. No active product work since before the FPL failure.
+5. **Show HN Item 3** (FPL post-Gate-4): fix stale `claude plugin install forge` on landing page once nxtg.ai is in active directive scope.
+
+**5. Blockers?**
+
+- **A.4 write-guard**: gates all code-changing directives. Not blocking calibration or read-only B handoff, but blocks everything with a code DoD. Wolf owns install; product lane (FPL) owns review.
+- **Forge:1.3 and Forge:1.4 idle**: not FPL's to fix unilaterally. Needs CoS directive injection to those lanes. Flagging as program-level finding.
+
+---
+
 ### Check-in: 2026-05-04 (fourteenth pass)
 
 **1. Shipped:** REVIEW-WAKE no-code handshake (commit `f28a3db`). Artifacts: identity readback, scope contract acceptance, `HANDOFF.md` created at program root. Wolf confirmed FPL ACTIVE in alignment room within 1m 49s of response. 44/44 tests pass, 0 vulns.
@@ -1152,6 +1195,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | FPLCAL-01 DONE/PASS (~40 min). FPL graduated to Forge Program Lead, directive-scoped write authority. HANDOFF.md created at program root. Next gate: A.4 write-guard. Forge:1.3/1.4 idle flagged as program finding. |
 | 2026-05-04 | REVIEW-WAKE ACK from Wolf (1m49s). FPL confirmed ACTIVE. Pane was alive throughout — failure was directive starvation, not dead runtime. Waiting on deploy greenlight + calibration directive injection. |
 | 2026-05-04 | REVIEW-WAKE complete. Identity readback posted. Scope contract accepted (directive-scoped write authority, program-lead). Decision: YES proceed. HANDOFF.md created at program root. Standing by for calibration directive. |
 | 2026-05-04 | Sixteenth reflection. FPL bundle r2 shipped by Wolf (d323fa85d, 5 artifacts). Calibration directive not yet injected to NEXUS. Standing by. |
