@@ -1,6 +1,6 @@
 {
   "name": "@nxtg-forge/governance-mcp",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "MCP server for NXTG-Forge governance dashboard",
   "type": "module",
   "main": "index.mjs",
@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "open": "^11.0.0"
   },
   "devDependencies": {

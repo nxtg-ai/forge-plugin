@@ -1,6 +1,6 @@
 {
   "name": "nxtg-forge",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "Governance-native AI development \u2014 33 agents, 23 commands, 33 skills, 13 security hooks, drift detection, CRUCIBLE test auditing, and shared memory for Claude Code",
   "author": {
     "name": "NXTG AI",

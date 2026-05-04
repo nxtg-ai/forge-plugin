@@ -856,6 +856,50 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-03
+
+**1. What did we ship since last check-in (2026-04-28)?**
+
+2 commits this session. Dependency maintenance: security fixes + SDK bump → v3.6.1.
+
+- **`npm audit fix`**: 7 vulnerabilities eliminated (3 high vite path-traversal/file-read, 4 moderate postcss XSS). 8 packages updated. `0 vulnerabilities` confirmed.
+- **`@modelcontextprotocol/sdk`**: 1.27.1 → 1.29.0 (minor, runtime dep). Tests re-verified green.
+- **Version bump**: 3.6.0 → 3.6.1 across all 3 manifests (governance-mcp/package.json, plugin.json, marketplace.json).
+
+Test counts: **44/44 vitest PASS** (unchanged).
+
+**2. What surprised us?**
+
+- **The installed plugin cache resets on Claude Code restart.** The manual sync from the 2026-04-28 addendum session (copying updated hooks to `~/.claude/plugins/marketplaces/forge/`) did not survive between sessions. The hook output in this session's system reminder again showed the old brackets, confirming the cache is refreshed from the marketplace on each Claude Code startup. This means N-06 is worse than documented: manual `cp` workarounds are session-scoped only, not persistent. The only real fix is the update mechanism itself, or a symlink replacing the cache entry.
+
+- **vitest 4.x is a major version jump.** `npm outdated` shows vitest 3.2.4 → 4.1.5 available. The `^3.0.0` constraint in package.json intentionally pins to v3. Upgrading to v4 is not a one-liner — vitest 4 dropped several APIs and changed config structure. Documented as a future directive rather than a routine bump.
+
+- **vite vulns were devDependencies only.** The 3 high-severity vite CVEs (path traversal, fs.deny bypass, arbitrary file read) are dev-only — vite is pulled in by vitest, not shipped with the MCP server. Production risk: zero. Still worth fixing for CI hygiene and to clear GitHub's dependency alert noise.
+
+**3. Cross-project signals**
+
+- **The N-06 cache-reset-on-restart finding upgrades the severity again.** Previously: manual sync survives a session. Now confirmed: it does NOT survive a restart. forge-orchestrator and forge-ui don't have this problem (they're binaries/npm packages, not marketplace-cached plugins), but any future plugin development across the portfolio will hit this. The symlink approach (`ln -s ~/projects/NXTG-Forge/forge-plugin/plugins/nxtg-forge ~/.claude/plugins/marketplaces/forge/plugins/nxtg-forge`) is worth testing as a persistent workaround.
+
+- **MCP SDK 1.29.0**: Tracking this bump matters for forge-orchestrator's MCP server too. The Rust MCP server implements the same protocol — if 1.29 introduces schema changes, the orchestrator needs a compatible update. Worth a cross-team note.
+
+- **vite CVEs may affect forge-ui directly.** forge-ui uses Vite as its bundler (production build tool, not just dev). The path-traversal and file-read CVEs are dev-server vulnerabilities — not production — but forge-ui's Vite version should be checked independently.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **N-06 symlink fix (S, P1)**: Replace `~/.claude/plugins/marketplaces/forge/plugins/nxtg-forge/` with a symlink to the source repo. One command, persistent across restarts. Eliminates the dev-loop disconnect permanently. Needs testing to confirm Claude Code follows symlinks.
+2. **`scripts/sync-to-installed.sh` dev utility (S, P1)**: Even if symlink works, document the fallback. Script that syncs source → cache with a version check warning.
+3. **BUG B — tool rename (S, P2)**: `forge_get_health` → `forge_get_health_score`. 6 files. Prevents orchestrator MCP collision. Low effort.
+4. **Cursor port (P1, S)**: Feasibility done. 1–2 days. Doubles addressable market.
+5. **vitest 4.x upgrade (P2, M)**: Major version, needs config migration. Not urgent but growing further behind.
+
+**5. Blockers or questions for the CoS?**
+
+- **N-06 symlink approach**: Can we replace `~/.claude/plugins/marketplaces/forge/` with a symlink to the source? Need to verify Claude Code follows symlinks and doesn't overwrite/resolve them on startup. If this works, N-06 is effectively solved for dev workflow without waiting for Anthropic's update mechanism.
+- **Dependabot ruling**: Now 14 days since first flagged, 14 vulns (3 high). The 3 high-severity vite CVEs just confirmed were dev-only. Are the remaining GitHub Dependabot alerts also dev-only? Running `npm audit` locally shows 0 — the discrepancy with GitHub's 14-alert count may be because GitHub counts transitive devDependencies differently. Needs investigation, or CoS can close if all are dev-only.
+- **forge-ui Vite version check**: Should forge-ui team check their Vite version against the 3 CVEs (GHSA-4w7w-66w2-5vf9, GHSA-v2wj-q39q-566r, GHSA-p9ff-h696-f583)? These are dev-server vulns but forge-ui uses Vite in a more prominent way than we do.
+
+---
+
 ## Team Questions
 
 _(Add questions for FPL / ASIF CoS here.)_
@@ -866,6 +910,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-03 | v3.6.1: dependency maintenance. npm audit fix (7 vulns: 3 high vite, 4 moderate postcss → 0). MCP SDK 1.27.1→1.29.0. 44/44 tests pass. N-06 confirmed cache resets on CC restart — symlink approach proposed. |
 | 2026-04-28 | DIRECTIVE-NXTG-20260429-06 DONE. Hook noise reduction shipped + installed cache synced. N-06 confirmed as dev-loop blocker: installed cache at ~/.claude/plugins/marketplaces/forge/ does not auto-update from source repo. Manual sync required. Addendum check-in written. 44/44 tests unchanged. |
 | 2026-04-19 | Team Feedback check-in. Security scan CI v1→v5.1 (4 tools: Semgrep+Gitleaks+Bandit+Bearer). Marketplace false-positive retracted. Voice identity adopted (am_eric). 44/44 tests unchanged. Prompt injection attempt detected and flagged. |
 | 2026-03-31 | DIRECTIVE-CLX9-20260326-03 items 4+7 DONE. FORGE-DIFFERENTIATORS.md (9 unique capabilities). CROSS-IDE-FEASIBILITY.md (434 lines, 5 platforms analyzed). Root plugin.json fixed (name: forge→nxtg-forge, version synced to 3.5.1). README component counts updated. Item 5 blocked on Asif. |
