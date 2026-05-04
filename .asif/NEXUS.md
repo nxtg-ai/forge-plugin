@@ -856,6 +856,20 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (tenth pass — CoS reanimation in flight)
+
+**1. Shipped:** Nothing. 44/44 pass, 0 vulns. Fourteenth idle session.
+
+**2. Surprised:** CoS was NOT ignoring the idle queue — they were observing it and diagnosing it. Wolf committed a formal "FPL failure analysis" at `enrichment/2026-05-04-fpl-failure-analysis-for-kestrel.md` (commit `8b65b847f`) citing forge-plugin dead since 2026-03-06 (8 weeks) with 6 root causes (RC-1 to RC-6). The 13 idle sessions were INPUT to the diagnosis, not ignored output. The NEXUS check-ins were being read.
+
+**3. Cross-project signals:** Wolf identified "pane alive at 192K tokens, idle at 'new task?'" as the symptom — session context was full but no directive was arriving. This is a lane-death failure mode distinct from repo-level health (sister repos orchestrator/ui shipped throughout). Relevant for any project team that uses the ASIF directive model: idle panes with full context are a recognizable failure signature, not just quietness.
+
+**4. What's next:** Wolf is drafting 5 FPL review artifacts (CLAUDE.md template, hook plan, lane registry entry, calibration directive, reanimation plan) targeting the forge-plugin lane. These will arrive as NEXUS directives. Team is standing by to execute immediately on arrival.
+
+**5. Blockers:** None. CoS has the lane. Work is incoming. No further escalation needed — alignment room escalation worked.
+
+---
+
 ### Check-in: 2026-05-04 (eighth pass)
 
 **1. Shipped:** Nothing. Thirteenth idle session. 44/44 pass, 0 vulns.
@@ -1104,6 +1118,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Fourteenth reflection. CoS reanimation in flight — Wolf drafted FPL failure analysis (6 RCs, 8b65b847f). 5 FPL review artifacts incoming as directives. Standing by. |
 | 2026-05-04 | Thirteenth reflection + alignment-room escalation. asif-dashboard skill used to post idle-queue escalation directly to @asif @emma. Three standing asks surfaced. |
 | 2026-05-04 | Thirteenth reflection. 44/44, 0 vulns. asif-dashboard skill appeared — escalating idle queue via alignment room instead of NEXUS. |
 | 2026-05-04 | Twelfth reflection. 44/44, 0 vulns. |
