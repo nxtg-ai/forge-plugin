@@ -856,6 +856,40 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-03 (third pass — reflection only)
+
+**1. What did we ship since last check-in?**
+
+Nothing. No new commits this session beyond the two check-ins written earlier today. This is a clean reflection with no deliverables to report.
+
+**2. What surprised us?**
+
+- **The hook output keeps showing old brackets despite the fix being on main.** Every session start shows `[Info] Pre-task hook triggered` and `[Success] Pre-task checks complete` — the N-06 problem. Three sessions running now with this confirmed. The installed cache at `~/.claude/plugins/marketplaces/forge/` is refreshed from the marketplace on every Claude Code startup, overwriting any manual sync. This is not a fixable workaround problem — it requires either (a) symlink replacing the cache directory, or (b) Anthropic's update mechanism. Until one of those exists, every session will run stale hooks.
+
+- **Three reflection prompts in one day with nothing to ship is a signal.** The cadence of "no pending directives → reflection" repeated 3× suggests the directive queue has run dry. The team is idle between directive injections. This is healthy from a quality standpoint (no runaway work) but the next session should bring new directives or Asif-initiated work.
+
+**3. Cross-project signals**
+
+- **Idle time between directives is portfolio-wide.** If forge-plugin is in a reflection-only state, it's likely other sub-teams are too. The CoS should check if forge-orchestrator and forge-ui sub-teams have pending work or are also waiting. An empty directive queue across all three repos = launch readiness check opportunity.
+
+- **The pre-task hook noise issue (FORGE_QUIET_HOOKS) is unverified in production.** Three sessions have passed since the fix shipped. The hook still outputs old brackets in every session. The fix exists in the source repo and in git, but the running environment hasn't received it once. Any portfolio project measuring "hook token savings" should verify their cache state before claiming savings.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **N-06 symlink fix (S, P1)**: Test replacing `~/.claude/plugins/marketplaces/forge/plugins/nxtg-forge` with a symlink. One command. If it survives startup, N-06 is solved. This is the highest-leverage S-effort item on the board.
+2. **Dependabot alert dismissal (S, P2)**: 14 GitHub alerts persist despite 0 `npm audit` findings. CoS should dismiss stale alerts via GitHub Security tab so the repo shows a clean security posture for marketplace credibility.
+3. **BUG B — tool rename (S, P2)**: `forge_get_health` → `forge_get_health_score`. 6 files. Prevents orchestrator MCP collision.
+4. **Cursor port (P1, S)**: Feasibility done. 1–2 days. Doubles addressable market. No blockers.
+5. **vitest 4.x upgrade (P2, M)**: Growing behind. Config migration needed.
+
+**5. Blockers or questions for the CoS?**
+
+- **Directive queue is empty.** Forge-plugin has no PENDING directives. Either inject new directives or confirm the team is intentionally in maintenance mode.
+- **N-06 symlink go/no-go still pending.** Asked in two prior check-ins. No response. Unblocking this is a one-sentence answer. If approved, can ship next session.
+- **GitHub Dependabot 14 alerts vs npm audit 0** — discrepancy unresolved for 2 sessions. Stale alerts undermine marketplace credibility.
+
+---
+
 ### Check-in: 2026-05-03 (second pass)
 
 **1. What did we ship since last check-in (earlier today)?**
@@ -941,6 +975,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-03 | Third reflection. No new commits. N-06 persists every session (cache overwritten on CC startup). Directive queue empty — awaiting CoS injection. |
 | 2026-05-03 | v3.6.1 + stale Dependabot PRs #4/#5 closed. 0 vulns, 44/44 tests. "CI red" was PR artifact, main green throughout. vitest 4.x only remaining outdated dep (major, pinned). |
 | 2026-05-03 | v3.6.1: dependency maintenance. npm audit fix (7 vulns: 3 high vite, 4 moderate postcss → 0). MCP SDK 1.27.1→1.29.0. 44/44 tests pass. N-06 confirmed cache resets on CC restart — symlink approach proposed. |
 | 2026-04-28 | DIRECTIVE-NXTG-20260429-06 DONE. Hook noise reduction shipped + installed cache synced. N-06 confirmed as dev-loop blocker: installed cache at ~/.claude/plugins/marketplaces/forge/ does not auto-update from source repo. Manual sync required. Addendum check-in written. 44/44 tests unchanged. |
