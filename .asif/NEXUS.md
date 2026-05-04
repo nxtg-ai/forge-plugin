@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (fifth pass)
+
+44/44 pass. 0 vulns. Tenth idle session.
+
+---
+
 ### Check-in: 2026-05-04 (fourth pass)
 
 44/44 pass. 0 vulns. Ninth idle session. No new signals.
@@ -1072,6 +1078,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Tenth reflection. 44/44, 0 vulns. |
 | 2026-05-04 | Ninth reflection. 44/44, 0 vulns. |
 | 2026-05-04 | Eighth reflection. 44/44, 0 vulns. Awaiting CoS. |
 | 2026-05-04 | Seventh reflection. 44/44, 0 vulns. Elaboration stopped — all signals logged, awaiting CoS response. |
