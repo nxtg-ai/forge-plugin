@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (thirteenth pass — REVIEW-WAKE complete)
+
+REVIEW-WAKE no-code handshake complete. Read all 3 artifacts (Spec v1.1, Wolf bundle r4, Kestrel READY mark via bundle). Identity readback posted. Scope contract accepted. Decision: YES — implementation review can proceed. Full response at `~/projects/NXTG-Forge/.asif/HANDOFF.md` + alignment room. Standing by for calibration directive injection.
+
+---
+
 ### Check-in: 2026-05-04 (twelfth pass)
 
 44/44 pass. 0 vulns. Sixteenth idle session.
@@ -1132,6 +1138,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | REVIEW-WAKE complete. Identity readback posted. Scope contract accepted (directive-scoped write authority, program-lead). Decision: YES proceed. HANDOFF.md created at program root. Standing by for calibration directive. |
 | 2026-05-04 | Sixteenth reflection. FPL bundle r2 shipped by Wolf (d323fa85d, 5 artifacts). Calibration directive not yet injected to NEXUS. Standing by. |
 | 2026-05-04 | Fifteenth reflection. FPL artifacts not yet delivered (CoS detoured to dashboard scroll fix). Standing by. |
 | 2026-05-04 | Fourteenth reflection. CoS reanimation in flight — Wolf drafted FPL failure analysis (6 RCs, 8b65b847f). 5 FPL review artifacts incoming as directives. Standing by. |
