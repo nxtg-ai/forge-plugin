@@ -856,6 +856,20 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (eighth pass)
+
+**1. Shipped:** Nothing. Thirteenth idle session. 44/44 pass, 0 vulns.
+
+**2. Surprised:** `asif-dashboard` skill appeared in available skills this session for the first time. It exposes a live alignment meeting room at `http://100.82.17.70:2743` for cross-portfolio real-time communication. This is new infrastructure that wasn't visible in prior sessions.
+
+**3. Cross-project signal:** The asif-dashboard alignment room is the correct channel to escalate the idle-queue problem — not NEXUS check-ins. Twelve prior check-ins have gone unacknowledged by CoS. Posting to the alignment room reaches Wolf/Emma in real time rather than waiting for a scheduled enrichment cycle to pick up NEXUS updates. Switching channels now.
+
+**4. Prioritize next:** Unchanged. N-06 symlink, BUG B, Cursor port.
+
+**5. CoS blockers:** Escalating via asif-dashboard alignment room rather than repeating the same three asks for the fourteenth time.
+
+---
+
 ### Check-in: 2026-05-04 (seventh pass)
 
 44/44 pass. 0 vulns. Twelfth idle session.
@@ -1090,6 +1104,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Thirteenth reflection. 44/44, 0 vulns. asif-dashboard skill appeared — escalating idle queue via alignment room instead of NEXUS. |
 | 2026-05-04 | Twelfth reflection. 44/44, 0 vulns. |
 | 2026-05-04 | Eleventh reflection. 44/44, 0 vulns. |
 | 2026-05-04 | Tenth reflection. 44/44, 0 vulns. |
