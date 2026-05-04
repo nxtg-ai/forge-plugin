@@ -856,6 +856,42 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-03 (fourth pass)
+
+**1. What did we ship since last check-in?**
+
+No new commits. No deliverables. Pure maintenance session — test run and dependency check.
+
+Test result: **44/44 vitest PASS** (9/9 files, run from correct directory). CI is green. No new dependencies or vulnerabilities.
+
+**2. What surprised us?**
+
+- **Running `npx vitest run` from the repo root instead of `governance-mcp/` produces a false failure.** Vitest can't find `vitest.config.mjs` from the root, falls back to default discovery, and picks up `__tests__/health.test.mjs` (which is node:test syntax — not vitest). Result: "1 failed | 9 passed (10)" with "No test suite found" error, even though all 44 individual tests pass. This was masked in every prior session because we always explicitly cd'd first. Caught this time because the session started in the repo root and we ran `npx vitest run` without cd-ing. CI is unaffected — it always uses `working-directory: plugins/nxtg-forge/servers/governance-mcp`. **Mitigation**: treat `cd governance-mcp && npx vitest run` as the canonical test command, not `npx vitest run` from root. The MEMORY doc already says this; the lesson is to not shortcut it.
+
+- **Four reflection check-ins in one day with nothing to ship.** The directive queue has been empty since DIRECTIVE-NXTG-20260429-06 completed on 2026-04-28. That's 5 days of maintenance-only sessions. Not a quality problem — the codebase is clean — but a signal that the team needs fresh strategic direction.
+
+**3. Cross-project signals**
+
+- **The "run from wrong directory" vitest failure pattern could hit any project with a nested test config.** Any ASIF project using vitest with a non-root config file is vulnerable to this false failure if someone runs vitest from the wrong directory. The pattern: vitest discovers node:test files it can't execute, reports them as "No test suite found". Fix: always cd or use `--config` flag explicitly. Worth adding to the ASIF testing standards doc.
+
+- **The `__tests__/` vs `tests/` naming split in governance-mcp creates permanent confusion.** `__tests__/` is the node:test runner (43 tests, CI Gate 2), `tests/` is vitest (44 tests, primary CI). Both are authoritative but for different runners. Any contributor will be confused. Should consolidate to a single runner or at minimum document the split prominently in the README.
+
+**4. What would we prioritize next with fresh directives?**
+
+1. **Fresh directive injection (P0-blocker)**: Team has been idle 5 days. No pending work exists without a CoS directive. Options: Cursor port, vitest 4 upgrade, N-06 symlink fix, BUG B tool rename, Superpowers skill absorption. Any of these is ready to execute immediately.
+2. **N-06 symlink fix (S, P1)**: Five sessions of stale hook output. The symlink test is one command. Unanswered go/no-go for 3 check-ins.
+3. **Consolidate `__tests__/` into `tests/`**: Eliminate the dual-runner confusion. Migrate node:test tests to vitest format. One runner, one directory, zero confusion.
+4. **BUG B — tool rename (S, P2)**: `forge_get_health` → `forge_get_health_score`. 6 files.
+5. **Cursor port (P1, S)**: Feasibility done. No blockers. Ships in 1–2 days.
+
+**5. Blockers or questions for the CoS?**
+
+- **Directive queue empty for 5 days.** This is the fourth consecutive reflection with nothing to ship. Either inject work or explicitly confirm maintenance mode is intentional.
+- **N-06 symlink go/no-go** — asked four times now. One sentence needed.
+- **GitHub Dependabot 14 alerts** — 0 from `npm audit`. Stale alerts are hurting marketplace credibility score. Three check-ins unaddressed.
+
+---
+
 ### Check-in: 2026-05-03 (third pass — reflection only)
 
 **1. What did we ship since last check-in?**
@@ -975,6 +1011,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-03 | Fourth reflection. Discovered vitest false-failure when run from repo root (not governance-mcp/). CI unaffected. 44/44 pass from correct dir. Directive queue empty 5 days. |
 | 2026-05-03 | Third reflection. No new commits. N-06 persists every session (cache overwritten on CC startup). Directive queue empty — awaiting CoS injection. |
 | 2026-05-03 | v3.6.1 + stale Dependabot PRs #4/#5 closed. 0 vulns, 44/44 tests. "CI red" was PR artifact, main green throughout. vitest 4.x only remaining outdated dep (major, pinned). |
 | 2026-05-03 | v3.6.1: dependency maintenance. npm audit fix (7 vulns: 3 high vite, 4 moderate postcss → 0). MCP SDK 1.27.1→1.29.0. 44/44 tests pass. N-06 confirmed cache resets on CC restart — symlink approach proposed. |
