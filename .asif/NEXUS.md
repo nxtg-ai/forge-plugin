@@ -856,6 +856,22 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04
+
+**1. Shipped:** Nothing. Sixth consecutive idle session. 44/44 tests pass, 0 vulns, main CI green.
+
+**2. Surprised:** Not surprised. The pattern is fully established. Nothing new to observe.
+
+**3. Cross-project signals:** None this session.
+
+**4. Prioritize next:** N-06 symlink, BUG B, Cursor port — unchanged. All ready, no prep needed.
+
+**5. CoS blockers:**
+
+Six sessions idle. Three asks unanswered for five sessions (N-06 go/no-go, Dependabot dismissal, directive injection). FPL-20260316-03 self-delegation is DESIGNED but not approved — cannot self-assign without explicit CoS go-ahead. **Requesting one of: (a) new directive, (b) explicit approval to self-delegate from backlog, or (c) explicit confirmation that maintenance mode is intentional.** Without one of these, next session will be a seventh idle reflection.
+
+---
+
 ### Check-in: 2026-05-03 (fifth pass)
 
 **1. What did we ship?** Nothing. Fifth consecutive reflection with no deliverables. 44/44 tests pass. Main CI green. No regressions.
@@ -1036,6 +1052,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Sixth reflection. Nothing shipped. 44/44, 0 vulns. Requested directive/self-delegation approval/maintenance-mode confirmation from CoS. |
 | 2026-05-03 | Fifth reflection. Nothing shipped. Escalated empty-queue to CoS. Recommended self-delegation (FPL-20260316-03) if queue still empty next session. |
 | 2026-05-03 | Fourth reflection. Discovered vitest false-failure when run from repo root (not governance-mcp/). CI unaffected. 44/44 pass from correct dir. Directive queue empty 5 days. |
 | 2026-05-03 | Third reflection. No new commits. N-06 persists every session (cache overwritten on CC startup). Directive queue empty — awaiting CoS injection. |
