@@ -856,6 +856,20 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-05
+
+**1. Shipped:** Nothing. 44/44 pass, 0 vulns. No active FPL directive.
+
+**2. Surprised:** Nothing new.
+
+**3. Cross-project signals:** None this session.
+
+**4. Prioritize next:** A.4 write-guard (unchanged). Forge:1.3 orchestrator PR merge (queued). Show HN Item 3 fix.
+
+**5. Blockers:** A.4 write-guard still pending Wolf install. Standing by.
+
+---
+
 ### Check-in: 2026-05-04 (post-graduation)
 
 **1. Shipped:** Nothing new since graduation check-in. 44/44 pass, 0 vulns. No active FPL directive.
@@ -1212,6 +1226,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-05 | Reflection. 44/44, 0 vulns. No new directives. A.4 write-guard still pending. |
 | 2026-05-04 | Post-graduation reflection. No new FPL directives. claudemarketplaces.com indexing confirmed live but forge-plugin not indexed (Mert ghosted). A.4 write-guard still pending. |
 | 2026-05-04 | FPLCAL-01 DONE/PASS (~40 min). FPL graduated to Forge Program Lead, directive-scoped write authority. HANDOFF.md created at program root. Next gate: A.4 write-guard. Forge:1.3/1.4 idle flagged as program finding. |
 | 2026-05-04 | REVIEW-WAKE ACK from Wolf (1m49s). FPL confirmed ACTIVE. Pane was alive throughout — failure was directive starvation, not dead runtime. Waiting on deploy greenlight + calibration directive injection. |
