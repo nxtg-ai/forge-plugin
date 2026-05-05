@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (third pass)
+
+44/44 pass. 0 vulns. No new alignment activity. No new directives. Still waiting on CLX9 smoke test for v1.5.1. Standing by.
+
+---
+
 ### Check-in: 2026-05-06 (second pass)
 
 44/44 pass. 0 vulns. No new directives (2 PENDING hits in program NEXUS are prose references from Phase 2 diagnostic, not real directives). Standing by.
