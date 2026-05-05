@@ -856,6 +856,37 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-05 (FORGE13 shipped)
+
+**1. Shipped:** DIRECTIVE-NXTG-20260504-FORGE13 — orchestrator v1.5.1 released.
+
+- PR #19 (ratatui 0.30): admin-merged → `02e73e3`
+- PR #21 (rand RUSTSEC-2026-0097): cherry-picked → `66b3fd9`
+- PR #20 (audit ignore number_prefix): cherry-picked (conflict resolved) → `5368035`
+- PR #16 (canonical positioning docs): cherry-picked → `2d2f2a8`
+- Cargo.toml: 1.5.0 → 1.5.1, CHANGELOG updated, tag pushed
+- musl binary: 4.8MB static-pie, SHA-256 `c274...3d9a8`, attached to GitHub release
+- Release: https://github.com/nxtg-ai/forge-orchestrator/releases/tag/v1.5.1
+- CLX9 smoke test requested via HANDOFF
+
+forge-plugin vitest: **44/44 pass** (unchanged — no plugin writes on this directive).
+
+**2. Surprised:** The CLA blocker pattern is now fully documented and repeatable. Dependabot PRs always fail CLA (bot can't sign). The fix is admin-merge for the first clean one, cherry-pick with conflict resolution for the rest. The `pr-protection.yml` conflict was caused by PR #19 having added temporary advisory ignores that were no longer needed after merging — resolving it required understanding what each advisory ignore was for, not just taking "ours" or "theirs". That judgment call was the hard part.
+
+The pre-push gate (ADR-036 Release Protocol) blocked the push until the GitHub release existed — correct behavior, but required creating the release before pushing main rather than after. Ordering matters: tag → release → push main.
+
+**3. Cross-project signals:** The cherry-pick-to-resolve-stacked-Dependabot-PRs pattern is reusable. When Dependabot stacks advisory ignores across multiple PRs with the same base branch, the cleanest resolution after merging the first PR is to cherry-pick individual commits from each branch rather than trying to rebase. Also: `cargo build --release --target x86_64-unknown-linux-musl` built cleanly in ~72s with no extra steps — the musl target was already installed. forge-ui should have similar musl-build readiness if it ever needs static binaries.
+
+**4. Prioritize next:**
+1. CLX9 smoke test on v1.5.1 (Wolf routing Emma)
+2. Show HN DIRECTIVE-NXTG-20260326-01 Item 3 — stale landing page ref in nxtg.ai
+3. Gate 3 B read-only orchestrator signal verification (Wolf's call on timing)
+4. Forge:1.4 (UI) wake-up — same idle pattern as FPL was in
+
+**5. Blockers:** CLX9 smoke test pending (Wolf/Emma action). No FPL blockers.
+
+---
+
 ### Check-in: 2026-05-05 (third pass)
 
 44/44 pass. 0 vulns. No new directives. Standing by for A.4 write-guard.
@@ -1238,6 +1269,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-05 | FORGE13 DONE. orchestrator v1.5.1 shipped — 4 PRs (ratatui+rand+audit+docs), musl binary, GitHub release. CLA cherry-pick pattern documented. CLX9 smoke test pending. |
 | 2026-05-05 | 44/44, 0 vulns. No new directives. |
 | 2026-05-05 | Reflection. 44/44, 0 vulns. No new directives. A.4 write-guard still pending. |
 | 2026-05-04 | Post-graduation reflection. No new FPL directives. claudemarketplaces.com indexing confirmed live but forge-plugin not indexed (Mert ghosted). A.4 write-guard still pending. |
