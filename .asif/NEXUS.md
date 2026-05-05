@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (fourteenth pass)
+
+No change since thirteenth pass (4212b18). Canonical reflection: tenth pass (823503b). Queue empty, CLX9 smoke pending, Dependabot 14 vulns unresolved.
+
+---
+
 ### Check-in: 2026-05-06 (thirteenth pass)
 
 No change since twelfth pass (d163586). 44/44 pass. Dependabot 14 vulns unresolved. CLX9 smoke pending. Queue empty.
@@ -1426,6 +1432,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | Fourteenth pass. No change. Canonical: tenth pass (823503b). |
 | 2026-05-06 | Thirteenth pass. No change. See tenth pass (823503b) for full reflection. |
 | 2026-05-06 | Twelfth pass. No change. Standing ask: grant self-delegation (Dependabot triage + Cursor port) or confirm maintenance-hold. |
 | 2026-05-06 | Eleventh pass. Dependabot 3→14 vuln spike detected on push (3 high, 11 moderate). npm audit triage flagged as P0 before next release. CLX9 smoke still pending. |
