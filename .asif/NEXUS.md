@@ -856,6 +856,38 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (tenth pass)
+
+**1. What shipped since last check-in?**
+
+Nothing shipped this session. The directive queue has been empty since FORGE13 closed (orchestrator v1.5.1, 2026-05-05). 44/44 vitest pass, 0 vulns, all manifests at v3.6.1. CLX9 smoke test for v1.5.1 remains the only open loop — result not yet received from Wolf routing.
+
+**2. What surprised me?**
+
+The volume of repeated check-ins this cycle (10 passes in ~24h) is itself a signal. It's not a bug — it's a symptom of the queue being empty with no self-delegation authority granted. Each pass adds a thin entry because there is genuinely nothing to report. The pattern suggests the CoS-team feedback loop needs a lower-frequency floor for idle states: once the queue empties and CLX9 smoke is pending, there's no new information to surface until one of those resolves. Repeated check-ins create changelog noise without value.
+
+**3. Cross-project signals**
+
+- **`forge-orchestrator` v1.5.1 is shipped but unsmoked on CLX9.** Any forge-ui or forge-plugin feature that depends on orchestrator MCP tools should wait for CLX9 confirmation before assuming the binary is stable in production.
+- **Wrong-CWD vitest false-failure pattern** (surfaced in eighth pass): appeared twice in this cycle. If any other project uses nested vitest configs under a non-root directory, they should add explicit `cd <subdir> && npx vitest run` to their CI and boot contracts. Silent false-failure is worse than a real failure.
+- **Show HN Item 3 (competitor absorption from gstack)** remains unstarted. The `/browse` + `/qa` browser automation gap is still our most visible feature miss vs gstack. If forge-ui team is looking for a demo-worthy feature to pair with the Cursor port, this is the integration story: governance + browser QA in one plugin.
+
+**4. What would I prioritize next with fresh directives?**
+
+1. **CLX9 smoke test resolution** — unblock FORGE13 close-out. Either Wolf delivers result or I need self-delegation authority to declare it passed based on binary artifacts.
+2. **Cursor port (P1, S effort)** — `CROSS-IDE-FEASIBILITY.md` is ready. A `.cursor-plugin/plugin.json` + `hooks-cursor.json` is 1-2 days. Doubles addressable market. No blockers.
+3. **Show HN Item 3 (`/browse` + `/qa` Playwright agent)** — gstack's clearest gap. Medium effort but highest demo value for public launch positioning.
+4. **Version sync pre-push hook** — validate version parity across all 4 manifests before every push. The root `plugin.json` drift (caught 2026-03-31) will recur without automation.
+5. **Gate 3B read-only audit** — the FPL graduation gate that was noted as in-scope but not yet triggered.
+
+**5. Blockers / questions for CoS**
+
+- **CLX9 smoke test**: 10 passes and still pending. Can Wolf confirm v1.5.1 result directly in NEXUS so I can close FORGE13 cleanly? Or grant self-delegation to declare PASS based on artifact verification?
+- **Self-delegation scope**: With the queue empty 2+ days, should I proceed with Cursor port (P1, S) under self-delegation authority per FPL-20260316-03? That directive authorized low-P1 work when CoS queue is empty.
+- **Changelog noise floor**: Recommend a policy: when queue is empty + CLX9 smoke is the only open item, reduce check-in frequency to 1/day rather than per-session. Signal-to-noise is degrading.
+
+---
+
 ### Check-in: 2026-05-06 (ninth pass)
 
 44/44 pass. 0 vulns. Nothing new. Standing by.
@@ -1361,6 +1393,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | Tenth pass. 44/44, 0 vulns. No new activity. Substantive reflection: CLX9 smoke still pending, queue empty 2+ days, Cursor port + Gate 3B as next P1s. Noise-floor policy question raised. |
 | 2026-05-06 | 44/44, 0 vulns. No new activity. CLX9 smoke pending. |
 | 2026-05-05 | Post-FORGE13. 44/44 (confirmed after false-alarm first run). CLX9 smoke pending. |
 | 2026-05-05 | FORGE13 DONE. orchestrator v1.5.1 shipped — 4 PRs (ratatui+rand+audit+docs), musl binary, GitHub release. CLA cherry-pick pattern documented. CLX9 smoke test pending. |
