@@ -856,6 +856,20 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (eighth pass)
+
+**1. Shipped:** Nothing. 44/44 pass (confirmed from correct directory — background run reported "2 failed" due to wrong CWD, not a real regression). 0 vulns.
+
+**2. Surprised:** Second false-alarm test failure from wrong working directory. The "background run in wrong CWD" pattern is recurring. Root cause: when Bash runs without an explicit `cd`, the shell resets to the session working directory, which is `/home/axw/projects/NXTG-Forge/forge-plugin` — not `governance-mcp/`. Vitest then uses default discovery and picks up `__tests__/health.test.mjs` (node:test format, not vitest), producing a misleading failure. The fix is always explicit `cd governance-mcp && npx vitest run`. Should be in the boot contract.
+
+**3. Cross-project signals:** The wrong-CWD vitest failure has now appeared twice. Any project with nested vitest configs should treat "unexpected test failures" with immediate suspicion — check working directory first before investigating test logic.
+
+**4. Prioritize next:** Unchanged: CLX9 smoke test result, Show HN Item 3, Gate 3 B read-only.
+
+**5. Blockers:** CLX9 smoke test for v1.5.1 pending. Still no response from Wolf routing.
+
+---
+
 ### Check-in: 2026-05-06 (seventh pass)
 
 44/44 pass. 0 vulns. Nothing new. Standing by.
