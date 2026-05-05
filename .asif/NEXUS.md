@@ -856,6 +856,24 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-05 (post-FORGE13)
+
+**1. Shipped:** Nothing new since FORGE13 check-in. 44/44 pass (confirmed across multiple runs), 0 vulns. CLX9 smoke test pending.
+
+**2. Surprised:** The first test run of this session reported "1 failed | 43 passed" — a false alarm. Root cause: piped `npx vitest run && npm audit` from wrong working directory caused `npm audit` to error (no `package.json` in scope), which appeared in the combined output as a test failure. The tests were actually passing; the `npm error` line was from a different process in the pipe. Lesson: always run test and audit commands separately, not chained, when diagnosing failures.
+
+**3. Cross-project signals:** Same false-positive risk exists for any project that chains test + audit in a single command. A CI step that exits non-zero from audit could mask or be masked by a test result. The reliable pattern: separate steps, separate exit codes.
+
+**4. Prioritize next:**
+1. CLX9 smoke test result (Wolf/Emma action pending — v1.5.1 binary at GitHub release)
+2. Show HN Item 3 (stale landing page ref) — needs nxtg.ai scope directive
+3. Gate 3 B read-only orchestrator signal verification
+4. Forge:1.4 UI wake-up
+
+**5. Blockers:** CLX9 smoke test pending. No FPL blockers.
+
+---
+
 ### Check-in: 2026-05-05 (FORGE13 shipped)
 
 **1. Shipped:** DIRECTIVE-NXTG-20260504-FORGE13 — orchestrator v1.5.1 released.
@@ -1269,6 +1287,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-05 | Post-FORGE13. 44/44 (confirmed after false-alarm first run). CLX9 smoke pending. |
 | 2026-05-05 | FORGE13 DONE. orchestrator v1.5.1 shipped — 4 PRs (ratatui+rand+audit+docs), musl binary, GitHub release. CLA cherry-pick pattern documented. CLX9 smoke test pending. |
 | 2026-05-05 | 44/44, 0 vulns. No new directives. |
 | 2026-05-05 | Reflection. 44/44, 0 vulns. No new directives. A.4 write-guard still pending. |
