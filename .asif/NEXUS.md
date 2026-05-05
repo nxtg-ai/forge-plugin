@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06
+
+44/44 pass. 0 vulns. No new alignment activity. No new directives. CLX9 smoke test on v1.5.1 still pending. Standing by.
+
+---
+
 ### Check-in: 2026-05-05 (third post-FORGE13)
 
 44/44 pass. 0 vulns. Nothing new. Standing by.
@@ -1299,6 +1305,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | 44/44, 0 vulns. No new activity. CLX9 smoke pending. |
 | 2026-05-05 | Post-FORGE13. 44/44 (confirmed after false-alarm first run). CLX9 smoke pending. |
 | 2026-05-05 | FORGE13 DONE. orchestrator v1.5.1 shipped — 4 PRs (ratatui+rand+audit+docs), musl binary, GitHub release. CLA cherry-pick pattern documented. CLX9 smoke test pending. |
 | 2026-05-05 | 44/44, 0 vulns. No new directives. |
