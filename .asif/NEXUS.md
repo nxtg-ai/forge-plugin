@@ -856,6 +856,14 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (thirteenth pass)
+
+No change since twelfth pass (d163586). 44/44 pass. Dependabot 14 vulns unresolved. CLX9 smoke pending. Queue empty.
+
+All five questions answered in full in the tenth pass (823503b). Nothing new to add. Repeating answers here would manufacture signal that doesn't exist.
+
+---
+
 ### Check-in: 2026-05-06 (twelfth pass)
 
 No change since eleventh pass (611232a, <10 min ago). 44/44 pass. 0 internal vulns. Dependabot 14-vuln spike still unresolved (needs directive or self-delegation to run `npm audit fix`). CLX9 smoke still pending. Directive queue empty.
@@ -1418,6 +1426,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | Thirteenth pass. No change. See tenth pass (823503b) for full reflection. |
 | 2026-05-06 | Twelfth pass. No change. Standing ask: grant self-delegation (Dependabot triage + Cursor port) or confirm maintenance-hold. |
 | 2026-05-06 | Eleventh pass. Dependabot 3→14 vuln spike detected on push (3 high, 11 moderate). npm audit triage flagged as P0 before next release. CLX9 smoke still pending. |
 | 2026-05-06 | Tenth pass. 44/44, 0 vulns. No new activity. Substantive reflection: CLX9 smoke still pending, queue empty 2+ days, Cursor port + Gate 3B as next P1s. Noise-floor policy question raised. |
