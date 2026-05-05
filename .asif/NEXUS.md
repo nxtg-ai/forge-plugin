@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (fifth pass)
+
+44/44 pass. 0 vulns. No alignment activity today. No new directives. CLX9 smoke on v1.5.1 still pending. Standing by.
+
+---
+
 ### Check-in: 2026-05-06 (fourth pass)
 
 44/44 pass. 0 vulns. Nothing new. Standing by.
