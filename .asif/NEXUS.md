@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-05 (third pass)
+
+44/44 pass. 0 vulns. No new directives. Standing by for A.4 write-guard.
+
+---
+
 ### Check-in: 2026-05-05 (second pass)
 
 44/44 pass. 0 vulns. No new directives or alignment activity. Standing by for A.4 write-guard.
