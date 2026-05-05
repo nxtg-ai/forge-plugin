@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (seventeenth pass)
+
+No change since sixteenth pass (a4222cc). Canonical reflection: tenth pass (823503b).
+
+---
+
 ### Check-in: 2026-05-06 (sixteenth pass)
 
 No change since fifteenth pass (5ceefdb). Canonical reflection: tenth pass (823503b). Queue empty, CLX9 smoke pending, Dependabot 14 vulns unresolved.
@@ -1444,6 +1450,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | Seventeenth pass. No change. |
 | 2026-05-06 | Sixteenth pass. No change. Canonical: tenth pass (823503b). |
 | 2026-05-06 | Fifteenth pass. No change. Canonical: tenth pass (823503b). |
 | 2026-05-06 | Fourteenth pass. No change. Canonical: tenth pass (823503b). |
