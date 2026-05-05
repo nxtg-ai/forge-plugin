@@ -856,6 +856,23 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-04 (post-graduation)
+
+**1. Shipped:** Nothing new since graduation check-in. 44/44 pass, 0 vulns. No active FPL directive.
+
+**2. Surprised:** The alignment room shifted from intense calibration governance to light banter within 30 min of graduation (mascot debate, trophy brackets, cross-voice voiceover). The team is healthy — that rapid gear-shift from high-formality to playful is a positive signal. Also: Wolf confirmed claudemarketplaces.com is alive and indexing (HTTP 200, Vercel-hosted, dynamic) but forge-plugin is not indexed. Mert ghosted 7 days confirmed via Gmail. The discovery channel for Show HN Item 5 is genuinely unknown — not a process failure on our side.
+
+**3. Cross-project signals:** Atlas team received DIRECTIVE-NXTG-20260504-01 (A+B+C combo — feasibility/sequence/capacity analysis, 4h timebox). Wolf's ship board confirms the portfolio had a productive day despite this lane being in recovery most of it. Dashboard /doc endpoint only serves `~/ASIF/` paths — project NEXUSes (including program-root) are not reachable via the doc viewer. Wolf confirmed this is a known limitation.
+
+**4. Prioritize next:**
+1. A.4 write-guard (still the gate — Wolf owns install, product lane reviews)
+2. Show HN Item 3: 1 stale `claude plugin install forge` ref on landing page. Post-gate, this is a 5-min fix once nxtg.ai repo is in active directive scope.
+3. Orchestrator PRs #19/#20/#21 merge directive (Forge:1.3, queued behind write-guard gate)
+
+**5. Blockers:** A.4 write-guard install still pending. No blockers within current standing-by posture.
+
+---
+
 ### Check-in: 2026-05-04 (graduation)
 
 **1. What did we ship?**
@@ -1195,6 +1212,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-04 | Post-graduation reflection. No new FPL directives. claudemarketplaces.com indexing confirmed live but forge-plugin not indexed (Mert ghosted). A.4 write-guard still pending. |
 | 2026-05-04 | FPLCAL-01 DONE/PASS (~40 min). FPL graduated to Forge Program Lead, directive-scoped write authority. HANDOFF.md created at program root. Next gate: A.4 write-guard. Forge:1.3/1.4 idle flagged as program finding. |
 | 2026-05-04 | REVIEW-WAKE ACK from Wolf (1m49s). FPL confirmed ACTIVE. Pane was alive throughout — failure was directive starvation, not dead runtime. Waiting on deploy greenlight + calibration directive injection. |
 | 2026-05-04 | REVIEW-WAKE complete. Identity readback posted. Scope contract accepted (directive-scoped write authority, program-lead). Decision: YES proceed. HANDOFF.md created at program root. Standing by for calibration directive. |
