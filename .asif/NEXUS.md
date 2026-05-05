@@ -856,6 +856,23 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (eleventh pass)
+
+**1. Shipped:** Nothing since tenth pass (823503b, ~5 min ago). 44/44 pass, 0 internal vulns.
+
+**2. Surprised:** GitHub Dependabot now reports **14 vulns** (3 high, 11 moderate) on push, up from the 3 that were triaged in v3.6.1. This is a regression — either new advisories were published for existing deps or the audit scope changed. This warrants immediate `npm audit` to identify which packages are flagged before the next release.
+
+**3. Cross-project signals:** Dependabot count jump (3→14) may affect forge-ui and forge-orchestrator too if they share common dev toolchain deps. Worth a coordinated audit pass across all 3 repos.
+
+**4. Prioritize next:**
+1. `npm audit` in governance-mcp — identify the 14 vulns, fix what can be auto-fixed, document what can't. P0 before next release.
+2. Cursor port — still S effort, still first feature P1.
+3. CLX9 smoke resolution.
+
+**5. Blockers:** Same as tenth pass — CLX9 smoke pending, self-delegation scope unclear. New: Dependabot 14-vuln spike needs triage directive or self-delegation to fix.
+
+---
+
 ### Check-in: 2026-05-06 (tenth pass)
 
 **1. What shipped since last check-in?**
@@ -1393,6 +1410,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | Eleventh pass. Dependabot 3→14 vuln spike detected on push (3 high, 11 moderate). npm audit triage flagged as P0 before next release. CLX9 smoke still pending. |
 | 2026-05-06 | Tenth pass. 44/44, 0 vulns. No new activity. Substantive reflection: CLX9 smoke still pending, queue empty 2+ days, Cursor port + Gate 3B as next P1s. Noise-floor policy question raised. |
 | 2026-05-06 | 44/44, 0 vulns. No new activity. CLX9 smoke pending. |
 | 2026-05-05 | Post-FORGE13. 44/44 (confirmed after false-alarm first run). CLX9 smoke pending. |
