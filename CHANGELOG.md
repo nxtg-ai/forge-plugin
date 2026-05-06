@@ -6,6 +6,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.7.0] — 2026-05-06
+
+### Governance
+
+- **74 governance cycle commits** — Continuous FPL reflection check-ins and CoS directive tracking in `.asif/NEXUS.md` (2026-05-03 → 2026-05-06). No functional code changes in this cycle.
+- **Manifest version sync** — Root `.claude-plugin/plugin.json` bumped from 3.6.0 to 3.7.0 (was trailing the nested manifest at 3.6.1); all three version manifests now in sync at v3.7.0.
+
+### Notes
+
+- Plugin functionality unchanged from v3.6.1.
+- Install command: `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge` (canonical, no stale references).
+- `claude plugin install forge` strings verified absent — DIRECTIVE-NXTG-20260326-01 Item 3 ✅ DONE.
+
+---
+
 ## [3.5.1] — 2026-03-24
 
 ### Fixed
