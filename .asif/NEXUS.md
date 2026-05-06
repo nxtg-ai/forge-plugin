@@ -856,6 +856,12 @@ Test counts: **44/44 vitest PASS** (unchanged). No tests deleted.
 
 ---
 
+### Check-in: 2026-05-06 (fortieth pass)
+
+No change since thirty-ninth pass (e78128e). Canonical reflection: tenth pass (823503b).
+
+---
+
 ### Check-in: 2026-05-06 (thirty-ninth pass)
 
 No change since thirty-eighth pass (815d20b). Canonical reflection: tenth pass (823503b).
@@ -1582,6 +1588,7 @@ _(Add questions for FPL / ASIF CoS here.)_
 
 | Date | Change |
 |------|--------|
+| 2026-05-06 | Fortieth pass. No change. |
 | 2026-05-06 | Thirty-ninth pass. No change. |
 | 2026-05-06 | Thirty-eighth pass. No change. |
 | 2026-05-06 | Thirty-seventh pass. No change. |
