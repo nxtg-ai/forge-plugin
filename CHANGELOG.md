@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.9.0] — 2026-07-14
+
+### Changed
+
+- **All 33 skills enhanced to Claude Code SOTA best practices** — fanout of 33 agents (one per skill), each grounded against real repo source, applying the official checklist ([code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills) + Anthropic engineering guidance):
+  - **Routing-rule descriptions** — every `description` rewritten as "what it does + concrete *Use when* triggers with keywords users actually type." Added the valid snake_case `when_to_use` field to 27 skills for extra routing signal.
+  - **Progressive disclosure** — the 9 skills over 500 lines (`testing-strategy`, `owasp-security`, `git-workflow`, `domain-knowledge`, `agent-qa-sentinel`, `core-testing`, `agent-platform-builder`, `agent-lead-architect`, `claude-code-best-practices`) split into 28 `reference/*.md` supporting files; SKILL.md bodies are now lean overview + navigation.
+  - **Real Gotchas sections** grounded in actual hook scripts, CLI, and MCP source; concrete worked examples replacing abstract rule lists; correct additive `allowed-tools`.
+  - **Wiring-safe** — `name`, `disable-model-invocation`, and `user-invocable` preserved verbatim on the 6 load-bearing skills preloaded into agents (`parallel-execution`, `owasp-security`, `crucible-audit`, `testing`, `core-testing`, `ceo-loop`).
+
+### Fixed
+
+- **Fabricated skill content removed (CRITICAL)** — several skills (`architecture`, `core-nxtg-forge`, `runtime-validation`, `git-workflow`, `testing-strategy`, `agent-development`) were template-generated fiction describing a Python "NXTG-Forge" (`forge/domain/`, Click, Jinja2, `di_container`, `.claude/state.json`) with zero correspondence to the real Rust + Node + React repo. Re-grounded against actual source (`.forge/state.json` via `src/core/state.rs`, real lifecycle hooks, real clap CLI); ~4,700 net lines of fabrication removed.
+- **`skill-development` frontmatter guidance** — corrected a Gotcha that wrongly listed the valid snake_case `when_to_use` as an ignored field (only camelCase `whenToUse` is ignored).
+- **`marketplace.json` version drift** — reconciled from stale `3.6.1` to match the plugin manifest.
+
+### Gate
+
+- 44/44 vitest pass · valid YAML across all 33 skills · zero skill-name changes · zero broken cross-references · all 9 oversized skills now under 500 lines.
+
+---
+
 ## [3.8.0] — 2026-07-14
 
 ### Fixed
