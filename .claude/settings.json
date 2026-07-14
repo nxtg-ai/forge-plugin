@@ -1,1 +1,33 @@
-{"model": "claude-sonnet-4-6"}
+{
+  "model": "claude-sonnet-4-6",
+  "env": {
+    "ASIF_ROOT": "/home/axw/ASIF",
+    "ALIGNMENT_AGENT": "forge"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "description": "ASIF /alignment bridge and team identity context",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/axw/ASIF/scripts/asif-hook-tap.sh --name team-alignment -- bash /home/axw/ASIF/scripts/asif-team-alignment-context-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "description": "ASIF /alignment bridge and team identity context",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/axw/ASIF/scripts/asif-hook-tap.sh --name team-alignment -- bash /home/axw/ASIF/scripts/asif-team-alignment-context-hook.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
