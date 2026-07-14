@@ -1,7 +1,15 @@
 ---
 name: crucible-audit
-description: Forensic test quality auditing based on the CRUCIBLE Protocol. Detects test fraud — hollow assertions, coverage gaming, mock proliferation, dead tests, and metric inflation that creates false green signals.
+description: >
+  Forensic test-quality audit that detects test fraud — hollow assertions, coverage-omit
+  gaming, mock proliferation, dead/gated tests, untested entry points, and README badge
+  inflation that produce false green signals. Use when asked to "run a CRUCIBLE audit",
+  "check/audit test quality", "find silent failures", "find hollow tests", "audit
+  assertions/mocks/coverage config", "why do tests pass but nothing works", or before any
+  release gate (pre-publish/pre-deploy) when a high test count or coverage % needs
+  verifying against reality.
 argument-hint: "[path]"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # CRUCIBLE Test Quality Audit
@@ -11,6 +19,18 @@ argument-hint: "[path]"
 The CRUCIBLE Audit skill provides the methodology for forensic analysis of test suites. It detects **test fraud** — the pattern where test count and coverage numbers look healthy but the tests prove nothing about whether the software actually works.
 
 **Origin**: Wolf's forensic audit of Podcast-Pipeline (2026-03-07). 1,601 tests, 77% claimed coverage — actual coverage ~15%, nothing worked when a human used it.
+
+## Language Matrix (read this BEFORE running any detection command)
+
+The detection greps below are **Python/pytest-shaped** (`tests/`, `def test_`, `assert x is not None`). Run them unchanged against a JS/TS or Rust repo and every pattern returns **0 → a false CLEAN verdict**. Always translate to the stack first. NXTG-Forge's own three repos are all non-Python.
+
+| Ecosystem | Test dirs / files | Test decl | Hollow-assertion tells | Mock tells | Coverage config |
+|-----------|-------------------|-----------|------------------------|------------|-----------------|
+| Python / pytest | `tests/`, `test_*.py` | `def test_` | `assert x is not None`, `.exists()`, `assert True`, `len >= 0/1`, `isinstance` | `@patch`, `MagicMock`, `Mock()` | `[tool.coverage.run] omit`, `.coveragerc` |
+| Node / vitest / jest | `tests/`, `__tests__/`, `*.test.{mjs,ts,tsx}` | `it(`, `test(` | `toBeDefined`, `toBeTruthy`, `not.toBeNull`, `expect(x).toBeDefined()` | `vi.mock`, `jest.mock`, `vi.fn()` | `coverage.exclude`, `coveragePathIgnorePatterns`, `collectCoverageFrom` |
+| Rust / cargo | inline `#[test]` in `src/**`, `tests/` | `#[test]`, `#[tokio::test]` | `assert!(x.is_some())`, `assert!(x.is_ok())`, `assert!(true)` | `mockall`, `#[automock]`, hand-rolled stub structs | tarpaulin `--exclude-files`, `#[cfg(not(coverage))]` |
+
+When `$1` (the audit path) points at a repo, detect the stack first (`ls` for `Cargo.toml` / `package.json` / `pyproject.toml`), then use the matching row. Report the stack in the audit header.
 
 ## The 8 Fraud Patterns
 
@@ -171,8 +191,35 @@ python -m pytest --cov=src --cov-report=term 2>&1 | grep TOTAL
 - When test count increases rapidly (>100 tests in one sprint = suspicious)
 - During portfolio enrichment cycles (spot audits)
 
+## Worked Example (Podcast-Pipeline, the origin audit)
+
+```bash
+# Stack detect → Python. Path = ./ (the whole repo).
+grep -A20 '\[tool.coverage.run\]' pyproject.toml | grep -i omit
+#   omit = ["src/engines/*", "src/ml/*", "src/api/*"]   ← core product excluded  → Pattern 1, P0
+MOCKS=$(grep -rn "@patch\|MagicMock\|Mock()" tests/ | wc -l)   # 439
+TESTS=$(grep -rn "def test_" tests/ | wc -l)                   # 1601
+# ratio 27% overall, BUT: test_pipeline_e2e.py mocks TTS + ASR + ffmpeg  → Pattern 5, CRITICAL
+grep -rn "assert.*is not None\|\.exists()\|assert len.*>= 1$" tests/ | wc -l   # 153  → Pattern 2, HIGH
+```
+Reported: **1,601 tests, 77% coverage**. After removing unjustified omits and re-running: **~15% real coverage**. Verdict: **CRITICAL FAIL** — fraud margin 62 points. The three things the pipeline exists to do (TTS/ASR/ffmpeg) were all mocked in the one test named `e2e`.
+
+## Gotchas
+
+- **The greps are Python-shaped — a JS/TS/Rust repo returns 0 for every pattern and looks CLEAN.** This is the #1 false-negative. Always use the Language Matrix row for the actual stack. All three NXTG-Forge repos (forge-ui = vitest/TS, governance-mcp = Node, forge-orchestrator = Rust) would pass the Python greps with a fraudulent clean bill.
+- **Nonstandard test dir → silent 0.** Detection assumes `tests/`. Repos use `test/`, `spec/`, `__tests__/`, or inline (`src/**/*.test.ts`, Rust `#[test]` in `src/`). `find`/`grep` hitting a missing `tests/` returns nothing, not an error. `ls` the real layout first.
+- **Grep counts are LEADS, not verdicts.** `grep | wc -l` counts matching *lines* (multiple mocks on one line undercount; a comment or string containing "Mock"/"assert True" overcounts). `assert len >= 1` and `assert isinstance` are sometimes legitimate. Every flagged count must be confirmed by *reading* the lines (Phase 2) before it enters the report — never accuse on a raw count.
+- **`bc` may be absent** (minimal containers, some CI images) — the mock-ratio one-liner then prints nothing. Fall back to integer math or `awk`.
+- **Check 8.5 mutates config — this is the one write in a read-only audit.** To get the real coverage number you temporarily strip `omit`/`exclude` and re-run. RESTORE the config afterward (or edit a copy). The "read-only" rule is about not touching *source/tests*, not about never running the suite.
+- **Running the suite has side effects.** `pytest --cov` / `vitest --coverage` executes code — it can hit a DB, write coverage artifacts, or run migrations. On an unknown repo, prefer static greps first; only run the suite when you understand what it touches.
+- **A green suite is not evidence of correctness** — that is the whole premise. dx3 (FP-006) had 3,277 passing tests while graph queries silently returned empty. Never let "all tests pass" close a Pattern-7 finding.
+
 ## The Fundamental Test
 
 > If you deleted all mocks, removed all env-var gates, and ran the full test suite against real infrastructure — how many tests would pass?
 
 That number is the REAL test count. Everything above it is scaffolding. Scaffolding is fine, but it must never be confused with the real thing.
+
+## Additional resources
+
+- **Full fraud-pattern catalog** (FP-001…FP-008, with TS/Node signatures, git-log detection, and the dx3 silent-exception + test-count-inflation + mock-tautology patterns not covered above): [references/forensic-patterns.md](references/forensic-patterns.md). Extend it — assign the next `FP-NNN` — whenever a new pattern surfaces in a portfolio audit.

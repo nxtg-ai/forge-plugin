@@ -1,361 +1,219 @@
 ---
 name: Agent Development
-description: Guides creation and configuration of Claude Code agents with proper frontmatter and system prompts.
+description: >
+  Author and configure Claude Code subagents — valid YAML frontmatter (name, description,
+  model, color, tools, isolation, memory, skills) plus a system-prompt body. Use when creating
+  a new agent .md, fixing an agent that won't load or won't auto-delegate, choosing a model/color,
+  deciding which tools an agent gets, or reviewing agent frontmatter for invalid/ignored fields.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Agent Development Guide
 
-## Creating NXTG-Forge Agents
+How to author a Claude Code subagent that loads, auto-delegates, and runs with the right tools.
+Ground every new agent against the 33 real agents in this plugin (`agents/*.md`) — copy a close
+match and adapt, don't start from a blank file.
 
-Agents are autonomous specialists that execute tasks within the NXTG-Forge orchestration system. This guide covers everything you need to create production-ready agents.
+## Where agents live
 
-## Required Frontmatter
+- **Plugin agents** (shipped): `plugins/nxtg-forge/agents/<name>.md`.
+- **Project-local agents** (a user's repo): `.claude/agents/<name>.md`.
+- **Personal agents** (all your projects): `~/.claude/agents/<name>.md`.
 
-Every agent MUST have proper YAML frontmatter. Claude Code's canonical schema:
+An agent is a single markdown file: YAML frontmatter (config) + body (the system prompt).
+
+## Frontmatter — valid fields only
 
 ```yaml
 ---
-name: agent-name          # REQUIRED: lowercase letters, numbers, hyphens only (max 64 chars)
-description: |            # REQUIRED: When Claude should delegate here. Include <example> blocks.
-  Use this agent when...
-
+name: builder                 # REQUIRED. lowercase + digits + hyphens, ≤64 chars. No uppercase, no underscores.
+description: |                 # REQUIRED. When Claude should delegate here. Add <example> blocks.
+  Use this agent when ... This includes: ...
   <example>
-  Context: User asks to do X.
-  user: "Do X please"
-  assistant: "I'll use agent-name to handle X."
-  <commentary>
-  Why this agent is the right choice.
-  </commentary>
+  Context: ...
+  user: "..."
+  assistant: "I'll use the Task tool to launch the builder agent to ..."
+  <commentary>Why builder is the right pick.</commentary>
   </example>
-model: sonnet             # Optional: sonnet | opus | haiku (default: inherit)
-color: cyan               # Optional: purple | cyan | green | orange | blue | red
-isolation: worktree       # Optional: worktree (for parallel file work without conflicts)
-memory: project           # Optional: user | project | local (persistent cross-session memory)
-skills: plugin-name:skill # Optional: preload specific skill (full content at startup)
-tools: Read, Grep, Glob, Write, Edit, Bash, TodoWrite, Task  # Optional: tool allowlist
+model: sonnet                  # optional. sonnet | opus | haiku. Omit to inherit the main thread's model.
+color: green                   # optional. EXACTLY one of: purple cyan green orange blue red
+tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite  # optional allowlist. Omit Task for leaf workers.
+isolation: worktree            # optional. Own git worktree for conflict-free parallel file edits.
+memory: project                # optional. project | user | local. Persists MEMORY.md across sessions.
+skills: nxtg-forge:parallel-execution  # optional. Preloads FULL skill text at startup (token cost).
+disallowedTools: WebFetch      # optional denylist, complements `tools`.
+permissionMode: acceptEdits    # optional. default | acceptEdits | plan | dontAsk | bypassPermissions
 ---
 ```
 
-### Frontmatter Fields Explained
+**Field notes**
+- **name** must match the delegate name Claude uses ("launch the builder agent"). It is also the
+  discovery key — invalid casing/underscores make the agent silently not load.
+- **description** is the routing engine, not documentation — see below.
+- **model**: `sonnet` for most specialists; `opus` for orchestration/high-stakes judgment
+  (`orchestrator`, `ceo-loop`); `haiku` only for cheap mechanical work. Omit to inherit.
+- **tools**: allowlist. A leaf worker that must never spawn subagents omits `Task`.
+- **isolation: worktree**: use for agents that write files in parallel with others (`builder`,
+  `testing`) so edits land on separate branches instead of colliding.
+- **memory: project**: use for agents that must remember across sessions (`learning`). Writes a
+  git-tracked `MEMORY.md`.
+- **skills**: preloads the entire skill body into the agent's context at startup — real routing
+  cost, so only preload skills the agent uses every run.
 
-- **name** (REQUIRED): Lowercase letters, numbers, and hyphens only — e.g., `builder`. NO uppercase.
-- **description** (REQUIRED): When Claude should auto-delegate to this agent. Use `<example>` blocks for strong matching.
-- **model** (optional): `sonnet` (default for most), `opus` (high-stakes decisions), `haiku` (fast/cheap tasks)
-- **color** (optional): Valid values: `purple`, `cyan`, `green`, `orange`, `blue`, `red`
-- **tools** (optional): Comma-separated allowlist. Omit `Task` for leaf workers (prevents sub-delegation).
-- **isolation** (optional): `worktree` — gives the agent its own git branch for conflict-free parallel work
-- **memory** (optional): `project` — persists `MEMORY.md` across sessions (checked into git); `user` — all projects
-- **skills** (optional): Comma-separated skill names to preload (full content injected at startup)
-- **disallowedTools** (optional): Tools to explicitly deny (denylist, complements `tools` allowlist)
-- **permissionMode** (optional): `acceptEdits` for auto-accept file edits, `plan` for read-only exploration
+## The description IS the routing rule
 
-## Agent Structure Template
+Claude reads only `description` (not the body) to decide whether to delegate. Write it for the
+model, front-load the primary trigger, and enumerate concrete scenarios + keywords a user would
+actually type. `<example>` blocks are the strongest matching signal — real agents carry 2+.
+
+Shape from the real `testing` agent:
+
+```yaml
+description: |
+  Use this agent when test generation, coverage analysis, or test infrastructure work is needed.
+  This includes: generating unit/integration/e2e tests for new code, analyzing coverage gaps,
+  creating test fixtures and mocks, improving flaky tests, or setting up test infrastructure.
+  <example>
+  Context: User has implemented a new service without tests.
+  user: "I just wrote the NotificationService, can you generate tests?"
+  assistant: "I'll use the testing agent to generate comprehensive tests for the NotificationService."
+  <commentary>New code needs coverage — the testing agent's specialty.</commentary>
+  </example>
+```
+
+## Gotchas
+
+Real failure modes when authoring agents in this plugin — each one is a silent break, not an error.
+
+1. **Invalid frontmatter fields are silently ignored — the agent still loads, but misconfigured.**
+   Claude Code accepts ONLY the fields listed above. These common-looking fields do NOTHING:
+   `shortname`, `avatar`, `whenToUse`, `exampleQueries`, `when_to_use`, `color: teal/pink/yellow`.
+   Put "when to use" text INSIDE `description`, not in a separate key. (Origin: the old version of
+   this very skill shipped a "minimal example" using `shortname/avatar/whenToUse/exampleQueries` —
+   all four are ignored.)
+2. **`name` casing breaks discovery.** `NXTG-CEO-LOOP` did not load until renamed to `ceo-loop`.
+   Lowercase + hyphens only; no uppercase, no underscores, ≤64 chars.
+3. **`color` is a fixed 6-value enum.** `purple cyan green orange blue red` — any other value
+   (teal, yellow, pink, hex) is ignored and the agent falls back to default coloring.
+4. **Leaf workers must omit `Task` or they can spawn subagents.** Pattern in this plugin: leaf
+   workers (`testing`, `learning`, `crucible-detective`) have NO `Task`; orchestrators (`builder`,
+   `guardian`, `orchestrator`) DO. Giving a leaf `Task` invites accidental fan-out and runaway cost.
+5. **`skills:` preload is not free.** It injects the whole SKILL.md into the agent's context at
+   startup every run. `crucible-detective` preloads three skills deliberately; don't preload a
+   skill the agent only occasionally needs — reference it in the body instead.
+6. **`read-only` agents still need `Bash` denied, not just `Write`/`Edit` omitted.**
+   `crucible-detective` is read-only and lists `Glob, Grep, Read, Bash` — Bash is present because
+   it runs test/coverage commands, but it never writes. If you want a truly read-only agent, omit
+   Write/Edit AND scope or drop Bash; `permissionMode: plan` enforces read-only exploration.
+7. **`model` omitted ≠ sonnet.** Omitting `model` inherits the *caller's* model, which may be opus
+   or haiku. State `model:` explicitly when the agent's cost/quality tier matters.
+8. **`isolation: worktree` needs a clean git repo.** It creates a worktree/branch; on a repo with a
+   dirty index or detached HEAD the isolation can fail to set up. Reserve it for agents that
+   genuinely edit files in parallel.
+
+## Worked example — a leaf specialist
+
+Goal: an agent that audits dependency licenses, read-only, never spawns subagents.
 
 ```markdown
 ---
-name: your-agent-name
+name: license-auditor
 description: |
-  Use this agent when [specific scenario]. This includes: [use case 1], [use case 2].
-
+  Use this agent to audit dependency licenses for compliance risk — flagging GPL/AGPL/copyleft
+  in a permissive-licensed project, missing LICENSE files, or license changes across versions.
+  This includes: scanning package.json/Cargo.toml/requirements, mapping each dep to its license,
+  and reporting incompatibilities.
   <example>
-  Context: User wants to do X.
-  user: "Do X"
-  assistant: "I'll use your-agent-name to handle X."
-  <commentary>
-  X is exactly what your-agent-name specializes in.
-  </commentary>
+  Context: User is prepping a proprietary release and worries about copyleft deps.
+  user: "Do any of our npm dependencies have GPL licenses?"
+  assistant: "I'll use the license-auditor agent to scan dependencies and flag copyleft licenses."
+  <commentary>License-compatibility scanning is exactly this agent's job; it's read-only.</commentary>
   </example>
 model: sonnet
-color: cyan
-tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
+color: orange
+tools: Glob, Grep, Read, Bash
 ---
 
-# 🎯 Agent Display Name
+# ⚖️ License Auditor
 
-You are the **Agent Role** - brief tagline about your identity.
+You audit dependency licenses for compatibility risk. You never modify files.
 
-## 🎭 Your Identity
+## Responsibilities
+- Enumerate dependencies from manifests (package.json, Cargo.toml, requirements.txt).
+- Resolve each dependency to its SPDX license.
+- Flag copyleft (GPL/AGPL/LGPL) in a permissive-licensed project and any missing LICENSE.
 
-You are:
-- **Role 1**: Description of this aspect
-- **Role 2**: Description of this aspect
-- **Role 3**: Description of this aspect
+## Protocol
+1. Detect the stack and locate manifest files.
+2. Read declared licenses (Bash: `npm ls --json`, `cargo license`, `pip-licenses`).
+3. Classify each into permissive / weak-copyleft / strong-copyleft.
+4. Report incompatibilities with the project's own license, with remediation options.
 
-## 💫 Core Responsibilities
-
-### 1. Primary Responsibility
-- **Sub-task**: Details
-- **Sub-task**: Details
-- **Sub-task**: Details
-
-### 2. Secondary Responsibility
-- **Sub-task**: Details
-- **Sub-task**: Details
-
-### 3. Tertiary Responsibility
-- **Sub-task**: Details
-- **Sub-task**: Details
-
-## 🚀 Execution Protocol
-
-### Phase 1: Discovery (timing)
-```
-1. What you do first
-2. Second step
-3. Third step
+## Done when
+- Every dependency is classified.
+- Every incompatibility names the dep, its license, and a remediation.
 ```
 
-### Phase 2: Planning (timing)
-```
-1. Planning step 1
-2. Planning step 2
-3. Planning step 3
-```
+Why it's correct: valid `name`, real `color`, `Task` omitted (leaf), `Bash` kept (it runs
+license tooling) but `Write`/`Edit` omitted (read-only), `description` front-loads the trigger
+with a concrete `<example>`.
 
-### Phase 3: Execution (timing)
-```
-1. Execution step 1
-2. Execution step 2
-3. Execution step 3
-```
+## Body structure that works here
 
-### Phase 4: Validation (timing)
-```
-1. Validation step 1
-2. Validation step 2
-3. Validation step 3
-```
-
-## 🎯 Decision Framework
-
-When making decisions, consider:
-
-1. **Criterion 1**: What to evaluate
-2. **Criterion 2**: What to evaluate
-3. **Criterion 3**: What to evaluate
-4. **Criterion 4**: What to evaluate
-
-## 📊 Quality Gates
-
-Before completing any task, verify:
-
-- ✅ **Quality 1**: What to check
-- ✅ **Quality 2**: What to check
-- ✅ **Quality 3**: What to check
-- ✅ **Quality 4**: What to check
-
-## 🔥 Your Mantra
-
-> "Inspiring quote that captures the agent's philosophy and approach to work"
-
-Remember: One sentence summary of what makes this agent valuable.
-```
-
-## Best Practices
-
-### 1. Clear Identity
-- Define exactly what the agent does and doesn't do
-- Use consistent personality and tone
-- Make the agent's expertise domain obvious
-
-### 2. Actionable Protocols
-- Provide step-by-step execution phases
-- Include timing estimates where relevant
-- Make protocols concrete and specific
-
-### 3. Decision Frameworks
-- Give clear criteria for making choices
-- Provide trade-off analysis guidance
-- Include examples of decision-making
-
-### 4. Quality Standards
-- Define what "done" looks like
-- List specific quality gates
-- Include validation steps
-
-### 5. Communication Style
-- Use consistent emoji branding
-- Maintain professional but engaging tone
-- Be clear and concise
-
-## Common Agent Types
-
-### Specialist Agents
-- Focus on one domain (e.g., QA, DevOps, Security)
-- Deep expertise in specific area
-- Called for targeted tasks
-
-### Coordinator Agents
-- Orchestrate other agents
-- Manage workflows and dependencies
-- Handle complex multi-step processes
-
-### Analysis Agents
-- Examine code, architecture, or systems
-- Provide recommendations
-- Generate reports
-
-## Agent Coordination
-
-Agents can work:
-
-### Sequentially
-```
-Agent A → Agent B → Agent C
-```
-
-### In Parallel
-```
-     ┌→ Agent A
-Main ├→ Agent B
-     └→ Agent C
-```
-
-### Iteratively
-```
-Agent A ←→ Agent B (feedback loop)
-```
-
-## Testing Your Agent
-
-1. **Frontmatter Validation**: Ensure all required fields are present
-2. **Scenario Testing**: Test with example queries from frontmatter
-3. **Integration Testing**: Verify agent works with orchestrator
-4. **Edge Cases**: Test boundary conditions and error handling
-
-## Common Mistakes
-
-❌ **Missing Required Frontmatter**: Agent won't load without all required fields
-❌ **Vague Descriptions**: Be specific about what agent does
-❌ **No Clear Protocols**: Agents need step-by-step execution guidance
-❌ **Overlapping Responsibilities**: Each agent should have distinct role
-❌ **No Quality Gates**: Always define what success looks like
-
-## Example: Minimal Valid Agent
+The plugin's agents follow a consistent house style. A workable skeleton:
 
 ```markdown
----
-name: code-reviewer
-shortname: 👁️
-avatar: 👁️
-description: Reviews code for quality, bugs, and best practices
-whenToUse:
-  - Before committing code changes
-  - During pull request review
-  - When refactoring existing code
-exampleQueries:
-  - "Review this function for bugs"
-  - "Check if this code follows best practices"
----
+# <emoji> Display Name
 
-# 👁️ Code Reviewer
+You are the **Role** — one-line identity.
 
-You are the **Code Quality Guardian** - ensuring every line meets high standards.
+## Responsibilities
+- What this agent owns (3–5 bullets).
 
-## Core Responsibilities
+## Protocol
+1. Discovery → 2. Plan → 3. Execute → 4. Validate  (concrete steps, not narration)
 
-### Code Analysis
-- Review code for bugs and logic errors
-- Check adherence to coding standards
-- Identify security vulnerabilities
-- Suggest improvements
+## Decision framework
+Criteria for the judgment calls this agent makes.
 
-## Execution Protocol
-
-1. Read the code thoroughly
-2. Identify issues by category (bugs, style, security, performance)
-3. Provide specific feedback with line numbers
-4. Suggest concrete improvements
-5. Rate overall code quality
-
-## Quality Gates
-
-- ✅ All identified issues documented
-- ✅ Feedback is specific and actionable
-- ✅ Suggestions include code examples
-- ✅ Overall assessment provided
+## Done when
+Explicit completion gates — what "finished" means.
 ```
 
-## Advanced Topics
+Keep the body tight: it is the system prompt and costs tokens every invocation. State what to do,
+not why. Match the tone of a sibling agent (read one before writing).
 
-### Agent Specialization
-- Create agents for specific tech stacks
-- Domain-specific expertise (e.g., ML, blockchain)
-- Role-specific agents (e.g., tech lead, architect)
+## Coordination patterns
 
-### Agent Communication
-- Passing context between agents
-- Sharing state and findings
-- Coordinating complex workflows
+- **Sequential**: `planner → builder → guardian` (plan, build, gate).
+- **Parallel**: an orchestrator with `Task` fans out to isolated (`isolation: worktree`) workers,
+  then merges — up to the measured concurrency ceiling, not unbounded.
+- **Iterative**: `builder ⇄ testing` feedback loop until gates pass.
 
-### Performance Optimization
-- Minimize agent overhead
-- Parallel execution when possible
-- Efficient context sharing
+Only agents with `Task` in `tools` can launch other agents — that is the coordinator/leaf split.
 
-## Using Agent Templates
+## Validation checklist before shipping an agent
 
-NXTG-Forge provides three agent templates in `/templates/`:
+- `name` is lowercase-hyphen, ≤64 chars, and matches how you delegate to it.
+- `description` front-loads the primary trigger and has ≥1 `<example>` block.
+- `color` is one of the 6 valid values; `model` is stated when tier matters.
+- `tools` is minimal; `Task` present only if the agent orchestrates.
+- No ignored fields (`shortname/avatar/whenToUse/exampleQueries`).
+- Body has explicit "done when" gates.
+- Diff against a sibling real agent (`agents/*.md`) for house-style consistency.
 
-### 1. Specialist Agent Template
-**File**: `templates/agent-specialist.template.md`
-**Use for**: Domain-specific experts (QA, Security, Frontend, Backend, etc.)
+## Learn from real agents
 
-```bash
-# Copy template
-cp templates/agent-specialist.template.md .claude/agents/your-agent.md
+Instead of a template, open a close match in `plugins/nxtg-forge/agents/`:
+- `builder.md` — worktree-isolated specialist that writes code + tests (`isolation`, `skills` preload).
+- `testing.md` — leaf worker, no `Task`.
+- `orchestrator.md` — opus coordinator with `Task`.
+- `learning.md` — cross-session `memory: project`.
+- `crucible-detective.md` — read-only auditor (`Glob, Grep, Read, Bash`), multi-skill preload.
 
-# Replace all {{PLACEHOLDERS}} with actual values
-# Required replacements:
-# - {{AGENT_NAME}}: e.g., "security-auditor"
-# - {{EMOJI}}: e.g., "🔒"
-# - {{DISPLAY_NAME}}: e.g., "Security Auditor"
-# - {{ONE_LINE_DESCRIPTION}}: Clear description
-# - {{SCENARIO_1/2/3}}: When to use scenarios
-# - {{EXAMPLE_QUERY_1/2}}: Example user queries
-# ... and all other placeholders
-```
-
-### 2. Coordinator Agent Template
-**File**: `templates/agent-coordinator.template.md`
-**Use for**: Orchestrators that manage other agents and complex workflows
-
-```bash
-# Copy template
-cp templates/agent-coordinator.template.md .claude/agents/orchestrator.md
-
-# Orchestrators have pre-filled orchestration patterns
-# Just customize for your specific orchestration needs
-```
-
-### 3. Analyzer Agent Template
-**File**: `templates/agent-analyzer.template.md`
-**Use for**: Agents that analyze code, systems, or data and generate reports
-
-```bash
-# Copy template
-cp templates/agent-analyzer.template.md .claude/agents/analyzer.md
-
-# Replace {{ANALYSIS_DOMAIN}} with what you're analyzing
-# e.g., "code quality", "security", "performance"
-```
-
-## Quick Start: Creating Your First Agent
-
-1. **Choose a template** based on agent type
-2. **Copy the template** to `.claude/agents/your-agent.md`
-3. **Replace ALL {{PLACEHOLDERS}}** with actual values
-4. **Test the agent** by invoking it with example queries
-5. **Iterate** based on results
-
-## Resources
-
-- See existing agents in `.claude/agents/` for examples
-- Orchestrator agent shows coordinator pattern
-- Developer agent shows specialist pattern
-- QA agent shows analysis pattern
-- Templates in `templates/agent-*.template.md`
+Copy the nearest one, then change `name`, `description`, and the body.
 
 ---
 
-**Remember**: A well-designed agent is clear about its purpose, provides actionable protocols, and delivers consistent quality. Always use templates to ensure proper frontmatter!
+**Remember**: the `description` decides whether your agent is ever used, and only valid frontmatter
+fields take effect. Ground every new agent against a real sibling in `agents/`.

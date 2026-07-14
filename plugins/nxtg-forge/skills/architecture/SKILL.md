@@ -1,287 +1,181 @@
 ---
 name: Architecture
-description: Provides architectural design patterns, system structure guidance, and component organization best practices.
 disable-model-invocation: true
+description: >
+  Clean Architecture and system-design guidance for organizing a codebase into
+  layers with the right dependency direction, choosing structural design patterns
+  (Repository, Strategy, Observer, Command, DI), and recording decisions as ADRs.
+  Use when designing a new system or feature, deciding which layer code belongs in,
+  refactoring a tangled/God-object codebase, reviewing coupling and boundaries, or
+  writing an Architecture Decision Record.
+when_to_use: >
+  Trigger on requests like "how should I structure this", "which layer does X go
+  in", "design the architecture for <feature>", "this module is too coupled / hard
+  to test", "should this be an interface or concrete class", "add a new backend
+  without touching business logic", "write an ADR for <decision>", "review our
+  dependency direction", "is this the right design pattern here".
+allowed-tools: Read, Grep, Glob
 ---
 
-# NXTG-Forge System Architecture
+# Architecture & System Design
 
-**Purpose**: Comprehensive understanding of NXTG-Forge's Clean Architecture implementation, design patterns, and component interactions.
+**What this skill is**: reusable, language-agnostic guidance for structuring a
+codebase — Clean Architecture layering, the dependency rule, the structural design
+patterns that keep boundaries clean, and the ADR format for recording decisions.
 
-**When to Use**: Any task involving system design, new features, refactoring, or understanding component relationships.
+**What this skill is NOT**: a description of the shipped NXTG-Forge implementation.
+The real forge repos are polyglot (Rust orchestrator, Node governance MCP, React
+UI) — for their actual internals read the repo `CLAUDE.md` files, not this skill.
+The examples below are illustrative reference patterns you apply to *a* project,
+shown in Python as one concrete language.
 
 ---
 
-## System Overview
+## Clean Architecture in one rule
 
-NXTG-Forge is a next-generation CLI tool for project scaffolding that implements Clean Architecture principles with specialized AI agent orchestration.
+**Dependencies point inward. Inner layers know nothing about outer layers.**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   NXTG-Forge Architecture                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌──────────────┐                    ┌──────────────┐     │
-│   │   CLI        │◄──────────────────►│   Hooks      │     │
-│   │  Interface   │                    │   System     │     │
-│   └──────┬───────┘                    └──────────────┘     │
-│          │                                                  │
-│   ┌──────▼───────────────────────────────────┐             │
-│   │        Application Layer                 │             │
-│   │  (Use Cases, Orchestration)              │             │
-│   └──────┬───────────────────────────────────┘             │
-│          │                                                  │
-│   ┌──────▼───────────┐        ┌───────────────┐            │
-│   │   Domain Layer   │        │ Agent System  │            │
-│   │ (Pure Business)  │◄──────►│ Orchestrator  │            │
-│   └──────┬───────────┘        └───────┬───────┘            │
-│          │                            │                     │
-│   ┌──────▼────────────────────────────▼──────┐             │
-│   │         Infrastructure Layer             │             │
-│   │  (File System, Templates, State)         │             │
-│   └──────────────────────────────────────────┘             │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  Interface   (CLI / HTTP / UI)               │  ─┐
+├─────────────────────────────────────────────┤   │
+│  Infrastructure  (files, DB, network, I/O)   │  ─┤  imports allowed
+├─────────────────────────────────────────────┤   │  in this direction ▼
+│  Application  (use cases, orchestration)     │  ─┤
+├─────────────────────────────────────────────┤   │
+│  Domain  (entities, value objects, rules)    │  ◄┘  imports nothing outward
+└─────────────────────────────────────────────┘
 ```
+
+The payoff: business rules survive a CLI rewrite, a DB swap, or a UI change,
+because none of those outer things are imported by the domain. The domain is
+testable with no mocks because it has no I/O.
 
 ---
 
-## Clean Architecture Principles
+## The four layers — what lands where
 
-### Core Tenets
+| Layer | Holds | Never holds | Example dir |
+|---|---|---|---|
+| **Domain** | Entities (identity), value objects (attributes), pure business rules | I/O, framework imports, DB calls | `domain/` |
+| **Application** | Use cases, orchestration of domain objects, DTOs, transaction boundaries | business rules of its own, I/O details | `application/` |
+| **Infrastructure** | Repository *implementations*, file/DB/network access, serialization | domain logic | `infrastructure/` |
+| **Interface** | CLI/HTTP/UI entry points, input validation, output formatting | business logic (delegates immediately) | `interface/` |
 
-1. **Independence of Frameworks**: Business logic doesn't depend on external libraries
-2. **Testability**: Business rules can be tested without UI, database, or external services
-3. **Independence of UI**: UI can change without changing business rules
-4. **Independence of Database**: Business rules not bound to database
-5. **Independence of External Agencies**: Business rules don't know about the outside world
+**The tell for a misplaced piece**: if a domain file imports a database driver, a
+web framework, or a file path, it is in the wrong layer. Move the I/O to
+infrastructure behind an interface the domain defines.
 
-### Dependency Rule
-
-**Dependencies point inward**: Outer layers can depend on inner layers, never the reverse.
-
-```
-┌───────────────────────────────────┐
-│  Interface Layer (CLI)            │ ─┐
-├───────────────────────────────────┤  │
-│  Infrastructure Layer (File I/O)  │ ─┼─► Dependencies flow inward
-├───────────────────────────────────┤  │
-│  Application Layer (Use Cases)    │ ─┤
-├───────────────────────────────────┤  │
-│  Domain Layer (Business Logic)    │ ◄┘
-└───────────────────────────────────┘
-   ↑ No outward dependencies
-```
+→ Full code for all four layers: [reference/patterns.md](reference/patterns.md) §Layer Examples
 
 ---
 
-## Layer Structure
+## Worked example — "add a `/generate` command that renders a template to disk"
 
-### 1. Domain Layer (`forge/domain/`)
+Trace one feature through the layers instead of guessing:
 
-**Purpose**: Pure business logic, completely independent of external concerns.
-
-**Components**: Entities (immutable, identity-based), Value Objects (attribute-defined), Domain Services (cross-entity logic)
-
-**Rules**:
-- No external dependencies (no imports from outer layers)
-- All functions should be pure where possible
-- Immutable data structures (`frozen=True`)
-- Business rules live here and only here
-
-→ See `patterns.md` §Domain Layer Examples for code
-
----
-
-### 2. Application Layer (`forge/application/`)
-
-**Purpose**: Orchestrate domain objects to fulfill use cases.
-
-**Components**: Use Cases (high-level workflows), Application Services (multi-use-case coordination), DTOs (inter-layer data)
-
-**Rules**:
-- Orchestrates domain layer — no business logic of its own
-- Handles transaction boundaries
-- Converts between domain and external representations
-
-→ See `patterns.md` §Application Layer Examples for code
-
----
-
-### 3. Infrastructure Layer (`forge/infrastructure/`)
-
-**Purpose**: Implement interfaces defined by inner layers; handle all I/O.
-
-**Components**: Repository implementations, File system access (Jinja2 rendering), State persistence (JSON)
-
-**Rules**:
-- Implements domain interfaces
-- All I/O happens here
-- No domain logic
-- External library usage concentrated here
-
-→ See `patterns.md` §Infrastructure Layer Examples for code
-
----
-
-### 4. Interface Layer (`forge/interface/`)
-
-**Purpose**: User interaction points (CLI via Click).
-
-**Rules**:
-- Thin layer — delegates immediately to application
-- Input validation and output formatting only
-- No business logic
-
-→ See `patterns.md` §Interface Layer Examples for code
-
----
-
-## Agent System Architecture
-
-### Agent Types
-
-| Agent | Specialty |
-|---|---|
-| `LEAD_ARCHITECT` | System design and architectural decisions |
-| `BACKEND_MASTER` | API, backend, database |
-| `CLI_ARTISAN` | CLI commands and interfaces |
-| `PLATFORM_BUILDER` | Platform and infrastructure |
-| `INTEGRATION_SPECIALIST` | Third-party integrations |
-| `QA_SENTINEL` | Testing and quality |
-
-### Orchestration Model
-
-Tasks assigned via keyword matching in task descriptions. `AgentOrchestrator` selects agent type; `TaskDispatcher` manages queue, async execution, and history tracking.
-
-Agent configuration lives in `.claude/config.json` (`agents.available_agents[]`). Max 3 parallel agents by default; handoff timeout 300s.
-
-→ See `patterns.md` §Agent System Examples for code
-
----
-
-## Hook System Design
-
-### Hook Lifecycle
-
-```
-Task/Operation Start
-       ↓
-[pre-task.sh]     ← Environment validation
-       ↓
-[Task Execution]
-       ↓
-[on-file-change.sh] ← After each file write
-       ↓
-[on-error.sh]     ← If error occurs
-       ↓
-[post-task.sh]    ← Quality checks
-       ↓
-Task Complete
-```
-
-### Hook Types
-
-| Hook | Purpose |
-|---|---|
-| `pre-task.sh` | Validate Python version, venv, deps, DB connection; warn on uncommitted changes |
-| `post-task.sh` | Run black, ruff, mypy, tests + coverage, bandit, doc updates |
-| `on-error.sh` | Capture error details, log system state, record git changes, create debug report |
-| `on-file-change.sh` | Quick format, syntax check, fast type check after file modification |
-
-Hooks receive context via env vars (`NXTG_PROJECT_ROOT`, `NXTG_TASK_DESCRIPTION`, `NXTG_AGENT_TYPE`, `NXTG_CONFIG_FILE`).
-
-→ See `patterns.md` §Hook Configuration Examples
-
----
-
-## State Management
-
-### State Architecture
-
-```
-ProjectState (Immutable frozen dataclass)
-  ├── project_id, name, template, variables
-  ├── status: ProjectStatus
-  └── created_at: datetime
-
-SessionState (In-Memory)
-  ├── agent_context: dict
-  ├── progress: float
-  └── errors: list
-
-StateManager (Persistence Interface)
-  ├── save(state)
-  ├── load() → state
-  └── checkpoint(desc)
-```
-
-### State Transitions
-
-```
-INITIALIZING → READY
-READY → GENERATING
-GENERATING → COMPLETED | ERROR
-COMPLETED → ARCHIVED
-ERROR → READY (after fix)
-```
-
-State persisted to `.nxtg-forge/state.json`. Checkpoints tracked with timestamp and description.
-
-→ See `patterns.md` §State Management Examples for code
-
----
-
-## Design Patterns — Index
-
-| Pattern | Purpose | Key Class |
+| Piece of the feature | Layer | Why |
 |---|---|---|
-| Repository | Abstract data access; domain interface + infra impl | `TemplateRepository` / `FileTemplateRepository` |
-| Strategy | Interchangeable algorithms for same operation | `TemplateSelectionStrategy` (Interactive / Config-based) |
-| Observer | Decouple event producers from consumers | `HookNotifier` + `HookObserver` |
-| Command | Encapsulate operations as executable objects | `GenerateProjectCommand` |
-| DI Container | Decouple construction from use; singleton vs transient | `Container` in `infrastructure/di_container.py` |
+| `Template`, `ProjectConfig` (the data + invariants) | Domain | Pure, no I/O — a template is valid or not regardless of where it's stored |
+| `TemplateRepository` (interface) | Domain | The domain declares *what* it needs ("find a template by name"), not *how* |
+| `GenerateProjectUseCase.execute()` | Application | Orchestrates: load → validate → render → return result |
+| `FileTemplateRepository`, `FileGenerator` (Jinja2) | Infrastructure | The actual disk reads/writes, implementing the domain interface |
+| `generate` CLI command parsing `--template --name` | Interface | Parses args, calls the use case, formats the result — nothing more |
 
-→ See `patterns.md` §Design Pattern Code Examples for implementations
+Dependency check: Interface → Application → Domain ← Infrastructure. The arrows
+converge on Domain; nothing leaves it. That is the rule holding.
 
----
-
-## Quality Attributes
-
-| Attribute | Approach |
-|---|---|
-| **Testability** | Pure domain functions (no mocks needed); injectable deps via constructor; mock-friendly interfaces |
-| **Maintainability** | Clear layer boundaries; SRP; ADRs for decisions |
-| **Extensibility** | Template plugins via config; new agents via config; hook system for custom behavior |
-| **Performance** | Lazy template loading; in-memory caching of parsed templates; parallel file generation |
+→ Repository/DTO/use-case code: [reference/patterns.md](reference/patterns.md)
 
 ---
 
-## Architecture Decision Records — Summary
+## Structural design patterns — pick by intent
 
-| ADR | Decision | Key Trade-offs |
+| Pattern | Use when | Trade-off to weigh |
 |---|---|---|
-| ADR-001 | Clean Architecture adoption | ✅ Testability, clear boundaries ⚠️ Initial complexity, learning curve |
-| ADR-002 | Agent-based generation | ✅ Parallelism, specialized expertise ⚠️ Coordination overhead, state sync |
-| ADR-003 | Immutable state (frozen dataclasses) | ✅ Predictability, thread-safety ⚠️ More object creation |
+| **Repository** | You want to swap storage (file ↔ DB ↔ network) without touching business code | One indirection layer; don't add it for a single hardcoded store |
+| **Strategy** | 3+ interchangeable algorithms for the same operation (e.g. template selection) | Overkill for 2 variants — a conditional is fine there |
+| **Observer** | Decouple event producers from consumers (hooks, notifications) | Execution order not guaranteed → observers must be idempotent |
+| **Command** | Operations need queuing, logging, or undo/redo | A wrapper object per operation |
+| **DI Container** | Wiring is sprawling and you want tests to inject fakes | For small projects, manual constructor wiring beats a custom container — reach for an established DI framework before hand-rolling one |
 
-→ See `adr-templates.md` for full ADR records and blank template
-
----
-
-## Detailed References
-
-| File | Content |
-|---|---|
-| `patterns.md` | Full code examples: all four layers, agent system, hooks, state management, design patterns, DI container |
-| `adr-templates.md` | Full ADR-001/002/003 records; blank ADR template for new decisions |
-
-## Related Skills
-
-- [Coding Standards](../coding-standards/SKILL.md) — Implementation patterns and conventions
-- [Domain Knowledge](../domain-knowledge/SKILL.md) — NXTG-Forge business concepts
-- [Testing Strategy](../testing-strategy/SKILL.md) — How to test this architecture
+→ Pattern implementations + trade-offs: [reference/patterns.md](reference/patterns.md) §Design Pattern Code Examples
 
 ---
 
-*Last Updated: 2026-01-06 | Version: 1.0.0*
+## Immutable state as a default
+
+Model state with immutable objects (Python `@dataclass(frozen=True)`, records,
+readonly structs). Mutate by producing a *new* object (`replace()`, `with_status()`),
+never by editing in place.
+
+- Predictable: state only changes at explicit, greppable call sites.
+- Concurrency-safe: a frozen object is safe to share across tasks without locks.
+- Debuggable: prior snapshots survive, so a transition history can be reconstructed.
+
+Cost: more object allocations — negligible for low-frequency transitions (CLI/session
+state), reconsider only on hot paths churning millions of updates/sec.
+
+→ State object + transition code: [reference/patterns.md](reference/patterns.md) §State Management Examples
+
+---
+
+## Recording decisions — ADRs
+
+When you make a non-obvious structural choice, capture it as an Architecture
+Decision Record so the *why* survives. Minimum fields: Decision, Context,
+Rationale, Alternatives Considered, Consequences (✅ gains / ⚠️ trade-offs),
+Status, Date.
+
+→ Worked example ADRs + a blank copy-paste template:
+[reference/adr-templates.md](reference/adr-templates.md)
+
+---
+
+## Gotchas
+
+Real, non-obvious failure modes when applying these patterns:
+
+1. **Dependency-rule inversion (the #1 violation)**: importing infrastructure from
+   the domain — e.g. a "pure" entity that imports `sqlalchemy`, `requests`, or
+   `pathlib` to load itself. This silently re-couples everything and kills the
+   testability payoff. Detect it: `grep -rE "import (sqlalchemy|requests|boto3|open\()" domain/` should return nothing.
+
+2. **Anemic domain model**: entities become bags of getters/setters with all logic
+   living in "services" or use cases. That is not Clean Architecture — it's a
+   procedural script with extra folders. Business rules belong *on* the domain
+   objects; the application layer only *orchestrates* them.
+
+3. **Over-engineering small projects**: full four-layer separation + DI container +
+   Repository abstraction on a 200-line script is negative value — more indirection
+   than logic. Layer only when the codebase is large enough that the boundaries pay
+   for themselves. "Correct for 3+, overkill for 1" applies to every pattern here.
+
+4. **Leaky abstractions in Repository interfaces**: a domain interface that returns
+   an ORM row, a raw SQL cursor, or a framework `Response` object has leaked
+   infrastructure back into the domain through its *return type*. The interface must
+   speak in domain types (`Template`), not storage types (`TemplateRow`).
+
+5. **Immutable ≠ deep-immutable**: a `frozen=True` dataclass with a `list` or `dict`
+   field is still mutable through that field (`state.errors.append(...)` succeeds).
+   Freeze the contents too (use tuples / `frozenset` / `MappingProxyType`) or the
+   thread-safety and audit-trail guarantees are false.
+
+6. **Circular use-case dependencies**: two use cases that call each other are a sign
+   a domain service is missing — extract the shared logic down into the domain layer
+   rather than letting the application layer form a cycle.
+
+---
+
+## Additional resources
+
+- [reference/patterns.md](reference/patterns.md) — full illustrative code for every
+  layer, each design pattern, DI container, and state management.
+- [reference/adr-templates.md](reference/adr-templates.md) — example ADRs showing the
+  format + a blank template for new decisions.
+
+## Related skills
+
+- [Coding Standards](../coding-standards/SKILL.md) — implementation conventions
+- [Testing Strategy](../testing-strategy/SKILL.md) — how to test a layered design
+- [Domain Knowledge](../domain-knowledge/SKILL.md) — forge business concepts

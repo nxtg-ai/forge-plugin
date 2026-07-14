@@ -1,144 +1,172 @@
 ---
 name: Dev Environment Patterns
-description: Documents development environment setup, WSL2 patterns, and tooling configuration.
+description: >
+  Debug and configure local dev-server networking for multi-device access — Vite
+  proxy, env-var URL priority, 0.0.0.0 binding, and WSL2 quirks. Use when API/fetch
+  or WebSocket calls fail from a phone/tablet/other PC ("localhost refused", CORS
+  blocked, NetworkError, WS won't connect), when a server is only reachable from
+  localhost, when a leftover VITE_API_URL breaks dev, or when setting up network
+  access on WSL2.
+when_to_use: >
+  Triggers: "works on my machine but not my phone", "CORS blocked localhost:5051",
+  "NetworkError when attempting to fetch", "WebSocket connection failed", "can't
+  reach dev server from another device", "vite proxy not working", "port 5050
+  already in use", "how do I bind to 0.0.0.0", "WSL2 windows host can't reach
+  vite", "VITE_API_URL keeps overriding".
+allowed-tools: Read, Grep, Bash(lsof:*), Bash(ss:*), Bash(curl:*), Bash(cat:*)
 ---
 
 # Development Environment Patterns
 
-## Purpose
-
-Institutional knowledge for common development environment configurations and pitfalls learned from real-world debugging sessions.
+Institutional knowledge for local dev-server networking, learned from real
+forge-ui debugging. All code here mirrors the live config in
+`forge-ui/vite.config.ts` and `forge-ui/src/services/api-client.ts` (ports:
+UI 5050 → proxies to API/WS 5051).
 
 ---
 
 ## Pattern: Multi-Device Development Access
 
-**Date Learned**: 2026-01-31
-**Severity**: Critical (blocks all functionality from non-localhost devices)
+**Severity**: Critical (blocks all functionality from non-localhost devices).
 
-### Problem
+### Symptom
 
-When accessing the development server from mobile devices, tablets, or other PCs on the network, API calls fail with:
+API/WS calls fail only when accessed from a phone, tablet, or another PC:
 - `Cross-Origin Request Blocked: localhost:5051`
 - `NetworkError when attempting to fetch resource`
 - WebSocket connection failures
 
-### Root Cause Analysis
+### Root cause
 
-1. **Environment Variables Override Code Logic**: `.env` files with `VITE_API_URL=http://localhost:5051/api` are injected into the bundle at build time
-2. **Priority Matters**: Code checks `import.meta.env.VITE_API_URL` first, uses it if set
-3. **localhost Is Not Reachable**: From another device, `localhost` refers to *that* device, not the dev server
+`localhost` on the remote device points at *that device*, not the dev server.
+Any URL that names `localhost` (hardcoded or via `VITE_API_URL`) is unreachable
+off-machine. The fix is relative URLs proxied by Vite, so the browser only ever
+talks same-origin to whatever host it loaded the page from.
 
-### Correct Pattern
+### Correct pattern (matches live source)
 
-```bash
-# .env - DO NOT hardcode localhost
-# VITE_API_URL=http://localhost:5051/api  # WRONG
-# VITE_WS_URL=ws://localhost:5051/ws      # WRONG
-```
-
-```typescript
-// api-client.ts - Use relative URLs in dev mode
+```ts
+// src/services/api-client.ts — env var wins, else relative /api in dev
 const getApiBaseUrl = () => {
-  // Env var takes priority - only set for production builds
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-
-  // Development: use relative URLs (proxied by Vite)
-  if (import.meta.env.DEV) return '/api';
-
-  // Production fallback: dynamic host detection
-  const host = window.location.hostname;
-  return `http://${host}:5051/api`;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL; // prod only
+  if (import.meta.env.DEV) return "/api";                                // Vite proxies this
+  const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+  return `http://${host}:5051/api`;                                       // prod fallback
 };
 ```
 
-```typescript
-// vite.config.ts - Proxy API and bind to all interfaces
-export default defineConfig({
-  server: {
-    host: '0.0.0.0',  // Accept connections from any device
-    port: 5050,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5051',
-        changeOrigin: true
-      },
-      '/ws': {
-        target: 'ws://localhost:5051',
-        ws: true
-      }
-    }
-  }
-});
+```ts
+// vite.config.ts — bind all interfaces + proxy /api, /ws, /terminal to 5051
+server: {
+  host: "0.0.0.0",     // accept connections from any device
+  port: 5050,
+  strictPort: true,    // FAIL if taken — does NOT auto-increment
+  proxy: {
+    "/api":      { target: "http://localhost:5051", changeOrigin: true },
+    "/ws":       { target: "ws://localhost:5051", ws: true, changeOrigin: true },
+    "/terminal": { target: "ws://localhost:5051", ws: true },
+  },
+}
 ```
 
-### Why This Works
+```bash
+# .env — never hardcode localhost. Leave VITE_API_URL UNSET in dev.
+# VITE_API_URL=http://localhost:5051/api   # WRONG — breaks every non-local device
+```
 
-1. **Relative URLs** (`/api/...`) are relative to `window.location.host`
-2. When accessed via `http://192.168.1.206:5050`, requests go to `http://192.168.1.206:5050/api/...`
-3. **Vite's proxy** intercepts these and forwards to `localhost:5051`
-4. No CORS issues because browser sees same-origin requests
+### Why it works
 
-### Anti-Patterns to Avoid
+Accessed via `http://192.168.1.206:5050`, a `/api/...` fetch resolves to
+`http://192.168.1.206:5050/api/...` (relative to `window.location.host`). Vite's
+dev server intercepts `/api`, `/ws`, `/terminal` and forwards to `localhost:5051`
+server-side. The browser only sees same-origin requests, so there is no CORS.
 
-| Anti-Pattern | Why It's Wrong |
+### Worked example — "signup works on laptop, dead on phone"
+
+1. `grep -rn "VITE_API_URL\|localhost:5051" .env* src/` → find `VITE_API_URL=http://localhost:5051/api` in `.env.local`.
+2. That value wins over the `import.meta.env.DEV → "/api"` branch, so the bundle ships an absolute `localhost` URL. On the phone `localhost` = the phone → connection refused.
+3. Comment it out, **restart Vite** (env is baked at startup, HMR won't pick it up), hard-refresh the phone (`Ctrl/Cmd+Shift+R`) to drop cached JS.
+4. Confirm in the phone's console the request now hits `/api/...` (relative), not `localhost`.
+
+### Anti-patterns
+
+| Anti-pattern | Why it's wrong |
 |--------------|----------------|
-| `VITE_API_URL=http://localhost:5051` | Only works on the dev machine |
-| `fetch('http://localhost:5051/api')` | Hardcoded, breaks multi-device |
-| Using `127.0.0.1` instead of `0.0.0.0` for server binding | Only accepts local connections |
-| Not using Vite proxy | Forces CORS configuration complexity |
+| `VITE_API_URL=http://localhost:5051` in dev | Overrides the relative-URL branch; only works on the dev machine |
+| `fetch("http://localhost:5051/api")` | Hardcoded host; breaks every other device |
+| `127.0.0.1` instead of `0.0.0.0` for server bind | Accepts local connections only |
+| Skipping the Vite proxy | Forces manual CORS config on the API server |
+| Omitting `changeOrigin: true` on the proxy | Target may reject the mismatched `Host` header |
 
-### Debugging Checklist
+### Debugging checklist
 
-When multi-device access fails:
+1. [ ] `grep -rn "VITE_" .env*` — any hardcoded `localhost`? Comment it out.
+2. [ ] `vite.config.ts` has `host: "0.0.0.0"`.
+3. [ ] Proxy blocks present for every path the app calls (`/api`, `/ws`, `/terminal`).
+4. [ ] **Restart Vite** after any `.env` change (not just HMR).
+5. [ ] Hard-refresh the remote browser to clear cached JS.
+6. [ ] Read the actual failing URL in the remote device's console — is it relative or absolute?
+7. [ ] `curl http://<dev-ip>:5050/api/health` from another box to isolate app vs network.
 
-1. [ ] Check `.env` for hardcoded localhost URLs - comment them out
-2. [ ] Verify `vite.config.ts` has `host: '0.0.0.0'`
-3. [ ] Verify proxy configuration in `vite.config.ts`
-4. [ ] Restart Vite after env changes
-5. [ ] Hard refresh browser (Ctrl+Shift+R) to clear cached JS
-6. [ ] Check browser console for the actual URL being requested
+### Related files
 
-### Related Files
-
-- `.env` - Environment variables
-- `vite.config.ts` - Vite configuration
-- `src/services/api-client.ts` - API URL construction
-- `src/App.tsx` - WebSocket URL construction
+- `forge-ui/.env*` — environment variables (build-time baked)
+- `forge-ui/vite.config.ts` — bind + proxy config
+- `forge-ui/src/services/api-client.ts` — `getApiBaseUrl()` URL construction
 
 ---
 
 ## Pattern: Server Binding for Network Access
 
-### Problem
+Bind to `0.0.0.0` for any dev server that must be reachable off-machine:
 
-Development servers only accessible from `localhost`, not from other devices.
-
-### Solution
-
-Always bind to `0.0.0.0` for development servers that need network access:
-
-```typescript
-// Vite
-server: { host: '0.0.0.0' }
-
-// Express
-app.listen(port, '0.0.0.0')
-
-// Node http
-server.listen(port, '0.0.0.0')
+```ts
+server: { host: "0.0.0.0" }   // Vite
+app.listen(port, "0.0.0.0")   // Express
+server.listen(port, "0.0.0.0")// Node http
 ```
 
-### Security Note
-
-`0.0.0.0` binding exposes the server to all network interfaces. This is appropriate for:
-- Local development on trusted networks
-- WSL2 development (required for Windows host access)
-
-For production, use specific interfaces or reverse proxies.
+`0.0.0.0` exposes the server on all interfaces — appropriate for local
+development on a trusted network and required for WSL2 → Windows-host access.
+For production use a specific interface or a reverse proxy.
 
 ---
 
-**Last Updated**: 2026-01-31
-**Version**: 1.0.0
-**Status**: Living Document - Update with new learnings
+## Gotchas
+
+Real, non-obvious failure modes for this stack:
+
+- **Env var beats the dev branch, silently.** `getApiBaseUrl()` checks
+  `VITE_API_URL` *before* `import.meta.env.DEV`. A stray value in `.env`,
+  `.env.local`, `.env.development`, or the shell environment overrides the
+  relative-URL logic — dev looks broken with no code change. `.env.local` is
+  gitignored, so it survives `git status` clean and is the classic "works on my
+  machine" culprit.
+- **Vite bakes env vars at startup, not per-request.** Editing `.env` does
+  nothing until you restart the Vite process; HMR will not pick it up. A stale
+  `dist-ui/` production build carries the URL baked at *its* build time.
+- **`strictPort: true` means no fallback port.** If 5050 is already in use Vite
+  exits with an error instead of hopping to 5051/5052. Find the stale process
+  (`lsof -i :5050` or `ss -ltnp | grep 5050`) and kill it — do not expect a new
+  port.
+- **WSL2 VM IP changes on reboot.** Under legacy NAT networking the WSL2 IP
+  (e.g. `192.168.x.x` / `172.x.x.x`) is reassigned each boot, so a bookmarked
+  `http://<old-ip>:5050` goes dead. Use WSL2 *mirrored* networking (Windows 11
+  `.wslconfig` → `networkingMode=mirrored`) so `localhost` and the LAN IP work
+  from the Windows host, or re-check the IP with `hostname -I` after each reboot.
+- **Windows Firewall blocks the LAN even with `0.0.0.0`.** Binding all
+  interfaces is necessary but not sufficient — a fresh Windows Firewall rule may
+  still drop inbound 5050 from other LAN devices. If `0.0.0.0` is set and the
+  Windows host still can't reach it, suspect the firewall before the app.
+- **Three separate WS proxies, three separate failures.** `/ws` and `/terminal`
+  are distinct proxy entries. A terminal/PTY feature can be dead while the main
+  WebSocket works (or vice versa) if only one proxy block is present or `ws:
+  true` is missing on it.
+- **Prod fallback assumes API co-located on `:5051`.** The non-dev branch builds
+  `http://${host}:5051/api`. Behind a reverse proxy that serves the API on the
+  same origin/port, that hardcoded `:5051` is wrong — set `VITE_API_URL`
+  explicitly for that deploy.
+
+---
+
+**Status**: Living document — update with new learnings.

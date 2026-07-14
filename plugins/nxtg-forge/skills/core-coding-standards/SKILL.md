@@ -1,9 +1,25 @@
 ---
 name: Core Coding Standards
-description: Enforces foundational coding standards and TypeScript best practices.
+description: >
+  Foundational cross-language coding conventions — naming, type hints/types,
+  error handling, async, imports, SQL formatting, commit-message format, review
+  checklist, and file-size limits for Python, JavaScript/TypeScript, and SQL.
+  Use when writing or reviewing new code, setting up a project's style baseline,
+  answering "what's our convention for X", enforcing type hints / TS-over-JS,
+  formatting a SQL query or git commit, or running a pre-PR code-review checklist.
+when_to_use: >
+  Triggers on requests like "how should I name this", "what commit format do we
+  use", "add type hints", "is this idiomatic Python/TypeScript", "format this
+  SQL", "review my code before PR", "what's the max file size", "should I use
+  async here", or when a builder/reviewer needs a shared style baseline.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Coding Standards & Conventions
+
+Reference for consistent Python / TypeScript / SQL. Read the section for the
+language at hand; apply the ✅ pattern, avoid the ❌. Read **## Gotchas** before
+relying on any language-version-specific syntax below.
 
 ## Python Standards
 
@@ -408,6 +424,43 @@ async def query():
     conn = await asyncpg.connect(DATABASE_URL)
     # Creates new connection each time!
 ```
+
+## Gotchas
+
+Real, non-obvious traps behind the rules above:
+
+- **`list[str]` / `dict[str, int]` builtins need Python 3.9+ at runtime.** On 3.8
+  they raise `TypeError: 'type' object is not subscriptable` unless the module has
+  `from __future__ import annotations` (which makes annotations lazy strings) or
+  you fall back to `typing.List`. The "modern syntax" rule assumes a 3.9+ target
+  — confirm the interpreter before deleting `from typing import List, Dict`.
+- **`asyncio.gather` fails fast but does not cancel siblings by default.** With
+  the default `return_exceptions=False`, the first exception propagates
+  immediately, but the other coroutines keep running (they are not cancelled) —
+  they can raise later into an unawaited-task warning. If partial results matter,
+  pass `return_exceptions=True` and inspect each result; don't assume gather
+  cleans up for you.
+- **A leading `_` is convention, not enforcement.** In both Python and TypeScript
+  `_private`/`private _foo` do not actually restrict access — Python name-mangles
+  only with a double underscore (`__x`), and TS `private` is compile-time only
+  (erased at runtime; still reachable via bracket access or plain JS). Never rely
+  on the underscore for a security boundary.
+- **`SELECT` list vs `GROUP BY` must agree.** Under `ONLY_FULL_GROUP_BY` (MySQL
+  default since 5.7) or in PostgreSQL, every non-aggregated selected column must
+  appear in `GROUP BY`. The ✅ SQL example groups by all three selected
+  non-aggregate columns for exactly this reason — dropping one from `GROUP BY`
+  errors on Postgres and silently returns arbitrary rows on lax MySQL.
+- **Index on `users(email)` should be `UNIQUE`.** A plain index speeds lookups but
+  does not prevent duplicate accounts; the unique constraint is what enforces the
+  invariant. The inline comment in the Indexing example flags this — a bare
+  `CREATE INDEX` on a natural key is usually a bug.
+- **"No `console.log`/`print`" also means no committed debug logging.** The
+  review-checklist item is about stray debug output, not all logging — replace
+  with the project logger, don't just delete the line and lose the signal.
+- **File-size limits are guidance, not a linter gate here.** This skill states
+  "Files: max 500 lines" but nothing in the plugin enforces it. Treat a 600-line
+  file as a refactor smell, not a hard failure, unless a project ESLint/ruff rule
+  actually enforces it.
 
 ---
 

@@ -1,7 +1,14 @@
 ---
 name: ceo-loop
-description: CEO Decision Loop — ORBIT model for Forge. Autonomous multi-iteration governance engine for NXTG-Forge product decisions. OBSERVE → REASON → BUILD → INSPECT → TURN. Reads state files written by /forge:ceo-loop command. The Stop hook keeps the loop alive. This skill defines the execution protocol for each iteration.
+description: >
+  CEO Decision Loop — the ORBIT execution protocol (OBSERVE → REASON → BUILD → INSPECT → TURN) for
+  one iteration of NXTG-Forge autonomous product governance. Preloaded into the nxtg-ceo-loop agent and
+  started by the /forge:ceo-loop command; the ceo-loop-stop.sh Stop hook re-invokes it each iteration
+  until the queue empties or limits hit. Use when running or resuming a CEO-LOOP: classify pending
+  decisions by depth, apply the impact×reversibility matrix, write the append-only decision journal +
+  progress file, run retrograde verification, update trust calibration, and decide continue-or-stop.
 disable-model-invocation: true
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TodoWrite
 ---
 
 # CEO Decision Loop — ORBIT Protocol
@@ -105,6 +112,28 @@ Agents write here to submit decisions for review:
 ]
 ```
 If this file is absent, CEO-LOOP does a proactive scan instead (see OBSERVE phase).
+
+---
+
+## Gotchas
+
+Real failure modes of the loop mechanism (`hooks/scripts/ceo-loop-stop.sh` + the `nxtg-ceo-loop` agent). Read before running.
+
+1. **State is keyed to the current working directory, not a fixed project.** The Stop hook sets `PROJECT_ROOT="$(pwd)"` and looks for `.claude/ceo-loop-state.json` under it (Guard 1). If the loop is running from a different CWD than where the state file was written, the hook silently exits 0 — the loop dies with **no error and no re-feed**. Always run from the same project root where `/forge:ceo-loop` wrote the state.
+
+2. **No `jq` → the loop dies silently.** Guard 2 exits 0 if `jq` is not on PATH — no warning. Independently, the time-limit check needs `python3`; if it is missing, `ELAPSED=0` and the **time limit never fires** — only `max_iterations` or a manual `active:false` can stop the loop.
+
+3. **You must set `active:false` yourself to stop cleanly.** The hook only auto-stops on `iteration >= max_iterations` or elapsed time. If the queue empties and TURN forgets to write `active:false`, the hook keeps re-feeding until it burns **all** remaining iterations running proactive scans. Empty queue + nothing to scan ⇒ set `active:false`.
+
+4. **The decision journal is append-only — you cannot edit a past `verification` in place.** Retrograde outcomes (`CONFIRMED`/`FAILED`) are recorded in the **progress file** and folded into `correct_decisions`/`incorrect_decisions` in the state file. New decisions are appended fresh with `verification:"PENDING"`. Never rewrite old JSONL lines to "update" a verification.
+
+5. **Only the top of the progress file survives to the next iteration.** The hook re-feeds `head -30 ceo-loop-progress.md` and only `tail -1` of the journal (for the retrograde line). Put queue status, next-depth target, and retrograde results **near the top** of the progress file, or the next iteration will not see them.
+
+6. **"Budget remaining" is a fabricated estimate, not a real token gauge.** The hook computes `~(100 − iteration×4)%` — a linear guess. Phase-5 check 2 ("last 10% of token budget") is heuristic only; do not treat it as a measured context reading.
+
+7. **Trust calibration only moves if INSPECT updates the counters.** `correct_decisions`/`incorrect_decisions` in the state file are the sole inputs to `trust_level` and the accuracy line the hook injects. If a retrograde check does not increment them, trust never changes and the injected accuracy line stays blank.
+
+8. **Inside the `nxtg-ceo-loop` agent there is no Bash tool.** That agent's allowlist is `Read, Grep, Glob, TodoWrite, Task, Write, Edit` — no Bash. When this skill runs under that agent, the `cat`/`jq`/`git`/`grep -r` snippets below **will not execute**; read state files with `Read` and scan with `Grep`/`Glob` instead. The Bash snippets apply when the loop is driven directly by the `/forge:ceo-loop` command (whose `allowed-tools` does grant Bash).
 
 ---
 
@@ -223,7 +252,7 @@ Three checks per iteration:
 - Check git log for expected changes
 - Check `.forge/state.json` task updates
 - Check if TodoWrite tasks were created
-- Mark `verification` field accordingly in progress file
+- Record the verification result in the **progress file** (the journal is append-only — do not edit past JSONL lines)
 
 **2. Decision retrograde** — For decisions from 1-2 iterations ago with `verification == "PENDING"`:
 - Did the agent's implementation align with what was approved?
@@ -271,6 +300,18 @@ jq '.depth_escalation_counter += 1' .claude/ceo-loop-state.json > .claude/ceo-lo
 mv .claude/ceo-loop-state.json.tmp .claude/ceo-loop-state.json
 ```
 If stopping: set `active: false`.
+
+---
+
+## Worked Example — One Iteration
+
+Queue (`ceo-decisions-pending.json`) holds 3 items: two trivial (add an ESLint rule, fix a README typo) and one medium (SQLite vs Postgres for state storage).
+
+- **OBSERVE** — state shows iteration 7/20, trust `standard`, 47/49 correct. Progress file's last entry: iter-6 decisions all `CONFIRMED`. Load the 3 pending items → classify as 2 trivial, 1 medium.
+- **REASON** — grep the journal for `"category":"architecture"` precedent → find iter-3 "chose SQLite, CONFIRMED". Batch the 2 trivials (Low impact, reversible → `auto_approve`). Pick the SQLite/Postgres item as the single deep focus.
+- **BUILD** — emit two `auto_approve` structs for the trivials; spawn `forge:detective` to report current scale + infra constraints; decide SQLite (reversible, single-user), tier `quick_review`. Append all three as JSONL lines with `verification:"PENDING"`.
+- **INSPECT** — verify iter-5's deep decision landed: `git log` shows the expected commit → mark it `CONFIRMED` in the progress file, bump `correct_decisions` to 48 in the state file. Rewrite the progress file with `queue: 0 remaining` **near the top** (gotcha 5).
+- **TURN** — queue empty; proactive scan finds no drift → set `active:false`, write the session summary. On the next Stop the hook sees `active:false` (Guard 3) and lets the session end.
 
 ---
 

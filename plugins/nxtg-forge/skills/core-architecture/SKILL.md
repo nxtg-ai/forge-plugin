@@ -1,9 +1,35 @@
 ---
 name: Core Architecture
-description: Defines core architectural principles and system design foundations.
+description: >
+  Language-agnostic Clean Architecture, Domain-Driven Design, REST API,
+  repository/unit-of-work, caching, event-driven, and error-handling reference
+  patterns (with runnable Python examples). Use when designing or reviewing a
+  new feature's layer structure, deciding where a piece of logic belongs
+  (domain vs application vs infrastructure vs interface), enforcing the
+  dependency rule, splitting entities from value objects, defining aggregates,
+  shaping REST resources and status codes, choosing a caching strategy, or
+  refactoring a layering / dependency-direction violation.
+when_to_use: >
+  Trigger on requests like "design the architecture for X", "which layer does
+  this belong in", "review my clean architecture", "is this domain or
+  infrastructure", "how do I structure this feature", "repository pattern",
+  "unit of work", "aggregate root", "domain vs value object", "REST endpoint
+  design", "what status code", "cache-aside vs write-through", "domain events",
+  "fix the dependency direction", "my domain imports the database".
+allowed-tools: Read, Grep, Glob
 ---
 
 # Architecture Patterns & Best Practices
+
+Language-agnostic design patterns. Examples are Python (async FastAPI +
+SQLAlchemy) but the principles apply to any stack. For NXTG-Forge's own
+concrete system layering, see the separate `Architecture` skill.
+
+## When to use this skill
+
+Reach for this when placing new logic, drawing layer boundaries, or refactoring
+a dependency-direction violation. The core question it answers: **where does
+this code belong, and what is it allowed to depend on?**
 
 ## Clean Architecture
 
@@ -406,6 +432,67 @@ async def change_password(request: ChangePasswordRequest):
     except InvalidPasswordError:
         raise HTTPException(status_code=400, detail="Invalid password")
 ```
+
+## Gotchas
+
+Non-obvious failure modes that pass review but break later:
+
+1. **Anemic domain model.** Entities become dumb data bags and every rule lives
+   in a use case / "service". This is the most common way DDD collapses back
+   into procedural code. Test: if `User` has no behavior methods and
+   `UserService` mutates its fields directly, the model is anemic — move
+   invariant-enforcing logic (like `change_password` above) onto the entity.
+
+2. **Async lazy-loading raises, it doesn't silently N+1.** With async
+   SQLAlchemy, accessing an unloaded relationship (`user.posts`) outside a
+   greenlet context throws `MissingGreenlet` / `DetachedInstanceError`, not a
+   convenient extra query. You MUST `selectinload`/`joinedload` up front. The
+   N+1 examples above are the *sync* trap; async turns the same mistake into a
+   runtime crash.
+
+3. **The repository leaks ORM models.** Returning a `UserModel` (SQLAlchemy
+   row) instead of the domain `User` silently drags infrastructure into the
+   domain — the dependency rule is now violated through the return type, not an
+   import. Always map at the boundary (`_to_domain`), and type the interface's
+   return as the domain entity.
+
+4. **Domain events are collected but never dispatched.** The `_events` list
+   pattern only works if something drains and publishes it after the
+   transaction commits. A common bug: events appended in the domain, the
+   aggregate saved, and `_events` never read — so `SendWelcomeEmailHandler`
+   never fires. Decide the dispatch point (usually the unit-of-work / use case
+   after `commit`) and clear the list once published.
+
+5. **Cache-aside has no invalidation path.** The `get_user` cache-aside example
+   populates on read but nothing evicts on write. Pair it with an explicit
+   delete/overwrite in every mutation path, or reads serve stale data until
+   TTL. Write-through narrows but doesn't close the stale window between the DB
+   commit and the cache write.
+
+6. **FastAPI already returns 422 for validation.** Request-body/Pydantic
+   validation failures come back as `422 Unprocessable Entity` automatically.
+   Raising a custom `HTTPException(400)` for the *same* class of error makes the
+   API inconsistent — reserve 400 for malformed requests and 422 for
+   semantically invalid ones, and don't fight the framework default.
+
+7. **Aggregates referencing each other by object, not ID.** Holding a direct
+   `Order.customer: Customer` object reference across aggregate boundaries
+   creates load fan-out, transactional coupling, and circular imports. Reference
+   other aggregate roots by identity (`customer_id: int`) and load them
+   separately.
+
+8. **`frozen=True` gives structural equality — but only for its fields.** A
+   value object's equality/hash is derived from its declared fields; a mutable
+   field (a `list`, a nested non-frozen object) inside a frozen dataclass breaks
+   hashing and lets the "immutable" value mutate underneath a dict/set key. Keep
+   value-object fields primitive or themselves immutable.
+
+## Additional resources
+
+- NXTG-Forge's concrete system architecture (CLI ↔ hooks ↔ layers, agent
+  orchestration): the sibling `Architecture` skill.
+- Cross-language naming, typing, and error-handling conventions: the
+  `Core Coding Standards` skill.
 
 ---
 

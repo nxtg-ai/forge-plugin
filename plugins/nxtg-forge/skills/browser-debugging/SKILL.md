@@ -1,107 +1,134 @@
 ---
 name: Browser Debugging
-description: Use Playwright MCP to see browser console errors, take screenshots, monitor network requests, and debug UI issues in the NXTG-Forge web dashboard. Activate when debugging UI bugs, verifying visual changes, or checking for console errors after code changes.
+description: >
+  Debug the running NXTG-Forge web dashboard by driving a headless Chromium via the
+  Playwright MCP server — read console errors, take screenshots, inspect the DOM
+  accessibility tree, and watch network requests. Use when the dashboard renders blank
+  or broken after a UI change, when the user reports browser console errors, after fixing
+  a React bug (infinite loop, "Maximum update depth", stale state) to confirm it's gone,
+  or when verifying a visual/interactive change (Command Center, Infinity Terminal) in the
+  real running app rather than from tests alone.
+when_to_use: >
+  "blank page", "white screen", "console errors", "check the browser", "take a screenshot
+  of the UI", "does the dashboard render", "verify the React fix", "Maximum update depth",
+  "did my UI change work", "test Command Center", "network request failing in the browser".
+allowed-tools: Bash(curl *), Bash(npm run *), mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_wait_for, mcp__playwright__browser_evaluate
 ---
 
 # Browser Debugging Skill
 
-Use Playwright MCP tools to inspect the running NXTG-Forge UI directly from Claude Code.
-Playwright runs its own headless Chromium inside WSL — no Windows Chrome dependency.
+Drive a real (headless) Chromium against the running NXTG-Forge dashboard from inside
+Claude Code, using the **Playwright MCP** server. No Windows Chrome dependency — Playwright
+launches its own headless Chromium inside WSL.
 
-## When to Use This Skill
+## Where the tools come from (read first)
 
-- After making UI changes — verify they render correctly
-- When the user reports browser console errors
-- After fixing React bugs (infinite loops, state issues) — confirm they're resolved
-- When testing Command Center or any interactive UI component
-- When you need to see what the user sees in their browser
+The Playwright MCP server is registered in **`forge-ui/.mcp.json`**, NOT in the plugin's
+`.mcp.json` (which only registers governance / orchestrator / semgrep). The `browser_*` tools
+only exist when a Claude Code session has `forge-ui/.mcp.json` loaded — i.e. you are working in
+the `forge-ui/` repo. From the plugin repo alone they are unavailable. Config as shipped:
+
+```jsonc
+"playwright": { "command": "npx", "args": ["@playwright/mcp@latest", "--headless", "--console-level", "debug"] }
+```
+
+Two consequences of that exact config:
+- `--console-level debug` → `browser_console_messages` returns **verbose debug logs**, not just
+  errors. Filter for `error`/`warning` yourself; do not assume a clean-looking tail means no errors.
+- **No `--caps`** flag → the `pdf`, `vision` (coordinate clicks/screenshots), and `devtools`
+  capabilities are OFF. `browser_pdf_save` and coordinate-based interaction are not available here.
 
 ## Prerequisites
 
-The NXTG-Forge servers must be running:
-- Vite dev server on port 5050: `npx vite --host 0.0.0.0 --port 5050`
-- API server on port 5051: `npx tsx src/server/api-server.ts`
+Start both servers from `forge-ui/` (one command starts Vite :5050 + Express API :5051):
 
-Playwright MCP is configured in `.mcp.json` and starts automatically.
+```bash
+cd forge-ui && npm run dev
+```
 
-## Available Tools (via Playwright MCP)
+Confirm they're up before driving the browser:
 
-### Navigation & Interaction
-- `browser_navigate` — Go to a URL (e.g., http://localhost:5050)
-- `browser_click` — Click an element by text, selector, or coordinates
-- `browser_type` — Type text into an input field
-- `browser_press_key` — Press a keyboard key
-- `browser_hover` — Hover over an element
-- `browser_select_option` — Select from a dropdown
-- `browser_drag` — Drag and drop
+```bash
+curl -sf http://localhost:5050 >/dev/null && echo "UI up"
+curl -sf http://localhost:5051/api/health >/dev/null && echo "API up"
+```
 
-### Screenshots & DOM
-- `browser_screenshot` — Capture the current page as an image
-- `browser_snapshot` — Get accessibility tree snapshot (structured DOM)
+## Core tools (Playwright MCP)
 
-### Console & JavaScript
-- `browser_console_messages` — Read console output (errors, warnings, logs)
-- `browser_evaluate` — Run JavaScript in the page context
+| Task | Tool |
+|------|------|
+| Go to a URL | `browser_navigate` |
+| Get the DOM as an accessibility tree (**+ element refs**) | `browser_snapshot` |
+| Capture the page as an image | `browser_take_screenshot` |
+| Read console output | `browser_console_messages` |
+| List HTTP requests the page made | `browser_network_requests` |
+| Wait for text / state (not a fixed sleep) | `browser_wait_for` |
+| Click / type on a snapshot element | `browser_click` / `browser_type` (need a `ref`) |
+| Run JS in page context | `browser_evaluate` |
+| Multiple tabs | `browser_tabs` (single tool, `action` arg) |
 
-### Network
-- `browser_network_requests` — List all HTTP requests the page made
+The interaction model is **snapshot-first**: `browser_snapshot` returns the accessibility
+tree with an element `ref` for each node; `browser_click` / `browser_type` operate on those
+refs. You cannot click by raw CSS selector or by pixel coordinates in this config — snapshot,
+find the element, then act on its ref.
 
-### Tab Management
-- `browser_tab_list` — List all open tabs
-- `browser_tab_new` — Open a new tab
-- `browser_tab_select` — Switch to a different tab
-- `browser_tab_close` — Close a tab
+## Workflow: dashboard is blank / has console errors
 
-### File Operations
-- `browser_file_upload` — Upload a file to an input
-- `browser_pdf_save` — Save page as PDF
+1. `browser_navigate` → `http://localhost:5050`
+2. `browser_console_messages` → scan for `error` entries (React errors, failed imports,
+   `Maximum update depth`, uncaught exceptions). Debug-level noise is expected — grep for `error`.
+3. `browser_network_requests` → any `4xx`/`5xx`? A failed `/api/*` call (API server down or
+   route 500) is the most common cause of a blank data panel.
+4. `browser_take_screenshot` → capture the rendered state for the report.
 
-## Workflow: Check for Console Errors
+## Workflow: verify a React fix (infinite loop / stale state)
 
-1. Navigate to the NXTG-Forge UI:
-   ```
-   browser_navigate → http://localhost:5050
-   ```
+1. `browser_navigate` → `http://localhost:5050` (fresh navigate reloads the Vite bundle — do
+   NOT reuse a stale open page after an HMR edit).
+2. `browser_wait_for` → wait for a stable element/text instead of guessing a sleep.
+3. `browser_console_messages` → confirm no `Maximum update depth exceeded` / `Warning:` reappears.
+4. `browser_take_screenshot` → visual confirmation.
 
-2. Wait for page to load, then check console:
-   ```
-   browser_console_messages
-   ```
+## Workflow: test Command Center interaction
 
-3. Take a screenshot to see current state:
-   ```
-   browser_screenshot
-   ```
+1. `browser_navigate` → `http://localhost:5050`
+2. `browser_snapshot` → locate the "Command" nav item, grab its `ref`
+3. `browser_click` (that `ref`) → open Command Center
+4. `browser_snapshot` again → grab the `ref` of a command button (e.g. "Forge Status")
+5. `browser_click` (that `ref`)
+6. `browser_console_messages` → check for errors triggered by the action
+7. `browser_network_requests` → confirm the backing API call returned `2xx`
+8. `browser_take_screenshot` → verify the result rendered
 
-## Workflow: Test Command Center
+## Gotchas
 
-1. `browser_navigate` → http://localhost:5050
-2. `browser_snapshot` → find the "Command" nav item
-3. `browser_click` → click "Command"
-4. `browser_click` → click a command button (e.g., "Forge Status")
-5. `browser_console_messages` → check for errors
-6. `browser_screenshot` → verify result displayed
-7. `browser_network_requests` → verify API call succeeded
-
-## Workflow: Verify React Fix
-
-After fixing a React infinite loop or state bug:
-1. `browser_navigate` → http://localhost:5050
-2. Wait 5 seconds (use browser_evaluate with setTimeout or just proceed)
-3. `browser_console_messages` → look for "Maximum update depth" or "Warning"
-4. If no errors, the fix is confirmed
-5. `browser_screenshot` → visual confirmation
-
-## Connection Details
-
-- Playwright runs headless Chromium inside WSL (no Windows dependency)
-- Configured with `--console-level error` to capture console errors
-- NXTG-Forge UI at `http://localhost:5050` (Vite dev server)
-- API server at `http://localhost:5051`
+- **The tools live in `forge-ui/.mcp.json`, not the plugin.** A session opened only in
+  `forge-plugin/` has no `browser_*` tools. Work from `forge-ui/`.
+- **Headless Chromium is a fresh, isolated session — it is NOT the user's browser.** No user
+  cookies, auth, or localStorage carry over. A screenshot shows what a clean anonymous session
+  renders, not "what the user sees" in their logged-in Windows Chrome. If a bug depends on auth
+  state you must reproduce that state in the headless session first.
+- **`--console-level debug` means console output is noisy.** Absence of a visible error at the
+  tail of `browser_console_messages` is not proof of no error — filter the full list for `error`.
+- **Snapshot before you interact.** `browser_click`/`browser_type` require a `ref` from
+  `browser_snapshot`. Clicking "by text" or by coordinates does not work in this config
+  (no `--caps vision`). Re-snapshot after any navigation or DOM change — refs go stale.
+- **`browser_pdf_save` is unavailable** here (needs `--caps pdf`); so is coordinate-based
+  screenshotting/clicking (`--caps vision`). Don't reach for them.
+- **Tab tools are consolidated.** Current Playwright MCP exposes a single `browser_tabs` tool
+  with an `action` argument — the old `browser_tab_list` / `browser_tab_new` / `browser_tab_select`
+  / `browser_tab_close` names do not exist.
+- **Re-navigate after an HMR edit.** A page left open from before your code change may still show
+  the old bundle; `browser_navigate` fresh to force the current build.
+- **`forge-ui/.mcp.json` also pins a stale `forge` server path** (`--project .../v3`, the old
+  pre-rename directory). Unrelated to browser debugging, but don't be surprised the orchestrator
+  MCP there points at a dead path.
 
 ## Troubleshooting
 
 If Playwright can't reach the UI:
-1. Check Vite is running: `curl -sf http://localhost:5050`
-2. Check API is running: `curl -sf http://localhost:5051/api/health`
-3. Restart servers if needed
+1. `curl -sf http://localhost:5050` — Vite up?
+2. `curl -sf http://localhost:5051/api/health` — API up?
+3. Restart with `cd forge-ui && npm run dev` if either fails.
+4. If the `browser_*` tools themselves are missing, confirm the session loaded
+   `forge-ui/.mcp.json` (you're in the `forge-ui/` repo), then reconnect the MCP server.

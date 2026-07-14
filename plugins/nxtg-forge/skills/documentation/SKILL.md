@@ -1,13 +1,24 @@
 ---
 name: Documentation
-description: Guides documentation standards including JSDoc, README structure, and API documentation.
+description: >
+  Documentation standards and code-to-docs sync conventions for Forge projects — JSDoc/TSDoc
+  annotations, README/CHANGELOG structure, auto-generated API reference, doc-tree layout, and
+  staleness detection. Use when writing or reviewing docs, adding JSDoc to exported functions,
+  structuring a docs/ tree, deciding what to document vs auto-generate, or running the Forge
+  docs commands (/forge:docs-status, /forge:docs-audit, /forge:docs-update).
+when_to_use: >
+  Trigger phrases: "document this", "add JSDoc", "write the README", "generate API docs",
+  "is our documentation stale", "docs audit", "documentation coverage", "changelog", "ADR",
+  "how should I structure docs", "docs are out of date".
+allowed-tools: Read, Grep, Glob, Bash(git *), Bash(find *)
 ---
 
 # Documentation Management
 
 **Purpose**: Keep documentation synchronized with code
-**Primary Agent**: Release Sentinel
-**Supporting Agents**: All (contribute documentation)
+**Primary Agent**: `release-sentinel` (opus) — docs↔code sync, staleness, changelog generation
+**Supporting Agent**: `docs` (sonnet) — writes JSDoc/README/API/architecture docs
+**Contributors**: all agents (each documents its own output)
 
 ---
 
@@ -15,6 +26,10 @@ description: Guides documentation standards including JSDoc, README structure, a
 
 > "Every feature is documented. Every change is tracked. 
 > No user is left wondering how something works."
+
+The doc tree below is the **recommended layout for a consuming project** — it is aspirational,
+not the structure of this plugin repo itself. Adopt the parts that fit; do not scaffold empty
+directories to match it.
 
 ---
 
@@ -207,7 +222,47 @@ Every documentation file must have:
 
 ## Commands
 
-- `/docs-status` - Show documentation health
-- `/docs-audit` - Full documentation audit
-- `/docs-update` - Update stale documentation
-- `/docs-generate <type>` - Generate new doc from template
+These are namespaced under `forge:` and are **user-typed only** — each carries
+`disable-model-invocation: true`, so Claude never auto-invokes them; the user runs them.
+
+| Command | Purpose | Arguments |
+|---------|---------|-----------|
+| `/forge:docs-status` | Show documentation health & coverage | none |
+| `/forge:docs-audit` | Comprehensive quality audit (coverage, inventory, links) | none |
+| `/forge:docs-update` | Find and update stale docs | `--file <path>`, `--dry-run`, `--jsdoc`, or none = all |
+
+There is **no** `docs-generate` command in this plugin. To create a doc from a template, invoke
+the `docs` agent or use `/forge:docs-update --jsdoc` for source annotations.
+
+---
+
+## Gotchas
+
+- **`/docs-generate` does not exist.** Earlier revisions of this skill listed it; the plugin ships
+  only `docs-status`, `docs-audit`, `docs-update`. Do not tell a user to run it.
+- **Commands are namespaced `/forge:docs-*`, not bare `/docs-*`.** A bare `/docs-status` will not
+  resolve.
+- **These commands do not auto-trigger.** All three have `disable-model-invocation: true`. Saying
+  "check the docs" does not fire them — the user must type the slash command, or you run the
+  underlying analysis yourself with Grep/Glob/Bash.
+- **`docs-update` argument surface is inconsistent between frontmatter and body.** Its
+  `argument-hint` advertises `[file-path] [--all]`, but the command body actually parses
+  `--file <path>`, `--dry-run`, and `--jsdoc` (bare invocation = update all). Follow the body's
+  flags, not the hint.
+- **Staleness detection is git-window-based, not semantic.** `docs-update` compares
+  `git diff --name-only HEAD~20 -- src/` against docs changes — a doc edited by hand without a
+  matching source commit inside that window can read as "fresh" even if wrong. It flags *drift*,
+  not *correctness*.
+- **Two agents own docs, split by intent.** `release-sentinel` (opus) handles sync/staleness/
+  changelog around releases; `docs` (sonnet) authors new prose. Route "keep docs current for the
+  release" to release-sentinel and "write the API guide" to docs.
+- **Auto-generation only works if the source is annotated.** The JSDoc→markdown pipeline below
+  produces nothing from undocumented exports. `docs-status` counts documented vs undocumented
+  exports precisely so you know the input coverage before generating.
+
+---
+
+## Additional resources
+
+- `docs/architecture/decisions/` — ADRs (Architecture Decision Records), manually authored
+- Command sources: `commands/docs-status.md`, `commands/docs-audit.md`, `commands/docs-update.md`

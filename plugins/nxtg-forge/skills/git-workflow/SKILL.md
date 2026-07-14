@@ -1,746 +1,136 @@
 ---
 name: Git Workflow
-description: Defines git workflow patterns including branching strategy, commit conventions, and PR practices.
-allowed-tools: Bash
+description: >
+  Trunk-based git workflow for NXTG-Forge — branching strategy, commit conventions,
+  PR practices, rebase/conflict resolution, and how the plugin's own hooks guard git
+  operations. Use when creating a feature branch, writing a commit message or PR,
+  rebasing onto main, resolving merge conflicts, choosing a merge strategy, recovering
+  from a bad commit/reset/detached HEAD, or when a git push is blocked by a security hook.
+when_to_use: >
+  "how do I branch", "commit message format", "open a PR", "rebase onto main",
+  "fix merge conflict", "squash vs rebase merge", "undo my last commit", "force push",
+  "my push got blocked", "recover a deleted branch", "detached HEAD", "cherry-pick".
+allowed-tools: Bash(git *), Bash(gh *)
 ---
 
 # Git Workflow and Branching Strategy
 
-## Overview
+NXTG-Forge uses **trunk-based development**: `main` stays always-deployable, work happens
+on short-lived feature branches, and changes land via squash-merged PRs. This SKILL.md is
+the lean operating guide; deep tables (commit/PR conventions, recovery recipes) live in the
+linked reference files.
 
-NXTG-Forge follows a **trunk-based development** approach with short-lived feature branches. This workflow emphasizes continuous integration, small frequent commits, and maintaining a deployable main branch.
+## Branch strategy
 
-## Branch Strategy
+- **`main`** — always deployable, protected, requires PR + passing CI. Single source of truth.
+- **Feature branches** — short-lived (1–3 days), single-purpose, named `type/description`:
+  `feat/user-authentication`, `fix/login-validation-bug`, `refactor/state-migration`,
+  `docs/api-guide`, `chore/dep-bump`.
+- **No long-lived branches** — no `develop`, no `release/*`, no `hotfix/*`. Fix directly
+  from `main` on a `fix/*` branch. (Reversing this needs an ADR.)
 
-### Main Branch (`main`)
-
-- **Always deployable**: Every commit on main should be production-ready
-- **Protected**: Requires pull requests and passing CI checks
-- **Source of truth**: All feature branches originate from main
-
-### Feature Branches
-
-- **Short-lived**: Typically 1-3 days
-- **Single purpose**: One feature or fix per branch
-- **Naming convention**: `feat/description`, `fix/description`, `refactor/description`
+## The core loop
 
 ```bash
-# Feature branch examples
-feat/user-authentication
-feat/payment-integration
-fix/login-validation-bug
-refactor/clean-architecture-migration
-docs/api-documentation
-```
-
-### No Long-Lived Branches
-
-We **do not** use:
-
-- `develop` branch
-- `release` branches
-- `hotfix` branches (fix directly from main)
-
----
-
-## Workflow Steps
-
-### 1. Start New Work
-
-```bash
-# 1. Ensure main is up to date
-git checkout main
-git pull origin main
-
-# 2. Create feature branch
+# 1. Branch off fresh main
+git checkout main && git pull origin main
 git checkout -b feat/user-authentication
 
-# 3. Verify branch
-git branch --show-current
-# Output: feat/user-authentication
-```
+# 2. Work → stage EXPLICIT paths (never `git add -A` / `git add .`) → commit
+git add src/auth/ tests/auth.test.mjs
+git commit -m "feat: add JWT auth middleware"
 
-### 2. Make Changes
+# 3. Stay current — rebase, don't merge main in
+git fetch origin && git rebase origin/main
 
-```bash
-# 1. Work on feature
-# Edit files...
+# 4. Push (first push sets upstream)
+git push -u origin feat/user-authentication      # later pushes: git push
+git push --force-with-lease                        # ONLY after a rebase, never plain --force
 
-# 2. Check status frequently
-git status
-
-# 3. Stage changes
-git add forge/auth/
-git add tests/unit/test_auth.py
-
-# 4. Commit with descriptive message
-git commit -m "Add JWT authentication middleware
-
-- Implement JWT token validation
-- Add token expiration checking
-- Create authentication decorator
-- Add unit tests for middleware
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>"
-```
-
-### 3. Keep Branch Updated
-
-```bash
-# Rebase frequently to stay current
-git fetch origin
-git rebase origin/main
-
-# If conflicts occur
-# 1. Resolve conflicts in files
-# 2. Stage resolved files
-git add <resolved-files>
-# 3. Continue rebase
-git rebase --continue
-```
-
-### 4. Push Changes
-
-```bash
-# First push (set upstream)
-git push -u origin feat/user-authentication
-
-# Subsequent pushes
-git push
-
-# Force push after rebase (use with caution)
-git push --force-with-lease
-```
-
-### 5. Create Pull Request
-
-```bash
-# Using GitHub CLI
-gh pr create \
-  --title "Add user authentication" \
-  --body "$(cat <<'EOF'
+# 5. Open PR
+gh pr create --title "feat: add user authentication" --body "$(cat <<'EOF'
 ## Summary
-- Implements JWT-based authentication
-- Adds authentication middleware
-- Includes comprehensive tests
-
+- JWT-based authentication middleware + login/logout endpoints
 ## Test Plan
-- [x] Unit tests for JWT validation
-- [x] Integration tests for auth flow
-- [x] Manual testing with Postman
-
-🤖 Generated with Claude Code
+- [x] Unit tests for token validation
+- [x] Integration test for the auth flow
 EOF
 )"
 
-# OR create via GitHub web interface
+# 6. After approval + green CI
+gh pr merge --squash --delete-branch
 ```
 
-### 6. Code Review and Merge
-
-```bash
-# After approval, merge via GitHub UI
-# OR use CLI
-gh pr merge --squash
-
-# Delete feature branch
-git branch -d feat/user-authentication
-git push origin --delete feat/user-authentication
-```
-
----
-
-## Commit Message Guidelines
-
-### Format
-
-```
-<type>: <subject>
-
-<body>
-
-<footer>
-```
-
-### Types
-
-- **feat**: New feature
-- **fix**: Bug fix
-- **refactor**: Code restructuring (no behavior change)
-- **docs**: Documentation changes
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
-- **perf**: Performance improvements
-- **style**: Code style changes (formatting, no logic change)
-
-### Examples
-
-#### Good Commit Messages
-
-```
-feat: Add user authentication system
-
-Implement JWT-based authentication:
-- JWT token generation and validation
-- Authentication middleware for FastAPI
-- User login/logout endpoints
-- Password hashing with bcrypt
-
-Tests include unit tests for token validation and
-integration tests for auth flow.
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-```
-fix: Correct validation error in user registration
-
-The email validation was rejecting valid emails with
-plus signs (e.g., user+tag@example.com). Updated regex
-to comply with RFC 5322.
-
-Fixes #123
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-```
-refactor: Extract database connection to separate module
-
-Move database connection logic from main.py to
-infrastructure/database.py for better separation of
-concerns and testability.
-
-No behavior changes.
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-#### Poor Commit Messages
-
-```
-fix: bug          # Too vague
-wip               # Work in progress shouldn't be committed
-update code       # Not descriptive
-asdf              # Meaningless
-```
-
-### Commit Frequency
-
-**DO**:
-
-- Commit after completing a logical unit of work
-- Commit when tests pass
-- Commit before switching contexts
-- Commit at end of work session
-
-**DON'T**:
-
-- Commit broken code
-- Commit commented-out code
-- Commit with failing tests
-- Commit large unrelated changes together
-
----
-
-## Pull Request Guidelines
-
-### PR Title
-
-Use same format as commit messages:
-
-```
-feat: Add user authentication system
-fix: Correct email validation in registration
-refactor: Extract database connection logic
-docs: Update API documentation for v2
-```
-
-### PR Description Template
-
-```markdown
-## Summary
-<!-- 1-3 bullet points describing the changes -->
-- Implements JWT-based authentication
-- Adds login/logout endpoints
-- Includes middleware for route protection
-
-## Motivation
-<!-- Why is this change needed? What problem does it solve? -->
-Users need a secure way to authenticate and access protected
-resources. Current system has no authentication mechanism.
-
-## Changes
-<!-- Detailed list of changes made -->
-- Added JWT token generation in `auth/jwt.py`
-- Created authentication middleware in `auth/middleware.py`
-- Implemented login/logout endpoints in `api/auth.py`
-- Added user model with password hashing
-- Created authentication tests
-
-## Test Plan
-<!-- How was this tested? -->
-- [x] Unit tests for JWT token validation
-- [x] Unit tests for password hashing
-- [x] Integration tests for login/logout flow
-- [x] Manual testing with Postman
-- [x] Tested edge cases (expired tokens, invalid passwords)
-
-## Checklist
-- [x] Tests added/updated
-- [x] Documentation updated
-- [x] No linting errors
-- [x] Follows Clean Architecture
-- [x] Backward compatible
-
-🤖 Generated with Claude Code
-```
-
-### PR Size Guidelines
-
-- **Small PR**: < 200 lines changed (preferred)
-- **Medium PR**: 200-500 lines changed (acceptable)
-- **Large PR**: > 500 lines changed (break into smaller PRs)
-
-**Benefits of small PRs**:
-
-- Faster reviews
-- Easier to understand
-- Less risk of conflicts
-- Quicker feedback loop
-
-### Review Process
-
-1. **Self-review**: Review your own PR first
-2. **CI checks**: Ensure all CI checks pass
-3. **Request review**: Tag appropriate reviewers
-4. **Address feedback**: Respond to all comments
-5. **Approval**: Get at least one approval
-6. **Merge**: Squash and merge to main
-
----
-
-## Merge Strategies
-
-### Squash and Merge (Default)
-
-Combines all commits into a single commit on main:
-
-```bash
-# Feature branch commits:
-# - Add user model
-# - Add authentication
-# - Fix linting errors
-# - Address review feedback
-
-# After squash merge:
-# feat: Add user authentication system
-```
-
-**Advantages**:
-
-- Clean linear history
-- Easy to revert entire feature
-- Hides work-in-progress commits
-
-**Use when**:
-
-- Multiple commits in feature branch
-- Want clean history on main
-
-### Rebase and Merge
-
-Replays commits onto main:
-
-```bash
-# Maintains individual commits but rebases them
-git rebase origin/main
-git push --force-with-lease
-```
-
-**Advantages**:
-
-- Preserves commit history
-- Shows incremental progress
-- Better for debugging with git bisect
-
-**Use when**:
-
-- Commits are already well-organized
-- Want to preserve detailed history
-
-### Never Use: Merge Commit
-
-Creates merge commit:
-
-```bash
-# DON'T DO THIS
-git merge feat/my-feature
-```
-
-**Why avoid**:
-
-- Creates merge commits that clutter history
-- Makes history harder to follow
-- Complicates git bisect
-
----
-
-## Handling Conflicts
-
-### Prevention
-
-```bash
-# Rebase frequently to avoid large conflicts
-git fetch origin
-git rebase origin/main
-
-# Keep branches short-lived
-# Merge within 1-3 days of creation
-```
-
-### Resolution
-
-```bash
-# 1. Start rebase
-git rebase origin/main
-
-# 2. Git shows conflicts
-# CONFLICT (content): Merge conflict in forge/auth/middleware.py
-
-# 3. Open conflicted files
-# Look for conflict markers:
-<<<<<<< HEAD
-# Current main branch code
-=======
-# Your feature branch code
->>>>>>> feat/user-authentication
-
-# 4. Resolve conflicts (keep one, combine, or rewrite)
-
-# 5. Stage resolved files
-git add forge/auth/middleware.py
-
-# 6. Continue rebase
-git rebase --continue
-
-# 7. Push (force with lease for safety)
-git push --force-with-lease
-```
-
-### Abort if Needed
-
-```bash
-# If conflicts are too complex, abort and retry
-git rebase --abort
-
-# Consider alternative approaches:
-# - Break feature into smaller pieces
-# - Coordinate with other developers
-# - Refactor conflicting code first
-```
-
----
-
-## Git Hooks
-
-NXTG-Forge uses git hooks for automation (see `.claude/hooks/`):
-
-### Pre-commit Hook
-
-Runs before each commit:
-
-- Formats code with Black
-- Runs linting (Ruff)
-- Checks type hints (MyPy)
-- Validates commit message format
-
-### Post-commit Hook
-
-Runs after each commit:
-
-- Updates state.json
-- Logs commit to session tracking
-
-### Pre-push Hook
-
-Runs before push:
-
-- Runs tests
-- Checks coverage threshold
-- Validates no secrets committed
-
----
-
-## Common Scenarios
-
-### Scenario 1: Update Feature Branch with Latest Main
-
-```bash
-# Option A: Rebase (preferred)
-git checkout feat/my-feature
-git fetch origin
-git rebase origin/main
-git push --force-with-lease
-
-# Option B: Merge (if rebase is problematic)
-git checkout feat/my-feature
-git merge origin/main
-git push
-```
-
-### Scenario 2: Accidentally Committed to Main
-
-```bash
-# If not pushed yet
-git reset HEAD~1              # Undo commit, keep changes
-git checkout -b feat/my-feature  # Create feature branch
-git add .
-git commit -m "..."
-git push -u origin feat/my-feature
-
-# If already pushed (coordinate with team)
-git revert <commit-hash>      # Create revert commit
-git push
-```
-
-### Scenario 3: Need to Update Commit Message
-
-```bash
-# If not pushed yet
-git commit --amend
-
-# If already pushed (avoid if others pulled)
-git commit --amend
-git push --force-with-lease
-```
-
-### Scenario 4: Split Large Commit
-
-```bash
-# Reset to before commit
-git reset HEAD~1
-
-# Stage and commit in pieces
-git add forge/auth/models.py
-git commit -m "Add user model"
-
-git add forge/auth/middleware.py
-git commit -m "Add authentication middleware"
-
-git add tests/
-git commit -m "Add authentication tests"
-```
-
-### Scenario 5: Cherry-pick Specific Commit
-
-```bash
-# Get commit hash from another branch
-git log feat/other-feature
-
-# Cherry-pick to current branch
-git cherry-pick <commit-hash>
-
-# Resolve conflicts if any
-```
-
----
-
-## Best Practices
-
-### DO
-
-✅ **Commit early, commit often**: Small, frequent commits
-✅ **Write descriptive messages**: Explain why, not just what
-✅ **Rebase before merging**: Keep history clean
-✅ **Review your own PRs**: Catch issues before others
-✅ **Keep branches short-lived**: Merge within days
-✅ **Test before committing**: Ensure tests pass
-✅ **Use meaningful branch names**: Clear purpose
-✅ **Squash WIP commits**: Clean up before merge
-
-### DON'T
-
-❌ **Commit broken code**: Always ensure code works
-❌ **Push directly to main**: Always use pull requests
-❌ **Force push to main**: Never rewrite public history
-❌ **Commit secrets**: Use environment variables
-❌ **Leave commented code**: Remove or uncomment
-❌ **Create long-lived branches**: Increases conflicts
-❌ **Skip code review**: Even small changes need review
-❌ **Ignore CI failures**: Fix before merging
-
----
-
-## Git Configuration
-
-### Recommended Git Config
-
-```bash
-# User info
-git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-
-# Editor
-git config --global core.editor "code --wait"
-
-# Default branch
-git config --global init.defaultBranch main
-
-# Rebase on pull
-git config --global pull.rebase true
-
-# Auto-stash during rebase
-git config --global rebase.autoStash true
-
-# Prune on fetch
-git config --global fetch.prune true
-
-# Colored output
-git config --global color.ui auto
-```
-
-### Aliases
-
-```bash
-# Useful shortcuts
-git config --global alias.st status
-git config --global alias.co checkout
-git config --global alias.br branch
-git config --global alias.ci commit
-git config --global alias.unstage 'reset HEAD --'
-git config --global alias.last 'log -1 HEAD'
-git config --global alias.visual 'log --oneline --graph --all'
-```
-
----
-
-## Troubleshooting
-
-### Problem: Detached HEAD
-
-```bash
-# Create branch from current state
-git checkout -b recover-branch
-
-# Or discard changes and return to branch
-git checkout main
-```
-
-### Problem: Accidentally Deleted Branch
-
-```bash
-# Find commit hash
-git reflog
-
-# Recreate branch
-git checkout -b recovered-branch <commit-hash>
-```
-
-### Problem: Large Files Committed
-
-```bash
-# Remove from history (careful!)
-git filter-branch --tree-filter 'rm -f large-file.bin' HEAD
-
-# Or use BFG Repo-Cleaner (faster)
-bfg --delete-files large-file.bin
-```
-
-### Problem: Need to Undo Last Commit
-
-```bash
-# Keep changes, undo commit
-git reset --soft HEAD~1
-
-# Discard changes, undo commit
-git reset --hard HEAD~1
-
-# Create revert commit (if pushed)
-git revert HEAD
-```
-
----
-
-## Quick Reference
-
-### Essential Commands
-
-```bash
-# Status and info
-git status
-git log --oneline --graph
-git branch --all
-git remote -v
-
-# Create and switch branches
-git checkout -b feat/new-feature
-git checkout main
-
-# Staging and committing
-git add <files>
-git commit -m "message"
-git commit --amend
-
-# Syncing with remote
-git fetch origin
-git pull origin main
-git push origin feat/branch
-git push --force-with-lease
-
-# Rebasing
-git rebase origin/main
-git rebase --continue
-git rebase --abort
-
-# Cleaning up
-git branch -d feat/branch
-git push origin --delete feat/branch
-git clean -fd
-
-# Stashing
-git stash
-git stash pop
-git stash list
-```
-
----
-
-## Integration with Claude Code
-
-### Automatic Commit Messages
-
-Claude Code generates commit messages automatically:
-
-```
-feat: Add user authentication system
-
-- Implement JWT token generation and validation
-- Add authentication middleware for FastAPI
-- Create login/logout endpoints
-- Add password hashing with bcrypt
-- Include comprehensive unit and integration tests
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-### Git Hooks Integration
-
-NXTG-Forge hooks (`.claude/hooks/`) integrate with git workflow:
-
-- **Pre-task**: Validates git status, warns of uncommitted changes
-- **Post-task**: Suggests creating commits for completed work
-- **On-file-change**: Tracks changes, updates state
-- **On-error**: Suggests checkpoints before major fixes
-
----
-
-**Last Updated**: 2026-01-06
-**Version**: 1.0.0
-**Workflow**: Trunk-Based Development
-**Merge Strategy**: Squash and Merge
+Stage explicit paths, not `git add -A` — it sweeps in unrelated dirty files and secrets.
+Rebase (not merge-from-main) keeps history linear. Push new work with `-u`; after a rebase
+that rewrote your branch, reconcile the remote with `--force-with-lease` (safe: it refuses if
+someone else pushed). See [reference/commit-and-pr.md](reference/commit-and-pr.md) for the
+full commit-type list, PR template, size guidance, and merge-strategy trade-offs.
+
+## Merge strategy
+
+**Squash and merge is the default** — collapses WIP commits into one clean commit on `main`,
+so the whole feature reverts as a unit. Use **rebase and merge** only when the branch's
+commits are already well-curated and worth preserving individually. **Never** create a merge
+commit (`git merge feat/x` into main) — it clutters history and complicates `git bisect`.
+
+## When something goes wrong
+
+The high-frequency recoveries — undo last commit, committed to main by accident, amend a
+message, split a commit, cherry-pick, detached HEAD, recover a deleted branch, purge a large
+file — are in [reference/scenarios-and-recovery.md](reference/scenarios-and-recovery.md).
+Quick reflexes:
+
+- **Undo last commit, keep changes:** `git reset --soft HEAD~1`
+- **Already pushed?** Don't rewrite public history — `git revert <sha>` instead.
+- **Rebase gone bad:** `git rebase --abort` returns you to the pre-rebase state.
+
+## Gotchas
+
+Real, non-obvious traps specific to this repo and the Claude Code environment:
+
+- **The plugin's own security hook BLOCKS force-push to main.** `hooks/scripts/security-command-guard.sh`
+  (PreToolUse on Bash) exits 2 — denying the tool call — on any `git push --force … main`/`master`.
+  It also blocks `git reset --hard origin/*`. Push force-updates to a *branch* with
+  `--force-with-lease`; stash or `git reset --soft` instead of `--hard origin/…`.
+- **A quiet working tree is NOT a clean one.** The `pre-task.sh` uncommitted-changes advisory
+  fires only at **>10 dirty files OR a tracked file modified >30 min ago** — small, fresh
+  changes are treated as sync noise and stay silent. Absence of the warning ≠ nothing to commit;
+  run `git status` yourself.
+- **Interactive rebase/add don't work here.** The Claude Code Bash environment does not support
+  `-i` (`git rebase -i`, `git add -i`). Use non-interactive equivalents: `git reset HEAD~N`
+  + re-commit to split, `git commit --amend` for the tip, explicit `git rebase --onto`.
+- **Don't hardcode a `Co-Authored-By` trailer.** Commit trailers are a per-repo convention, not
+  a git requirement — follow the target repo's canon (each NXTG repo defines its own). Never
+  paste a boilerplate co-author line into a repo that doesn't use it.
+- **Stop-hook nudges are advisory, not gates.** `post-task.sh` (checkpoint/smaller-commit hints)
+  and `smoke-test-reminder.sh` (test-after-server-change reminder) run on Stop and never block a
+  commit or push — they're prompts, so acting on them is on you.
+- **`--force-with-lease`, never bare `--force`.** Lease refuses the push if the remote moved
+  since your last fetch, catching the case where a teammate pushed to your branch. Bare `--force`
+  silently clobbers it.
+
+## Forge integration
+
+Git behavior is shaped by the plugin's Claude Code lifecycle hooks (`hooks/scripts/`), NOT by
+classic `.git/hooks` pre-commit scripts:
+
+| Hook (trigger) | Git-relevant effect |
+|---|---|
+| `security-command-guard.sh` (PreToolUse: Bash) | **Blocks** force-push to main/master and `git reset --hard origin/*` (exit 2 = deny) |
+| `pre-task.sh` (UserPromptSubmit) | Advisory: warns of uncommitted changes past the >10-file / >30-min threshold; posts branch + dirty count to session tracking |
+| `post-task.sh` (Stop) | Advisory: suggests `/forge:checkpoint` after major work, hints at smaller commits |
+| `smoke-test-reminder.sh` (Stop) | Advisory: reminds you to smoke-test after editing server/test files |
+
+`/forge:checkpoint` and `/forge:restore` provide governance-state snapshots that complement
+git — use them at milestone boundaries, not as a replacement for commits.
+
+## Additional resources
+
+- [reference/commit-and-pr.md](reference/commit-and-pr.md) — commit message format + type
+  glossary, good/poor examples, commit-frequency rules, PR title/description template, PR size
+  guidance, review process, and the squash-vs-rebase-vs-merge-commit trade-off in full.
+- [reference/scenarios-and-recovery.md](reference/scenarios-and-recovery.md) — conflict
+  resolution walkthrough, the five common scenarios (update branch, accidental main commit,
+  amend message, split commit, cherry-pick), troubleshooting (detached HEAD, deleted branch,
+  large files, undo commit), recommended `git config`, and the essential-command quick reference.

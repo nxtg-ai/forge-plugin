@@ -1,225 +1,226 @@
 ---
 name: Parallel Execution
 description: >
-  Canonical reference for Claude Code's two highest-leverage superpowers: Plan Mode
-  (explore-then-plan-then-wait-for-approval) and Agent Teams (parallel subagent
-  spawning via the Task tool). Load this skill when designing complex features,
-  running multi-dimensional analysis, or orchestrating parallel build/test pipelines.
-allowed-tools: Task, Bash, Read
+  Claude Code's two force-multipliers — Plan Mode (explore → plan → wait-for-approval →
+  execute) and Agent Teams (parallel subagents via the Task tool) — plus the canonical
+  forge agent roster and delegation-routing rules. Use when decomposing a multi-file
+  feature, running multi-dimensional codebase analysis, orchestrating parallel
+  build/test/validate pipelines, or deciding which subagent to delegate a task to.
+when_to_use: >
+  touching 3+ files; "plan this feature"; "analyze the codebase / health check / gap
+  analysis"; spawning subagents; "which agent should do X"; parallel build + test;
+  running a --fix command; any work with multiple independent dimensions.
+allowed-tools: Task, Read, Grep, Glob, Bash
 ---
 
 # Parallel Execution: Plan Mode + Agent Teams
 
+Two superpowers. **Plan Mode** thinks before it writes. **Agent Teams** fan work out
+across parallel subagents. Combine them for complex features. The agent roster and
+routing rules in §5 are the source of truth for `Task` delegation — the `subagent_type`
+must match a `name:` from that table exactly.
+
 ## 1. PLAN MODE
 
-### Workflow
-
 ```
-Explore → Plan → Present → Wait for Approval → Execute
+Explore (reads only) → Draft plan → Present → Wait for approval → Execute
 ```
 
-**Step-by-step:**
+1. **Explore only** — Read, Glob, Grep, read-only Bash. No writes until approved.
+2. **Draft a plan** — scope, files affected, approach, boundaries.
+3. **Present** — show the plan in chat, ask for approval.
+4. **Wait** — do not proceed until the user says "proceed" / "yes" / "looks good".
+5. **Execute** — now write, edit, spawn agents.
 
-1. **Explore only** — use Read, Glob, Grep, Bash (read-only). No writes until approved.
-2. **Draft a plan** — structured document capturing scope, files affected, approach.
-3. **Present to user** — show the plan in chat, ask for approval.
-4. **Wait** — do not proceed until the user says "proceed", "yes", "looks good", or similar.
-5. **Execute** — now write code, modify files, spawn agents.
-
-### Plan Document Format
+### Plan document format
 
 ```
-## Plan: {Feature or Task Name}
-
-**Scope:** {what will change}
-**Files to create:** list
-**Files to modify:** list
-**Files NOT touched:** (boundary declaration)
-**Approach:** brief description
+## Plan: {task name}
+**Scope:** what will change
+**Files to create / modify / NOT touch:** (the last is a boundary declaration)
+**Approach:** brief
 **Risks / trade-offs:** if any
-
 Proceed? (yes / modify / cancel)
 ```
 
-### Anti-Patterns (Never Do These)
+### When to invoke
 
-- Writing files during the Explore phase
-- Presenting a plan and immediately executing without waiting
-- Skipping the plan for "quick" tasks touching 3+ files
-- Modifying files outside the declared scope
-
-### When to Invoke Plan Mode
-
-| Situation | Use Plan Mode? |
-|-----------|---------------|
+| Situation | Plan Mode? |
+|-----------|-----------|
 | Touching 3+ files | Yes |
-| New feature with `--fix` flag | Yes |
-| Architectural changes | Yes |
-| Single-file bug fix | No |
-| Adding a comment | No |
-| Answering a question | No |
+| A `--fix` command (show what changes before writing) | Yes — always |
+| Architectural change | Yes |
+| Single-file bug fix / comment / answering a question | No |
+
+### Anti-patterns
+
+- Writing files during Explore.
+- Presenting a plan then executing without waiting.
+- Skipping the plan for a "quick" task that touches 3+ files.
+- Modifying files outside the declared scope.
 
 ---
 
 ## 2. AGENT TEAMS
 
-### Task Tool Invocation Pattern
+### Invocation
 
 ```
-Use the Task tool to spawn a subagent:
-  subagent_type: "builder"   (or any agent name)
-  prompt: "Your task description. Be specific about file boundaries."
-  run_in_background: false         (true only for genuinely independent work)
+Task tool:
+  subagent_type: "builder"    ← must match a name: in §5 exactly (kebab-case)
+  prompt: "Self-contained task. Declare file boundaries. State: no writes / writes X only."
+  run_in_background: false     ← true only if you have real work to do while it runs
 ```
 
-### 3 Core Patterns
-
-#### Pattern A: Fan-Out Analysis
-
-Spawn N read-only agents simultaneously, each analyzing one dimension. Aggregate
-their reports when all complete.
+### Pattern A — Fan-Out Analysis (read-only, N dimensions in parallel)
 
 ```
 Task(detective, "Analyze test coverage in src/. Report gaps only. No writes.")
-Task(detective, "Analyze security patterns in src/. Report issues. No writes.")
-Task(detective, "Analyze architecture in src/. Report debt. No writes.")
-  ↓ all 3 run simultaneously ↓
-Aggregate results into single report.
+Task(security,  "Scan src/ for OWASP issues + secrets. Report only. No writes.")
+Task(performance,"Profile src/ hotspots. Report only. No writes.")
+   ↓ all run concurrently ↓
+Aggregate the three reports into one.
 ```
 
-#### Pattern B: Plan-Then-Parallel-Build
-
-After plan approval, spawn builder + tester simultaneously with non-overlapping
-file scopes.
+### Pattern B — Plan-Then-Parallel-Build (non-overlapping write scopes)
 
 ```
 Approval received
-  ├─ Task(builder, "Implement per spec. Write src/*.ts only. No test files.")
-  └─ Task(testing, "Generate tests per spec. Write src/__tests__/*.test.ts only. No source changes.")
+  ├─ Task(builder,  "Implement per spec. Write src/*.ts ONLY. No test files.")
+  └─ Task(testing,  "Write tests per spec. Write src/__tests__/*.test.ts ONLY. No source edits.")
        ↓ both complete ↓
-  Task(guardian, "Run quality gate on completed work.")
+  Task(guardian, "Run the quality gate on the completed work.")
 ```
 
-#### Pattern C: Build-Then-Validate
-
-Sequential build, then parallel validation.
+### Pattern C — Build-Then-Validate (sequential, then parallel validation)
 
 ```
 Task(builder, "Implement the feature.")
-  ↓ completes ↓
-Task(guardian, "Run tests, type check, and security scan.")
+   ↓ completes ↓
+  ├─ Task(guardian, "Run tests + type check.")
+  └─ Task(security, "Security-scan the diff.")
 ```
 
-### Design Rules
+### Design rules
 
-1. **Declare file boundaries in the prompt** — builder writes `src/*.ts`, tester writes
-   `src/__tests__/*.test.ts`. No overlap.
-2. **Parallel = no shared mutable state** — agents can read the same files, but each
-   writes to different files.
-3. **Foreground vs background** — use `run_in_background: true` only when you have
-   genuinely independent follow-up work to do while waiting.
-4. **Aggregate, don't chain unnecessarily** — wait for all parallel agents to complete
-   before synthesizing, rather than chaining each result into the next.
-5. **Explicit prompts** — each agent prompt must be self-contained. The subagent does
-   not see your conversation history.
+1. **Declare file boundaries in every prompt** — writers must not overlap (see Gotchas).
+2. **Parallel = no shared mutable state** — agents may read the same files; each writes
+   to a different path.
+3. **Self-contained prompts** — the subagent sees none of your conversation history.
+4. **Aggregate, don't over-chain** — let independent agents run concurrently, then
+   synthesize; only serialize genuine data dependencies.
+5. **Wave, don't flood** — the provider throttles beyond ~6 concurrent subagents. Launch
+   in waves of ≤6, not fifty at once.
 
 ---
 
 ## 3. COMBINED PATTERN
 
-The full power is combining both superpowers:
-
 ```
-1. Plan Mode: Explore codebase (reads only)
-2. Plan Mode: Draft plan document, present to user
-3. Plan Mode: Wait for approval
-4. Agent Teams: Spawn parallel agents to execute approved plan
-5. Agent Teams: Aggregate results
-6. Agent Teams: Run guardian quality gate
+Plan Mode: explore (reads) → draft plan → present → wait for approval
+Agent Teams: fan out parallel agents on the approved plan → aggregate → guardian gate
 ```
-
----
 
 ## 4. DECISION TREE
 
 ```
-Is this task touching 3+ files?
-  YES → Use Plan Mode first
-  NO  → Check if it has multiple independent dimensions
-          YES → Use Agent Teams (Fan-Out Analysis)
-          NO  → Execute directly
-
-Is this a --fix command?
-  YES → ALWAYS use Plan Mode pre-flight (show what will change before writing)
-
-Is this a health/gap/analysis command?
-  YES → Use Agent Teams (Fan-Out Analysis pattern)
-
-Is this feature implementation?
-  YES → Plan Mode first, then Agent Teams for parallel build + test
+3+ files?               → Plan Mode first.
+Multiple independent dimensions? → Agent Teams, Fan-Out (Pattern A).
+--fix command?          → Plan Mode pre-flight ALWAYS (show changes before writing).
+health / gap / analysis?→ Agent Teams, Fan-Out (Pattern A).
+feature implementation? → Plan Mode, then Agent Teams (Pattern B).
+Otherwise (1 file, no dimensions) → execute directly.
 ```
 
 ---
 
-## 5. COMPLETE AGENT ROUTING GUIDE
+## 5. AGENT ROUTING GUIDE (source of truth)
 
-### Full Roster (23 agents)
+The roster is **33 agents**. `subagent_type` must equal a `name:` below verbatim.
+Only agents with `Task` in their tools can spawn other agents; the rest are leaf
+workers. Four agents (`Read`/`Grep`-only, no `Write`/`Edit`) are **read-only** — never
+route code-writing to them.
 
-| Agent | Model | Specialty | Delegate when... |
-|-------|-------|-----------|-----------------|
-| planner | sonnet | Architecture, feature design, task breakdown | New feature needs a plan |
-| builder | sonnet | Code implementation from approved plan | Ready to write code |
-| testing | sonnet | Test generation, coverage analysis, flaky tests | New code needs tests |
-| guardian | sonnet | Quality gates, pre-commit, code review | Implementation complete |
-| security | sonnet | OWASP, secrets detection, vuln scanning | Security audit needed |
-| detective | sonnet | Project health, gap analysis, architecture review | Codebase analysis needed |
-| refactor | sonnet | Code restructuring, complexity reduction, DRY | Tech debt to address |
-| performance | sonnet | Profiling, bundle analysis, memory leaks | Perf audit or optimization |
-| ui | sonnet | React components, a11y, responsive layouts | Frontend UI work |
-| docs | sonnet | JSDoc, README, changelogs, API docs | Documentation work |
-| database | sonnet | Schema design, migrations, query optimization | Database/schema work |
-| api | sonnet | REST/GraphQL design, validation, OpenAPI | API design or integration |
-| devops | sonnet | CI/CD, Docker, infra, monitoring | Infrastructure work |
-| integration | sonnet | 3rd-party services, webhooks, OAuth | External service connection |
-| analytics | haiku | Metrics, KPI tracking, dashboards | Analytics instrumentation |
-| compliance | haiku | License audit, GDPR, WCAG | Compliance check |
-| learning | haiku | Pattern capture, preference persistence | Session learning |
-| governance-verifier | haiku | Governance concern resolution | Scope/quality concern flagged |
-| release-sentinel | opus | Docs sync, changelog, version mgmt | Pre-release doc audit |
-| orchestrator | opus | Top-level multi-phase orchestration | Full session coordination |
-| oracle | sonnet | Proactive governance, drift detection | Autonomous mode scope validation |
-| nxtg-ceo-loop | opus | Strategic decisions, product direction | CRITICAL architectural pivot |
+### Orchestrators (have `Task` — can sub-delegate)
 
-### Anti-Patterns (Never Do These)
+| name | model | Delegate when… | Notes |
+|------|-------|----------------|-------|
+| planner | opus | A feature needs an architecture + task plan | **read-only** (plans, doesn't write code) |
+| builder | sonnet | Ready to write code from an approved plan | can spawn `testing` |
+| guardian | sonnet | Implementation done; run quality gates | spawns parallel validators |
+| detective | sonnet | Health / gap / architecture analysis | **read-only** |
+| orchestrator | opus | Top-level multi-phase session coordination | |
+| master-architect | opus | System-level architecture across repos | |
+| product-strategist | opus | Product direction / prioritization | |
+| revenue-architect | opus | Monetization / pricing / GTM engineering | |
+| growth-engine | sonnet | Growth loops, acquisition instrumentation | |
+| incident-commander | opus | Live incident triage + coordination | |
+| release-sentinel | opus | Pre-release docs/changelog/version audit | |
+| devops | sonnet | CI/CD, Docker, infra, monitoring | |
+| integration | sonnet | 3rd-party services, webhooks, OAuth | |
+| qa-sentinel | sonnet | End-to-end QA orchestration | |
+| dx-engineer | sonnet | Developer-experience tooling | |
+| design-vanguard | opus | High-craft visual/UX design | |
+| nxtg-ceo-loop | opus | CRITICAL strategic pivot only (else it decides autonomously) | |
 
-- Reference any agent not in the table above (e.g., `nxtg-master-architect`, `general-purpose`)
-- Use `oracle` or `nxtg-ceo-loop` for routine implementation tasks
-- Spawn a leaf worker as an orchestrator (agents without `Task` in tools list cannot sub-delegate)
-- Spawn the same agent type recursively (e.g., detective spawning detective)
+### Leaf workers (no `Task` — cannot sub-delegate)
 
-### Tool List Requirements
+| name | model | Delegate when… |
+|------|-------|----------------|
+| testing | sonnet | New code needs tests / coverage / flaky-test triage |
+| security | sonnet | OWASP scan, secrets, vuln audit |
+| refactor | sonnet | Complexity reduction, DRY, restructuring |
+| performance | sonnet | Profiling, bundle/memory analysis |
+| ui | sonnet | React components, a11y, responsive layout |
+| api | sonnet | REST/GraphQL design, validation, OpenAPI |
+| database | sonnet | Schema, migrations, query tuning |
+| docs | sonnet | JSDoc, README, changelog, API docs |
+| analytics | sonnet | Metrics, KPI tracking, dashboards |
+| compliance | sonnet | License audit, GDPR, WCAG |
+| learning | sonnet | Pattern capture, preference persistence |
+| governance-verifier | sonnet | Resolve a hook-flagged scope/quality concern |
+| oracle | sonnet | Non-blocking drift/scope validation in autonomous mode |
+| scout | sonnet | Web research / external-source gathering (read+web, no Task) |
+| wordsmith | sonnet | Copy, naming, prose polish |
+| crucible-detective | sonnet | Test-suite quality audit — **read-only** |
 
-Agents that orchestrate other agents MUST have `Task` in their tools list:
+### Read-only agents (no `Write`/`Edit`)
 
-| Agent | Needs Task? | Reason |
-|-------|-------------|--------|
-| planner | Yes | Spawns builder + testing after plan approval |
-| builder | Yes | Spawns testing after implementation |
-| guardian | Yes | Spawns parallel validators (test + security) |
-| detective | Yes | Spawns 4 parallel dimension analyzers |
-| orchestrator | Yes | Top-level coordination |
-| testing | No | Leaf worker — writes tests only |
-| refactor | No | Leaf worker — refactors only |
-| api | No | Leaf worker — API design only |
-| database | No | Leaf worker — DB work only |
-| ui | No | Leaf worker — UI work only |
-| devops | No | Leaf worker — DevOps only |
-| security | No | Leaf worker — security scanning only |
-| docs | No | Leaf worker — documentation only |
-| performance | No | Leaf worker — performance analysis only |
-| integration | No | Leaf worker — service integration only |
-| analytics | No | Leaf worker — analytics only |
-| compliance | No | Leaf worker — compliance only |
-| learning | No | Leaf worker — knowledge capture only |
-| release-sentinel | No | Leaf worker — release/docs only |
-| governance-verifier | No | Leaf worker — governance only |
+`planner`, `detective`, `crucible-detective`, `oracle` — route analysis/planning to
+them, never file writes.
+
+### Routing anti-patterns
+
+- Referencing a `subagent_type` not in this table (e.g. `general-purpose`,
+  `nxtg-master-architect`). The correct name is `master-architect`.
+- Using `nxtg-ceo-loop` or `orchestrator` for routine implementation.
+- Spawning a leaf worker expecting it to sub-delegate — it has no `Task`.
+- Routing code writes to a read-only agent (planner/detective/crucible-detective/oracle).
+- Spawning the same agent type recursively (detective spawning detective).
+
+---
+
+## Gotchas
+
+- **`subagent_type` name ≠ filename.** The CEO agent's file is `ceo-loop.md` but its
+  `name:` is `nxtg-ceo-loop` — spawn by the `name`, not the filename. Any mismatch fails
+  the Task call.
+- **planner is opus + read-only.** It plans; it cannot `Write`/`Edit`. To actually write
+  the plan's code you must then spawn `builder`. Same for `detective`, `oracle`,
+  `crucible-detective`.
+- **Model claims drift — verify against the agent file.** `analytics`, `compliance`,
+  `learning`, `governance-verifier` are **sonnet**, not haiku. Read the `model:`
+  frontmatter before asserting cost/capability.
+- **Subagents are context-blind.** A subagent receives only its `prompt` — none of your
+  conversation, files you've read, or prior agent output. Restate every fact it needs.
+- **Overlapping write scopes silently corrupt work.** Two parallel writers touching the
+  same file race; the last writer wins and the other's edits vanish. Partition paths
+  explicitly (`src/*.ts` vs `src/__tests__/*.test.ts`) or serialize them.
+- **`run_in_background: true` needs a poll.** A background subagent does not block; you
+  must check its completion before consuming its output. Use foreground unless you have
+  genuine parallel work of your own.
+- **Concurrency ceiling ≈ 6.** Beyond ~6 simultaneous subagents the provider throttles
+  (429/529). Fan out in waves of ≤6; a sequential queue of independent work is not
+  parallelism, but neither is a 30-agent flood.
+- **Leaf workers can't orchestrate.** 16 of the 33 agents have no `Task` tool. Don't hand
+  one a prompt that says "spawn a tester" — it will just do the work inline or fail.

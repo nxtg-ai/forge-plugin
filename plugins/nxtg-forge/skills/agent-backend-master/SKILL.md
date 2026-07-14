@@ -1,6 +1,19 @@
 ---
 name: Backend Master Agent
-description: Specialized backend development knowledge for API design, database patterns, and server architecture.
+description: >-
+  Backend implementation playbook — API endpoints, database models/migrations,
+  auth, query optimization, and the framework-specific traps that break servers
+  in production. Use when implementing or reviewing server-side code: FastAPI /
+  Django / Flask / Express / NestJS / Go / Axum handlers, SQLAlchemy / Prisma /
+  Mongoose / Tortoise models, JWT / OAuth / session auth, bcrypt / argon2
+  password hashing, rate limiting, N+1 query fixes, async/event-loop bugs, or
+  when a handoff spec asks for "the backend" of a feature.
+when_to_use: >-
+  "implement the API", "write the endpoint", "add a database model / migration",
+  "why is my FastAPI route slow", "N+1 query", "MissingGreenlet",
+  "hash the password", "JWT auth", "rate limit this", "async blocking the event
+  loop", "OpenAPI docs", handoff from the Lead Architect to build server code.
+allowed-tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 
 # Agent: Backend Master
@@ -106,27 +119,81 @@ Receive: Architecture spec, domain models, use case specs, API requirements
 
 Provide: Implemented endpoints, test coverage report, known edge cases, performance data
 
+## Gotchas
+
+Real, non-obvious failure modes that pass local tests and break in production.
+
+- **Sync I/O inside an `async def` route blocks the whole event loop.** A single
+  `requests.get()`, `time.sleep()`, `psycopg2` call, or CPU-bound loop inside a
+  FastAPI/Starlette `async def` handler freezes *every* concurrent request, not
+  just that one. Fix: use an async client (`httpx.AsyncClient`, async DB driver)
+  or offload to `run_in_executor` / `anyio.to_thread`. A route that is fully sync
+  (`def`, not `async def`) is fine — Starlette runs it in a threadpool.
+
+- **SQLAlchemy async lazy-load raises `MissingGreenlet` outside the session.**
+  Accessing a relationship attribute after the session closes (e.g. serializing
+  an ORM object in the response layer) throws
+  `sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called`. Fix:
+  eager-load with `selectinload()`/`joinedload()`, or map to a Pydantic/DTO
+  *inside* the session scope.
+
+- **N+1 queries hide behind ORM lazy loading.** `for u in users: u.orders` issues
+  one query per user. It's invisible in unit tests with 2 rows and lethal at
+  10k. Detect with query-count assertions or `echo=True`; fix with eager loading
+  / a single join.
+
+- **bcrypt silently truncates passwords at 72 bytes.** Anything past byte 72 is
+  ignored, so two different long passwords can validate against the same hash.
+  Pre-hash with SHA-256 before bcrypt, or use argon2 (no such limit).
+
+- **JWT: never trust the token's own `alg` header.** Accepting `alg: none` or
+  letting the token pick the algorithm enables signature bypass / RS256→HS256
+  confusion. Always pin `algorithms=["RS256"]` (or your one algorithm) on the
+  server `decode()` call, and verify `exp`/`aud`/`iss`.
+
+- **Pydantic v1 → v2 renamed the core API.** `.dict()`→`.model_dump()`,
+  `.parse_obj()`→`.model_validate()`, `Config` class→`model_config`,
+  `@validator`→`@field_validator`. Mixing v1 idioms on a v2 install fails at
+  import/runtime, not at install. Check the installed major version first.
+
+- **`Depends()` default args are shared across requests.** A mutable default
+  (`x: list = []`) or a module-level singleton created at import time leaks state
+  between requests. Build request-scoped objects inside the dependency, not at
+  module load.
+
+- **Alembic autogenerate misses data migrations and some type changes.** It
+  diffs schema, not data; enum value changes, server defaults, and index renames
+  frequently produce empty or wrong migrations. Always read the generated
+  migration before applying.
+
 ## Best Practices
 
 ```python
-# ✅ GOOD - Full type hints, proper error handling
+# ✅ GOOD - Full type hints, no-race duplicate check, real hash
 async def create_user(
     email: str,
     password: str,
-    user_repo: UserRepository
+    user_repo: UserRepository,
 ) -> User:
     existing = await user_repo.find_by_email(email)
     if existing:
         raise UserAlreadyExistsError(f"User {email} already exists")
-    return await user_repo.create(User(email=email, password=hash(password)))
+    # argon2/bcrypt via a library — never a plain hash() (unsalted, reversible-ish)
+    return await user_repo.create(
+        User(email=email, password_hash=pwd_hasher.hash(password))
+    )
 
-# ❌ BAD - No types, bare except
+# ❌ BAD - No types, bare except swallows the real error, returns None on failure
 async def create_user(email, password, user_repo):
     try:
         return await user_repo.create(email, password)
-    except:
+    except:  # noqa - hides DB errors, integrity violations, everything
         return None
 ```
+
+Note: the DB unique constraint on `email` is the real guard against duplicates —
+the `find_by_email` check is a UX nicety and races under concurrency. Catch the
+`IntegrityError` and map it to `UserAlreadyExistsError` for the authoritative path.
 
 ---
 

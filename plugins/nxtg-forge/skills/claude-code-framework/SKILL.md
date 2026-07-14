@@ -1,7 +1,13 @@
 ---
 name: Claude Code Framework
-description: Deep knowledge of Claude Code architecture, capabilities, and extension patterns.
+description: >
+  Reference for how Claude Code itself works — CLI/headless modes, MCP integration,
+  CLAUDE.md memory, skills, subagents, hooks, plan mode, settings precedence, and
+  multi-platform surfaces. Use when authoring or debugging plugin components
+  (commands/agents/skills/hooks), wiring MCP servers, deciding frontmatter fields,
+  or answering "how does Claude Code X work" questions.
 disable-model-invocation: true
+allowed-tools: Read, Grep, Glob
 ---
 
 # CLAUDE CODE FRAMEWORK — QUICK REFERENCE & DECISION GUIDE
@@ -259,12 +265,27 @@ CLAUDE.md                       # Project context (auto-loaded)
 - Use `.claudeignore` to exclude large irrelevant files from context
 - Never commit API keys to `.mcp.json` — use environment variables
 - Local stdio servers are faster than remote HTTP/SSE
-- MCP Tool Search auto-manages context at 10% threshold (configurable)
+- MCP Tool Search auto-manages context at the `auto:N` percent threshold you set (`auto:5` = 5%); keep this consistent with the `ENABLE_TOOL_SEARCH` value in §2
 - Audit third-party MCP servers before deployment
 - Enterprise: use `managed-mcp.json` for exclusive policy control
 - CLAUDE.md hard ceiling: **40k characters** (beyond this, Claude Code warns about performance)
 
 ---
+
+## GOTCHAS
+
+Real, non-obvious traps when building for Claude Code — verified against this plugin's own source (`plugins/nxtg-forge/agents/*.md`, `servers/governance-mcp/`).
+
+- **`disable-model-invocation: true` removes the description from context entirely.** It is not just "manual-only" — the skill's description is stripped from Claude's auto-load context, so the model cannot discover or auto-invoke it. This skill uses it; it is reachable only by explicit invocation. Do NOT set it on a skill you want Claude to route to automatically.
+- **Agent `name` must be lowercase-hyphens, ≤64 chars — no uppercase, no underscores.** A display-cased name (e.g. `NXTG-CEO-LOOP`) silently fails discovery; the fix was renaming to `nxtg-ceo-loop`. The `name` is the wiring key, not a label.
+- **`color` accepts ONLY: `purple | cyan | green | orange | blue | red`.** Any other value is ignored. All 22 agents in this plugin use exactly these six.
+- **Leaf-worker agents must OMIT `Task` from `tools`; orchestrators must INCLUDE it.** `Task` is what lets an agent spawn subagents. Give it to a leaf (testing/security/docs) and you invite unintended recursion; withhold it from an orchestrator (planner/builder/guardian/detective/orchestrator) and delegation silently no-ops.
+- **Invalid frontmatter fields are silently dropped, not errored.** Claude Code ignores `shortname`, `avatar`, `whenToUse` (camelCase), `exampleQueries`, `when_to_use` on agents — a typo'd field name looks accepted but does nothing. Verify field names against the valid set; never assume a field "took."
+- **`model` in an agent/skill file overrides the session model** — an agent pinned to `sonnet` will NOT inherit an Opus session. Omit `model` to inherit; set it only when you deliberately want a fixed tier.
+- **An MCP server entry file that runs `server.connect()` at import time breaks test harnesses.** `governance-mcp/index.mjs` guards it (`if (!process.env.FORGE_TEST_MODE) server.connect(...)`) and dropped its `#!/usr/bin/env node` shebang because the shebang blocked vitest's ESM transform. If you import an MCP entry module in tests, gate the transport connect behind an env flag.
+- **MCP scope precedence is Local > Project > User** — a `local` server in `~/.claude.json` shadows a `project` server of the same name in `.mcp.json`. A "why is the team server not loading" bug is usually a same-named local override.
+- **`allowed-tools` pre-approves; it does NOT restrict.** Listing tools only suppresses permission prompts for them — it never limits what the skill can reach. Use `permissions.deny` / `disallowedTools` in settings to actually restrict.
+- **CLAUDE.md hard ceiling is ~40k characters.** Past it Claude Code warns about performance and effective recall degrades. Move deep detail into `.claude/rules/*.md` (path-scoped) or linked docs; keep CLAUDE.md as an orienting index.
 
 ## RESOURCES
 

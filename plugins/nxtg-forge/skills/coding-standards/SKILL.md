@@ -1,6 +1,19 @@
 ---
 name: Coding Standards
-description: Enforces coding standards including naming conventions, file organization, and code style guidelines. For per-language detail see the Language Reference Files section.
+description: >
+  NXTG-Forge Python coding standards — naming conventions, quality gates
+  (complexity/length/coverage), Black/Ruff/MyPy config, type hints, error
+  handling, pytest layout, Google docstrings, import order, and security
+  patterns. Use when writing or reviewing Python code, answering "what's our
+  convention for X", enforcing type hints or docstrings, running the pre-PR
+  review checklist, or configuring black/ruff/mypy/pytest for a Forge Python
+  module. For deep per-pattern examples and tool configs see python.md.
+when_to_use: >
+  Explicit invocation only (auto-invoke disabled). Reach for it on "check my
+  Python against our standards", "add type hints / docstrings", "is this
+  idiomatic", "review before PR", "what's the max complexity / line length",
+  "how do we handle errors / path traversal", "set up black/ruff/mypy".
+allowed-tools: Read, Grep, Glob
 disable-model-invocation: true
 ---
 
@@ -123,6 +136,67 @@ Order within each file: **(1) stdlib → (2) third-party → (3) local**. One bl
 - [ ] `ruff check forge/ tests/` passes
 - [ ] `mypy forge/` passes (strict)
 - [ ] All tests pass: `pytest -v --cov=forge --cov-fail-under=80`
+
+---
+
+## Gotchas
+
+Real, non-obvious failure modes when enforcing these standards:
+
+- **`is_relative_to` does NOT stop symlink traversal.** The security rule
+  (`is_relative_to(allowed_root)`) passes for a path that *looks* nested but is
+  a symlink pointing outside the root. You MUST `.resolve()` both the candidate
+  and the root first, then compare — otherwise an attacker-planted symlink
+  escapes the sandbox. `is_relative_to` also requires Python 3.9+.
+- **Atomic write breaks across filesystems.** `write .tmp then Path.replace()`
+  is atomic only on the *same* filesystem. Writing the temp file under `/tmp`
+  and replacing to a project mount raises `OSError: Invalid cross-device link`.
+  Create the `.tmp` in the destination directory, not a global temp dir.
+- **`raise ... from e` vs `from None`.** The standard mandates context
+  preservation. Bare `raise SpecificError(...)` inside an `except` block still
+  implicitly chains, but re-raising after catching-and-transforming without
+  `from e` (or explicitly `from None`) muddies tracebacks. Always be explicit.
+- **`Protocol` + `isinstance` needs `@runtime_checkable`.** Using a `Protocol`
+  for structural typing is fine for MyPy, but `isinstance(obj, MyProtocol)`
+  raises `TypeError` unless the Protocol is decorated `@runtime_checkable` —
+  and even then it only checks method *names*, not signatures.
+- **`--cov-fail-under=80` hides uncovered critical modules.** Total line
+  coverage ≥80% can pass while a critical-path module sits at 0%. The "100% on
+  critical paths" rule is NOT enforced by the aggregate gate — check per-file
+  coverage, don't trust the single pass/fail number.
+- **Don't run Black AND the Ruff formatter both.** Ruff ships a formatter that
+  overlaps Black. Pick one formatter (Black here) and use Ruff only as the
+  linter (`ruff check`), or they fight over the same constructs in CI.
+- **`TYPE_CHECKING` imports fail at runtime if annotations are evaluated.**
+  Imports behind `if TYPE_CHECKING:` don't exist at runtime. Referencing them
+  in a non-annotation context (or without `from __future__ import annotations`
+  / quoted string annotations) raises `NameError`.
+
+---
+
+## Worked Example — safe path handling
+
+Request: "validate a user-supplied output path stays inside the project."
+
+```python
+# WRONG — symlink under project_root escapes; also no resolve()
+def write_output(project_root: Path, user_path: Path) -> None:
+    if user_path.is_relative_to(project_root):   # passes for a symlink!
+        user_path.write_text(data)
+
+# RIGHT — resolve both, then compare, then atomic write in-place
+def write_output(project_root: Path, user_path: Path, data: str) -> None:
+    root = project_root.resolve()
+    target = (root / user_path).resolve()
+    if not target.is_relative_to(root):
+        raise PathTraversalError(f"{target} escapes {root}")
+    tmp = target.with_suffix(target.suffix + ".tmp")  # same dir = same FS
+    tmp.write_text(data)
+    tmp.replace(target)                                # atomic on same FS
+```
+
+Applies: security path-traversal rule + the resolve/symlink and same-filesystem
+gotchas above, plus the `PathTraversalError` domain exception pattern.
 
 ---
 
