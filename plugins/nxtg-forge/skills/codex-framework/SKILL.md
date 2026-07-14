@@ -1,6 +1,7 @@
 ---
 name: Codex Framework
 description: Reference knowledge for OpenAI Codex CLI compatibility. Describes how Codex discovers agents and skills so Forge can interoperate. DO NOT create files from this skill — it is reference material only.
+disable-model-invocation: true
 ---
 
 # Codex CLI — Reference Knowledge

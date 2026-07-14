@@ -62,10 +62,10 @@ function withProject(dir) {
 }
 
 // ---------------------------------------------------------------------------
-// forge_get_health
+// forge_get_governance_health
 // ---------------------------------------------------------------------------
 
-describe("forge_get_health", () => {
+describe("forge_get_governance_health", () => {
   let dir;
 
   beforeEach(() => {

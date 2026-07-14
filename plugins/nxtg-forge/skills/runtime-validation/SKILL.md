@@ -1,6 +1,7 @@
 ---
 name: Runtime Validation
 description: Provides runtime validation patterns for data integrity and type safety at system boundaries.
+allowed-tools: Bash, Read
 ---
 
 # NXTG-Forge Runtime Validation Layer

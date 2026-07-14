@@ -20,7 +20,7 @@ description: |
   Capturing and applying user preferences is a learning specialty.
   </commentary>
   </example>
-model: haiku
+model: sonnet
 color: purple
 memory: project
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite

@@ -1,6 +1,7 @@
 ---
 name: Gemini Framework
 description: Reference knowledge for Google Gemini CLI compatibility. Describes how Gemini discovers context and configuration so Forge can interoperate. DO NOT create files from this skill — it is reference material only.
+disable-model-invocation: true
 ---
 
 # Gemini CLI — Reference Knowledge

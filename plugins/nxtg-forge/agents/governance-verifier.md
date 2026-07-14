@@ -22,7 +22,7 @@ description: |
   Scope validation is a governance-verifier specialty.
   </commentary>
   </example>
-model: haiku
+model: sonnet
 color: orange
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---

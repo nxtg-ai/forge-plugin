@@ -1,6 +1,7 @@
 ---
 name: ceo-loop
 description: CEO Decision Loop — ORBIT model for Forge. Autonomous multi-iteration governance engine for NXTG-Forge product decisions. OBSERVE → REASON → BUILD → INSPECT → TURN. Reads state files written by /forge:ceo-loop command. The Stop hook keeps the loop alive. This skill defines the execution protocol for each iteration.
+disable-model-invocation: true
 ---
 
 # CEO Decision Loop — ORBIT Protocol

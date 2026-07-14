@@ -51,7 +51,7 @@ export {
  */
 export const TOOLS = [
   {
-    name: "forge_get_health",
+    name: "forge_get_governance_health",
     description:
       "Get the project health score (0-100) with letter grade and detailed check results. Evaluates governance, git cleanliness, test coverage, documentation, type safety, file sizes, and security.",
     inputSchema: { type: "object", properties: {}, required: [] },
@@ -128,7 +128,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
  */
 export async function dispatchToolCall(name) {
   switch (name) {
-    case "forge_get_health":        return getHealthScore();
+    case "forge_get_governance_health":        return getHealthScore();
     case "forge_get_governance_state": return getGovernanceState();
     case "forge_get_git_status":    return getGitStatus();
     case "forge_get_code_metrics":  return getCodeMetrics();

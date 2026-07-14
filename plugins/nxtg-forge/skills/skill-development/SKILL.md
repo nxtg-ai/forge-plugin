@@ -1,6 +1,7 @@
 ---
 name: Skill Development
 description: Guides creation of Claude Code skills with proper SKILL.md format and progressive disclosure.
+disable-model-invocation: true
 ---
 
 # Equipping agents for the real world with Agent Skills

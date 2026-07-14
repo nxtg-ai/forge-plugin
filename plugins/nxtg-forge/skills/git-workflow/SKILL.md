@@ -1,6 +1,7 @@
 ---
 name: Git Workflow
 description: Defines git workflow patterns including branching strategy, commit conventions, and PR practices.
+allowed-tools: Bash
 ---
 
 # Git Workflow and Branching Strategy

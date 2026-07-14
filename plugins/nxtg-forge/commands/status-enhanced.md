@@ -73,7 +73,7 @@ Agents and commands are loaded from the NXTG-Forge plugin (23 agents, 23 command
 Call orchestrator MCP tools in parallel:
 - `forge_get_state` — Full orchestration state
 - `forge_get_tasks` — Task board with statuses
-- `forge_get_health` — Orchestrator health check (docs, architecture, task health, knowledge coverage, drift)
+- `forge_get_governance_health` — Orchestrator health check (docs, architecture, task health, knowledge coverage, drift)
 - `forge_get_knowledge` — Knowledge base entries
 - `forge_check_drift` — Vision alignment
 

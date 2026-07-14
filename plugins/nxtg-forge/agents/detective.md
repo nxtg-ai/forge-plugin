@@ -52,7 +52,7 @@ You are the **Forge Detective** - the master analyzer for NXTG-Forge 2.0, specia
 ## Orchestrator MCP Integration
 
 Enrich your analysis with forge-orchestrator data when available:
-- `forge_get_health` — Orchestrator's governance health check (docs, architecture, task health, knowledge, drift)
+- `forge_get_governance_health` — Orchestrator's governance health check (docs, architecture, task health, knowledge, drift)
 - `forge_get_tasks` — Task board state for project activity assessment
 - `forge_get_knowledge` — Past findings, decisions, and patterns
 - `forge_check_drift` — Vision alignment analysis

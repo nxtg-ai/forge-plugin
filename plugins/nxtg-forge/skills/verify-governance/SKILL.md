@@ -1,12 +1,7 @@
 ---
 name: verify-governance
-description: Verify governance concerns with evidence gathering and automated analysis
-user_invocable: true
-triggers:
-  - /verify-governance
-  - /verify-gov
-  - governance concern
-  - test mismatch
+description: Verify governance concerns with evidence gathering and automated analysis. Use when invoking /verify-governance or /verify-gov, or when "governance concern" or "test mismatch" messages appear.
+user-invocable: true
 ---
 
 # Verify Governance Skill

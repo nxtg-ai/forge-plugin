@@ -5,6 +5,7 @@ description: >
   (explore-then-plan-then-wait-for-approval) and Agent Teams (parallel subagent
   spawning via the Task tool). Load this skill when designing complex features,
   running multi-dimensional analysis, or orchestrating parallel build/test pipelines.
+allowed-tools: Task, Bash, Read
 ---
 
 # Parallel Execution: Plan Mode + Agent Teams

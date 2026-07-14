@@ -1,6 +1,7 @@
 ---
 name: Optimization
 description: Identifies performance bottlenecks and recommends optimization strategies.
+user-invocable: false
 ---
 
 # Performance Optimization Skill

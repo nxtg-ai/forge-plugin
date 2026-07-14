@@ -22,7 +22,7 @@ Options:
 ## Pre-Analysis: Orchestrator Data
 
 Before running local analysis, pull orchestrator data if available:
-- Call `forge_get_health` — get orchestrator's governance health check (documentation quality, architecture metrics, task health, knowledge coverage, drift detection)
+- Call `forge_get_governance_health` — get orchestrator's governance health check (documentation quality, architecture metrics, task health, knowledge coverage, drift detection)
 - Call `forge_check_drift` — compare current work against project vision (SPEC.md)
 - Call `forge_get_knowledge` — check existing knowledge base for previously identified patterns
 

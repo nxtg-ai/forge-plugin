@@ -1,6 +1,7 @@
 ---
 description: "Activate the CEO Decision Loop in ORBIT mode. Starts a continuous multi-iteration governance cycle: OBSERVE pending decisions → REASON with precedent → BUILD decisions → INSPECT retrograde → TURN for next iteration. The Stop hook keeps the loop alive until the queue is empty or limits are reached. Usage: /forge:ceo-loop [max-iterations] [time-limit-minutes]"
-disable-model-invocation: false
+disable-model-invocation: true
+argument-hint: "[max-iterations] [time-limit-minutes]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, TodoWrite, Task
 ---
 

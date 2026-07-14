@@ -20,7 +20,7 @@ description: |
   Privacy compliance review is a compliance specialty.
   </commentary>
   </example>
-model: haiku
+model: sonnet
 color: orange
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---

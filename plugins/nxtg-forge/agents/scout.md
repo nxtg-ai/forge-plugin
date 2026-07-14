@@ -48,7 +48,7 @@ description: |
   </commentary>
   </example>
 model: sonnet
-color: amber
+color: orange
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite, WebSearch, WebFetch
 ---
 

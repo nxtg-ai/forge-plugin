@@ -25,7 +25,7 @@ description: |
 
 model: sonnet
 color: purple
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, Edit, TodoWrite
 ---
 
 # Forge Oracle Agent

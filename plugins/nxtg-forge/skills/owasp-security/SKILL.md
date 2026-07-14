@@ -5,6 +5,7 @@ description: >
   Use when reviewing authentication, authorization, input validation, cryptography,
   API security, session management, or any security-sensitive code. Covers OWASP Top 10:2025,
   API Security Top 10, Agentic AI Security (ASI01-ASI10), CWE Top 25, and ASVS 5.0.
+allowed-tools: Bash, Read, Grep
 ---
 
 # OWASP Security Knowledge

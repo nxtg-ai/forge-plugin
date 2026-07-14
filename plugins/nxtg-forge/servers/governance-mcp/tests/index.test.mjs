@@ -56,7 +56,7 @@ describe('TOOLS definitions', () => {
   it('contains all expected tool names', () => {
     const names = TOOLS.map((t) => t.name);
     const expected = [
-      'forge_get_health',
+      'forge_get_governance_health',
       'forge_get_governance_state',
       'forge_get_git_status',
       'forge_get_code_metrics',
@@ -115,8 +115,8 @@ describe('dispatchToolCall', () => {
     await expect(dispatchToolCall('FORGE_GET_HEALTH')).rejects.toThrow('Unknown tool:');
   });
 
-  it('dispatches forge_get_health and returns valid health object', async () => {
-    const result = await dispatchToolCall('forge_get_health');
+  it('dispatches forge_get_governance_health and returns valid health object', async () => {
+    const result = await dispatchToolCall('forge_get_governance_health');
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
     expect(['A', 'B', 'C', 'D', 'F']).toContain(result.grade);

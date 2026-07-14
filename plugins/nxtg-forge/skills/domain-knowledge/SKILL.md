@@ -1,6 +1,7 @@
 ---
 name: Domain Knowledge
 description: Provides project-specific domain knowledge and business logic context.
+disable-model-invocation: true
 ---
 
 # NXTG-Forge Domain Knowledge

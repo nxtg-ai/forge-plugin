@@ -1,6 +1,6 @@
 ---
 description: "Open the NXTG-Forge governance dashboard in your browser"
-allowed-tools: ["mcp__plugin_nxtg_forge_governance_mcp__forge_open_dashboard", "mcp__plugin_nxtg_forge_governance_mcp__forge_get_health"]
+allowed-tools: ["mcp__plugin_nxtg_forge_governance_mcp__forge_open_dashboard", "mcp__plugin_nxtg_forge_governance_mcp__forge_get_governance_health"]
 disable-model-invocation: true
 ---
 
@@ -30,7 +30,7 @@ The `{url}` field is a clickable `file://` URL that opens in the browser. Always
 
 If the MCP server is not available (tools not found), fall back to the text-based approach:
 
-1. Use `forge_get_health` MCP tool if available
+1. Use `forge_get_governance_health` MCP tool if available
 2. Otherwise, use Bash to read `.claude/governance.json` and `git status`
 3. Display a text-based health summary
 

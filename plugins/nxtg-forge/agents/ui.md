@@ -31,6 +31,7 @@ description: |
   </example>
 model: sonnet
 color: red
+isolation: worktree
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---
 

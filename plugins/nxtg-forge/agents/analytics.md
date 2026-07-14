@@ -20,7 +20,7 @@ description: |
   Metrics instrumentation is a analytics specialty.
   </commentary>
   </example>
-model: haiku
+model: sonnet
 color: cyan
 tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
 ---

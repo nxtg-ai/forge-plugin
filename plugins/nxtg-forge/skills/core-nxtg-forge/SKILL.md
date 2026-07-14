@@ -1,6 +1,7 @@
 ---
 name: Core NXTG-Forge
 description: Provides NXTG-Forge platform knowledge including agent system, governance, and plugin architecture.
+user-invocable: false
 ---
 
 # NXTG-Forge System Overview

@@ -29,7 +29,7 @@ description: |
   Refactoring plans require the planner agent's structured approach to analyze current state, define target state, and provide safe transformation steps.
   </commentary>
   </example>
-model: sonnet
+model: opus
 color: cyan
 skills: nxtg-forge:parallel-execution
 tools: Glob, Grep, Read, Bash, TodoWrite, Task

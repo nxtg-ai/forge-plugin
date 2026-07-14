@@ -1,6 +1,7 @@
 ---
 name: Core Testing
 description: Defines core testing principles and test infrastructure patterns.
+user-invocable: false
 ---
 
 # Testing Standards & Best Practices

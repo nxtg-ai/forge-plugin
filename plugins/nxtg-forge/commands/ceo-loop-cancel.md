@@ -1,6 +1,6 @@
 ---
 description: "Cancel the active CEO Decision Loop gracefully. Sets the loop to inactive, writes a final session summary to the progress file, and logs session statistics. Does NOT delete the decision journal — all decisions are preserved. Safe to run at any time, even if no loop is active."
-disable-model-invocation: false
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash
 ---
 

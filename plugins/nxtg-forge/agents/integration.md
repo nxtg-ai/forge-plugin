@@ -22,7 +22,7 @@ description: |
   </example>
 model: sonnet
 color: blue
-tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite
+tools: Glob, Grep, Read, Write, Edit, Bash, TodoWrite, Task
 ---
 
 # Forge Integration Agent

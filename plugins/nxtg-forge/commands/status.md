@@ -54,7 +54,7 @@ Read `.claude/governance.json` if it exists. Extract:
 Call orchestrator MCP tools in parallel to get live orchestration data:
 - `forge_get_state` — Full orchestration state (project info, tools, active locks)
 - `forge_get_tasks` — All tasks with status and assignments
-- `forge_get_health` — Governance health check from orchestrator
+- `forge_get_governance_health` — Governance health check from orchestrator
 - `forge_check_drift` — Vision alignment check
 
 If the orchestrator MCP server is not available (tools not found), or if it returns initialization errors (e.g., "Forge is not initialized"), skip this section gracefully. Do NOT show raw error messages to the user. Instead, display a friendly upgrade prompt:

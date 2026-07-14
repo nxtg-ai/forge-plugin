@@ -1,9 +1,13 @@
 {
+  "$schema": "https://claude.ai/schemas/plugin.json",
   "name": "nxtg-forge",
-  "version": "3.7.0",
-  "description": "Governance-native AI development \u2014 33 agents, 23 commands, 33 skills, 13 security hooks, drift detection, CRUCIBLE test auditing, and shared memory for Claude Code",
+  "displayName": "NXTG Forge",
+  "version": "3.8.0",
+  "description": "Governance-native AI development — 33 agents, 23 commands, 33 skills, 13 security hooks, drift detection, CRUCIBLE test auditing, and shared memory for Claude Code",
+  "defaultEnabled": true,
   "author": {
     "name": "NXTG AI",
+    "email": "team@nxtg.ai",
     "url": "https://github.com/nxtg-ai"
   },
   "repository": "https://github.com/nxtg-ai/forge-plugin",
