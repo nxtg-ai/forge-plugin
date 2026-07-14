@@ -129,7 +129,7 @@ The plugin includes its own Node.js MCP server (8 tools) separate from forge-orc
 
 | Tool | Purpose |
 |------|---------|
-| `forge_get_health` | Health score (0-100, A-F grade) |
+| `forge_get_governance_health` | Health score (0-100, A-F grade) |
 | `forge_get_governance_state` | Read `.claude/governance.json` |
 | `forge_get_git_status` | Branch, commits, clean status |
 | `forge_get_code_metrics` | Lines, files, deps, test ratio |
@@ -213,10 +213,10 @@ Contextual knowledge, patterns, best practices...
 
 ## Key Dimensions
 
-- **Version:** 3.5.1
-- **Components:** 23 commands, 33 agents, 33 skills, 13 hook scripts (8 PreToolUse + 5 PostToolUse + 4 Stop + 1 UserPromptSubmit), 8 MCP tools
+- **Version:** 3.8.0
+- **Components:** 23 commands, 33 agents, 33 skills, 13 hook scripts (11 PreToolUse + 7 PostToolUse + 4 Stop + 1 UserPromptSubmit), 8 MCP tools
 - **MCP Servers:** 3 (governance-mcp Node.js, orchestrator-mcp Rust, semgrep-mcp Python)
-- **Security Hooks:** 4 PreToolUse guards (command, secret, injection, SQL) + 1 PostToolUse Semgrep auto-scan
+- **Security Hooks:** 4 PreToolUse guards (command, secret, injection, SQL) × {Write, Edit, NotebookEdit} + 1 PostToolUse Semgrep auto-scan × {Write, Edit, NotebookEdit}
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
 - **Repo:** github.com/nxtg-ai/forge-plugin
 
@@ -267,3 +267,14 @@ On every session start, recall relevant context from Dx3 before starting work:
 - The brain at dx3-cognitive MCP has context from ALL projects — use it
 
 This is how the portfolio compounds intelligence. Your work benefits from every other team's learning.
+
+<!-- ASIF:TEAM-ALIGNMENT-WIRING:START -->
+## ASIF Alignment Wiring
+
+@/home/axw/ASIF/standards/claude-team-alignment-wiring.md
+
+- Team alignment id: `forge`.
+- Cross-team room: `/alignment`, written through `~/ASIF/scripts/alignment-say`.
+- If an `[ALIGNMENT ...]` message appears, respond through `alignment-say`; do not answer only in this private TUI.
+- Deterministic state first: typed Dx3/asifctl, `.asif/NEXUS.md`, git/tests/runtime probes. Prose is backup and local steering only.
+<!-- ASIF:TEAM-ALIGNMENT-WIRING:END -->

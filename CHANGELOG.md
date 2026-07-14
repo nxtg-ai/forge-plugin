@@ -6,6 +6,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.8.0] — 2026-07-14
+
+### Fixed
+
+- **Agent colors (CRITICAL)** — `design-vanguard` (pink→purple), `dx-engineer` (teal→cyan), `revenue-architect` (gold→orange), `scout` (amber→orange). All four were silently rejected by Claude Code; agents appeared with no color.
+- **Command safety flags (CRITICAL)** — `ceo-loop` and `ceo-loop-cancel` had `disable-model-invocation: false`, allowing Claude to autonomously start or kill a 30–60 min ORBIT governance loop. Both set to `true`.
+- **MCP tool collision (CRITICAL)** — `forge_get_health` existed in both governance-mcp and orchestrator-mcp simultaneously. Renamed to `forge_get_governance_health` in governance-mcp and all 9 callers (commands/agents/tests). Eliminates undefined tool resolution behavior on Claude Code v2.1.207+.
+- **`.mcp.json` missing `mcpServers` wrapper (CRITICAL)** — All 3 MCP servers were not loading on Claude Code v2.1.207+. Added required top-level wrapper, env injection (`FORGE_PROJECT_ROOT`), timeouts (governance: 15s, orchestrator: 10s, semgrep: 120s), and visible `exit 1` on binary-missing instead of silent `exit 0`.
+- **`verify-governance` skill invalid frontmatter (CRITICAL)** — `user_invocable` (underscore, silently ignored) replaced with `user-invocable` (dash); non-existent `triggers:` field removed.
+- **Agent model upgrades (HIGH)** — `analytics`, `compliance`, `governance-verifier`, `learning` upgraded from `haiku` to `sonnet`. `planner` upgraded from `sonnet` to `opus`. haiku was causing silent false-negatives in compliance/governance and shallow synthesis in the memory-backed learning agent.
+- **Skill `disable-model-invocation` flags (HIGH)** — Added to `codex-framework`, `gemini-framework`, `ceo-loop` (skill), `domain-knowledge`, `skill-development`. Prevents accidental auto-trigger of reference-only and state-machine skills.
+- **Hook `NotebookEdit` coverage gap (HIGH)** — `security-secret-shield`, `security-injection-guard`, `security-sql-guard` now cover `NotebookEdit` in PreToolUse (symmetry with Write/Edit). `governance-check` and `security-semgrep-scan` now cover `NotebookEdit` in PostToolUse.
+- **governance-mcp `start.sh` silent failure (HIGH)** — Was `exit 0` (silent EOF) when `node_modules` missing or `index.mjs` not found; now `exit 1` with a clear stderr message.
+
+### Added
+
+- **`isolation: worktree`** on `refactor`, `database`, `ui` agents — multi-file operations no longer dirty the main checkout.
+- **`Task` tool** added to `integration` and `devops` agents — enables parallel subagent spawning for multi-service work.
+- **`Edit` + `TodoWrite`** added to `oracle` agent — oracle now writes decision records directly.
+- **Skill `allowed-tools`** added to `parallel-execution` (Task, Bash, Read), `owasp-security` (Bash, Read, Grep), `git-workflow` (Bash), `runtime-validation` (Bash, Read).
+- **`user-invocable: false`** added to `core-testing`, `core-nxtg-forge`, `optimization` — hides internal skills from the `/` menu.
+- **`argument-hint`** added to `ceo-loop` command frontmatter.
+- **`plugin.json` SOTA fields** — `$schema`, `displayName: "NXTG Forge"`, `defaultEnabled: true`, `author.email`.
+- **Skill split: `claude-code-framework`** — 1097 lines → 287-line SKILL.md index + `reference.md` + `patterns.md`. Reduces per-session token burn by ~60k tokens.
+- **Skill split: `coding-standards`** — 1089 lines → 139-line SKILL.md + `python.md`. Per-language detail now loaded on demand.
+- **Skill split: `architecture`** — 922 lines → 287-line SKILL.md + `patterns.md` + `adr-templates.md`.
+- **`docs-coverage.map`** — Created initial coverage map so `docs-drift-check.sh` can detect CHANGELOG/CLAUDE.md drift on future releases.
+
+---
+
 ## [3.7.0] — 2026-05-06
 
 ### Governance

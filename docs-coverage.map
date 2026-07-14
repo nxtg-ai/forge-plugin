@@ -1,0 +1,25 @@
+# docs-coverage.map — forge-plugin
+# Format: <code-glob> <doc-class> <doc-path>
+# doc-class: changelog | api-ref | consumer | arch/design
+# Used by: scripts/docs-drift-check.sh (ASIF docs-sync canon)
+
+# Any change to plugin components → CHANGELOG entry required
+plugins/nxtg-forge/agents/**      changelog  CHANGELOG.md
+plugins/nxtg-forge/commands/**    changelog  CHANGELOG.md
+plugins/nxtg-forge/skills/**      changelog  CHANGELOG.md
+plugins/nxtg-forge/hooks/**       changelog  CHANGELOG.md
+plugins/nxtg-forge/.mcp.json      changelog  CHANGELOG.md
+plugins/nxtg-forge/.claude-plugin/plugin.json  changelog  CHANGELOG.md
+plugins/nxtg-forge/servers/**     changelog  CHANGELOG.md
+
+# Plugin manifest or component count changes → CLAUDE.md Key Dimensions
+plugins/nxtg-forge/.claude-plugin/plugin.json  consumer  CLAUDE.md
+plugins/nxtg-forge/hooks/hooks.json             consumer  CLAUDE.md
+plugins/nxtg-forge/servers/governance-mcp/index.mjs  consumer  CLAUDE.md
+
+# MCP server changes → CLAUDE.md MCP Server table
+plugins/nxtg-forge/servers/governance-mcp/index.mjs  api-ref  CLAUDE.md
+plugins/nxtg-forge/.mcp.json                          api-ref  CLAUDE.md
+
+# Architecture-level changes → CLAUDE.md architecture section
+plugins/nxtg-forge/agents/*.md    arch/design  CLAUDE.md
