@@ -6,6 +6,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.1] — 2026-07-14
+
+### Security
+
+- **Cleared all 22 Dependabot alerts** (1 critical, 4 high, 15 moderate, 2 low) on `governance-mcp` — 0 vulnerabilities remaining. All were transitive:
+  - **Dev toolchain** (via `vitest`) — bumped `vitest` + `@vitest/coverage-v8` 3.2.4 → 4.1.10, patching the vitest UI RCE (critical), the `vite` `server.fs.deny` bypass (high), and `esbuild`/`launch-editor` (dev-server-only, never shipped).
+  - **Runtime transitives** (via `@modelcontextprotocol/sdk`) — `npm audit fix` bumped in-range: `hono` 4.12.16 → 4.12.30, `fast-uri` 3.1.0 → 3.1.3, `qs` 6.15.0 → 6.15.3, `ip-address` 10.1.0 → 10.2.0. Note: the MCP server uses **stdio** transport, so the `hono` HTTP-framework advisories (CORS, cookies, JWT, serve-static traversal) were never reachable; patched regardless.
+- 44/44 vitest still pass on vitest 4. Shipped `index.mjs`/`tools.mjs` unchanged.
+
+---
+
 ## [3.10.0] — 2026-07-14
 
 ### Changed
