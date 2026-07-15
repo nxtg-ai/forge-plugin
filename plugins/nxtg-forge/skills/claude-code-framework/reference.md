@@ -326,8 +326,7 @@ claude --resume <session-id>
 ```
 
 ### Session Search
-Third-party tools provide fuzzy full-text search across coding sessions.
-Reference: https://stanislas.blog/2026/01/tui-index-search-coding-agent-sessions/
+`/resume` lists recent sessions to pick from interactively.
 
 ---
 
@@ -446,26 +445,6 @@ Build custom AI agents using Claude Agent SDK. Reference implementation availabl
 
 ---
 
-## TERMINAL UI ENHANCEMENTS
-
-### Claude Canvas (Experimental)
-Third-party TUI toolkit providing rich interactive interfaces directly in terminal:
-- Email clients, calendar views, flight booking interfaces
-- Interactive forms with keyboard/mouse navigation
-- Two-way communication with Claude
-
-Note: Still proof-of-concept as of January 2026.
-
-### Terminal UI Designer Skill
-Available via MCP Market — creates production-grade terminal UIs with:
-- Custom Unicode borders
-- Cohesive color palettes
-- Complex spatial layouts
-- Terminal animations
-- Advanced visual hierarchy
-
----
-
 ## PRACTICAL USE CASE EXAMPLES
 
 ### Full-Stack Feature Development
@@ -536,10 +515,5 @@ Generate a report with severity levels and remediation steps."
 
 ---
 
-## VERSION INFORMATION
-
-**Document Created:** January 28, 2026
-**Claude Code Version:** Current stable release (auto-updates)
-**Last Verified:** January 28, 2026
-
-All information sourced from official Anthropic documentation and verified community resources.
+Ground all specifics (model IDs, flags, limits) against the live docs at
+<https://code.claude.com/docs>. Claude Code auto-updates; version-pinned claims rot.

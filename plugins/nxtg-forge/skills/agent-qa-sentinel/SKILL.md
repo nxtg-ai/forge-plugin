@@ -126,7 +126,7 @@ Real failure modes for this domain — the reasons a "green" suite still ships a
   E2E / critical-path examples and GOOD-vs-BAD contrasts.
 - `skills/crucible-audit/SKILL.md` — the 8 CRUCIBLE test-fraud patterns and their detection
   commands (coverage-omit gaming, hollow assertions, dead tests, metric inflation).
-- `skills/core-testing/SKILL.md` — the shared testing-pyramid and infra baseline.
+- `skills/testing/SKILL.md` — the shared testing-pyramid, patterns, and infra baseline.
 - `agents/qa-sentinel.md` — the agent that reasons from this skill.
 
 ---

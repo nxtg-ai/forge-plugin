@@ -2,18 +2,24 @@
 name: Architecture
 disable-model-invocation: true
 description: >
-  Clean Architecture and system-design guidance for organizing a codebase into
-  layers with the right dependency direction, choosing structural design patterns
-  (Repository, Strategy, Observer, Command, DI), and recording decisions as ADRs.
-  Use when designing a new system or feature, deciding which layer code belongs in,
-  refactoring a tangled/God-object codebase, reviewing coupling and boundaries, or
-  writing an Architecture Decision Record.
+  Clean Architecture, Domain-Driven Design, and backend system-design guidance:
+  organizing a codebase into layers with the right dependency direction, choosing
+  structural design patterns (Repository, Strategy, Observer, Command, DI), applying
+  DDD tactical patterns (entities vs value objects, aggregates), designing REST
+  resources and status codes, persistence (unit-of-work, N+1), caching, domain
+  events, layered error handling, and recording decisions as ADRs. Use when
+  designing a new system or feature, deciding which layer code belongs in,
+  refactoring a tangled/God-object codebase, reviewing coupling and boundaries,
+  shaping an API, or writing an Architecture Decision Record.
 when_to_use: >
   Trigger on requests like "how should I structure this", "which layer does X go
   in", "design the architecture for <feature>", "this module is too coupled / hard
   to test", "should this be an interface or concrete class", "add a new backend
-  without touching business logic", "write an ADR for <decision>", "review our
-  dependency direction", "is this the right design pattern here".
+  without touching business logic", "entity or value object", "define an aggregate",
+  "REST endpoint design", "what status code", "repository / unit of work",
+  "fix the N+1", "cache-aside vs write-through", "domain events", "error handling
+  across layers", "write an ADR for <decision>", "review our dependency direction",
+  "is this the right design pattern here".
 allowed-tools: Read, Grep, Glob
 ---
 
@@ -103,6 +109,59 @@ converge on Domain; nothing leaves it. That is the rule holding.
 
 ---
 
+## DDD tactical patterns — entities, value objects, aggregates
+
+Inside the Domain layer, three building blocks decide *where identity and
+invariants live*:
+
+| Concept | Has identity? | Mutable? | Model as | Compare by |
+|---|---|---|---|---|
+| **Entity** | Yes (a stable id) | Yes — but only via its own methods | class with behavior | identity |
+| **Value object** | No — it *is* its attributes | No (immutable, self-validating) | frozen record / readonly struct | value |
+| **Aggregate** | Root is an entity | Only through the root | root + private children | root identity |
+
+- **Entity**: `User` stays the same user after changing email. Business rules
+  (`change_email`, `change_password`) belong *on* the entity, not in a service.
+- **Value object**: `Email`, `Money`, `DateRange` — immutable and self-validating in
+  its constructor. Modeled as `@dataclass(frozen=True)` / `record` / `readonly
+  struct` / frozen class depending on language.
+- **Aggregate**: mutate only through the root so invariants can't be bypassed;
+  reference *other* aggregates by id (`customer_id`), never by object.
+
+→ Full DDD code + language equivalents: [reference/backend-patterns.md](reference/backend-patterns.md) §Domain-Driven Design
+
+---
+
+## Backend building blocks — API, persistence, caching, events, errors
+
+Concise rules; full illustrative code is in
+[reference/backend-patterns.md](reference/backend-patterns.md).
+
+- **REST resources**: URLs name resources, the HTTP method is the verb — `GET
+  /users/123`, `POST /users`, `DELETE /users/123`. Never `POST /getUser`. Split
+  status codes: `2xx` success (`201` create, `204` empty delete), `400` unparseable
+  vs `422` semantically invalid, `401` no-auth vs `403` no-permission, `409`
+  conflict. Many frameworks already emit `422` on body validation — don't re-raise a
+  custom `400` for the same error.
+- **Repository + Unit of Work**: the repository interface lives in Domain and speaks
+  domain types; the implementation lives in Infrastructure. Wrap a multi-repository
+  write in a unit-of-work / transaction so it commits or rolls back atomically.
+- **N+1**: a query inside a per-row loop is the defect. Eager-load relations up
+  front. With async ORMs a lazy relation access *raises* rather than silently
+  issuing the extra query — eager-loading is mandatory, not an optimization.
+- **Caching**: cache-aside populates on read but you must evict on every write;
+  write-through updates DB+cache together but still leaves a stale window. A cache
+  with no invalidation plan is a bug.
+- **Domain events**: record events on the aggregate, then have the unit-of-work /
+  use case drain and publish them *after commit*. An `_events` list nobody reads is
+  the classic "event fired, nothing happened" bug.
+- **Layered errors**: define a domain error hierarchy (`DomainError` →
+  `ValidationError` / `NotFoundError` / `ConflictError`). Domain raises them;
+  the *interface* layer is the only one that maps them to a transport (HTTP status,
+  gRPC code, CLI exit code). Domain code never imports the transport.
+
+---
+
 ## Immutable state as a default
 
 Model state with immutable objects (Python `@dataclass(frozen=True)`, records,
@@ -165,17 +224,49 @@ Real, non-obvious failure modes when applying these patterns:
    a domain service is missing — extract the shared logic down into the domain layer
    rather than letting the application layer form a cycle.
 
+7. **Async lazy-loading raises — it does not silently N+1**: with async ORMs (async
+   SQLAlchemy, Prisma in some modes, etc.) touching an unloaded relation outside its
+   session/context *throws* (`MissingGreenlet`/`DetachedInstanceError`), not a
+   convenient extra query. Eager-load up front. The classic N+1 (a query per row in a
+   loop) is the *sync* trap; async turns the same mistake into a runtime crash.
+
+8. **Domain events collected but never dispatched**: the `_events`-on-the-aggregate
+   pattern only works if something drains and publishes the list after commit. A
+   frequent bug: events appended, aggregate saved, `_events` never read — so the
+   handler never fires. Fix the dispatch point (unit-of-work / use case after
+   `commit`) and clear the list once published.
+
+9. **Cache-aside with no invalidation path**: populating the cache on read but never
+   evicting on write means reads serve stale data until the TTL expires. Every
+   mutation path must delete or overwrite the key. Write-through narrows but doesn't
+   close the window between DB commit and cache write.
+
+10. **Fighting the framework's validation default**: many web frameworks already
+    return `422` for body/schema validation failures. Raising a custom `400` for the
+    *same* class of error makes the API inconsistent. Reserve `400` for malformed
+    requests and `422` for semantically invalid ones, and let the framework default
+    stand.
+
+11. **Aggregates referencing each other by object, not id**: holding a direct
+    `Order.customer: Customer` reference across an aggregate boundary creates load
+    fan-out, transactional coupling, and circular imports. Reference other aggregate
+    roots by identity (`customer_id`) and load them separately.
+
 ---
 
 ## Additional resources
 
 - [reference/patterns.md](reference/patterns.md) — full illustrative code for every
   layer, each design pattern, DI container, and state management.
+- [reference/backend-patterns.md](reference/backend-patterns.md) — DDD (entities /
+  value objects / aggregates), REST resources + status codes + pagination,
+  repository / unit-of-work, N+1, caching, domain events, and layered error handling,
+  with language-agnostic notes (TS/JS, Rust, Go).
 - [reference/adr-templates.md](reference/adr-templates.md) — example ADRs showing the
   format + a blank template for new decisions.
 
 ## Related skills
 
 - [Coding Standards](../coding-standards/SKILL.md) — implementation conventions
-- [Testing Strategy](../testing-strategy/SKILL.md) — how to test a layered design
+- [Testing](../testing/SKILL.md) — how to test a layered design
 - [Domain Knowledge](../domain-knowledge/SKILL.md) — forge business concepts

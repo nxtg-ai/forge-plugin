@@ -1,213 +1,367 @@
 ---
 name: Coding Standards
 description: >
-  NXTG-Forge Python coding standards — naming conventions, quality gates
-  (complexity/length/coverage), Black/Ruff/MyPy config, type hints, error
-  handling, pytest layout, Google docstrings, import order, and security
-  patterns. Use when writing or reviewing Python code, answering "what's our
-  convention for X", enforcing type hints or docstrings, running the pre-PR
-  review checklist, or configuring black/ruff/mypy/pytest for a Forge Python
-  module. For deep per-pattern examples and tool configs see python.md.
+  Cross-language coding conventions — naming, type safety, error handling, async,
+  imports, SQL formatting, git commit format, complexity/size limits, security, and
+  a pre-PR review checklist for Python, TypeScript/JavaScript, Rust, and Go. Use when
+  writing or reviewing code, setting a project's style baseline, answering "what's the
+  convention for X", enforcing types/docstrings, formatting a SQL query or commit
+  message, or running the pre-PR checklist. Language deep dives and tool configs live
+  in reference/.
 when_to_use: >
-  Explicit invocation only (auto-invoke disabled). Reach for it on "check my
-  Python against our standards", "add type hints / docstrings", "is this
-  idiomatic", "review before PR", "what's the max complexity / line length",
-  "how do we handle errors / path traversal", "set up black/ruff/mypy".
+  Explicit invocation only (auto-invoke disabled). Reach for it on "check my code
+  against our standards", "how should I name this", "add type hints / types", "is this
+  idiomatic Python/TS/Rust/Go", "what commit format do we use", "format this SQL",
+  "review before PR", "what's the max complexity / file size", "how do we handle errors
+  / secrets / path traversal", "set up the formatter/linter/type-checker".
 allowed-tools: Read, Grep, Glob
 disable-model-invocation: true
 ---
 
-# NXTG-Forge Coding Standards
+# Coding Standards
+
+A language-agnostic baseline for consistent, readable, secure code. This skill ships
+inside a plugin you install in *your own* project — Python, TypeScript/JavaScript,
+Rust, Go, or anything else. Apply the principles universally; use the language section
+that matches the file at hand. The numeric thresholds here are **recommended defaults**
+— tune them to your project and enforce them with your own linter/CI, not from memory.
 
 ## Core Principles (Universal)
 
-1. **Readability counts** — code is read far more than written
-2. **Explicit over implicit** — clear intent over clever tricks
-3. **Simple over complex** — favor straightforward solutions
-4. **Consistency matters** — follow existing patterns in the codebase
+1. **Readability counts** — code is read far more often than written.
+2. **Explicit over implicit** — clear intent beats clever tricks.
+3. **Simple over complex** — favor the straightforward solution.
+4. **Consistency matters** — follow the existing patterns in the codebase you're in.
+5. **Single responsibility** — one module/class/function does one thing well.
 
 ---
 
-## Naming Conventions
+## Naming Conventions (by language)
 
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Python modules | `snake_case` | `file_generator.py` |
-| Packages | `snake_case` | `forge/domain/` |
-| Classes | `PascalCase` | `FileGenerator` |
-| Functions/Methods | `snake_case` | `generate_files()` |
-| Variables | `snake_case` | `template_path` |
-| Constants | `SCREAMING_SNAKE_CASE` | `DEFAULT_TIMEOUT` |
-| Private members | `_leading_underscore` | `_internal_method()` |
-| Type Variables | `PascalCase` + `T` prefix | `TEntity` |
+| Element | Python | TypeScript/JS | Rust | Go |
+|---------|--------|---------------|------|-----|
+| Files/modules | `snake_case.py` | `kebab-case.ts` / `camelCase.ts` | `snake_case.rs` | `snake_case.go` |
+| Types/Classes | `PascalCase` | `PascalCase` | `PascalCase` | `PascalCase` |
+| Functions | `snake_case` | `camelCase` | `snake_case` | `camelCase` (unexported) / `PascalCase` (exported) |
+| Variables | `snake_case` | `camelCase` | `snake_case` | `camelCase` |
+| Constants | `SCREAMING_SNAKE_CASE` | `SCREAMING_SNAKE_CASE` | `SCREAMING_SNAKE_CASE` | `PascalCase` / `camelCase` |
+| Private/internal | `_leading_underscore` | `#private` field / `_prefix` | module-private (no `pub`) | lowercase first letter |
 
-Rules:
-- No abbreviations that obscure intent (`tp` → `template_path`, `genProj` → `generate_project`)
-- No camelCase in Python (reserved for JS/TS)
-- Boolean functions: `is_`, `has_`, `can_` prefix (`is_valid_template`)
-- No `TemplateRepo` abbreviations — spell it out
+Universal rules:
+- **No intent-obscuring abbreviations**: `tp` → `template_path`, `genProj` → `generate_project`, `usrRepo` → `user_repository`.
+- **Boolean names read as predicates**: `is_valid`, `has_access`, `can_retry`.
+- **In Go, exported vs unexported is the capitalization of the first letter** — this is the language's access control, not a convention you can opt out of.
+- **Don't fight the ecosystem**: `camelCase` in Python or `snake_case` in TS/JS reads as a mistake to every reviewer.
 
 ---
 
-## Quality Gates (Enforced by CI)
+## Type Safety
 
-| Metric | Maximum | Target | Tool |
-|--------|---------|--------|------|
-| Cyclomatic complexity | 10 | ≤5 | Ruff/McCabe |
-| Function length (lines) | 25 | ≤15 | Manual |
-| Nesting depth | 3 | ≤2 | Manual |
-| Test coverage | ≥80% | 86% | pytest-cov |
-| Line length (Python) | 100 chars | — | Black |
+Prefer statically-typed code and full signatures on anything public.
 
----
+**Python** — type hints on all public functions; modern builtin generics (3.9+):
 
-## Standards Summary
+```python
+# GOOD — full hints, modern syntax
+def process_items(items: list[str]) -> dict[str, int]:
+    return {item: len(item) for item in items}
 
-### Code Formatting
-- **Black** enforces all Python formatting: `black --line-length 100 forge/ tests/`
-- Line length: 100 chars (`pyproject.toml` `[tool.black]` section)
-- Indentation: 4 spaces, no tabs
-- Trailing commas on all multi-line constructs
-- Break **before** binary operators (not after)
-- Comprehensions: single line for simple, multiline for complex (`if` + transform)
+# AVOID — no hints, or legacy typing.List/Dict on a 3.9+ target
+def process_items(items):
+    ...
+```
+Use `X | None` over `Optional[X]`, `X | Y` over `Union`, `Protocol` for structural
+typing, and run a type checker in strict mode.
 
-### Type Hints
-- **Mandatory** for: all public functions, methods, class attributes, parameters, return values
-- **Optional** for: private methods (encouraged), local variables (unless clarifying), simple lambdas
-- Modern Python 3.11+ syntax only:
-  - `list[str]` not `List[str]`
-  - `dict[str, int]` not `Dict[str, int]`
-  - `X | Y` not `Union[X, Y]`
-  - `X | None` not `Optional[X]`
-- MyPy strict mode: `strict = true` in `pyproject.toml`
-- Use `Protocol` for structural typing over concrete base classes
+**TypeScript over JavaScript** — always. Types are the point:
 
-### Error Handling
-- Define domain exceptions in `forge/domain/exceptions.py` inheriting from `ForgeError`
-- Always catch specific exceptions — never bare `except Exception`
-- Always preserve context: `raise SpecificError(...) from original_exception`
-- Use context managers (`with`) for all resource cleanup
-- Retry transient failures with exponential backoff (`2 ** attempt`)
-- Graceful degradation: return `None` (typed) rather than swallowing exceptions silently
+```typescript
+// GOOD
+interface User { id: number; email: string; createdAt: Date; }
+async function createUser(email: string, password: string): Promise<User> { /* ... */ }
 
-### Testing (pytest)
-- Coverage: ≥80% minimum, 86% target, 100% on critical paths
-- Test layout: `unit/` (70%), `integration/` (20%), `e2e/` (10%)
-- Naming pattern: `test_<method>_<scenario>_<expected_outcome>`
-- Structure: **AAA** — Arrange / Act / Assert (one block each, comments required)
-- Mock **external** dependencies only — never mock internal logic or private methods
-- Shared fixtures in `conftest.py`; fixture scope as narrow as possible
+// AVOID — untyped JS, `any` everywhere
+async function createUser(email, password) { /* no safety */ }
+```
+Enable `strict: true` in `tsconfig.json`; avoid `any` (reach for `unknown` + narrowing).
 
-### Documentation (Google-style Docstrings)
-- **Required** for all public modules, classes, and functions
-- Sections: `Args`, `Returns`, `Raises`, `Example` (in that order)
-- Comments explain **WHY**, not what the code does
-- TODO format: `# TODO(username): brief description`
-- Section dividers inside large classes: `# === Public API ===`
-
-### Import Organization
-Order within each file: **(1) stdlib → (2) third-party → (3) local**. One blank line between groups.
-
-- Explicit named imports only — wildcard (`from x import *`) is banned
-- Use `TYPE_CHECKING` guard for imports needed only to resolve type annotations
-- Optional dependencies: wrap in `try/except ImportError`, default to local fallback
-
-### Security
-- Validate and sanitize **all** user-supplied input before use
-- Prevent path traversal: resolve paths and verify `is_relative_to(allowed_root)`
-- Never hardcode secrets — use env vars or `forge.infrastructure.secrets.get_secret()`
-- Subprocess: always `shlex.split(cmd)` + `shell=False` — never `shell=True`
-- File writes: write to `.tmp` then `Path.replace()` for atomicity
+**Rust / Go** — the compiler enforces types; the discipline is *modeling* well: make
+illegal states unrepresentable (Rust enums / Go typed constants), return errors as
+values (`Result<T, E>` / `(T, error)`), and avoid `unwrap()`/ignored errors outside
+tests and `main`.
 
 ---
 
-## Code Review Checklist
+## Error Handling
 
-- [ ] Code follows PEP 8 and NXTG-Forge extensions (Black + Ruff pass)
-- [ ] All public functions/methods/class attributes have type hints
-- [ ] All public APIs have Google-style docstrings (Args / Returns / Raises)
-- [ ] Tests added or updated — coverage ≥ 80%
-- [ ] No function exceeds complexity 10 or 25 lines
-- [ ] Nesting depth ≤ 3 (prefer guard clauses / early returns)
-- [ ] Imports organized: stdlib → third-party → local, one blank line between groups
-- [ ] No hardcoded secrets or credentials anywhere
-- [ ] Error handling uses specific exception types with `from e` context preservation
-- [ ] `black --line-length 100 forge/ tests/` passes
-- [ ] `ruff check forge/ tests/` passes
-- [ ] `mypy forge/` passes (strict)
-- [ ] All tests pass: `pytest -v --cov=forge --cov-fail-under=80`
+Catch/return **specific** errors, preserve context, and clean up resources.
+
+```python
+# Python — specific exceptions, context preserved, logged
+def find_user(user_id: int) -> User:
+    try:
+        user = repo.find_by_id(user_id)
+        if user is None:
+            raise UserNotFoundError(f"User {user_id} not found")
+        return user
+    except DatabaseConnectionError as e:
+        logger.error("DB error finding user %s: %s", user_id, e)
+        raise ServiceUnavailableError() from e   # chain, don't swallow
+```
+- Never bare `except:` / `except Exception` that returns `None` and hides the failure.
+- Always `raise NewError(...) from original` to keep the traceback chain.
+- Use context managers (`with`) / `try/finally` / RAII for cleanup.
+
+```typescript
+// TypeScript — narrow the caught value, rethrow with context
+try {
+  return await repo.findById(id);
+} catch (err) {
+  logger.error(`find user ${id} failed`, err);
+  throw new ServiceError("lookup failed", { cause: err });  // cause preserves chain
+}
+```
+
+```rust
+// Rust — propagate with `?`, wrap with context (anyhow/thiserror)
+fn find_user(id: u64) -> Result<User, AppError> {
+    let user = repo.find_by_id(id)?;            // early-return on Err
+    user.ok_or(AppError::NotFound(id))
+}
+```
+
+```go
+// Go — wrap with %w so errors.Is / errors.As still work up the stack
+user, err := repo.FindByID(id)
+if err != nil {
+    return nil, fmt.Errorf("find user %d: %w", id, err)
+}
+```
+
+Retry only *transient* failures, with exponential backoff (`2 ** attempt`). Degrade
+gracefully — return a typed empty/`None`/`nil` result rather than silently swallowing.
 
 ---
 
-## Gotchas
+## Concurrency & Async
 
-Real, non-obvious failure modes when enforcing these standards:
+Run independent I/O concurrently; don't serialize awaits that have no data dependency.
 
-- **`is_relative_to` does NOT stop symlink traversal.** The security rule
-  (`is_relative_to(allowed_root)`) passes for a path that *looks* nested but is
-  a symlink pointing outside the root. You MUST `.resolve()` both the candidate
-  and the root first, then compare — otherwise an attacker-planted symlink
-  escapes the sandbox. `is_relative_to` also requires Python 3.9+.
-- **Atomic write breaks across filesystems.** `write .tmp then Path.replace()`
-  is atomic only on the *same* filesystem. Writing the temp file under `/tmp`
-  and replacing to a project mount raises `OSError: Invalid cross-device link`.
-  Create the `.tmp` in the destination directory, not a global temp dir.
-- **`raise ... from e` vs `from None`.** The standard mandates context
-  preservation. Bare `raise SpecificError(...)` inside an `except` block still
-  implicitly chains, but re-raising after catching-and-transforming without
-  `from e` (or explicitly `from None`) muddies tracebacks. Always be explicit.
-- **`Protocol` + `isinstance` needs `@runtime_checkable`.** Using a `Protocol`
-  for structural typing is fine for MyPy, but `isinstance(obj, MyProtocol)`
-  raises `TypeError` unless the Protocol is decorated `@runtime_checkable` —
-  and even then it only checks method *names*, not signatures.
-- **`--cov-fail-under=80` hides uncovered critical modules.** Total line
-  coverage ≥80% can pass while a critical-path module sits at 0%. The "100% on
-  critical paths" rule is NOT enforced by the aggregate gate — check per-file
-  coverage, don't trust the single pass/fail number.
-- **Don't run Black AND the Ruff formatter both.** Ruff ships a formatter that
-  overlaps Black. Pick one formatter (Black here) and use Ruff only as the
-  linter (`ruff check`), or they fight over the same constructs in CI.
-- **`TYPE_CHECKING` imports fail at runtime if annotations are evaluated.**
-  Imports behind `if TYPE_CHECKING:` don't exist at runtime. Referencing them
-  in a non-annotation context (or without `from __future__ import annotations`
-  / quoted string annotations) raises `NameError`.
+```python
+# GOOD — concurrent
+user, posts, comments = await asyncio.gather(
+    user_repo.find_by_id(uid), post_repo.by_user(uid), comment_repo.by_user(uid)
+)
+# AVOID — three sequential round-trips
+user = await user_repo.find_by_id(uid)
+posts = await post_repo.by_user(uid)
+comments = await comment_repo.by_user(uid)
+```
+TS: `Promise.all([...])`. Go: goroutines + `errgroup`/`WaitGroup`. Rust: `tokio::join!`
+/ `futures::try_join!`. See the `asyncio.gather` cancellation caveat in **## Gotchas**.
+
+---
+
+## Imports & Module Organization
+
+Group imports **stdlib → third-party → local**, one blank line between groups; explicit
+named imports only (wildcard imports are banned). Use lazy/type-only imports to break
+cycles (Python `if TYPE_CHECKING:` + `from __future__ import annotations`; TS
+`import type { ... }`). Wrap genuinely optional dependencies in `try/except ImportError`
+(or dynamic import) with a local fallback.
+
+---
+
+## SQL
+
+```sql
+-- GOOD — formatted, every non-aggregate column in GROUP BY
+SELECT u.id, u.email, COUNT(p.id) AS post_count
+FROM users u
+LEFT JOIN posts p ON p.user_id = u.id
+WHERE u.is_active = true
+GROUP BY u.id, u.email
+ORDER BY post_count DESC
+LIMIT 100;
+
+-- Index foreign keys and hot filter columns; use UNIQUE for natural keys
+CREATE UNIQUE INDEX idx_users_email ON users (email);
+CREATE INDEX idx_posts_user_id ON posts (user_id);
+```
+Never build queries with string concatenation of user input — use parameterized
+queries / an ORM. See the `GROUP BY` and UNIQUE-index traps in **## Gotchas**.
+
+---
+
+## Git Commit Messages
+
+```
+<type>(<scope>): <subject>
+
+<body — what & why, wrapped ~72 cols>
+
+<footer — Closes #123, BREAKING CHANGE: ...>
+```
+Types: `feat` (minor bump), `fix` (patch), `docs`, `style`, `refactor`, `test`,
+`chore`, `perf`, `build`, `ci`. Subject is imperative and ≤ ~50 chars.
+
+```
+# GOOD
+feat(auth): add JWT refresh token endpoint
+
+- implement refresh use-case + POST /auth/refresh
+- add integration tests
+
+Closes #123
+
+# BAD
+update stuff
+```
+
+---
+
+## Complexity & Size Limits (recommended defaults)
+
+| Metric | Suggested max | Aim for |
+|--------|---------------|---------|
+| Cyclomatic complexity / function | 10 | ≤ 5 |
+| Function length (lines) | 50 | ≤ 20 |
+| Nesting depth | 3 | ≤ 2 |
+| File length (lines) | 500 | — |
+| Line length | 100 (Py) · 80–100 (JS/TS) · rustfmt/gofmt defaults | — |
+
+Reduce nesting with **guard clauses / early returns** instead of deep `if/else`
+pyramids. These are smells to refactor, not hard gates — enforce the ones you care
+about via your own linter (Ruff `C90`, ESLint `complexity`, clippy, `gocyclo`).
+
+---
+
+## Documentation & Comments
+
+- Public modules/classes/functions get a doc comment (Google-style docstrings in
+  Python; JSDoc/TSDoc; `///` doc comments in Rust; `//` above exported names in Go).
+- Comments explain **WHY**, never restate WHAT the code obviously does.
+- Delete commented-out code — that's what version control is for.
+- `# TODO(username): ...` / `// TODO(username): ...` so ownership is traceable.
+
+```python
+# GOOD — explains a non-obvious decision
+# Exponential backoff avoids hammering the API during an outage
+await retry_with_backoff(api_call)
+
+# BAD — states the obvious
+counter += 1  # increment counter
+```
+
+---
+
+## Security (universal)
+
+- **Validate & sanitize all external input** before use.
+- **Never hardcode secrets** — read from environment / a secrets manager; keep them out
+  of source and logs.
+- **Path traversal**: `resolve()` the candidate *and* the allowed root, then verify
+  containment (see worked example + symlink gotcha below).
+- **Subprocess**: pass an argument list, never `shell=True` / string interpolation into
+  a shell.
+- **SQL**: parameterized queries only.
+- **Passwords**: hash with bcrypt/argon2 — never store plaintext.
+- **Atomic writes**: write to a temp file *in the destination directory*, then rename.
 
 ---
 
 ## Worked Example — safe path handling
 
-Request: "validate a user-supplied output path stays inside the project."
+Request: "validate a user-supplied output path stays inside the project root."
 
 ```python
-# WRONG — symlink under project_root escapes; also no resolve()
-def write_output(project_root: Path, user_path: Path) -> None:
-    if user_path.is_relative_to(project_root):   # passes for a symlink!
+# WRONG — a symlink under root escapes; also no resolve()
+def write_output(root: Path, user_path: Path, data: str) -> None:
+    if user_path.is_relative_to(root):        # passes for a symlink!
         user_path.write_text(data)
 
-# RIGHT — resolve both, then compare, then atomic write in-place
-def write_output(project_root: Path, user_path: Path, data: str) -> None:
-    root = project_root.resolve()
+# RIGHT — resolve both, verify containment, atomic write in the same dir
+def write_output(root: Path, user_path: Path, data: str) -> None:
+    root = root.resolve()
     target = (root / user_path).resolve()
     if not target.is_relative_to(root):
-        raise PathTraversalError(f"{target} escapes {root}")
-    tmp = target.with_suffix(target.suffix + ".tmp")  # same dir = same FS
+        raise ValueError(f"{target} escapes {root}")
+    tmp = target.with_suffix(target.suffix + ".tmp")   # same dir = same filesystem
     tmp.write_text(data)
-    tmp.replace(target)                                # atomic on same FS
+    tmp.replace(target)                                # atomic on the same FS
 ```
-
-Applies: security path-traversal rule + the resolve/symlink and same-filesystem
-gotchas above, plus the `PathTraversalError` domain exception pattern.
+Applies the path-traversal rule + the symlink-resolve and same-filesystem gotchas below.
 
 ---
 
-## Language Reference Files
+## Pre-PR Code Review Checklist
 
-Detailed code examples, tool configurations, and per-pattern deep dives:
+- [ ] All tests pass; new/changed behavior has tests (coverage doesn't drop).
+- [ ] Public functions/methods/exports have types (hints / TS types / signatures).
+- [ ] Public APIs documented (docstring / JSDoc / doc comment).
+- [ ] No function over the complexity/length limit; nesting via guard clauses.
+- [ ] Imports grouped stdlib → third-party → local; no wildcard imports.
+- [ ] No hardcoded secrets or credentials.
+- [ ] Errors handled with specific types + context preservation (`from e` / `%w` / `cause`).
+- [ ] No stray `print` / `console.log` / `println!` / `fmt.Println` debug output — use the logger.
+- [ ] Queries are parameterized and efficient (no N+1).
+- [ ] Formatter + linter + type-checker pass (see language reference for commands).
+- [ ] Commit messages follow the `type(scope): subject` convention.
+
+---
+
+## Gotchas
+
+Real, non-obvious traps behind the rules above:
+
+- **`list[str]` / `dict[str, int]` builtins need Python 3.9+ at runtime.** On 3.8 they
+  raise `TypeError: 'type' object is not subscriptable` unless the module has
+  `from __future__ import annotations` (lazy string annotations) or you use
+  `typing.List`. Confirm the interpreter before deleting legacy `typing` imports.
+- **`asyncio.gather` fails fast but does NOT cancel siblings by default.** With
+  `return_exceptions=False`, the first exception propagates immediately while the other
+  coroutines keep running and may raise later into an unawaited-task warning. If partial
+  results matter, pass `return_exceptions=True` and inspect each result.
+- **A leading `_` (or TS `private`) is convention, not enforcement.** Python
+  name-mangles only with double underscore (`__x`); TS `private` is compile-time only
+  (erased at runtime, reachable via bracket access or plain JS). Never treat it as a
+  security boundary. (Real privacy: Python `__x`, JS `#field`, Rust module privacy, Go
+  lowercase.)
+- **`is_relative_to` does NOT stop symlink traversal.** It passes for a path that looks
+  nested but is a symlink pointing outside the root. `.resolve()` both sides first, then
+  compare. (`is_relative_to` also requires Python 3.9+.)
+- **Atomic write breaks across filesystems.** `write .tmp then replace()` is atomic only
+  on the *same* filesystem. A temp file under `/tmp` replaced onto a project mount raises
+  `OSError: Invalid cross-device link`. Create the temp file in the destination dir.
+- **`SELECT` list vs `GROUP BY` must agree.** Under `ONLY_FULL_GROUP_BY` (MySQL default
+  since 5.7) and in PostgreSQL, every non-aggregated selected column must appear in
+  `GROUP BY` — otherwise Postgres errors and lax MySQL silently returns arbitrary rows.
+- **A plain index on a natural key ≠ a UNIQUE constraint.** `CREATE INDEX` on
+  `users(email)` speeds lookups but does not prevent duplicate accounts; use
+  `CREATE UNIQUE INDEX` to enforce the invariant.
+- **"No `console.log`/`print`" means no *debug* output, not no logging.** Replace stray
+  debug lines with the project logger — don't delete the line and lose the signal.
+- **Type-only imports vanish at runtime.** Python `if TYPE_CHECKING:` imports and TS
+  `import type` are erased; referencing them outside an annotation raises `NameError` /
+  a bundler error. Keep them to annotations (with quoted/`__future__` annotations in Py).
+- **Coverage thresholds hide uncovered critical modules.** An aggregate `≥80%` can pass
+  while a critical-path file sits at 0%. Check per-file coverage — a single pass/fail
+  number is not "critical paths are tested."
+- **Don't run two formatters over the same files.** Ruff's formatter overlaps Black;
+  Prettier + ESLint `--fix` can fight. Pick one formatter per language and let the
+  linter lint.
+- **Go: a `nil` error can still carry a non-nil concrete type in an interface.** Returning
+  a typed pointer that's `nil` as an `error` makes `err != nil` true. Return the `error`
+  interface directly, not a concrete-typed nil.
+
+---
+
+## Additional resources
+
+Language deep dives — tool configs, full examples, and per-pattern detail:
 
 | File | Content |
 |------|---------|
-| [`python.md`](./python.md) | Black config, type hint patterns, error handling examples, pytest fixtures + mocking, Google docstring templates, import patterns, security patterns, Ruff/MyPy `pyproject.toml` config, pre-commit hooks, Makefile |
-
----
-
-**Version**: 1.0.0 | **Last Updated**: 2026-01-06 | **Maintainer**: NXTG-Forge Team
+| [`reference/python.md`](./reference/python.md) | Formatter/linter/type-checker configs (Black·Ruff·MyPy), type-hint patterns, error/exception hierarchies, pytest layout + fixtures + mocking, Google docstrings, security patterns, pre-commit + Makefile. |
+| [`reference/typescript.md`](./reference/typescript.md) | `tsconfig` strict setup, ESLint/Prettier, interfaces vs types, modern JS idioms, async patterns, error `cause` chaining. |
+| [`reference/rust-go.md`](./reference/rust-go.md) | Rust (rustfmt/clippy, `Result`/`?`, thiserror·anyhow) and Go (gofmt/golangci-lint, error wrapping `%w`, table-driven tests) conventions. |

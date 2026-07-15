@@ -1,12 +1,16 @@
-# Extending Claude Code — commands, subagents, skills, MCP
+# Authoring Claude Code Extensions — commands, subagents, skills, MCP
 
-Authoring patterns and the **valid frontmatter fields** for each surface. Invalid fields
-are silently ignored, so getting these right is load-bearing.
+Field tables and authoring patterns for each surface. **Invalid frontmatter fields are
+silently ignored**, so getting these exactly right is load-bearing. Ground against
+<https://code.claude.com/docs>.
+
+---
 
 ## Slash commands (`.claude/commands/*.md`)
 
 A command is a reusable prompt you invoke on demand (`/name`). Body is the instruction
-Claude executes; `$ARGUMENTS` (or `$1`, `$2`) interpolates args.
+Claude executes; `$ARGUMENTS` (or `$1`, `$2`) interpolates args. `name` defaults to the
+filename.
 
 ```markdown
 ---
@@ -18,13 +22,15 @@ allowed-tools: Read, Grep, Bash(git *)                # pre-approve tools this c
 Analyze $ARGUMENTS for: DB query efficiency, memory patterns, API latency.
 ```
 
-Best practice: give every command `disable-model-invocation: true` so it only runs when
-explicitly called, never auto-triggered. `name` defaults to the filename.
+Best practice: give every command `disable-model-invocation: true` so it runs only when
+explicitly called, never auto-triggered.
+
+---
 
 ## Subagents (`.claude/agents/*.md`)
 
-An isolated context with its own tools and system prompt. Claude auto-delegates when a
-task matches the `description`.
+An isolated context with its own tools and system prompt. Claude auto-delegates when a task
+matches the `description`.
 
 **Valid agent frontmatter fields:**
 
@@ -42,9 +48,11 @@ task matches the `description`.
 | `permissionMode` | `default\|acceptEdits\|dontAsk\|bypassPermissions\|plan`. |
 | `background` | `true` — always run as a background task. |
 
-**INVALID (ignored):** `shortname`, `avatar`, `whenToUse`, `exampleQueries`, `when_to_use`.
+**INVALID (silently ignored):** `shortname`, `avatar`, `whenToUse`, `exampleQueries`,
+`when_to_use`.
 
 Strong description shape:
+
 ```markdown
 ---
 name: security-reviewer
@@ -64,10 +72,19 @@ You are a security expert. Focus on authn/authz, input validation, secret handli
 dependency vulns. Report findings ranked by severity.
 ```
 
+### Orchestrator vs leaf worker
+
+- **Orchestrator** (`planner`, `builder`, `guardian`, `detective`, `orchestrator`): INCLUDE
+  `Task` in `tools` so it can spawn subagents. Typically `model: opus`.
+- **Leaf worker** (`testing`, `security`, `docs`, …): OMIT `Task`. Focus on one bounded job;
+  never spawn subagents.
+
+---
+
 ## Skills (`.claude/skills/<name>/SKILL.md`)
 
 Auto-loaded domain knowledge. Claude reads the `description` and pulls the skill in when
-relevant — no explicit invocation needed (unless disabled).
+relevant — no explicit invocation needed unless disabled.
 
 **Valid skill frontmatter fields:**
 
@@ -78,17 +95,23 @@ relevant — no explicit invocation needed (unless disabled).
 | `disable-model-invocation: true` | Removes description from context AND blocks subagent preload → invoke-only. |
 | `user-invocable: false` | Hides from the `/` menu but keeps it in Claude's context. |
 | `argument-hint` | Autocomplete hint. |
-| `allowed-tools` | Pre-approve tools the skill's procedure runs. |
+| `allowed-tools` | Pre-approve tools the skill's procedure runs (does NOT restrict). |
 | `context: fork` | Runs the skill in an isolated subagent context. |
 | `model` | Per-skill model override. |
 
 Progressive disclosure: keep `SKILL.md` under ~500 lines. Move detail into sibling
-`reference/*.md` files and link them — body content stays in context every turn, so every
-line is recurring token cost. Put *what to do*, not narration.
+`reference/*.md` and link them — body content stays in context every turn, so every line is
+recurring token cost. Put *what to do*, not narration.
 
-Token control: `disable-model-invocation` fully removes the description from context (max
-savings, but no auto-trigger). `!\`command\`` in a skill body injects live command output
-before Claude reads the skill. The keyword "ultrathink" anywhere enables extended thinking.
+Token control tricks:
+- `disable-model-invocation` fully removes the description from context (max savings, no
+  auto-trigger).
+- `` !`command` `` in a skill body injects live command output before Claude reads the skill.
+- The keyword `ultrathink` anywhere in the body enables extended thinking.
+- Raise the command-description budget when many skills compete: `export
+  SLASH_COMMAND_TOOL_CHAR_BUDGET=30000`.
+
+---
 
 ## MCP servers
 
@@ -99,6 +122,7 @@ claude mcp add my-server -e API_KEY=123 -- /path/to/server arg1 arg2
 ```
 
 Or declare in a plugin's `.mcp.json` (stdio JSON-RPC). Servers degrade gracefully if the
-backing binary/runtime isn't installed. Common uses: issue trackers, databases, design
-docs, SAST scanners, custom dev tooling. Prefer dynamic tool loading so tool definitions
-don't consume context until a tool is actually needed.
+backing binary/runtime isn't installed. Common uses: issue trackers, databases, design docs,
+SAST scanners, custom dev tooling. Prefer dynamic tool loading (`ENABLE_TOOL_SEARCH`) so tool
+definitions don't consume context until a tool is actually needed. Full server template and
+`.mcp.json` registration example: [../patterns.md](../patterns.md).

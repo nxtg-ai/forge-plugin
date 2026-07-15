@@ -1,36 +1,86 @@
 ---
 name: Claude Code Framework
 description: >
-  Reference for how Claude Code itself works — CLI/headless modes, MCP integration,
-  CLAUDE.md memory, skills, subagents, hooks, plan mode, settings precedence, and
-  multi-platform surfaces. Use when authoring or debugging plugin components
-  (commands/agents/skills/hooks), wiring MCP servers, deciding frontmatter fields,
-  or answering "how does Claude Code X work" questions.
+  Authoritative reference for how Claude Code itself works AND how to build for it —
+  CLAUDE.md memory, custom slash commands, subagents, skills, hooks, MCP servers,
+  settings precedence, permissions, plan mode, CLI/headless/CI, worktrees, and
+  multi-platform surfaces. Use when authoring or debugging a plugin component
+  (command/agent/skill/hook), wiring an MCP server, choosing frontmatter fields,
+  configuring settings.json or permissions, figuring out why an agent/skill won't
+  auto-trigger, running headless/CI or worktree-parallel sessions, or answering
+  "how does Claude Code X work / how should I structure this for Claude Code."
+when_to_use: >
+  Triggers: "write/review a CLAUDE.md", "add a slash command", "create a
+  subagent/skill/hook", "wire an MCP server", "configure settings.json /
+  permissions / allowedTools", "why won't my agent or skill trigger", "run Claude
+  Code in CI / headless", "git worktree parallel sessions", "context is bloating /
+  clear context", "TDD workflow", "how does Claude Code <feature> work".
 disable-model-invocation: true
 allowed-tools: Read, Grep, Glob
 ---
 
-# CLAUDE CODE FRAMEWORK — QUICK REFERENCE & DECISION GUIDE
+# Claude Code Framework — Reference & Decision Guide
 
-**Version:** January 28, 2026 | Source: Official Anthropic Documentation + verified community resources
+Authoritative reference for Claude Code's behavior and for authoring its extensions.
+Ground every claim to current behavior at <https://code.claude.com/docs>. Model IDs,
+pricing, and "as of version X" specifics rot — re-verify against live docs before relying
+on them. This file is the index; depth lives in the linked reference files.
 
-This is the index and quick reference. For full details see the Deep Reference section at the bottom.
+---
+
+## CORE OPERATING RULES
+
+Apply these directly when working *with* Claude Code on real tasks:
+
+1. **Plan before code on anything non-trivial.** Use Plan Mode (or a written plan) to agree
+   on approach before edits. Discussion-then-code catches wrong turns cheaply.
+2. **Keep CLAUDE.md lean and failure-focused.** Document what Claude gets *wrong* in this
+   repo (build quirks, forbidden paths, naming rules), not what it does right. ~100–200
+   lines; past ~40k chars Claude Code warns performance degrades — move depth into
+   skills/docs and link them.
+3. **Clear context aggressively.** `/clear` between unrelated tasks; provide only files
+   relevant to the current task. Don't let one session accumulate stale context.
+4. **TDD as guardrail.** Write/keep failing tests first, let Claude iterate to green. Tests
+   are the objective signal that beats "looks done."
+5. **Split write vs. review contexts.** Have a fresh context or subagent verify code the
+   first context wrote — a single context rationalizes its own mistakes.
+6. **Checkpoints ≠ version control.** `/rewind` (or double-Esc) restores Claude's edits and
+   conversation, but NOT your bash side effects (migrations, `rm`, pushes). Commit real
+   milestones to git.
+
+---
+
+## EXTENDING CLAUDE CODE — PICK THE RIGHT SURFACE
+
+| You want to… | Use | Lives in |
+|---|---|---|
+| Reusable prompt shortcut (`/thing`) | **Slash command** | `.claude/commands/*.md` |
+| Specialized persona with its own context/tools | **Subagent** | `.claude/agents/*.md` |
+| Auto-loaded domain knowledge (model-triggered) | **Skill** | `.claude/skills/*/SKILL.md` |
+| Deterministic action on an event (lint, guard, sync) | **Hook** | `settings.json` + script |
+| External tool/data integration | **MCP server** | `.mcp.json` / `claude mcp add` |
+| Repo-wide standing context | **CLAUDE.md** | `./CLAUDE.md`, `~/.claude/CLAUDE.md` |
+
+Rule of thumb: **command** = you invoke on demand; **skill** = Claude pulls it in when
+relevant; **agent** = isolated context for a bounded job; **hook** = the harness runs it
+(not the model), so it's the only way to *guarantee* an automated behavior.
+
+> Frontmatter field tables + authoring patterns: [reference/authoring.md](reference/authoring.md)
 
 ---
 
 ## 1. CORE CAPABILITIES
 
-Claude Code is an autonomous coding agent in your terminal:
-- **Feature Implementation**: Plain English → working code (plan → implement → verify)
-- **Bug Fixing**: Analyze codebase, identify issues, implement fixes
-- **Codebase Navigation**: Maintain awareness of entire project structure
-- **Task Automation**: Lint fixes, merge conflicts, release notes
+Claude Code is an autonomous coding agent in your terminal: feature implementation
+(plan → implement → verify), bug fixing, codebase navigation, and task automation.
 
 ```bash
-cd your-project && claude      # Start interactive session
-claude -p "prompt text"        # Single prompt mode (scriptable/pipeable)
-claude --resume <session-id>   # Resume previous session
-claude mcp serve               # Run Claude Code as an MCP server
+cd your-project && claude      # Interactive session
+claude "explain this project"  # Start with an initial prompt
+claude -p "prompt text"        # Print mode: query once, exit (scriptable/pipeable)
+claude -c                      # Continue most recent conversation
+claude --resume <session-id>   # Resume a specific session
+claude mcp serve               # Run Claude Code itself as an MCP server
 ```
 
 ---
@@ -39,106 +89,96 @@ claude mcp serve               # Run Claude Code as an MCP server
 
 MCP is an open standard connecting Claude Code to external tools, databases, and APIs.
 
-### Add Servers
 ```bash
-claude mcp add --transport http <name> <url>           # HTTP remote
-claude mcp add --transport sse <name> <url>            # Server-Sent Events
-claude mcp add --transport stdio <name> -- <cmd>       # Local process
-claude mcp add-from-claude-desktop                     # Import from Desktop
-claude mcp add-json <name> '{"type":"http","url":"..."}' # From JSON
+claude mcp add --transport http  <name> <url>              # HTTP remote
+claude mcp add --transport sse   <name> <url>              # Server-Sent Events
+claude mcp add --transport stdio <name> -- <cmd>           # Local process (fastest)
+claude mcp add-json <name> '{"type":"http","url":"..."}'   # From JSON
+claude mcp add-from-claude-desktop                         # Import from Desktop
+claude mcp list / get <name> / remove <name>               # Manage
+/mcp                                                       # Status (in-session)
 ```
 
-### Scope
+### Scope & precedence
+
 | Scope | File | When |
 |-------|------|------|
 | `local` (default) | `~/.claude.json` | Current project only |
 | `project` | `.mcp.json` | Team-shared, version controlled |
 | `user` | `~/.claude.json` | All projects |
 
-**Precedence:** Local > Project > User
+**Precedence: Local > Project > User** — a same-named `local` server shadows a `project` one.
 
-### Manage
-```bash
-claude mcp list              # List all servers
-claude mcp get <name>        # Get server details
-claude mcp remove <name>     # Remove server
-/mcp                         # Check status (in-session)
-```
+### In-session usage
 
-### In-Session Usage
 ```bash
-@github:issue://123                 # Reference MCP resource
-/mcp__github__list_prs              # Execute MCP prompt (no args)
+@github:issue://123                 # Reference an MCP resource
+/mcp__github__list_prs              # Execute an MCP prompt (no args)
 /mcp__jira__create_issue "Bug" high # Execute with args
 ```
 
-### Tuning
+### Context tuning
+
 ```bash
-ENABLE_TOOL_SEARCH=auto:5 claude    # Dynamic tool loading (fires at 5% of context)
-ENABLE_TOOL_SEARCH=true claude      # Always enabled
+ENABLE_TOOL_SEARCH=auto:5 claude    # Dynamic tool loading — fires at 5% of context
+ENABLE_TOOL_SEARCH=true  claude     # Always dynamic
 ENABLE_TOOL_SEARCH=false claude     # Load all tools upfront
-export MAX_MCP_OUTPUT_TOKENS=50000  # Warning: 10k, default max: 25k tokens
+export MAX_MCP_OUTPUT_TOKENS=50000  # Warn at 10k; default max 25k tokens
 ```
 
-> Full MCP details (transports, enterprise management, popular integrations): see reference.md
+> Full MCP details (transports, `@`-mentions, enterprise `managed-mcp.json`, popular
+> integrations): [reference.md](reference.md)
 
 ---
 
 ## 3. CLAUDE.MD — PROJECT MEMORY
 
-Auto-loaded at session start. Commit to version control so the entire team benefits.
+Auto-loaded at session start. Commit it so the whole team benefits.
 
-### What to Include
-- Common bash commands for the project
-- Core files and utility function locations
-- Code style guidelines and patterns
-- Testing instructions and coverage requirements
-- Repository etiquette (branch naming, merge vs rebase)
-- Developer environment setup (Python/Node versions, compiler requirements)
-- Unexpected behaviors or project-specific warnings
-- Database migration procedures
-- Deployment processes
-
-### Key Features
-- Import other files: `@path/to/import` (relative to importing file)
-- `CLAUDE.local.md` — auto-gitignored, private per-machine overrides
-- Rules in `.claude/rules/*.md` — auto-loaded as project memory, support `paths` globs for scoping
+- **Import other files:** `@path/to/import` (relative to the importing file).
+- **`CLAUDE.local.md`** — auto-gitignored, private per-machine overrides.
+- **`.claude/rules/*.md`** — auto-loaded as project memory; support `paths` globs for
+  file-scoped rules.
+- **Hierarchy:** `~/.claude/CLAUDE.md` (global) → `./CLAUDE.md` (project) → subdirectory
+  CLAUDE.md (component-specific).
 
 ```bash
-> "Create a comprehensive CLAUDE.md for this project by analyzing the structure and conventions"
-/memory                   # Open and edit memory files in your editor (in-session)
-/init                     # Bootstrap a CLAUDE.md
+/init      # Bootstrap a CLAUDE.md by analyzing the project
+/memory    # Open and edit memory files in your editor (in-session)
 ```
+
+Keep it failure-focused, lean (~100–200 lines, hard ceiling ~40k chars), and iterated like
+a prompt: add the one line that prevents a repeated mistake; delete rules that stop mattering.
 
 ---
 
 ## 4. SKILLS SYSTEM
 
-Skills are context-aware capabilities that activate based on task context. Pure LLM reasoning — no embeddings or classifiers.
+Skills are context-aware capabilities that activate on task context — pure LLM reasoning,
+no embeddings or classifiers.
 
-### How Skills Work
-1. **Discovery**: Session start — scans available skills (~100 tokens of YAML metadata each)
-2. **Contextual Activation**: Claude decides which to invoke based on task
-3. **Dynamic Loading**: Full skill content loaded only when needed
+1. **Discovery** — session start scans available skills (~100 tokens of YAML metadata each).
+2. **Contextual activation** — Claude decides which to invoke from the `description`.
+3. **Dynamic loading** — full skill body loads only when needed.
 
-### Skill Locations
-- `~/.claude/skills/` — user-level
-- `.claude/skills/` — project-level
-- Plugin-provided skills (e.g., `plugins/nxtg-forge/skills/`)
+Locations: `~/.claude/skills/` (user), `.claude/skills/` (project), plugin-provided.
 
-### Key Frontmatter Fields
 ```yaml
 name: skill-name
-description: When this skill is relevant...     # Auto-trigger matching
-disable-model-invocation: true                  # Manual-only (saves tokens in auto-load)
-user-invocable: false                           # Hide from / menu but keep in context
-argument-hint: "[args]"                         # Autocomplete hint shown in / menu
-allowed-tools: Read, Grep                       # Permission bypass for listed tools
-context: fork                                   # Run in isolated subagent context
+description: When this skill is relevant...    # Auto-trigger matching; put "Use when…" first
+disable-model-invocation: true                 # Manual-only: removes description from context
+user-invocable: false                          # Hide from / menu but keep in context
+argument-hint: "[args]"                         # Autocomplete hint
+allowed-tools: Read, Grep                      # Pre-approve tools the procedure runs
+context: fork                                   # Run in an isolated subagent context
 model: sonnet                                   # Per-skill model override
 ```
 
-> Full skill pattern templates (ux-brief, 3d-prototyper, a11y-gate, etc.): see patterns.md
+Progressive disclosure: keep `SKILL.md` under ~500 lines; move detail into sibling
+`reference/*.md` and link it (body content is recurring per-turn token cost).
+
+> Skill/agent/command authoring + field tables: [reference/authoring.md](reference/authoring.md).
+> Ready-to-copy skill templates: [patterns.md](patterns.md).
 
 ---
 
@@ -149,27 +189,21 @@ Use plan mode for complex features before any implementation.
 ```bash
 > "Build a task management API with user authentication"
 # Claude generates: DB schema, endpoint structure, auth flow, testing strategy
-
 > "Use TypeScript instead of JavaScript"   # Refine the plan
-> "Looks good, proceed"                    # Approve → Claude implements
+> "Looks good, proceed"                     # Approve → Claude implements
 ```
 
-**Benefits:**
-- Catch issues in planning phase, not during debugging
-- Like working with a senior architect for alignment
-- Discuss approach before execution
+Catch issues in the planning phase, not during debugging — like aligning with a senior
+architect before execution.
 
 ---
 
 ## 6. UNIX PHILOSOPHY — COMPOSABILITY
 
-Claude Code embraces Unix principles — composable with standard tools:
-
 ```bash
 tail -f app.log | claude -p "Slack me if you see any anomalies"
-git diff main | claude -p "Review changes and generate a commit message"
+git diff main   | claude -p "Review changes and generate a commit message"
 cat metrics.csv | claude -p "Identify the slowest endpoints"
-claude -p "Check test coverage and fail if below 80%"
 find . -name "*.py" | xargs -I {} claude -p "Add type hints to {}"
 ```
 
@@ -178,24 +212,28 @@ find . -name "*.py" | xargs -I {} claude -p "Add type hints to {}"
 ## 7. SETTINGS & CONFIGURATION
 
 ### Hierarchy (highest → lowest precedence)
+
 1. Organizational policies (managed settings — system-level `managed-mcp.json`)
 2. `.claude/settings.json` — team conventions (project root, version controlled)
 3. `.claude/settings.local.json` — machine-specific (project root, gitignored)
-4. `~/.claude.json` — user-level global settings
+4. `~/.claude/settings.json` / `~/.claude.json` — user-level global
 
-### Key Settings Patterns
 ```json
 {
   "permissions": {
-    "deny": ["MCPSearch"],
-    "disallowedTools": ["FileEdit"]
+    "allow": ["Read", "Write(src/**)", "Bash(git *)", "Bash(npm *)"],
+    "deny":  ["Read(**/.env*)", "Read(**/*.key)", "Bash(rm *)", "Bash(sudo *)"]
   },
-  "env": {
-    "MAX_MCP_OUTPUT_TOKENS": "50000",
-    "ENABLE_TOOL_SEARCH": "auto:5"
-  }
+  "env": { "MAX_MCP_OUTPUT_TOKENS": "50000", "ENABLE_TOOL_SEARCH": "auto:5" }
 }
 ```
+
+**Permissions:** `deny` overrides `allow`; patterns are literal globs — `Read(.env*)` does
+NOT match `config/.env`, use `Read(**/.env*)`. Scope Bash narrowly (`Bash(git *)`), never
+blanket `Bash`. Don't pin a dated `"model"` in a committed settings file — it freezes the
+team on a rotting model; omit to inherit or use `/model` at runtime.
+
+> settings tiers, hooks wiring, and the full permissions model: [reference.md](reference.md).
 
 ---
 
@@ -205,13 +243,14 @@ find . -name "*.py" | xargs -I {} claude -p "Add type hints to {}"
 > "Spawn a subagent to write unit tests while you implement the API endpoints"
 ```
 
-- **Desktop app**: Multiple sessions via git worktrees
-- **Web interface**: Built-in parallel task execution
-- **Agent definition**: `tools: Task` in frontmatter enables spawning subagents
+- **Desktop app / CLI:** multiple sessions via git worktrees (or agent `isolation: worktree`).
+- **Web interface:** built-in parallel task execution.
+- **`tools: Task`** in agent frontmatter enables spawning subagents.
 
-**Key rule for forge-plugin agents:**
-- Leaf workers (testing, security, docs, etc.): NO `Task` in tools list
-- Orchestrators (planner, builder, guardian, detective): HAVE `Task`
+**forge-plugin rule:** leaf workers (testing, security, docs) OMIT `Task`; orchestrators
+(planner, builder, guardian, detective, orchestrator) INCLUDE `Task`.
+
+> Headless/CI, worktree parallelism, multi-Claude verification: [reference/workflows.md](reference/workflows.md).
 
 ---
 
@@ -225,7 +264,6 @@ find . -name "*.py" | xargs -I {} claude -p "Add type hints to {}"
 | VS Code Extension | Inline diffs, @-mentions, plan review UI |
 | JetBrains Plugin | IntelliJ/PyCharm/WebStorm support |
 | GitHub Actions | `anthropic/claude-code-action@v1` |
-| Chrome Extension | Live browser debugging, Figma verification |
 
 ---
 
@@ -233,76 +271,111 @@ find . -name "*.py" | xargs -I {} claude -p "Add type hints to {}"
 
 ```bash
 # CLI
-claude                          # Start in current dir
-claude -p "prompt"              # Single prompt mode
-claude --resume <id>            # Resume session
-claude mcp list                 # Show MCP servers
-claude mcp add <config>         # Add MCP server
-claude mcp serve                # Run as MCP server
+claude / claude -p "prompt" / claude -c / claude --resume <id>
+claude mcp list | add <config> | serve
 
-# In-Session
-/mcp                            # Check MCP status
-/brainstorm                     # Start planning session
-/<tab>                          # Show all commands
-@<file>                         # Reference file in prompt
-@<mcp-resource>                 # Reference MCP resource
+# In-session
+/mcp        # MCP status        /init      # bootstrap CLAUDE.md
+/memory     # edit memory       /clear     # drop context between tasks
+/rewind     # restore edits (NOT bash side effects)
+@<file>     # reference a file   @<mcp-resource>  # reference an MCP resource
 
-# Config Files
-CLAUDE.md                       # Project context (auto-loaded)
-.mcp.json                       # Project MCP servers (version controlled)
-.claude/settings.json           # Team settings
-.claude/settings.local.json     # Local overrides (gitignored)
-~/.claude.json                  # User config
-
-# Session Storage
-~/.claude/sessions/<proj>/<id>.jsonl
+# Config files
+CLAUDE.md                     # Project context (auto-loaded)
+.mcp.json                     # Project MCP servers (version controlled)
+.claude/settings.json         # Team settings
+.claude/settings.local.json   # Local overrides (gitignored)
+~/.claude.json                # User config
 ```
 
 ---
 
-## LIMITATIONS & BEST PRACTICES
+## WORKED EXAMPLE — an agent that won't auto-trigger
 
-- Use `.claudeignore` to exclude large irrelevant files from context
-- Never commit API keys to `.mcp.json` — use environment variables
-- Local stdio servers are faster than remote HTTP/SSE
-- MCP Tool Search auto-manages context at the `auto:N` percent threshold you set (`auto:5` = 5%); keep this consistent with the `ENABLE_TOOL_SEARCH` value in §2
-- Audit third-party MCP servers before deployment
-- Enterprise: use `managed-mcp.json` for exclusive policy control
-- CLAUDE.md hard ceiling: **40k characters** (beyond this, Claude Code warns about performance)
+Symptom: you built `.claude/agents/db-migrator.md` but Claude never delegates to it.
+
+1. **Read the frontmatter `name`.** `name: DB_Migrator` → invalid (uppercase + underscore).
+   Rename to `db-migrator`. The `name` is the wiring key, not a label.
+2. **Read the `description`.** "Handles database stuff." → no trigger signal. Rewrite:
+   "Plans and applies database schema migrations with rollback. Use when the user adds a
+   column, changes a table, writes an Alembic/Prisma migration, or mentions schema drift."
+   Add a realistic `<example>` block.
+3. **Check for `disable-model-invocation: true`** on any skill/agent you expected to preload
+   — it removes the description from context, so auto-trigger can never fire. Remove it if
+   you need routing.
+4. **Confirm `color`** is in the allowed palette, reload the session, and test with a prompt
+   that matches the new trigger phrases.
 
 ---
 
 ## GOTCHAS
 
-Real, non-obvious traps when building for Claude Code — verified against this plugin's own source (`plugins/nxtg-forge/agents/*.md`, `servers/governance-mcp/`).
+Real, non-obvious traps — verified against this plugin's own source (`agents/*.md`,
+`servers/governance-mcp/`) and current Claude Code behavior.
 
-- **`disable-model-invocation: true` removes the description from context entirely.** It is not just "manual-only" — the skill's description is stripped from Claude's auto-load context, so the model cannot discover or auto-invoke it. This skill uses it; it is reachable only by explicit invocation. Do NOT set it on a skill you want Claude to route to automatically.
-- **Agent `name` must be lowercase-hyphens, ≤64 chars — no uppercase, no underscores.** A display-cased name (e.g. `NXTG-CEO-LOOP`) silently fails discovery; the fix was renaming to `nxtg-ceo-loop`. The `name` is the wiring key, not a label.
-- **`color` accepts ONLY: `purple | cyan | green | orange | blue | red`.** Any other value is ignored. All 22 agents in this plugin use exactly these six.
-- **Leaf-worker agents must OMIT `Task` from `tools`; orchestrators must INCLUDE it.** `Task` is what lets an agent spawn subagents. Give it to a leaf (testing/security/docs) and you invite unintended recursion; withhold it from an orchestrator (planner/builder/guardian/detective/orchestrator) and delegation silently no-ops.
-- **Invalid frontmatter fields are silently dropped, not errored.** Claude Code ignores `shortname`, `avatar`, `whenToUse` (camelCase), `exampleQueries`, `when_to_use` on agents — a typo'd field name looks accepted but does nothing. Verify field names against the valid set; never assume a field "took."
-- **`model` in an agent/skill file overrides the session model** — an agent pinned to `sonnet` will NOT inherit an Opus session. Omit `model` to inherit; set it only when you deliberately want a fixed tier.
-- **An MCP server entry file that runs `server.connect()` at import time breaks test harnesses.** `governance-mcp/index.mjs` guards it (`if (!process.env.FORGE_TEST_MODE) server.connect(...)`) and dropped its `#!/usr/bin/env node` shebang because the shebang blocked vitest's ESM transform. If you import an MCP entry module in tests, gate the transport connect behind an env flag.
-- **MCP scope precedence is Local > Project > User** — a `local` server in `~/.claude.json` shadows a `project` server of the same name in `.mcp.json`. A "why is the team server not loading" bug is usually a same-named local override.
-- **`allowed-tools` pre-approves; it does NOT restrict.** Listing tools only suppresses permission prompts for them — it never limits what the skill can reach. Use `permissions.deny` / `disallowedTools` in settings to actually restrict.
-- **CLAUDE.md hard ceiling is ~40k characters.** Past it Claude Code warns about performance and effective recall degrades. Move deep detail into `.claude/rules/*.md` (path-scoped) or linked docs; keep CLAUDE.md as an orienting index.
-
-## RESOURCES
-
-| Resource | URL |
-|----------|-----|
-| Main Docs | https://code.claude.com/docs/en/overview |
-| MCP Guide | https://code.claude.com/docs/en/mcp |
-| Best Practices | https://www.anthropic.com/engineering/claude-code-best-practices |
-| MCP Registry | https://github.com/modelcontextprotocol |
-| MCP Market | https://mcpmarket.com |
+- **A weak `description` is the #1 reason an agent/skill won't fire.** Routing is decided
+  purely from description text. Write "<what it does>. Use when <concrete phrases users
+  say>." with the key case first; `<example>` blocks in agent descriptions sharpen delegation.
+- **`disable-model-invocation: true` removes the description from context entirely** and
+  blocks subagent preload — it's not merely "manual-only." This skill uses it; it's reachable
+  only by explicit invocation. Never set it on a skill you want Claude to auto-route to.
+- **Agent `name` must be lowercase-hyphens, ≤64 chars — no uppercase, no underscores.** A
+  display-cased name (`NXTG-CEO-LOOP`) silently fails discovery; the fix was `nxtg-ceo-loop`.
+- **`color` accepts ONLY `purple|cyan|green|orange|blue|red`.** Any other value is ignored.
+- **Leaf-worker agents must OMIT `Task`; orchestrators must INCLUDE it.** Give `Task` to a
+  leaf and you invite unintended recursion; withhold it from an orchestrator and delegation
+  silently no-ops.
+- **Invalid frontmatter fields are silently dropped, not errored.** `shortname`, `avatar`,
+  `whenToUse` (camelCase), `exampleQueries`, `when_to_use` on an *agent* look accepted but do
+  nothing. Verify names against the valid set; never assume a field "took."
+- **`model` in an agent/skill overrides the session model** — an agent pinned to `sonnet`
+  will NOT inherit an Opus session. Omit to inherit; set only for a deliberately fixed tier.
+- **Hooks are the harness, not the model — and can block.** A `PreToolUse` hook exiting code
+  `2` *denies* the tool call (stderr goes to Claude); advisory hooks must exit `0`. A slow
+  `SessionStart`/`UserPromptSubmit` hook delays every turn — set a `timeout`.
+- **Use `${CLAUDE_PLUGIN_ROOT}`, never absolute paths, in plugin command/hook bodies.**
+  Absolute paths break when the plugin installs to a different machine/location.
+- **An MCP entry file that runs `server.connect()` at import time breaks test harnesses.**
+  `governance-mcp/index.mjs` guards it (`if (!process.env.FORGE_TEST_MODE) server.connect(...)`)
+  and dropped its `#!/usr/bin/env node` shebang because the shebang blocked vitest's ESM
+  transform. Gate the transport connect behind an env flag if you import the module in tests.
+- **`allowed-tools` pre-approves; it does NOT restrict.** It only suppresses permission
+  prompts. To actually limit reach, use `permissions.deny` / `disallowedTools` in settings.
+- **Pinned model IDs and version numbers rot.** Don't hardcode `claude-sonnet-4-...` in a
+  committed `settings.json` unless you mean to; treat any "as of version X" claim as needing
+  re-verification against live docs.
+- **CLAUDE.md hard ceiling is ~40k characters.** Past it Claude Code warns and recall
+  degrades. Move deep detail into `.claude/rules/*.md` (path-scoped) or linked docs.
+- **Many skills can exceed the ~15k-char command budget** and get their descriptions dropped
+  from context. Raise it: `export SLASH_COMMAND_TOOL_CHAR_BUDGET=30000`.
 
 ---
 
-## DEEP REFERENCE
+## LIMITATIONS & BEST PRACTICES
 
-For detailed API reference (MCP transports, enterprise config, popular integrations, settings schema, session management, authentication, platform integration, practical examples):
-> Read /home/axw/projects/NXTG-Forge/forge-plugin/plugins/nxtg-forge/skills/claude-code-framework/reference.md
+- Use `.claudeignore` to exclude large irrelevant files from context.
+- Never commit API keys to `.mcp.json` — use environment variables.
+- Local stdio servers are faster than remote HTTP/SSE; audit third-party MCP servers first.
+- Keep MCP Tool Search's `auto:N` threshold consistent with the `ENABLE_TOOL_SEARCH` value.
+- Enterprise: use `managed-mcp.json` for exclusive policy control.
 
-For implementation patterns (CLAUDE.md/rules/skills file templates, agent definitions, hook examples, skill pack templates):
-> Read /home/axw/projects/NXTG-Forge/forge-plugin/plugins/nxtg-forge/skills/claude-code-framework/patterns.md
+---
+
+## ADDITIONAL RESOURCES
+
+- [reference.md](reference.md) — MCP transports/`@`-mentions/enterprise, settings & hooks
+  schema, session management, install, platform integration, practical examples.
+- [reference/authoring.md](reference/authoring.md) — commands, subagents, skills, MCP:
+  authoring patterns + complete valid-frontmatter field tables.
+- [reference/workflows.md](reference/workflows.md) — CLI flags, headless/CI automation, git
+  worktree parallelism, checklist-driven and multi-Claude verification, checkpoints & rewind.
+- [patterns.md](patterns.md) — copy-ready CLAUDE.md / rules / skill / agent / hook / MCP templates.
+
+| Doc | URL |
+|-----|-----|
+| Overview | https://code.claude.com/docs/en/overview |
+| MCP | https://code.claude.com/docs/en/mcp |
+| Skills | https://code.claude.com/docs/en/skills |
+| Hooks | https://code.claude.com/docs/en/hooks |
+| Settings | https://code.claude.com/docs/en/settings |
+| Best Practices | https://www.anthropic.com/engineering/claude-code-best-practices |

@@ -40,7 +40,7 @@ description: |
   </example>
 model: sonnet
 color: red
-skills: nxtg-forge:crucible-audit, nxtg-forge:testing, nxtg-forge:core-testing
+skills: nxtg-forge:crucible-audit, nxtg-forge:testing
 tools: Glob, Grep, Read, Bash
 ---
 

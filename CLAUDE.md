@@ -25,7 +25,7 @@ plugins/nxtg-forge/
 ├── .mcp.json                 # MCP server config (governance-mcp via stdio)
 ├── commands/                 # 23 slash commands (*.md)
 ├── agents/                   # 23 agent definitions (*.md)
-├── skills/                   # 32 skill directories (*/SKILL.md)
+├── skills/                   # 27 skill directories (*/SKILL.md)
 ├── hooks/                    # 6 governance hooks (bash scripts)
 │   ├── hooks.json            # Hook trigger definitions
 │   └── scripts/lib.sh        # Shared utilities
@@ -80,19 +80,20 @@ plugins/nxtg-forge/
 
 **Format:** Markdown with YAML frontmatter (`name`, `description`, `model`, `color`, `tools`). Body is the agent's system prompt.
 
-### 29 Skills
+### 27 Skills
 
 | Category | Skills |
 |----------|--------|
-| **Core** | core-architecture, core-coding-standards, core-nxtg-forge, core-testing |
-| **Domain** | architecture, coding-standards, documentation, security, testing-strategy, testing |
-| **Frameworks** | claude-code-framework, claude-code-best-practices, codex-framework, gemini-framework |
-| **Workflow** | dev-environment-patterns, git-workflow, runtime-validation |
+| **Platform** | core-nxtg-forge, domain-knowledge |
+| **Domain** | architecture, coding-standards, documentation, owasp-security, testing |
+| **Frameworks** | claude-code-framework, codex-framework, gemini-framework |
+| **Workflow** | dev-environment-patterns, git-workflow, runtime-validation, parallel-execution |
 | **Performance** | optimization, browser-debugging |
-| **Knowledge** | skill-development, domain-knowledge, verify-governance |
+| **Governance** | ceo-loop, crucible-audit, verify-governance |
+| **Knowledge** | skill-development |
 | **Agent Roles** | agent-lead-architect, agent-backend-master, agent-cli-artisan, agent-platform-builder, agent-qa-sentinel, agent-development, agent-integration-specialist |
 
-**Format:** `SKILL.md` with YAML frontmatter (`name`, `description`). Body is contextual knowledge auto-loaded when relevant.
+**Format:** `SKILL.md` with YAML frontmatter (`name`, `description`, plus best-practice fields: `when_to_use`, `allowed-tools`, `disable-model-invocation`, `user-invocable`). Oversized skills split detail into `reference/*.md` (progressive disclosure). Body is contextual knowledge auto-loaded when relevant.
 
 ### 13 Hook Scripts
 
@@ -214,7 +215,7 @@ Contextual knowledge, patterns, best practices...
 ## Key Dimensions
 
 - **Version:** 3.8.0
-- **Components:** 23 commands, 33 agents, 33 skills, 13 hook scripts (11 PreToolUse + 7 PostToolUse + 4 Stop + 1 UserPromptSubmit), 8 MCP tools
+- **Components:** 23 commands, 33 agents, 27 skills, 13 hook scripts (11 PreToolUse + 7 PostToolUse + 4 Stop + 1 UserPromptSubmit), 8 MCP tools
 - **MCP Servers:** 3 (governance-mcp Node.js, orchestrator-mcp Rust, semgrep-mcp Python)
 - **Security Hooks:** 4 PreToolUse guards (command, secret, injection, SQL) × {Write, Edit, NotebookEdit} + 1 PostToolUse Semgrep auto-scan × {Write, Edit, NotebookEdit}
 - **Build:** None (pure markdown, auto-loaded by Claude Code)
