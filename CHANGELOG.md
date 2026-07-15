@@ -6,6 +6,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.0] — 2026-07-14
+
+### Changed
+
+- **Skill consolidation: 33 → 27 skills** — five duplicate/overlapping clusters merged into single best-in-class survivors (union of unique content, de-duplicated, re-grounded honestly language-generic for end-users' projects rather than tied to a fabricated codebase). Survivors chosen to preserve load-bearing names (no agent preload breaks):
+  - `testing` ← absorbed `testing-strategy` + `core-testing`
+  - `owasp-security` ← absorbed `security`
+  - `architecture` ← absorbed `core-architecture`
+  - `coding-standards` ← absorbed `core-coding-standards`
+  - `claude-code-framework` ← absorbed `claude-code-best-practices`
+- **Agent wiring updated** — `crucible-detective` preload list dropped `core-testing` (its content now lives in `testing`); the `security` agent already preloads the `owasp-security` survivor, so no change needed.
+- **CLAUDE.md** — skill count and Skills table updated to the 27-skill roster; `plugin.json` description count corrected.
+
+### Removed
+
+- Deleted 6 merged-away skill directories: `testing-strategy`, `core-testing`, `security`, `core-architecture`, `core-coding-standards`, `claude-code-best-practices`. All their unique content is preserved in the survivors above. If you invoked any of these directly, use the survivor instead.
+
+### Gate
+
+- 44/44 vitest pass · valid YAML across all 27 skills · zero broken cross-references · zero dangling preloads to removed skills · all skills under 500 lines.
+
+---
+
 ## [3.9.0] — 2026-07-14
 
 ### Changed
