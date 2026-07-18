@@ -6,6 +6,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.2] — 2026-07-18
+
+Plugin hardening — health-tool routing correctness + manifest/handshake drift (DIRECTIVE-NXTG-20260718-01, deep-dive G-01/G-10). No new features; agent/command/skill counts unchanged.
+
+### Fixed
+
+- **Health-tool routing mismatch (G-01)** — five agent/command surfaces named the plugin's Node `forge_get_governance_health` (0-100 code-quality score, no drift) while their prose promised orchestrator *drift* semantics, so the orchestrator's `forge_get_health` (5-dimension + drift) went uncalled and drift detection silently degraded for L2 users. Repointed the drift-semantics references to orchestrator `forge_get_health` with an explicit L1 fallback to the always-available Node `forge_get_governance_health` (honors the Lego Snap): `agents/detective.md`, `agents/orchestrator.md` (×3), `commands/status.md`, `commands/gap-analysis.md`, `commands/status-enhanced.md`.
+  - `commands/status.md` additionally split the always-on Node health-score call (new §4c — feeds the Health dimension bars, which parse the Node tool's `checks[]` shape) out from the orchestrator-conditional §4b, fixing a latent bug where the L1 health bars had no data source when the `forge` binary was absent.
+  - `commands/dashboard.md` intentionally keeps `forge_get_governance_health`: it renders the governance dashboard's 0-100 score (not drift), so the Node tool is the correct routing there.
+- **MCP handshake version hardcoded (G-10)** — `servers/governance-mcp/index.mjs` advertised a static `"3.0.0"` in the MCP `Server` handshake; now derives from the exported `serverVersion` (reads `package.json`), so it tracks releases automatically.
+- **`start.sh` project-root override (G-10)** — `export FORGE_PROJECT_ROOT="$(pwd)"` clobbered the value `.mcp.json` passes via `${CLAUDE_PROJECT_DIR}`. Now `${FORGE_PROJECT_ROOT:-$(pwd)}` (honor the injected env, keep pwd as the direct-run fallback).
+
+### Changed
+
+- **Version-manifest drift (G-10)** — root `.claude-plugin/plugin.json` was stale at 3.7.0; all four version surfaces (root manifest, plugin manifest, `marketplace.json`, `governance-mcp/package.json`) now agree at 3.10.2, and the MCP handshake derives from the same source.
+- **`docs/C-12-mcp-tools.md`** — corrected a pervasive mislabel: the doc named the plugin's Node health tool `forge_get_health`, perpetuating a false "both servers expose `forge_get_health`" collision. The Node tool is `forge_get_governance_health` (runtime-verified, `index.mjs`); the two health tools have **distinct names** and there is no runtime collision.
+
+### Gate
+
+- 44/44 vitest pass · 0 npm vulnerabilities · all 4 version surfaces + handshake resolve to 3.10.2 · every orchestrator reference is L2-gated (no L1 error path referencing the orchestrator).
+
+---
+
 ## [3.10.1] — 2026-07-14
 
 ### Security
