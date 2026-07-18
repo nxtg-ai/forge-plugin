@@ -4,8 +4,10 @@
 
 set -euo pipefail
 
-# Save project root (Claude Code sets cwd to user's project before launching MCP servers)
-export FORGE_PROJECT_ROOT="$(pwd)"
+# Project root: honor FORGE_PROJECT_ROOT from .mcp.json (${CLAUDE_PROJECT_DIR}) when set;
+# fall back to cwd for direct runs. Must resolve BEFORE the `cd` below, which moves us into
+# the server dir. (tools.mjs also defaults to process.cwd() if this stays unset.)
+export FORGE_PROJECT_ROOT="${FORGE_PROJECT_ROOT:-$(pwd)}"
 
 cd "$(dirname "$0")"
 

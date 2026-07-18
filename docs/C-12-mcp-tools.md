@@ -8,7 +8,7 @@ Forge exposes tools via two MCP servers that connect automatically when the plug
 
 | Tool | Server | Purpose |
 |------|--------|---------|
-| `forge_get_health` | Governance | Project health score (0-100) with letter grade |
+| `forge_get_governance_health` | Governance | Project health score (0-100) with letter grade |
 | `forge_get_governance_state` | Governance | Read governance.json (vision, goals, quality gates) |
 | `forge_get_git_status` | Governance | Branch, commits, modified/untracked file counts |
 | `forge_get_code_metrics` | Governance | Source files, test files, coverage, largest files |
@@ -27,7 +27,7 @@ Forge exposes tools via two MCP servers that connect automatically when the plug
 | `forge_get_health` | Orchestrator | Governance health check (5 dimensions + drift) |
 | `forge_set_project` | Orchestrator | Switch which .forge/ directory is active |
 
-Both servers expose a tool named `forge_get_health`, but they measure different things. See the note at the bottom of this page and [Health Scoring](C-14-health-scoring.md) for details.
+The two servers each expose a health tool with a **different name**: the Governance (plugin) server's `forge_get_governance_health` (0-100 code-quality score) and the Orchestrator (Rust) server's `forge_get_health` (5-dimension governance check + drift). They are distinct tools, not a name collision. See the note at the bottom of this page and [Health Scoring](C-14-health-scoring.md) for details.
 
 ---
 
@@ -37,9 +37,9 @@ Runtime: Node.js (index.mjs). Transport: stdio. Always available when the plugin
 
 This server reads directly from the project filesystem. It does not require a `.forge/` directory and works on any codebase.
 
-### forge_get_health
+### forge_get_governance_health
 
-Get the project health score (0-100) with a letter grade and detailed check results. Evaluates governance files, git cleanliness, test coverage, documentation, type safety, file sizes, and security.
+Get the project health score (0-100) with a letter grade and detailed check results. Evaluates governance files, git cleanliness, test coverage, documentation, type safety, file sizes, and security. (This is the plugin's Node tool — distinct from the Orchestrator's `forge_get_health` below.)
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -266,8 +266,8 @@ This is the "Lego Snap" (N-12): L1 users get the 8 governance tools out of the b
 Users do not invoke MCP tools directly. Agents, hooks, and commands call them automatically based on context:
 
 **Governance tools are called when:**
-- The `guardian` agent runs a pre-commit quality check (calls `forge_get_health`, `forge_security_scan`)
-- `/forge:status` displays project health (calls `forge_get_health`, `forge_get_git_status`, `forge_get_code_metrics`)
+- The `guardian` agent runs a pre-commit quality check (calls `forge_get_governance_health`, `forge_security_scan`)
+- `/forge:status` displays project health (calls `forge_get_governance_health`, `forge_get_git_status`, `forge_get_code_metrics`)
 - `/forge:dashboard` opens the visual dashboard (calls `forge_open_dashboard`)
 - The `pre-task.sh` hook syncs state at session start (calls `forge_get_governance_state`)
 
@@ -282,9 +282,9 @@ Users do not invoke MCP tools directly. Agents, hooks, and commands call them au
 
 ## Two Health Tools
 
-Both servers expose `forge_get_health`, but they measure different things:
+Each server has its own health tool — **different names, different focus** (`forge_get_governance_health` on the plugin, `forge_get_health` on the orchestrator). They are not a name collision:
 
-| Aspect | Governance (Plugin) | Orchestrator (Rust) |
+| Aspect | Governance (Plugin) — `forge_get_governance_health` | Orchestrator (Rust) — `forge_get_health` |
 |--------|-------------------|-------------------|
 | **Focus** | Code quality | Project governance |
 | **Checks** | Git cleanliness, test coverage, file sizes, security, type safety, documentation files | Documentation quality, architecture adherence, task health, knowledge coverage, drift detection |
@@ -292,4 +292,4 @@ Both servers expose `forge_get_health`, but they measure different things:
 | **Requires** | Any codebase | `forge init` (initialized project) |
 | **Score** | 0-100 with letter grade (A-F) | 0-100 with dimensional breakdown |
 
-When `/forge:status` runs, it calls the governance version. When `forge status` runs from the CLI, it uses the orchestrator version. See [Health Scoring](C-14-health-scoring.md) for the full scoring methodology.
+When `/forge:status` runs at L1 (no `forge` binary) it calls `forge_get_governance_health`; at L2 it also calls the orchestrator's `forge_get_health` for the drift/governance dimensions. When `forge status` runs from the CLI, it uses the orchestrator version. See [Health Scoring](C-14-health-scoring.md) for the full scoring methodology.

@@ -49,12 +49,16 @@ Read `.claude/governance.json` if it exists. Extract:
 - Workstream count and statuses
 - Sentinel log entries (last 5)
 
+### 4c. Health Score (always available — L1 + L2)
+
+Call the plugin's Node MCP tool `forge_get_governance_health` to get the 0-100 health score, letter grade, and the `checks[]` breakdown. This tool ships with the plugin and is available whether or not the `forge` binary is installed — it does **not** require the orchestrator. Its `checks[]` array (each with a `name` and `points`) drives the **Health** section below, so this call MUST run regardless of orchestrator availability.
+
 ### 4b. Orchestrator State (if forge-orchestrator is available)
 
 Call orchestrator MCP tools in parallel to get live orchestration data:
 - `forge_get_state` — Full orchestration state (project info, tools, active locks)
 - `forge_get_tasks` — All tasks with status and assignments
-- `forge_get_governance_health` — Governance health check from orchestrator
+- `forge_get_health` — Orchestrator's 5-dimension health + **drift** analysis (L2 only, requires the `forge` binary). Feeds the Drift row in the Orchestrator section below.
 - `forge_check_drift` — Vision alignment check
 
 If the orchestrator MCP server is not available (tools not found), or if it returns initialization errors (e.g., "Forge is not initialized"), skip this section gracefully. Do NOT show raw error messages to the user. Instead, display a friendly upgrade prompt:
@@ -124,7 +128,7 @@ Here is the EXACT structure to output (substitute real values for placeholders):
 
 For each health dimension, generate a progress bar using Unicode block characters. Calculate filled blocks as `round(score / max * 20)`. Use `█` for filled and `░` for empty, always 20 characters wide total.
 
-The health checks from the MCP tool map to these dimensions with their ACTUAL point maximums:
+The health checks from the `forge_get_governance_health` result (§4c, always available) map to these dimensions with their ACTUAL point maximums:
 
 - **Tests** (max 20): "Test Coverage" check
 - **Types** (max 10): "Type Safety" check

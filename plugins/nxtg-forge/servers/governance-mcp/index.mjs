@@ -22,6 +22,7 @@ import {
   getSecurityScan,
   generateDashboard,
   findApplicationRoot,
+  serverVersion,
 } from "./tools.mjs";
 
 // Re-export all tool functions so tests can destructure from index.mjs
@@ -35,6 +36,7 @@ export {
   getSecurityScan,
   generateDashboard,
   findApplicationRoot,
+  serverVersion,
 } from "./tools.mjs";
 
 // ---------------------------------------------------------------------------
@@ -105,7 +107,7 @@ export const TOOLS = [
 // ---------------------------------------------------------------------------
 
 const server = new Server(
-  { name: "forge-governance", version: "3.0.0" },
+  { name: "forge-governance", version: serverVersion },
   { capabilities: { tools: {} } }
 );
 

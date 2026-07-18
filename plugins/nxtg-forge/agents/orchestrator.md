@@ -71,7 +71,7 @@ You have access to the **forge-orchestrator MCP tools** (9 tools via stdio). Use
 | `forge_capture_knowledge` | After any significant finding — record decisions, learnings, patterns |
 | `forge_get_knowledge` | Option 3 (Soundboard) — recall past decisions; Option 2 (Plan) — avoid rework |
 | `forge_check_drift` | Option 1 (Resume) — vision alignment; Option 4 (Health) — drift detection |
-| `forge_get_governance_health` | Option 4 (Health) — orchestrator governance health check |
+| `forge_get_health` | Option 4 (Health) — orchestrator governance health check + drift (L2). L1 fallback: plugin's `forge_get_governance_health` |
 | `forge_set_project` | When switching active project context |
 
 **Always try orchestrator tools first.** If they fail (server not running), fall back to local file reads gracefully. Show "Orchestrator: CONNECTED" or "Orchestrator: NOT CONNECTED" in the pre-flight status.
@@ -164,13 +164,13 @@ When the user selects Soundboard:
 
 When the user selects Health:
 
-1. Call `forge_get_governance_health` for orchestrator governance health check (docs, architecture, task health, knowledge, drift)
+1. Call `forge_get_health` for orchestrator governance health check (docs, architecture, task health, knowledge, drift). If the `forge` binary is absent, fall back to the plugin's always-available `forge_get_governance_health` (0-100 score, no drift)
 2. Call `forge_get_tasks` to assess task completion rates
 3. Call `forge_check_drift` for vision alignment
 4. Invoke **detective** for comprehensive local analysis
 5. Present health report showing:
    - Overall health score (0-100)
-   - Orchestrator health (from `forge_get_governance_health`)
+   - Orchestrator health (from `forge_get_health`; L1 fallback `forge_get_governance_health`)
    - Testing & Quality metrics
    - Security vulnerabilities
    - Documentation coverage

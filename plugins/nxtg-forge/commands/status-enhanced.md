@@ -73,11 +73,11 @@ Agents and commands are loaded from the NXTG-Forge plugin (23 agents, 23 command
 Call orchestrator MCP tools in parallel:
 - `forge_get_state` — Full orchestration state
 - `forge_get_tasks` — Task board with statuses
-- `forge_get_governance_health` — Orchestrator health check (docs, architecture, task health, knowledge coverage, drift)
+- `forge_get_health` — Orchestrator health check (docs, architecture, task health, knowledge coverage, drift). L2 only.
 - `forge_get_knowledge` — Knowledge base entries
 - `forge_check_drift` — Vision alignment
 
-If orchestrator MCP tools are not available, skip this section and note "Orchestrator: not connected".
+If orchestrator MCP tools are not available (`forge` binary absent), skip this section and note "Orchestrator: not connected". The Health Score above is computed locally and does not depend on the orchestrator; the plugin's `forge_get_governance_health` remains available as an L1 health source.
 
 ### 7. Dependencies
 ```bash
