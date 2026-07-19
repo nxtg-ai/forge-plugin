@@ -41,6 +41,7 @@ import {
 
 const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", ".."); // -> governance-mcp/
 const MCP_JSON = join(SERVER_DIR, "..", "..", ".mcp.json");                    // plugins/nxtg-forge/.mcp.json
+const PKG = JSON.parse(readFileSync(join(SERVER_DIR, "package.json"), "utf8")); // governance-mcp version
 // forge-ui repo: env override, else the sibling checkout (…/NXTG-Forge/forge-ui). CI must provide one.
 const FORGE_UI_DIR = process.env.FORGE_UI_DIR || join(SERVER_DIR, "..", "..", "..", "..", "..", "forge-ui");
 
@@ -101,9 +102,12 @@ function populateFixture(dir) {
 
 const canonicalProjectName = (fixture) => JSON.parse(readFileSync(join(fixture, ".forge", "state.json"), "utf8")).project_name;
 
-// Boot the orchestrator MCP EXECUTING the .mcp.json env contract verbatim (regate-11 C1), bound to fixture.
-function bindOrchestrator(fixture) {
-  const spec = JSON.parse(readFileSync(MCP_JSON, "utf8")).mcpServers["orchestrator-mcp"];
+// Boot an MCP server from its .mcp.json spec, EXECUTING the env contract verbatim (regate-11 C1),
+// bound to the fixture. Used for BOTH governance-mcp (the plugin's own Node product — start.sh) and
+// orchestrator-mcp (Rust `forge mcp`), so the L3 topology has all THREE products concurrently live
+// (regate-13 C1: the earlier build never started governance-mcp).
+function bindMcpServer(key, fixture) {
+  const spec = JSON.parse(readFileSync(MCP_JSON, "utf8")).mcpServers[key];
   const env = {};
   for (const [k, v] of Object.entries(spec.env || {})) env[k] = expandPlaceholders(v, fixture);
   env.PATH = process.env.PATH;
@@ -190,20 +194,28 @@ async function main() {
   check(`forge-ui checkout present (${FORGE_UI_DIR})`, uiPresent, uiPresent ? "" : "UI_ABSENT: set FORGE_UI_DIR or provide the sibling checkout with deps installed");
   if (!bin.ok || !uiPresent) { summarize(); return; }
 
-  let fixture, uiHome, uiChild, orchClient, orchTransport;
+  let fixture, uiHome, uiChild, orchClient, orchTransport, govClient, govTransport;
   try {
     fixture = makeFixtureWith(populateFixture);       // outer-scope registration (regate-11 C2)
     uiHome = mkdtempSync(join(tmpdir(), "forge-l3-home-")); // isolates forge-ui's ~/.forge global writes
     const canonical = canonicalProjectName(fixture);  // .forge/state.json project_name == "l3-fixture"
     const port = await freePort();
 
-    // ── Leg A: Ship Lord snap — all three products live against one fixture ──
-    console.log("\n[Leg A] boot orchestrator MCP + forge-ui API/WS against one fixture");
-    orchTransport = bindOrchestrator(fixture);
+    // ── Leg A: Ship Lord snap — ALL THREE products live SIMULTANEOUSLY against one fixture ──
+    // regate-13 C1: the earlier build started orchestrator + forge-ui only; governance-mcp (the
+    // plugin's own Node product) was never executed. All three are now up concurrently below.
+    console.log("\n[Leg A] boot governance-mcp + orchestrator MCP + forge-ui API/WS (three products, one fixture)");
+    orchTransport = bindMcpServer("orchestrator-mcp", fixture);
     orchClient = new Client({ name: "l3-orch", version: "1.0.0" }, { capabilities: {} });
     await orchClient.connect(orchTransport);
     const orchSv = orchClient.getServerVersion();
     check(`orchestrator handshake version == ${FORGE_PIN}`, orchSv?.version === FORGE_PIN, `got ${orchSv?.version}`);
+
+    govTransport = bindMcpServer("governance-mcp", fixture); // Node server via start.sh — third product
+    govClient = new Client({ name: "l3-gov", version: "1.0.0" }, { capabilities: {} });
+    await govClient.connect(govTransport);
+    const govSv = govClient.getServerVersion();
+    check(`governance-mcp handshake version == package.json (${PKG.version})`, govSv?.version === PKG.version, `got ${govSv?.version}`);
 
     const ui = bootForgeUi(fixture, port, uiHome);
     uiChild = ui.child;
@@ -212,6 +224,28 @@ async function main() {
     if (!up) throw new Error("forge-ui failed to boot");
     const healthResp = await fetch(`${ui.base}/api/health`).then((r) => r.json()).catch(() => ({}));
     check("forge-ui /api/health status == healthy", healthResp.status === "healthy", `got ${healthResp.status}`);
+
+    // Cross-product interaction discovered by the three-live topology: forge-ui's boot MIGRATION rewrites
+    // the plugin's .claude/governance.json ({project:{name}} → {constitution}), dropping the project
+    // identity governance-mcp reads. It is a ONE-TIME boot migration (a post-boot rewrite survives — no
+    // re-clobber). Record it as a finding, then restore the plugin's own project identity so governance-mcp's
+    // fixture binding can be proven WITH ALL THREE STILL LIVE.
+    const govJsonPath = join(fixture, ".claude", "governance.json");
+    const afterBoot = JSON.parse(readFileSync(govJsonPath, "utf8"));
+    if (!afterBoot.project?.name) {
+      recordFinding("GOVERNANCE_JSON_REWRITTEN_BY_UI",
+        `forge-ui boot-migration dropped .claude/governance.json 'project' (keys now: [${Object.keys(afterBoot)}]) — the plugin governance-mcp reads project.name from there; schema divergence plugin({project}) vs forge-ui({constitution}). Restored to prove governance binding.`);
+      writeFileSync(govJsonPath, JSON.stringify({ ...afterBoot, project: { name: canonical, vision: "restored for governance-mcp identity proof" } }, null, 2));
+    }
+
+    // With ALL THREE concurrently live, prove governance-mcp's fixture identity + health surface.
+    const govHealth = await govClient.callTool({ name: "forge_get_governance_health", arguments: {} });
+    const ghc = checkShapedResponse("forge_get_governance_health", govHealth);
+    check("governance-mcp forge_get_governance_health → shaped non-error (Node, all three live)", ghc.ok, ghc.reason);
+    const govState = await govClient.callTool({ name: "forge_get_governance_state", arguments: {} });
+    const gsc = checkShapedResponse("forge_get_governance_state", govState);
+    check("governance-mcp bound to fixture identity (forge_get_governance_state.project.name == canonical, all three live)",
+      gsc.ok && gsc.parsed?.project?.name === canonical, `got ${gsc.parsed?.project?.name}`);
 
     const rustHealth = await orchClient.callTool({ name: "forge_get_health", arguments: {} });
     const rh = checkShapedResponse("forge_get_health", rustHealth, ["drift", "findings", "health_score", "summary"]);
@@ -257,8 +291,8 @@ async function main() {
     check("post-mutation: UI health still == Math.round(fresh orchestrator health) [live read, not stale]", reflect.ok, reflect.reason);
     if (!reflect.ok) recordFinding("UI_HEALTH_CONTRACT_DRIFT", `post-mutation: ${reflect.reason}`);
   } finally {
-    try { if (orchClient) await orchClient.close(); } catch { /* */ }
-    try { if (orchTransport) await orchTransport.close(); } catch { /* */ }
+    for (const c of [orchClient, govClient]) { try { if (c) await c.close(); } catch { /* */ } }
+    for (const t of [orchTransport, govTransport]) { try { if (t) await t.close(); } catch { /* */ } }
     await reap(uiChild);
     if (fixture) rmSync(fixture, { recursive: true, force: true });
     if (uiHome) rmSync(uiHome, { recursive: true, force: true });

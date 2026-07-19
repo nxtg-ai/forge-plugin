@@ -3,6 +3,9 @@
 // negative-control tests (version-surface.test.mjs / l1-checks.test.mjs). The tested logic IS the
 // shipped logic — no parallel reimplementation (that divergence is a classic gate finding).
 
+import { realpathSync as _realpathSync } from "node:fs";
+import { resolve as _resolve } from "node:path";
+
 // The 8 Node governance-mcp tools (L1). Source of truth: index.mjs TOOLS.
 export const NODE_TOOLS = [
   "forge_get_governance_health",
@@ -123,13 +126,23 @@ export function checkHealthContract(uiScore, uiSource, rustScore) {
   return { ok: true, reason: "ok" };
 }
 
+// Two filesystem paths refer to the same location? Compares real paths (symlink-resolved) when both
+// exist, else normalized-absolute paths. EQUALITY, not containment — so a prefix-sharing SIBLING
+// (…-abc-stale vs …-abc) does NOT match (regate-13 C2). Pure enough for the seeded controls.
+export function samePath(a, b) {
+  if (!a || !b) return false;
+  const norm = (p) => { try { return _realpathSync(p); } catch { return _resolve(p); } };
+  return norm(a) === norm(b);
+}
+
 // forge-ui binds the fixture's CANONICAL identity? uiName = data.project.name; uiPath = data.project.path;
 // canonicalName = .forge/state.json project_name; fixture = the temp dir the harness owns. A drift here
-// is the named finding UI_IDENTITY_DRIFT (forge-ui e8c011f made this bind canonically). Returns { ok, reason }.
+// is the named finding UI_IDENTITY_DRIFT (forge-ui e8c011f made this bind canonically). The path check is
+// EQUALITY of normalized/real paths, not containment — a stale sibling dir must not pass. Returns { ok, reason }.
 export function checkUiIdentity(uiName, uiPath, canonicalName, fixture) {
   const problems = [];
   if (uiName !== canonicalName) problems.push(`UI_IDENTITY_DRIFT: data.project.name="${uiName}" != canonical "${canonicalName}"`);
-  if (!uiPath || !String(uiPath).includes(fixture)) problems.push(`data.project.path="${uiPath}" not bound to fixture "${fixture}"`);
+  if (!samePath(uiPath, fixture)) problems.push(`data.project.path="${uiPath}" != fixture "${fixture}" (not the same location)`);
   return { ok: problems.length === 0, reason: problems.join("; ") || "ok" };
 }
 

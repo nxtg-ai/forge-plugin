@@ -28,17 +28,23 @@ describe("L3 harness checks — seeded-defect controls", () => {
     expect(checkHealthContract(90, "orchestrator", undefined).ok).toBe(false);
   });
 
-  it("checkUiIdentity: canonical bind passes; unknown name and wrong-dir path each fail", () => {
+  it("checkUiIdentity: canonical bind passes; unknown name, wrong-dir, and prefix-sibling each fail", () => {
     const fx = "/tmp/forge-l3-fixture-abc";
     expect(checkUiIdentity("l3-fixture", `${fx}`, "l3-fixture", fx).ok).toBe(true);
+    // Trailing-slash / non-normalized form of the SAME dir still passes (normalized equality).
+    expect(checkUiIdentity("l3-fixture", `${fx}/`, "l3-fixture", fx).ok).toBe(true);
     // forge-ui's pre-e8c011f bug: data.project.name === "unknown".
     const unknown = checkUiIdentity("unknown", fx, "l3-fixture", fx);
     expect(unknown.ok).toBe(false);
     expect(unknown.reason).toContain("UI_IDENTITY_DRIFT");
-    // Server bound to the WRONG dir (path doesn't include the fixture) — the wrong-dir false-pass.
+    // Server bound to a completely WRONG dir.
     const wrongDir = checkUiIdentity("l3-fixture", "/home/somewhere/else", "l3-fixture", fx);
     expect(wrongDir.ok).toBe(false);
-    expect(wrongDir.reason).toContain("not bound to fixture");
+    expect(wrongDir.reason).toContain("not the same location");
+    // regate-13 C2: a PREFIX-SHARING SIBLING (…-abc-stale) must NOT pass — containment would have.
+    const sibling = checkUiIdentity("l3-fixture", `${fx}-stale`, "l3-fixture", fx);
+    expect(sibling.ok).toBe(false);
+    expect(sibling.reason).toContain("not the same location");
   });
 
   it("checkWsRoundtrip: full round-trip passes; missing state.update / pong / binding each fail", () => {
