@@ -683,7 +683,29 @@ What the L2 harness proves, from a clean temp fixture (`forge init` + rule-based
 - **Task lifecycle (durable-state value-proof)** — `forge_get_tasks`→`forge_claim_task`→`forge_complete_task` transitions `.forge/state.json` `task_summary` (completed↑, pending↓), flips `.forge/tasks/T-001.json` to `completed`, and appends `task_assigned`+`task_completed` to `.forge/events.jsonl` — read from the files, not just the tool text.
 - **Deterministic failure** — the check functions (`tests/lib/checks.mjs`, shared with the live journey) are covered by seeded-defect controls (`l2-checks.test.mjs`): wrong binary version, a missing/extra Rust tool, a cross-server identity mismatch, and an un-applied lifecycle each make the suite fail.
 
-CI can adopt `npm test` verbatim once Actions billing is unlocked **and the runner installs the pinned `forge` binary** (the L2 leg needs it present). The L3 leg is the remaining phase (3 of 3).
+CI can adopt `npm test` verbatim once Actions billing is unlocked **and the runner installs the pinned `forge` binary** (the L2 leg needs it present).
+
+### Automated L3 Integration Harness — Ship Lord journey (CI-adoptable)
+
+The L3 path (all three products snapped together — plugin governance/orchestrator MCP **and** forge-ui's live API+WS server) is machine-tested by `servers/governance-mcp/tests/integration/l3-journey.mjs` — the phase-3 leg of G-09. It **requires the pinned `forge` binary AND a forge-ui checkout** (with deps installed). forge-ui is a TEST-FIXTURE DEP: booted from its repo, never modified.
+
+```bash
+cd plugins/nxtg-forge/servers/governance-mcp
+npm ci && forge --version         # forge 1.5.2
+# forge-ui at the sibling ../../../../forge-ui, or set FORGE_UI_DIR:
+npm test                          # vitest → live L1 → live L2 → live L3
+# or just the live L3 journey:
+npm run test:l3
+```
+
+What the L3 harness proves, from a clean temp fixture (`forge init` + rule-based `plan --generate`, ephemeral port, no network beyond localhost):
+- **Ship Lord snap** — boots the orchestrator `forge mcp` (executing the `.mcp.json` env contract verbatim) AND forge-ui's API+WS server (source via the tsx loader — the built `dist` server is broken; `cwd=fixture` binds `data.project.path`) on an **ephemeral** port (never 5050/5051).
+- **Cross-product contract (dx-journeys)** — `data.health.score === Math.round(orchestrator forge_get_health.health_score)` (float→rounded-int) with `data.health.source === "orchestrator"`; a fallback to forge-ui's own `"estimate"` computation is the named finding `UI_HEALTH_CONTRACT_DRIFT`. Identity binds canonically: `data.project.name === .forge/state.json.project_name`.
+- **Liveness** — `POST /api/auth/ws-token` → WS `/ws` connect → a fixture-bound `state.update` + a `ping`→`pong` round-trip; then a task completed via MCP and the UI's orchestrator-sourced health re-verified against a fresh `forge_get_health` (live read across the mutation).
+- **Deterministic failure** — shared check functions (`tests/lib/checks.mjs`) are covered by seeded-defect controls (`l3-checks.test.mjs`): ui-absent (`UI_ABSENT`), estimate/mismatched health, an `unknown` or wrong-dir identity, and an incomplete WS round-trip each make the suite fail.
+- **Isolation** — forge-ui's global runspace bookkeeping (`~/.forge/projects.json`) is redirected to a throwaway `HOME`, so a clean run leaves the operator's real `~/.forge` byte-identical; teardown reaps the forge-ui child by its own pid (never pkill-by-name — a concurrent forge-ui session may be live) and removes every temp dir.
+
+CI must provide: the pinned `forge` binary, a forge-ui checkout with deps installed (`FORGE_UI_DIR`), and network access to `127.0.0.1`. This completes G-09 (L1/L2/L3, 3 of 3).
 
 
 

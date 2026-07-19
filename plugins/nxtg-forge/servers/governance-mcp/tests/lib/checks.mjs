@@ -108,6 +108,43 @@ export function checkLifecycle({ summaryBefore, summaryAfter, taskStatus, append
   return { ok: problems.length === 0, problems };
 }
 
+// ── L3 (Ship Lord journey) — forge-ui ⟂ orchestrator contract surfaces — DIRECTIVE-NXTG-20260718-13 ──
+// UI health matches the orchestrator health per the dx-journeys contract (docs line ~170-172)? Rust
+// forge_get_health.health_score is a FLOAT; forge-ui serves data.health.score as a ROUNDED INT and
+// labels data.health.source. The contract holds iff the UI sourced from the orchestrator AND its
+// rounded score equals Math.round(rust). A non-orchestrator source (independent/estimate computation)
+// or a score mismatch is the named finding UI_HEALTH_CONTRACT_DRIFT. Returns { ok, reason }.
+export function checkHealthContract(uiScore, uiSource, rustScore) {
+  if (typeof rustScore !== "number") return { ok: false, reason: `no rust health_score to compare (got ${rustScore})` };
+  if (typeof uiScore !== "number") return { ok: false, reason: `UI_HEALTH_CONTRACT_DRIFT: ui health.score not a number (${uiScore})` };
+  if (uiSource !== "orchestrator") return { ok: false, reason: `UI_HEALTH_CONTRACT_DRIFT: ui health.source="${uiSource}" (not "orchestrator" → independent/estimate computation)` };
+  const expected = Math.round(rustScore);
+  if (uiScore !== expected) return { ok: false, reason: `UI_HEALTH_CONTRACT_DRIFT: ui=${uiScore} != Math.round(rust ${rustScore})=${expected}` };
+  return { ok: true, reason: "ok" };
+}
+
+// forge-ui binds the fixture's CANONICAL identity? uiName = data.project.name; uiPath = data.project.path;
+// canonicalName = .forge/state.json project_name; fixture = the temp dir the harness owns. A drift here
+// is the named finding UI_IDENTITY_DRIFT (forge-ui e8c011f made this bind canonically). Returns { ok, reason }.
+export function checkUiIdentity(uiName, uiPath, canonicalName, fixture) {
+  const problems = [];
+  if (uiName !== canonicalName) problems.push(`UI_IDENTITY_DRIFT: data.project.name="${uiName}" != canonical "${canonicalName}"`);
+  if (!uiPath || !String(uiPath).includes(fixture)) problems.push(`data.project.path="${uiPath}" not bound to fixture "${fixture}"`);
+  return { ok: problems.length === 0, reason: problems.join("; ") || "ok" };
+}
+
+// A live WS round-trip happened AND its payload bound to the fixture? events = the WS message `type`s
+// observed; fixtureBound = whether the state.update payload carried the fixture identity. Requires a
+// state.update (server→client on connect) and a pong (client ping → server pong). Returns { ok, reason }.
+export function checkWsRoundtrip({ events, fixtureBound }) {
+  const problems = [];
+  const set = new Set(events || []);
+  if (!set.has("state.update")) problems.push("no state.update received on connect");
+  if (!set.has("pong")) problems.push("no pong (ping round-trip failed)");
+  if (!fixtureBound) problems.push("state.update payload did not bind to the fixture identity");
+  return { ok: problems.length === 0, reason: problems.join("; ") || "ok" };
+}
+
 // All version surfaces agree? map = { label: versionString }. Returns { ok, version, problems[] }.
 export function checkVersionsAgree(map) {
   const entries = Object.entries(map);
