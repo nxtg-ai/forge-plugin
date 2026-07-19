@@ -56,7 +56,7 @@
 
 **Like:** A credit score for your codebase — one number summarizing overall quality.
 **Definition:** A 0-100 score across 5 dimensions: testing, documentation, security, architecture, and governance. Displayed as a letter grade (A-F).
-**In Forge:** Computed by the governance-mcp server via `forge_get_health`. Visible in `/forge:status` output and the L3 dashboard.
+**In Forge:** Computed by the governance-mcp server via `forge_get_governance_health` (the orchestrator's `forge_get_health` adds the drift dimension at L2). Visible in `/forge:status` output and the L3 dashboard.
 
 ## Hook
 

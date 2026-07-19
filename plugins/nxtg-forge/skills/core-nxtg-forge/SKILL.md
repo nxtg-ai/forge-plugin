@@ -98,8 +98,10 @@ trail of truth (`src/core/event.rs`). `forge sync` reconciles the cache from tas
 ## MCP Servers — Two of them, both prefix tools `forge_*`
 
 Claude Code connects to both simultaneously (`.mcp.json`). They overlap conceptually but run
-independently. **Do not assume a `forge_*` tool comes from one server** — `forge_get_health`
-exists on both surfaces.
+independently. **Do not assume a `forge_*` tool comes from one server.** The health tools are the
+classic trap: the two servers each expose a health tool with a **different name** —
+`forge_get_health` (orchestrator, Rust, L2) and `forge_get_governance_health` (governance-mcp,
+Node, always available). There is no `forge_get_health` on the Node server.
 
 **orchestrator-mcp** (Rust, from `forge` binary — degrades gracefully if `forge` not installed):
 `forge_init`, `forge_set_project`, `forge_get_state`, `forge_get_plan`, `forge_get_tasks`,
@@ -141,9 +143,12 @@ Two distinct sets — do not conflate them:
 
 ## Governance Health
 
-`forge_get_health` / `forge_get_governance_health` return a 0–100 score with an A–F grade,
-computed across five dimensions (see `forge-orchestrator/src/core/governance.rs`). Read it, don't
-guess it — the score is deterministic from git status, tests, code metrics, and drift.
+Two health tools, different servers: the orchestrator's `forge_get_health` returns a 0–100 score
+across five governance dimensions incl. drift (see `forge-orchestrator/src/core/governance.rs`);
+the plugin's `forge_get_governance_health` (Node, always available) returns its own 0–100 score +
+A–F grade from git status, tests, code metrics, docs, and security (see
+`servers/governance-mcp/tools.mjs` `getHealthScore`). Read the score, don't guess it — both are
+deterministic.
 
 ## Worked example — resuming after an interruption ("zero-context recovery")
 

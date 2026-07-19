@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.3] — unreleased (held for Codex re-gate, DIRECTIVE-NXTG-20260718-05)
+
+Completes the v3.10.2 health-tool rename in **user-facing docs** (Codex Wave-1 gate finding 2) and adds a contract test so it cannot regress. Docs-and-test only; no runtime/tool changes. Release (version bump + tag + GitHub release) is held until FPL routes the Codex re-gate on this diff.
+
+### Fixed
+
+- **Node-health misattribution in released guidance** — three user-facing docs still advertised the removed name `forge_get_health` as the Node/L1 governance tool (following them reached the Rust tool at L2, or an unknown tool at L1). Corrected to `forge_get_governance_health`:
+  - `docs/C-02-quick-start-l1.md:70` (the L1 "8 governance tools" table)
+  - `docs/GLOSSARY.md:59` ("Computed by the governance-mcp server via …")
+  - `UAT-GUIDE.md:422` (the governance-mcp tool list)
+- **Repo-wide sweep** also fixed `skills/core-nxtg-forge/SKILL.md` — it still claimed "`forge_get_health` exists on both surfaces" (false; contradicted its own later line) and conflated the two tools' score computation. Now states the distinct names + servers and each tool's actual source.
+
+### Added
+
+- **`tests/tool-attribution-contract.test.mjs`** — a contract test that (1) asserts at runtime that governance-mcp exposes `forge_get_governance_health` and **not** `forge_get_health`, and (2) classifies every bare `forge_get_health` reference in the repo's docs by server/level (via Node-exclusive/orchestrator-exclusive tool co-location + keyword context) and **fails on any Node/L1 misattribution**. Adversarially self-checked: flags the original defect pattern, passes correct orchestrator refs and neutral keyword lists.
+
+### Gate
+
+- vitest **46/46** pass (44 + 2 contract tests) · zero user-facing docs attribute `forge_get_health` to governance-mcp.
+
+---
+
 ## [3.10.2] — 2026-07-18
 
 Plugin hardening — health-tool routing correctness + manifest/handshake drift (DIRECTIVE-NXTG-20260718-01, deep-dive G-01/G-10). No new features; agent/command/skill counts unchanged.

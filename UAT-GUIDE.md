@@ -419,7 +419,7 @@ The MCP dashboard provides 8 governance tools and a visual HTML dashboard.
 ### MCP Tools Available
 
 Once the MCP server is running, these tools are available:
-- `forge_get_health` — Health score (0-100, A-F grade)
+- `forge_get_governance_health` — Health score (0-100, A-F grade)
 - `forge_get_governance_state` — Read governance.json
 - `forge_get_git_status` — Git branch, commits, working tree
 - `forge_get_code_metrics` — File counts, dependencies

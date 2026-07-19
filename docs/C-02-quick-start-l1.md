@@ -67,7 +67,7 @@ The plugin installs an MCP governance server that provides 8 tools:
 
 | Tool | What It Does |
 |------|-------------|
-| `forge_get_health` | Composite health score (0-100, A-F grade) |
+| `forge_get_governance_health` | Composite health score (0-100, A-F grade) |
 | `forge_get_git_status` | Branch, commits, clean status |
 | `forge_get_code_metrics` | Lines, files, dependencies, test ratio |
 | `forge_run_tests` | Auto-detects runner (vitest/jest/pytest) |
