@@ -225,18 +225,15 @@ async function main() {
     const healthResp = await fetch(`${ui.base}/api/health`).then((r) => r.json()).catch(() => ({}));
     check("forge-ui /api/health status == healthy", healthResp.status === "healthy", `got ${healthResp.status}`);
 
-    // Cross-product interaction discovered by the three-live topology: forge-ui's boot MIGRATION rewrites
-    // the plugin's .claude/governance.json ({project:{name}} → {constitution}), dropping the project
-    // identity governance-mcp reads. It is a ONE-TIME boot migration (a post-boot rewrite survives — no
-    // re-clobber). Record it as a finding, then restore the plugin's own project identity so governance-mcp's
-    // fixture binding can be proven WITH ALL THREE STILL LIVE.
+    // Cross-product interaction the three-live topology surfaces: forge-ui's startup migration rewrites the
+    // plugin's .claude/governance.json ({project:{name}} → {version,constitution}), dropping the identity
+    // governance-mcp reads (tools.mjs:123). A RELEASE GATE MUST NEVER REPAIR PRODUCT-OWNED STATE TO PASS —
+    // so we do NOT restore it. The governance identity check runs against the real post-boot file and FAILS
+    // HONESTLY; a red L3 is true state. The divergence is a real cross-product defect owned by forge-ui
+    // (DIRECTIVE-NXTG-20260719-18, Leg B — they round-trip the contract documented in
+    // docs/governance-mcp-governance-json-contract.md, convergence-spec style).
     const govJsonPath = join(fixture, ".claude", "governance.json");
     const afterBoot = JSON.parse(readFileSync(govJsonPath, "utf8"));
-    if (!afterBoot.project?.name) {
-      recordFinding("GOVERNANCE_JSON_REWRITTEN_BY_UI",
-        `forge-ui boot-migration dropped .claude/governance.json 'project' (keys now: [${Object.keys(afterBoot)}]) — the plugin governance-mcp reads project.name from there; schema divergence plugin({project}) vs forge-ui({constitution}). Restored to prove governance binding.`);
-      writeFileSync(govJsonPath, JSON.stringify({ ...afterBoot, project: { name: canonical, vision: "restored for governance-mcp identity proof" } }, null, 2));
-    }
 
     // With ALL THREE concurrently live, prove governance-mcp's fixture identity + health surface.
     const govHealth = await govClient.callTool({ name: "forge_get_governance_health", arguments: {} });
@@ -244,8 +241,14 @@ async function main() {
     check("governance-mcp forge_get_governance_health → shaped non-error (Node, all three live)", ghc.ok, ghc.reason);
     const govState = await govClient.callTool({ name: "forge_get_governance_state", arguments: {} });
     const gsc = checkShapedResponse("forge_get_governance_state", govState);
+    const govName = gsc.parsed?.project?.name;
+    const idOk = gsc.ok && govName === canonical;
     check("governance-mcp bound to fixture identity (forge_get_governance_state.project.name == canonical, all three live)",
-      gsc.ok && gsc.parsed?.project?.name === canonical, `got ${gsc.parsed?.project?.name}`);
+      idOk, `got ${govName}`);
+    if (!idOk) {
+      recordFinding("GOVERNANCE_SCHEMA_DIVERGENCE",
+        `governance-mcp consumes .claude/governance.json {project:{name,vision,goals}, workstreams[], qualityGates, version} (tools.mjs:108-125,643-644,736). forge-ui's startup migration rewrote it to {${Object.keys(afterBoot)}} (constitution schema), dropping 'project' → governance-mcp identity="${govName}". Incompatible shapes — NOT repaired (a gate must not fix the product). forge-ui owns the round-trip: DIRECTIVE-NXTG-20260719-18 (Leg B). Contract: docs/governance-mcp-governance-json-contract.md.`);
+    }
 
     const rustHealth = await orchClient.callTool({ name: "forge_get_health", arguments: {} });
     const rh = checkShapedResponse("forge_get_health", rustHealth, ["drift", "findings", "health_score", "summary"]);
