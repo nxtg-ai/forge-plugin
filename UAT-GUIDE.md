@@ -644,6 +644,28 @@ After running through the UAT, please capture your feedback:
 
 Before cutting a release, test plugin changes on a separate machine (CLX9) without publishing to GitHub or the marketplace.
 
+### Automated L1 Integration Harness (CI-adoptable)
+
+The L1 (plugin-standalone) path is machine-tested by `servers/governance-mcp/tests/integration/l1-journey.mjs` — one command, deterministic, no network. It is the L1 leg of the L1/L2/L3 integration coverage (G-09).
+
+```bash
+cd plugins/nxtg-forge/servers/governance-mcp
+npm ci          # or npm install
+npm test        # vitest (unit + attribution + version-surface + seeded-defect controls) THEN the live L1 journey
+# or just the live journey:
+npm run test:l1
+```
+
+What the harness proves, from a clean temp fixture:
+- **Handshake** — boots the real `governance-mcp` over stdio via `start.sh`; the advertised MCP version equals `package.json`.
+- **All 8 Node tools** — `tools/list` is exactly the 8 governance tools (and contains `forge_get_governance_health`, **not** the orchestrator's `forge_get_health`); every `tools/call` returns a shaped, non-error response.
+- **Lego-Snap invariant** — with no `forge` binary on `PATH` the orchestrator-mcp command exits 1 (silent degrade); with a stub `forge` it resolves (exit 0); and **zero** L1 tool responses reference the orchestrator surface.
+- **Deterministic failure** — the check functions (`tests/lib/checks.mjs`) are covered by seeded-defect negative controls (`version-surface.test.mjs`, `l1-checks.test.mjs`): a mismatched version surface, a missing/extra tool, an orchestrator reference at L1, or a malformed tool response each make the suite fail.
+
+CI can adopt `npm test` verbatim once Actions billing is unlocked. The L2/L3 legs are future phases (2 of 3, 3 of 3).
+
+
+
 ### Method: `--plugin-dir` (Recommended)
 
 Claude Code supports loading a plugin from any local directory using `--plugin-dir`. This bypasses the marketplace entirely — no git push, no release, no remove/re-add.

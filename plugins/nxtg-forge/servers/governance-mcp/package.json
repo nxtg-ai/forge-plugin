@@ -6,7 +6,9 @@
   "main": "index.mjs",
   "license": "MIT",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run && node tests/integration/l1-journey.mjs",
+    "test:unit": "vitest run",
+    "test:l1": "node tests/integration/l1-journey.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
