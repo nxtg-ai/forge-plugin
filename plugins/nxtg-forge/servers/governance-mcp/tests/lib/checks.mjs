@@ -32,6 +32,73 @@ export const TOOL_KEYS = {
 const ORCH_REF =
   /\borchestrator\b|forge_get_tasks|forge_claim_task|forge_complete_task|forge_get_state|forge_get_plan|forge_check_drift|forge_capture_knowledge|forge_get_knowledge|forge_set_project|forge_get_events|forge_get_health(?![_a-zA-Z])/i;
 
+// ── L2 (Pro Builder journey) surface — DIRECTIVE-NXTG-20260718-11 ──
+// The 11 orchestrator-mcp tools shipped by the Rust `forge mcp` server. Source of truth: the LIVE
+// v1.5.2 handshake (probed 2026-07-18). The live L2 leg asserts the handshake set == this list AND
+// reports any delta as a finding (never "fixes" orchestrator surfaces from the plugin repo — the
+// directive's escalation clause). This list is also the expected input for the missing-Rust-tool
+// negative control.
+export const ORCH_TOOLS = [
+  "forge_get_tasks",
+  "forge_claim_task",
+  "forge_complete_task",
+  "forge_get_state",
+  "forge_get_plan",
+  "forge_capture_knowledge",
+  "forge_get_knowledge",
+  "forge_check_drift",
+  "forge_get_health",
+  "forge_get_events",
+  "forge_set_project",
+];
+
+// The pinned orchestrator binary version the L2 harness requires (fixture dep, not a package dep).
+export const FORGE_PIN = "1.5.2";
+
+// `forge --version` string matches the pin? actual = parsed version (e.g. "1.5.2") or null if absent.
+// Returns { ok, reason } — named findings FORGE_ABSENT / WRONG_BINARY_VERSION for deterministic fail.
+export function checkBinaryVersion(actual, expected = FORGE_PIN) {
+  if (actual == null || actual === "") return { ok: false, reason: `FORGE_ABSENT (expected ${expected})` };
+  if (actual !== expected) return { ok: false, reason: `WRONG_BINARY_VERSION got ${actual} expected ${expected}` };
+  return { ok: true, reason: "ok" };
+}
+
+// The same fixture identity is bound on BOTH servers? nodeName = Node forge_get_governance_state
+// .project.name; rustName = Rust forge_get_state.project_name. Guards the FORGE_PROJECT_ROOT-not-reached
+// false-pass (a server bound to the wrong dir returns shaped data with a DIFFERENT identity).
+// Returns { ok, reason }.
+export function checkIdentityMatch(nodeName, rustName, expected) {
+  const problems = [];
+  if (nodeName !== expected) problems.push(`node identity ${nodeName} != ${expected}`);
+  if (rustName !== expected) problems.push(`rust identity ${rustName} != ${expected}`);
+  if (nodeName !== rustName) problems.push(`cross-server identity mismatch node=${nodeName} rust=${rustName}`);
+  return { ok: problems.length === 0, reason: problems.join("; ") || "ok" };
+}
+
+// The task lifecycle actually mutated durable state (value-proof, not tool-message shape)? Inputs:
+//   summaryBefore/summaryAfter = .forge/state.json task_summary {pending,completed,...} snapshots
+//   taskStatus                 = .forge/tasks/<id>.json "status" after complete
+//   eventTypes                 = array of event_type strings appended to .forge/events.jsonl
+// Asserts state.json transitioned (completed↑, pending↓), the task file flipped to completed, and
+// BOTH task_assigned + task_completed events landed. Returns { ok, problems[] }.
+export function checkLifecycle({ summaryBefore, summaryAfter, taskStatus, eventTypes }) {
+  const problems = [];
+  if (!summaryBefore || !summaryAfter) {
+    problems.push("missing task_summary snapshot");
+  } else {
+    const bc = summaryBefore.completed ?? 0, ac = summaryAfter.completed ?? 0;
+    const bp = summaryBefore.pending ?? 0, ap = summaryAfter.pending ?? 0;
+    if (!(ac > bc)) problems.push(`state.json task_summary.completed did not increase (${bc}->${ac})`);
+    if (!(ap < bp)) problems.push(`state.json task_summary.pending did not decrease (${bp}->${ap})`);
+  }
+  if (taskStatus !== "completed") problems.push(`tasks/<id>.json status != completed (got ${taskStatus})`);
+  const evs = new Set(eventTypes || []);
+  for (const req of ["task_assigned", "task_completed"]) {
+    if (!evs.has(req)) problems.push(`events.jsonl missing ${req}`);
+  }
+  return { ok: problems.length === 0, problems };
+}
+
 // All version surfaces agree? map = { label: versionString }. Returns { ok, version, problems[] }.
 export function checkVersionsAgree(map) {
   const entries = Object.entries(map);

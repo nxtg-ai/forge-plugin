@@ -662,7 +662,28 @@ What the harness proves, from a clean temp fixture:
 - **Lego-Snap invariant** — with no `forge` binary on `PATH` the orchestrator-mcp command exits 1 (silent degrade); with a stub `forge` it resolves (exit 0); and **zero** L1 tool responses reference the orchestrator surface.
 - **Deterministic failure** — the check functions (`tests/lib/checks.mjs`) are covered by seeded-defect negative controls (`version-surface.test.mjs`, `l1-checks.test.mjs`): a mismatched version surface, a missing/extra tool, an orchestrator reference at L1, or a malformed tool response each make the suite fail.
 
-CI can adopt `npm test` verbatim once Actions billing is unlocked. The L2/L3 legs are future phases (2 of 3, 3 of 3).
+CI can adopt `npm test` verbatim once Actions billing is unlocked. The L3 leg is a future phase (3 of 3).
+
+### Automated L2 Integration Harness — Pro Builder journey (CI-adoptable)
+
+The L2 path (plugin **and** orchestrator loaded together, the Lego Snap exercised LIVE) is machine-tested by `servers/governance-mcp/tests/integration/l2-journey.mjs` — the phase-2 leg of G-09. It **requires the pinned `forge` binary** on `PATH` (v1.5.2) by design; absence or a version mismatch is a deterministic named failure (`FORGE_ABSENT` / `WRONG_BINARY_VERSION`), never a silent skip.
+
+```bash
+cd plugins/nxtg-forge/servers/governance-mcp
+npm ci                 # or npm install
+forge --version        # must report 1.5.2 (test fixture dependency, not a package dep)
+npm test               # vitest THEN the live L1 journey THEN the live L2 journey
+# or just the live L2 journey:
+npm run test:l2
+```
+
+What the L2 harness proves, from a clean temp fixture (`forge init` + rule-based `forge plan --generate`, no network):
+- **Dual handshake + surfaces** — boots BOTH servers from their verbatim `.mcp.json` command specs (Claude Code placeholders expanded); governance advertises exactly the 8 Node tools at the `package.json` version, orchestrator advertises exactly the 11 v1.5.2 tools (live counts; any delta from the pinned surface is reported as a finding, never patched from this repo).
+- **Cross-server contract (G-04 proven live)** — `forge_get_governance_health` (Node, `{score,grade,checks}`) and `forge_get_health` (Rust, `{drift,findings}`) both return shaped non-error responses with **distinct shapes** (no runtime collision), and the fixture identity is bound identically on both sides (`forge_get_governance_state.project.name` == `forge_get_state.project_name` == `l2-fixture`).
+- **Task lifecycle (durable-state value-proof)** — `forge_get_tasks`→`forge_claim_task`→`forge_complete_task` transitions `.forge/state.json` `task_summary` (completed↑, pending↓), flips `.forge/tasks/T-001.json` to `completed`, and appends `task_assigned`+`task_completed` to `.forge/events.jsonl` — read from the files, not just the tool text.
+- **Deterministic failure** — the check functions (`tests/lib/checks.mjs`, shared with the live journey) are covered by seeded-defect controls (`l2-checks.test.mjs`): wrong binary version, a missing/extra Rust tool, a cross-server identity mismatch, and an un-applied lifecycle each make the suite fail.
+
+CI can adopt `npm test` verbatim once Actions billing is unlocked **and the runner installs the pinned `forge` binary** (the L2 leg needs it present). The L3 leg is the remaining phase (3 of 3).
 
 
 
