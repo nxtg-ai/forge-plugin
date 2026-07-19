@@ -83,7 +83,14 @@ function forgeVersion() {
 
 // Fixture: clean temp project, forge-init'd + a rule-based plan seeded so the lifecycle leg has a task.
 function makeFixture() {
-  const dir = mkdtempSync(join(tmpdir(), "forge-l2-fixture-"));
+  // Alloc the temp dir FIRST, then populate; on ANY setup failure clean the dir and rethrow so a throwing
+  // `forge init/config/plan` cannot leak the fixture (the caller only receives a path on full success).
+  return makeFixtureWith(populateFixture);
+}
+
+// Write files + run `forge init/config/plan` into an already-allocated fixture dir. Throws propagate to
+// makeFixtureWith, which owns the dir's cleanup-on-failure.
+function populateFixture(dir) {
   // Minimal source + SPEC so `forge plan --generate` (rule-based) yields T-001/T-002 deterministically.
   writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "l2-fixture", version: "0.0.1" }, null, 2));
   mkdirSync(join(dir, "src"));
@@ -108,19 +115,47 @@ function makeFixture() {
   execFileSync("forge", ["init", "-n", "l2-fixture", "--project", dir], { cwd: dir, env: fenv, stdio: "ignore", timeout: 30000 });
   execFileSync("forge", ["config", "brain", "rule-based", "--project", dir], { cwd: dir, env: fenv, stdio: "ignore", timeout: 30000 });
   execFileSync("forge", ["plan", "--generate", "--project", dir], { cwd: dir, env: fenv, stdio: "ignore", timeout: 60000 });
-  return dir;
+}
+
+// Alloc a temp fixture dir, run `populate(dir)`, return the path on success. On ANY exception during
+// populate, remove the dir and rethrow — so setup failures never leak a fixture. Exported for the
+// setup-failure cleanup control (l2-checks.test.mjs).
+export function makeFixtureWith(populate) {
+  const dir = mkdtempSync(join(tmpdir(), "forge-l2-fixture-"));
+  try {
+    populate(dir);
+    return dir;
+  } catch (e) {
+    rmSync(dir, { recursive: true, force: true });
+    throw e;
+  }
 }
 
 function readState(fixture) {
   return JSON.parse(readFileSync(join(fixture, ".forge", "state.json"), "utf8"));
 }
 
-// Boot an MCP server via its .mcp.json command spec (placeholders expanded) bound to the fixture.
+// Parse .forge/events.jsonl into [{ event_type, task_id }] (order preserved). Used to snapshot before
+// the lifecycle and diff the APPENDED records after — pre-existing init/plan events must not count.
+function readEvents(fixture) {
+  return readFileSync(join(fixture, ".forge", "events.jsonl"), "utf8")
+    .split("\n").filter(Boolean)
+    .map((l) => { try { const j = JSON.parse(l); return { event_type: j.event_type, task_id: j.task_id }; } catch { return null; } })
+    .filter(Boolean);
+}
+
+// Boot an MCP server via its .mcp.json command spec, EXECUTING the spec's env contract (placeholders
+// expanded the same way as args) rather than injecting our own root. A misconfigured .mcp.json
+// FORGE_PROJECT_ROOT therefore binds the wrong project and FAILS the live identity check (the false-green
+// Codex proved by editing .mcp.json env). Launch cwd follows the configured root so cwd cannot mask a
+// wrong env. extraPath (shadow-bin) is merged for browser-opener shadowing.
 function bindTransport(spec, fixture, extraPath = "") {
-  const env = { FORGE_PROJECT_ROOT: fixture };
+  const env = {};
+  for (const [k, v] of Object.entries(spec.env || {})) env[k] = expandPlaceholders(v, fixture);
   if (extraPath) env.PATH = extraPath;
   const args = (spec.args || []).map((a) => expandPlaceholders(a, fixture));
-  return new StdioClientTransport({ command: spec.command, args, env, cwd: fixture, stderr: "ignore" });
+  const cwd = env.FORGE_PROJECT_ROOT || fixture;
+  return new StdioClientTransport({ command: spec.command, args, env, cwd, stderr: "ignore" });
 }
 
 const textOf = (result) => (result.content || []).filter((c) => c?.type === "text").map((c) => c.text).join("\n");
@@ -198,8 +233,9 @@ async function main() {
     check("same fixture identity bound on BOTH servers (node.project.name == rust.project_name == l2-fixture)", idm.ok, idm.reason);
 
     // ── Leg C: task lifecycle — durable-state VALUE proof ──
-    console.log("\n[Leg C] task lifecycle get→claim→complete; assert state.json + tasks/*.json + events.jsonl");
+    console.log("\n[Leg C] task lifecycle get→claim→complete; assert state.json + tasks/*.json + APPENDED events");
     const summaryBefore = readState(fixture).task_summary;
+    const eventsBefore = readEvents(fixture); // snapshot BEFORE the lifecycle (init/plan events don't count)
     const tasksList = await orchClient.callTool({ name: "forge_get_tasks", arguments: {} });
     let firstTaskId = null;
     try { firstTaskId = JSON.parse(textOf(tasksList))?.tasks?.[0]?.id; } catch { /* leave null */ }
@@ -212,10 +248,10 @@ async function main() {
 
     const summaryAfter = readState(fixture).task_summary;
     const taskStatus = JSON.parse(readFileSync(join(fixture, ".forge", "tasks", "T-001.json"), "utf8")).status;
-    const eventTypes = readFileSync(join(fixture, ".forge", "events.jsonl"), "utf8")
-      .split("\n").filter(Boolean).map((l) => { try { return JSON.parse(l).event_type; } catch { return null; } }).filter(Boolean);
-    const life = checkLifecycle({ summaryBefore, summaryAfter, taskStatus, eventTypes });
-    check("lifecycle mutated durable state (state.json task_summary + tasks/T-001.json + events.jsonl)", life.ok, life.problems.join("; "));
+    // Only the records APPENDED by the claim/complete count — and they must be scoped to T-001.
+    const appendedEvents = readEvents(fixture).slice(eventsBefore.length);
+    const life = checkLifecycle({ summaryBefore, summaryAfter, taskStatus, appendedEvents, taskId: "T-001" });
+    check("lifecycle mutated durable state (state.json task_summary + tasks/T-001.json + NEW T-001-scoped events)", life.ok, life.problems.join("; "));
 
     // ── Leg D: Lego-Snap negative controls (deterministic PAIR, verbatim .mcp.json command) ──
     console.log("\n[Leg D] Lego-Snap: orchestrator degrades w/o binary, resolves w/ stub");
@@ -253,7 +289,12 @@ function runOrchSpec(spec, pathEnv) {
   }
 }
 
-main().catch((e) => {
-  console.error("L2 harness crashed:", e?.stack || e);
-  process.exitCode = 1;
-});
+// Run the live journey ONLY when invoked directly (`node l2-journey.mjs`), not when imported for its
+// exported helpers (e.g. makeFixtureWith in l2-checks.test.mjs) — importing must not boot the servers.
+const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (invokedDirectly) {
+  main().catch((e) => {
+    console.error("L2 harness crashed:", e?.stack || e);
+    process.exitCode = 1;
+  });
+}

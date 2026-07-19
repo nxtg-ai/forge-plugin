@@ -78,10 +78,15 @@ export function checkIdentityMatch(nodeName, rustName, expected) {
 // The task lifecycle actually mutated durable state (value-proof, not tool-message shape)? Inputs:
 //   summaryBefore/summaryAfter = .forge/state.json task_summary {pending,completed,...} snapshots
 //   taskStatus                 = .forge/tasks/<id>.json "status" after complete
-//   eventTypes                 = array of event_type strings appended to .forge/events.jsonl
-// Asserts state.json transitioned (completed↑, pending↓), the task file flipped to completed, and
-// BOTH task_assigned + task_completed events landed. Returns { ok, problems[] }.
-export function checkLifecycle({ summaryBefore, summaryAfter, taskStatus, eventTypes }) {
+//   appendedEvents             = the events.jsonl records APPENDED between the before/after snapshots,
+//                                each { event_type, task_id } (NOT the whole file — pre-existing events
+//                                from `forge init`/`plan --generate` must not satisfy this check)
+//   taskId                     = the task the lifecycle acted on (default "T-001")
+// Asserts state.json transitioned (completed↑, pending↓), the task file flipped to completed, and BOTH
+// a NEW task_assigned and a NEW task_completed record SCOPED TO taskId were appended. Requiring the
+// events to be (a) newly appended and (b) task-scoped closes the false-green where unscoped, pre-existing
+// event types would pass a regression that stopped appending lifecycle events. Returns { ok, problems[] }.
+export function checkLifecycle({ summaryBefore, summaryAfter, taskStatus, appendedEvents, taskId = "T-001" }) {
   const problems = [];
   if (!summaryBefore || !summaryAfter) {
     problems.push("missing task_summary snapshot");
@@ -92,9 +97,13 @@ export function checkLifecycle({ summaryBefore, summaryAfter, taskStatus, eventT
     if (!(ap < bp)) problems.push(`state.json task_summary.pending did not decrease (${bp}->${ap})`);
   }
   if (taskStatus !== "completed") problems.push(`tasks/<id>.json status != completed (got ${taskStatus})`);
-  const evs = new Set(eventTypes || []);
-  for (const req of ["task_assigned", "task_completed"]) {
-    if (!evs.has(req)) problems.push(`events.jsonl missing ${req}`);
+  const appended = Array.isArray(appendedEvents) ? appendedEvents : null;
+  if (appended == null) {
+    problems.push("missing appendedEvents snapshot");
+  } else {
+    const hasNew = (type) => appended.some((e) => e && e.event_type === type && e.task_id === taskId);
+    if (!hasNew("task_assigned")) problems.push(`no newly-appended task_assigned event scoped to ${taskId}`);
+    if (!hasNew("task_completed")) problems.push(`no newly-appended task_completed event scoped to ${taskId}`);
   }
   return { ok: problems.length === 0, problems };
 }
