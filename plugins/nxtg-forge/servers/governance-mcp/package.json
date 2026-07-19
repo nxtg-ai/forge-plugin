@@ -6,11 +6,12 @@
   "main": "index.mjs",
   "license": "MIT",
   "scripts": {
-    "test": "vitest run && node tests/integration/l1-journey.mjs && node tests/integration/l2-journey.mjs && node tests/integration/l3-journey.mjs",
+    "test": "vitest run && node tests/integration/l1-journey.mjs && node tests/integration/l2-journey.mjs && node tests/integration/l3-journey.mjs && node tests/integration/binding-journey.mjs",
     "test:unit": "vitest run",
     "test:l1": "node tests/integration/l1-journey.mjs",
     "test:l2": "node tests/integration/l2-journey.mjs",
-    "test:l3": "node tests/integration/l3-journey.mjs"
+    "test:l3": "node tests/integration/l3-journey.mjs",
+    "test:binding": "node tests/integration/binding-journey.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

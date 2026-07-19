@@ -61,7 +61,7 @@ const EXCLUDED_DIRS = [
   "coverage", ".nyc_output", "__pycache__", ".pytest_cache",
   "vendor", ".venv", ".turbo", ".vite", ".stryker-tmp", "dist-ui",
 ];
-const BUILD_ARTIFACT_EXCLUDES = EXCLUDED_DIRS.map((d) => `-not -path "*/${d}/*"`).join(" ");
+export const BUILD_ARTIFACT_EXCLUDES = EXCLUDED_DIRS.map((d) => `-not -path "*/${d}/*"`).join(" ");
 const GREP_EXCLUDE_DIRS = EXCLUDED_DIRS.map((d) => `--exclude-dir=${d}`).join(" ");
 
 /**
