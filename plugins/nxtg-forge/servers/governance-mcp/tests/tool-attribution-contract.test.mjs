@@ -1,20 +1,22 @@
-// Contract test — health-tool attribution (DIRECTIVE-NXTG-20260718-05, Codex Wave-1 gate,
-// hardened after Codex re-gate round 2).
+// Contract test — health-tool attribution (DIRECTIVE-NXTG-20260718-05, Codex Wave-1 gate).
+// Hardened across three Codex re-gate rounds:
+//   r1: user-facing docs named the removed Node tool `forge_get_health` (fixed) + runtime assert.
+//   r2: block-level classifier let a Node/L1 sentence hide behind a nearby "orchestrator" word
+//       -> resolve at LINE level, reject ambiguous blocks (fail-closed).
+//   r3: nearest-signal conflated OWNERSHIP with AVAILABILITY — "At L1, use the orchestrator tool
+//       forge_get_health" passed because the orchestrator (ownership) token was nearest, masking an
+//       impossible L1-availability claim.
 //
-// Ground truth (runtime-verified below):
-//   - governance-mcp (Node, ships with plugin, L1+L2) exposes `forge_get_governance_health`.
-//   - forge-orchestrator (Rust, needs the `forge` binary, L2) exposes `forge_get_health`.
-//   These are DISTINCT names — there is no `forge_get_health` on the Node server, hence no runtime
-//   collision. Any user-facing doc that presents `forge_get_health` as a governance-mcp / Node / L1
-//   tool is a MISATTRIBUTION (a follower reaches the Rust tool at L2 or an unknown tool at L1).
+// GROUND TRUTH (runtime-verified below): `forge_get_health` is OWNED by the orchestrator (Rust) and
+// AVAILABLE only at L2 (needs the `forge` binary). `forge_get_governance_health` is the Node tool
+// (L1+L2). The two are DISTINCT names — no runtime collision.
 //
-// Classifier design (v2, hardened): the previous ±5-line-block classifier had a false negative —
-// a block with BOTH Node and orchestrator signals was resolved as orchestrator, so an explicit
-// Node/L1 sentence could hide behind a nearby "orchestrator" word (Codex round-2 mutation, pinned
-// as a negative fixture below). This version resolves attribution at the LINE (sentence / table-row)
-// level of each occurrence, breaks a mixed line by the signal NEAREST the token, and only falls back
-// to the block when the line is neutral — rejecting an ambiguous (Node+orch) block rather than
-// silently trusting it.
+// Attribution is modelled on TWO INDEPENDENT AXES, each resolved per-occurrence by binding signals
+// to the nearest tool token:
+//   * OWNERSHIP:    orchestrator (correct) vs Node (VIOLATION for forge_get_health)
+//   * AVAILABILITY: L2 (correct)          vs L1 (VIOLATION for forge_get_health)
+// A forge_get_health occurrence FAILS if EITHER a Node-ownership OR an L1-availability signal binds
+// to it — a correct ownership token never rescues an availability violation, and vice-versa.
 
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -22,41 +24,31 @@ import { join } from "node:path";
 import { TOOLS } from "../index.mjs";
 
 const REPO_ROOT = join(import.meta.dirname, "../../../../../"); // -> forge-plugin/
-
 const NODE_HEALTH = "forge_get_governance_health";
 const ORCH_HEALTH = "forge_get_health";
 
-// Tools exposed ONLY by the governance-mcp (Node) server.
+// Tool-name context used ONLY for the neutral-line block fallback (a table/list of one server's
+// tools implies that server). Not used for per-occurrence axis binding.
 const NODE_EXCLUSIVE = [
-  "forge_get_governance_health",
-  "forge_get_governance_state",
-  "forge_get_code_metrics",
-  "forge_security_scan",
-  "forge_open_dashboard",
-  "forge_list_checkpoints",
-  "forge_run_tests",
+  "forge_get_governance_health", "forge_get_governance_state", "forge_get_code_metrics",
+  "forge_security_scan", "forge_open_dashboard", "forge_list_checkpoints", "forge_run_tests",
   "forge_get_git_status",
 ];
-// Tools exposed ONLY by the orchestrator (Rust) server. (Source: forge-orchestrator/src/mcp/tools.rs.)
 const ORCH_EXCLUSIVE = [
-  "forge_get_tasks",
-  "forge_claim_task",
-  "forge_complete_task",
-  "forge_get_state",
-  "forge_get_plan",
-  "forge_capture_knowledge",
-  "forge_get_knowledge",
-  "forge_check_drift",
-  "forge_set_project",
+  "forge_get_tasks", "forge_claim_task", "forge_complete_task", "forge_get_state", "forge_get_plan",
+  "forge_capture_knowledge", "forge_get_knowledge", "forge_check_drift", "forge_set_project",
   "forge_get_events",
 ];
-const ORCH_KEYWORDS = /orchestrator|\bRust\b|\bL2\b|\bL3\b|forge binary|forge mcp/gi;
-const NODE_KEYWORDS =
-  /governance-mcp|governance server|governance mcp|\(Node\b|\bNode\)|\bNode\b|\bL1\b|always[- ]available|MCP governance server/gi;
 
-// Bare `forge_get_health` — not `forge_get_health_score`, and not the substring of
-// `forge_get_governance_health` (which does not contain `forge_get_health`).
-const BARE_HEALTH = /forge_get_health(?![_a-zA-Z])/g;
+// Axis signals (keywords). axis: "own"|"avail"; value: "orch"|"node"|"l2"|"l1".
+const SIGNAL_DEFS = [
+  { re: /orchestrator|\bRust\b/gi, axis: "own", value: "orch" },
+  { re: /governance-mcp|governance server|governance mcp|MCP governance server|\bNode\b/gi, axis: "own", value: "node" },
+  { re: /\bL2\b|\bL3\b|(?:requires|needs)\s+(?:the\s+)?forge\s+binary|the\s+forge\s+binary|forge\s+mcp/gi, axis: "avail", value: "l2" },
+  { re: /\bL1\b|always[- ]available|out of the box|(?:requires no|without|no)\s+(?:forge\s+)?binary/gi, axis: "avail", value: "l1" },
+];
+
+const BARE_HEALTH = /forge_get_health(?![_a-zA-Z])/g; // not _score, not the substring of _governance_
 
 const EXCLUDE_DIRS = new Set(["node_modules", ".git", ".asif"]);
 const EXCLUDE_FILES = new Set(["CHANGELOG.md"]); // documents this rename in prose
@@ -72,72 +64,76 @@ function walkMarkdown(dir, acc = []) {
   return acc;
 }
 
-// All start-indices of any Node-attribution signal in `text`.
-function nodeSignalPositions(text) {
-  const pos = [];
-  for (const tool of NODE_EXCLUSIVE) {
-    let i = text.indexOf(tool);
-    while (i !== -1) {
-      pos.push(i);
-      i = text.indexOf(tool, i + 1);
-    }
-  }
-  for (const m of text.matchAll(NODE_KEYWORDS)) pos.push(m.index);
-  return pos;
+// All positions of a fixed substring in text.
+function indexAll(text, needle) {
+  const out = [];
+  let i = text.indexOf(needle);
+  while (i !== -1) { out.push(i); i = text.indexOf(needle, i + 1); }
+  return out;
 }
-function orchSignalPositions(text) {
-  const pos = [];
-  for (const tool of ORCH_EXCLUSIVE) {
-    let i = text.indexOf(tool);
-    while (i !== -1) {
-      pos.push(i);
-      i = text.indexOf(tool, i + 1);
-    }
-  }
-  for (const m of text.matchAll(ORCH_KEYWORDS)) pos.push(m.index);
-  return pos;
-}
-const nearest = (positions, from) =>
-  positions.length ? Math.min(...positions.map((p) => Math.abs(p - from))) : Infinity;
 
-// Classify ONE bare-`forge_get_health` occurrence at char `col` on `line`, with `lines`/`idx` for
-// block fallback. Returns "orchestrator" | "node" | "ambiguous" | "neutral".
-// "node" and "ambiguous" are FAILURES (misattribution or unresolved attribution).
+// Collect axis signals on a line. OWNERSHIP signals include server keywords AND server-exclusive
+// tool NAMES (a tool name attributes its own server). AVAILABILITY signals are level keywords only.
+function collectSignals(line) {
+  const sig = [];
+  for (const def of SIGNAL_DEFS) {
+    for (const m of line.matchAll(def.re)) sig.push({ pos: m.index, axis: def.axis, value: def.value });
+  }
+  for (const t of ORCH_EXCLUSIVE) for (const p of indexAll(line, t)) sig.push({ pos: p, axis: "own", value: "orch" });
+  for (const t of NODE_EXCLUSIVE) for (const p of indexAll(line, t)) sig.push({ pos: p, axis: "own", value: "node" });
+  return sig;
+}
+
+// The value of the signal (of a given axis) NEAREST to the forge_get_health token [ts,te].
+// Returns the nearest signal's value, or null if none. Equidistant opposite values -> "ambiguous".
+function nearestAxis(signals, axis, ts, te) {
+  let bestDist = Infinity, bestVal = null, tie = false;
+  for (const s of signals) {
+    if (s.axis !== axis) continue;
+    const d = s.pos >= ts && s.pos <= te ? 0 : Math.min(Math.abs(s.pos - ts), Math.abs(s.pos - te));
+    if (d < bestDist) { bestDist = d; bestVal = s.value; tie = false; }
+    else if (d === bestDist && s.value !== bestVal) tie = true;
+  }
+  return tie ? "ambiguous" : bestVal;
+}
+
+// Classify one bare forge_get_health occurrence on the two independent axes.
+//   "orchestrator" (OK) | "node" (FAIL: Node ownership or L1 availability) | "ambiguous" (FAIL) | "neutral" (OK)
 function classifyOccurrence(line, col, lines, idx) {
-  // 1. Resolve at the line (sentence / table-row) level first.
-  const nodePos = nodeSignalPositions(line);
-  const orchPos = orchSignalPositions(line);
-  const lineHasNode = nodePos.length > 0;
-  const lineHasOrch = orchPos.length > 0;
+  const ts = col, te = col + "forge_get_health".length;
+  const signals = collectSignals(line);
+  const own = nearestAxis(signals, "own", ts, te);      // "orch" | "node" | "ambiguous" | null
+  const avail = nearestAxis(signals, "avail", ts, te);  // "l2"  | "l1"   | "ambiguous" | null
 
-  if (lineHasNode && !lineHasOrch) return "node"; // explicit Node attribution on the line
-  if (lineHasOrch && !lineHasNode) return "orchestrator";
-  if (lineHasNode && lineHasOrch) {
-    // Mixed line — resolve by the signal NEAREST the token; equidistant => ambiguous (reject).
-    const dNode = nearest(nodePos, col);
-    const dOrch = nearest(orchPos, col);
-    if (dOrch < dNode) return "orchestrator";
-    if (dNode < dOrch) return "node";
-    return "ambiguous";
-  }
+  // A violation on EITHER axis fails, independent of the other (round-3): forge_get_health is
+  // orchestrator-owned and L2-only, so Node-ownership OR L1-availability is impossible.
+  if (own === "node" || avail === "l1") return "node";
+  if (own === "ambiguous" || avail === "ambiguous") return "ambiguous";
+  if (own === "orch" || avail === "l2") return "orchestrator";
 
-  // 2. Line is neutral — fall back to the ±5-line block, but REJECT an ambiguous block.
+  // No axis signal on the line -> fall back to the +/-5-line block; reject an ambiguous block.
   const block = lines.slice(Math.max(0, idx - 5), idx + 6).join("\n");
-  const blockNode = nodeSignalPositions(block).length > 0;
-  const blockOrch = orchSignalPositions(block).length > 0;
-  if (blockNode && blockOrch) return "ambiguous"; // <-- the Codex-round-2 hole, now fail-closed
+  const blockNode =
+    /governance-mcp|governance server|governance mcp|MCP governance server|\bNode\b|\bL1\b|always[- ]available/i.test(block) ||
+    NODE_EXCLUSIVE.some((t) => block.includes(t));
+  const blockOrch =
+    /orchestrator|\bRust\b|\bL2\b|\bL3\b|forge binary|forge mcp/i.test(block) ||
+    ORCH_EXCLUSIVE.some((t) => block.includes(t));
+  if (blockNode && blockOrch) return "ambiguous";
   if (blockNode) return "node";
   if (blockOrch) return "orchestrator";
   return "neutral";
 }
 
-// Scan a document's text; return every bare-forge_get_health occurrence with its verdict.
 function classifyDocument(content) {
-  const lines = content.split("\n");
+  const rawLines = content.split("\n");
+  // Normalize markdown code-span backticks to spaces (length-preserving, so char positions stay
+  // aligned) so that `forge` binary / `forge_get_health` are seen as plain words by the scanners.
+  const scanLines = rawLines.map((l) => l.replace(/`/g, " "));
   const results = [];
-  lines.forEach((line, idx) => {
+  scanLines.forEach((line, idx) => {
     for (const m of line.matchAll(BARE_HEALTH)) {
-      results.push({ lineNo: idx + 1, verdict: classifyOccurrence(line, m.index, lines, idx), line });
+      results.push({ lineNo: idx + 1, verdict: classifyOccurrence(line, m.index, scanLines, idx), line: rawLines[idx] });
     }
   });
   return results;
@@ -152,52 +148,82 @@ describe("health-tool attribution contract", () => {
     expect(names).not.toContain(ORCH_HEALTH);
   });
 
-  it("no user-facing doc attributes forge_get_health to governance-mcp / Node / L1", () => {
+  it("no user-facing doc misattributes forge_get_health (Node ownership OR L1 availability)", () => {
     const files = walkMarkdown(REPO_ROOT);
-    expect(files.length).toBeGreaterThan(10); // guard a broken REPO_ROOT
-
+    expect(files.length).toBeGreaterThan(10);
     const bad = [];
     for (const file of files) {
       for (const r of classifyDocument(readFileSync(file, "utf8"))) {
-        if (FAIL_VERDICTS.has(r.verdict)) {
-          bad.push(`${file.replace(REPO_ROOT, "")}:${r.lineNo} [${r.verdict}]: ${r.line.trim()}`);
-        }
+        if (FAIL_VERDICTS.has(r.verdict)) bad.push(`${file.replace(REPO_ROOT, "")}:${r.lineNo} [${r.verdict}]: ${r.line.trim()}`);
       }
     }
-    expect(
-      bad,
-      `Misattributed / ambiguous forge_get_health (Node/L1 context must use ${NODE_HEALTH}):\n` +
-        bad.join("\n"),
-    ).toEqual([]);
+    expect(bad, `Misattributed forge_get_health:\n${bad.join("\n")}`).toEqual([]);
   });
 
-  // Negative fixture — Codex re-gate round 2, §1. Pinned VERBATIM. This exact text passed the
-  // previous (block-level) classifier 2/2 while assigning the orchestrator-only tool to Node/L1;
-  // the "orchestrator" word one line up suppressed detection. The hardened classifier MUST flag it.
-  it("flags the Codex round-2 mutation (orchestrator-keyword-override false negative)", () => {
-    const CODEX_MUTATION = [
+  // Negative fixture — Codex re-gate ROUND 2 §1 (block-ambiguity false negative). Pinned VERBATIM.
+  it("flags the Codex round-2 mutation (orchestrator-keyword-override)", () => {
+    const M = [
       "# L1 Governance Health",
       "The Node governance-mcp is always available at L1.",
       "Unlike the optional orchestrator, it requires no Forge binary.",
       "Call `forge_get_health` for the Node governance score.",
     ].join("\n");
-
-    const verdicts = classifyDocument(CODEX_MUTATION);
-    expect(verdicts.length).toBe(1); // exactly one bare forge_get_health
-    expect(FAIL_VERDICTS.has(verdicts[0].verdict)).toBe(true); // must be flagged (node/ambiguous)
-    expect(verdicts[0].verdict).toBe("node"); // resolved at the line level: explicit Node attribution
+    const v = classifyDocument(M);
+    expect(v.length).toBe(1);
+    expect(v[0].verdict).toBe("node");
   });
 
-  // Positive control — a correct, explicitly-orchestrator reference must NOT be flagged, even when
-  // the disambiguating Node tool name shares the same line.
-  it("does NOT flag correct orchestrator references (no false positives)", () => {
+  // Negative fixture — Codex re-gate ROUND 3 §1 (ownership-vs-availability conflation). Pinned VERBATIM.
+  // Ownership (orchestrator) is correct, but the L1-availability claim is impossible; must FAIL.
+  it("flags the Codex round-3 input (L1 availability despite correct ownership)", () => {
+    const M = [
+      "# L1 Governance Health",
+      "At L1, use the orchestrator tool `forge_get_health`.",
+    ].join("\n");
+    const v = classifyDocument(M);
+    expect(v.length).toBe(1);
+    expect(FAIL_VERDICTS.has(v[0].verdict)).toBe(true);
+    expect(v[0].verdict).toBe("node"); // L1-availability violation on the availability axis
+  });
+
+  // Positive control — correct orchestrator/L2 references must NOT flag, including a mixed line where
+  // the L1 token legitimately binds to the *other* tool (the L1 fallback), not to forge_get_health.
+  it("does NOT flag correct references (no false positives)", () => {
     const GOOD = [
-      "The orchestrator (Rust) exposes `forge_get_health`; the plugin exposes `forge_get_governance_health`.",
+      "The orchestrator (Rust) exposes `forge_get_health` at L2; the plugin's `forge_get_governance_health` is the L1 tool.",
       "| `forge_get_health` | Orchestrator | 5-dimension health + drift (L2) |",
       "- `forge_get_health` / `forge_check_drift` (orchestrator-mcp, Rust)",
+      "Orchestrator health (from `forge_get_health` — Rust/L2; the Node `forge_get_governance_health` is the L1 fallback)",
     ].join("\n");
-    const verdicts = classifyDocument(GOOD);
-    expect(verdicts.length).toBe(3);
-    for (const v of verdicts) expect(v.verdict).toBe("orchestrator");
+    for (const r of classifyDocument(GOOD)) expect(r.verdict).not.toBe("node");
+  });
+
+  // Adversarial neighbor matrix — pinned. Codex attacks the nearest adjacent invariant each round;
+  // these probe BOTH axes (ownership ⟂ availability), the masking case (correct owner + bad
+  // availability), phrasing variants of each violation, and the legitimate "signal binds to the
+  // OTHER tool" case. A future round-N attack should extend this table, not rediscover a gap.
+  const MATRIX = [
+    // ── availability-axis violations (L1 is impossible for forge_get_health) ──
+    ["forge_get_health is always available.", true, "avail: always-available synonym"],
+    ["Use `forge_get_health` out of the box.", true, "avail: out-of-the-box synonym"],
+    ["`forge_get_health` requires no forge binary.", true, "avail: no-binary synonym"],
+    ["At L1, use the orchestrator tool `forge_get_health`.", true, "MASK: correct owner + L1 (round-3)"],
+    ["The orchestrator's `forge_get_health` works with no binary at L1.", true, "MASK: owner ok, two L1 cues"],
+    // ── ownership-axis violations (Node is impossible for forge_get_health) ──
+    ["The governance-mcp `forge_get_health` score.", true, "own: governance-mcp"],
+    ["Call `forge_get_health` for the Node governance score.", true, "own: Node (round-2)"],
+    ["governance-mcp exposes `forge_get_health` at L1.", true, "both axes violated"],
+    // ── correct references (must NOT flag) ──
+    ["The orchestrator's `forge_get_health` (Rust).", false, "ok: orch owner"],
+    ["`forge_get_health` at L2 needs the forge binary.", false, "ok: L2 availability"],
+    ["Orchestrator tools: `forge_get_tasks`, `forge_get_health`, `forge_check_drift`.", false, "ok: orchestrator tool list"],
+    ["`forge_get_health` (orchestrator, L2); `forge_get_governance_health` is the L1 tool.", false, "ok: L1 binds to the other tool"],
+  ];
+  it("adversarial neighbor matrix — each axis, masking, and phrasing variants", () => {
+    for (const [text, shouldFail, label] of MATRIX) {
+      const v = classifyDocument(text);
+      expect(v.length, `${label}: expected exactly one occurrence`).toBe(1);
+      expect(FAIL_VERDICTS.has(v[0].verdict), `${label}: got "${v[0].verdict}" for: ${text}`).toBe(shouldFail);
+    }
   });
 });
