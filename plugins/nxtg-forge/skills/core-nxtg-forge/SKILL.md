@@ -101,7 +101,7 @@ Claude Code connects to both simultaneously (`.mcp.json`). They overlap conceptu
 independently. **Do not assume a `forge_*` tool comes from one server.** The health tools are the
 classic trap: the two servers each expose a health tool with a **different name** —
 `forge_get_health` (orchestrator, Rust, L2) and `forge_get_governance_health` (governance-mcp,
-Node, always available). There is no `forge_get_health` on the Node server.
+Node, always available). The Node server has no tool by that name.
 
 **orchestrator-mcp** (Rust, from `forge` binary — degrades gracefully if `forge` not installed):
 `forge_init`, `forge_set_project`, `forge_get_state`, `forge_get_plan`, `forge_get_tasks`,

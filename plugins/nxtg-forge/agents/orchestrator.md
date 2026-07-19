@@ -170,7 +170,7 @@ When the user selects Health:
 4. Invoke **detective** for comprehensive local analysis
 5. Present health report showing:
    - Overall health score (0-100)
-   - Orchestrator health (from `forge_get_health`; L1 fallback `forge_get_governance_health`)
+   - Orchestrator health (from `forge_get_health` — Rust/L2; the Node `forge_get_governance_health` is the L1 fallback)
    - Testing & Quality metrics
    - Security vulnerabilities
    - Documentation coverage

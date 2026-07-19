@@ -20,11 +20,12 @@ Completes the v3.10.2 health-tool rename in **user-facing docs** (Codex Wave-1 g
 
 ### Added
 
-- **`tests/tool-attribution-contract.test.mjs`** — a contract test that (1) asserts at runtime that governance-mcp exposes `forge_get_governance_health` and **not** `forge_get_health`, and (2) classifies every bare `forge_get_health` reference in the repo's docs by server/level (via Node-exclusive/orchestrator-exclusive tool co-location + keyword context) and **fails on any Node/L1 misattribution**. Adversarially self-checked: flags the original defect pattern, passes correct orchestrator refs and neutral keyword lists.
+- **`tests/tool-attribution-contract.test.mjs`** — a contract test that (1) asserts at runtime that governance-mcp exposes `forge_get_governance_health` and **not** `forge_get_health`, and (2) classifies every bare `forge_get_health` reference in the repo's docs by server/level and **fails on any Node/L1 misattribution**.
+  - **Hardened after Codex re-gate round 2**: the first version classified a ±5-line block as orchestrator whenever *any* orchestrator signal appeared, so an explicit Node/L1 sentence could hide behind a nearby "orchestrator" word (false negative). The classifier now resolves attribution at the **line (sentence / table-row)** level, breaks a mixed line by the signal **nearest** the token, and only falls back to the block when the line is neutral — **rejecting an ambiguous (Node+orchestrator) block** rather than trusting it. Codex's exact round-2 mutation is pinned as a **negative fixture**, plus a positive control (correct orchestrator refs must not flag). Two of our own mixed-attribution doc lines were reworded to tool→qualifier adjacency (`agents/orchestrator.md:173`, `skills/core-nxtg-forge/SKILL.md`).
 
 ### Gate
 
-- vitest **46/46** pass (44 + 2 contract tests) · zero user-facing docs attribute `forge_get_health` to governance-mcp.
+- vitest **48/48** pass (44 + 4 contract: runtime + repo-scan + Codex-mutation negative fixture + positive control) · zero user-facing docs attribute `forge_get_health` to governance-mcp · block-ambiguity false-negative closed.
 
 ---
 

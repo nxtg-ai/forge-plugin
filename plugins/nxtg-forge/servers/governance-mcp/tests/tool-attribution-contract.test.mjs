@@ -1,13 +1,20 @@
-// Contract test — health-tool attribution (DIRECTIVE-NXTG-20260718-05, Codex Wave-1 gate).
+// Contract test — health-tool attribution (DIRECTIVE-NXTG-20260718-05, Codex Wave-1 gate,
+// hardened after Codex re-gate round 2).
 //
 // Ground truth (runtime-verified below):
 //   - governance-mcp (Node, ships with plugin, L1+L2) exposes `forge_get_governance_health`.
 //   - forge-orchestrator (Rust, needs the `forge` binary, L2) exposes `forge_get_health`.
-//   These are DISTINCT names — there is no `forge_get_health` on the Node server, and thus no
-//   runtime collision. Any user-facing doc that presents `forge_get_health` as a governance-mcp /
-//   Node / L1 tool is a MISATTRIBUTION: a follower reaches the Rust tool at L2 or an unknown tool
-//   at L1. This test classifies every `forge_get_health` reference in the repo by server/level and
-//   fails on misattribution.
+//   These are DISTINCT names — there is no `forge_get_health` on the Node server, hence no runtime
+//   collision. Any user-facing doc that presents `forge_get_health` as a governance-mcp / Node / L1
+//   tool is a MISATTRIBUTION (a follower reaches the Rust tool at L2 or an unknown tool at L1).
+//
+// Classifier design (v2, hardened): the previous ±5-line-block classifier had a false negative —
+// a block with BOTH Node and orchestrator signals was resolved as orchestrator, so an explicit
+// Node/L1 sentence could hide behind a nearby "orchestrator" word (Codex round-2 mutation, pinned
+// as a negative fixture below). This version resolves attribution at the LINE (sentence / table-row)
+// level of each occurrence, breaks a mixed line by the signal NEAREST the token, and only falls back
+// to the block when the line is neutral — rejecting an ambiguous (Node+orch) block rather than
+// silently trusting it.
 
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -16,12 +23,10 @@ import { TOOLS } from "../index.mjs";
 
 const REPO_ROOT = join(import.meta.dirname, "../../../../../"); // -> forge-plugin/
 
-// --- Ground-truth tool sets -------------------------------------------------
 const NODE_HEALTH = "forge_get_governance_health";
 const ORCH_HEALTH = "forge_get_health";
 
-// Tools exposed by ONLY the governance-mcp (Node) server. Co-location of a bare
-// `forge_get_health` with any of these (and no orchestrator signal) marks a Node-tool listing.
+// Tools exposed ONLY by the governance-mcp (Node) server.
 const NODE_EXCLUSIVE = [
   "forge_get_governance_health",
   "forge_get_governance_state",
@@ -32,9 +37,7 @@ const NODE_EXCLUSIVE = [
   "forge_run_tests",
   "forge_get_git_status",
 ];
-
-// Tools exposed by ONLY the orchestrator (Rust) server. Co-location marks an orchestrator context.
-// (Source of truth: forge-orchestrator/src/mcp/tools.rs.)
+// Tools exposed ONLY by the orchestrator (Rust) server. (Source: forge-orchestrator/src/mcp/tools.rs.)
 const ORCH_EXCLUSIVE = [
   "forge_get_tasks",
   "forge_claim_task",
@@ -47,19 +50,16 @@ const ORCH_EXCLUSIVE = [
   "forge_set_project",
   "forge_get_events",
 ];
-
-const ORCH_KEYWORDS = /orchestrator|\bRust\b|\bL2\b|\bL3\b|forge binary|forge mcp/i;
+const ORCH_KEYWORDS = /orchestrator|\bRust\b|\bL2\b|\bL3\b|forge binary|forge mcp/gi;
 const NODE_KEYWORDS =
-  /governance-mcp|governance server|governance mcp|\(Node\b|\bNode\)|\bL1\b|always[- ]available|MCP governance server/i;
+  /governance-mcp|governance server|governance mcp|\(Node\b|\bNode\)|\bNode\b|\bL1\b|always[- ]available|MCP governance server/gi;
 
-// Match a BARE `forge_get_health` — not `forge_get_health_score`, and not part of
-// `forge_get_governance_health` (which does not contain the substring `forge_get_health`).
-const BARE_HEALTH = /forge_get_health(?![_a-zA-Z])/;
+// Bare `forge_get_health` — not `forge_get_health_score`, and not the substring of
+// `forge_get_governance_health` (which does not contain `forge_get_health`).
+const BARE_HEALTH = /forge_get_health(?![_a-zA-Z])/g;
 
-// Files excluded from the doc scan: node_modules, VCS, governance side-cars, and the CHANGELOG
-// (which documents this very rename in prose and legitimately co-locates "Node" + "forge_get_health").
 const EXCLUDE_DIRS = new Set(["node_modules", ".git", ".asif"]);
-const EXCLUDE_FILES = new Set(["CHANGELOG.md"]);
+const EXCLUDE_FILES = new Set(["CHANGELOG.md"]); // documents this rename in prose
 
 function walkMarkdown(dir, acc = []) {
   for (const entry of readdirSync(dir)) {
@@ -72,16 +72,78 @@ function walkMarkdown(dir, acc = []) {
   return acc;
 }
 
-// Classify one bare `forge_get_health` occurrence by its ±5-line block.
-// Returns "orchestrator" | "node" | "neutral".
-function classify(lines, idx) {
+// All start-indices of any Node-attribution signal in `text`.
+function nodeSignalPositions(text) {
+  const pos = [];
+  for (const tool of NODE_EXCLUSIVE) {
+    let i = text.indexOf(tool);
+    while (i !== -1) {
+      pos.push(i);
+      i = text.indexOf(tool, i + 1);
+    }
+  }
+  for (const m of text.matchAll(NODE_KEYWORDS)) pos.push(m.index);
+  return pos;
+}
+function orchSignalPositions(text) {
+  const pos = [];
+  for (const tool of ORCH_EXCLUSIVE) {
+    let i = text.indexOf(tool);
+    while (i !== -1) {
+      pos.push(i);
+      i = text.indexOf(tool, i + 1);
+    }
+  }
+  for (const m of text.matchAll(ORCH_KEYWORDS)) pos.push(m.index);
+  return pos;
+}
+const nearest = (positions, from) =>
+  positions.length ? Math.min(...positions.map((p) => Math.abs(p - from))) : Infinity;
+
+// Classify ONE bare-`forge_get_health` occurrence at char `col` on `line`, with `lines`/`idx` for
+// block fallback. Returns "orchestrator" | "node" | "ambiguous" | "neutral".
+// "node" and "ambiguous" are FAILURES (misattribution or unresolved attribution).
+function classifyOccurrence(line, col, lines, idx) {
+  // 1. Resolve at the line (sentence / table-row) level first.
+  const nodePos = nodeSignalPositions(line);
+  const orchPos = orchSignalPositions(line);
+  const lineHasNode = nodePos.length > 0;
+  const lineHasOrch = orchPos.length > 0;
+
+  if (lineHasNode && !lineHasOrch) return "node"; // explicit Node attribution on the line
+  if (lineHasOrch && !lineHasNode) return "orchestrator";
+  if (lineHasNode && lineHasOrch) {
+    // Mixed line — resolve by the signal NEAREST the token; equidistant => ambiguous (reject).
+    const dNode = nearest(nodePos, col);
+    const dOrch = nearest(orchPos, col);
+    if (dOrch < dNode) return "orchestrator";
+    if (dNode < dOrch) return "node";
+    return "ambiguous";
+  }
+
+  // 2. Line is neutral — fall back to the ±5-line block, but REJECT an ambiguous block.
   const block = lines.slice(Math.max(0, idx - 5), idx + 6).join("\n");
-  const hasOrch = ORCH_EXCLUSIVE.some((t) => block.includes(t)) || ORCH_KEYWORDS.test(block);
-  const hasNode = NODE_EXCLUSIVE.some((t) => block.includes(t)) || NODE_KEYWORDS.test(block);
-  if (hasNode && !hasOrch) return "node"; // Node/L1 context, no orchestrator signal -> misattribution
-  if (hasOrch) return "orchestrator";
+  const blockNode = nodeSignalPositions(block).length > 0;
+  const blockOrch = orchSignalPositions(block).length > 0;
+  if (blockNode && blockOrch) return "ambiguous"; // <-- the Codex-round-2 hole, now fail-closed
+  if (blockNode) return "node";
+  if (blockOrch) return "orchestrator";
   return "neutral";
 }
+
+// Scan a document's text; return every bare-forge_get_health occurrence with its verdict.
+function classifyDocument(content) {
+  const lines = content.split("\n");
+  const results = [];
+  lines.forEach((line, idx) => {
+    for (const m of line.matchAll(BARE_HEALTH)) {
+      results.push({ lineNo: idx + 1, verdict: classifyOccurrence(line, m.index, lines, idx), line });
+    }
+  });
+  return results;
+}
+
+const FAIL_VERDICTS = new Set(["node", "ambiguous"]);
 
 describe("health-tool attribution contract", () => {
   it("governance-mcp exposes forge_get_governance_health and NOT forge_get_health (runtime)", () => {
@@ -92,24 +154,50 @@ describe("health-tool attribution contract", () => {
 
   it("no user-facing doc attributes forge_get_health to governance-mcp / Node / L1", () => {
     const files = walkMarkdown(REPO_ROOT);
-    // Sanity: the scan actually found docs (guards against a broken REPO_ROOT).
-    expect(files.length).toBeGreaterThan(10);
+    expect(files.length).toBeGreaterThan(10); // guard a broken REPO_ROOT
 
-    const misattributions = [];
+    const bad = [];
     for (const file of files) {
-      const lines = readFileSync(file, "utf8").split("\n");
-      lines.forEach((line, idx) => {
-        if (!BARE_HEALTH.test(line)) return;
-        if (classify(lines, idx) === "node") {
-          misattributions.push(`${file.replace(REPO_ROOT, "")}:${idx + 1}: ${line.trim()}`);
+      for (const r of classifyDocument(readFileSync(file, "utf8"))) {
+        if (FAIL_VERDICTS.has(r.verdict)) {
+          bad.push(`${file.replace(REPO_ROOT, "")}:${r.lineNo} [${r.verdict}]: ${r.line.trim()}`);
         }
-      });
+      }
     }
-
     expect(
-      misattributions,
-      `Misattributed forge_get_health (should be ${NODE_HEALTH} in Node/L1 context):\n` +
-        misattributions.join("\n"),
+      bad,
+      `Misattributed / ambiguous forge_get_health (Node/L1 context must use ${NODE_HEALTH}):\n` +
+        bad.join("\n"),
     ).toEqual([]);
+  });
+
+  // Negative fixture — Codex re-gate round 2, §1. Pinned VERBATIM. This exact text passed the
+  // previous (block-level) classifier 2/2 while assigning the orchestrator-only tool to Node/L1;
+  // the "orchestrator" word one line up suppressed detection. The hardened classifier MUST flag it.
+  it("flags the Codex round-2 mutation (orchestrator-keyword-override false negative)", () => {
+    const CODEX_MUTATION = [
+      "# L1 Governance Health",
+      "The Node governance-mcp is always available at L1.",
+      "Unlike the optional orchestrator, it requires no Forge binary.",
+      "Call `forge_get_health` for the Node governance score.",
+    ].join("\n");
+
+    const verdicts = classifyDocument(CODEX_MUTATION);
+    expect(verdicts.length).toBe(1); // exactly one bare forge_get_health
+    expect(FAIL_VERDICTS.has(verdicts[0].verdict)).toBe(true); // must be flagged (node/ambiguous)
+    expect(verdicts[0].verdict).toBe("node"); // resolved at the line level: explicit Node attribution
+  });
+
+  // Positive control — a correct, explicitly-orchestrator reference must NOT be flagged, even when
+  // the disambiguating Node tool name shares the same line.
+  it("does NOT flag correct orchestrator references (no false positives)", () => {
+    const GOOD = [
+      "The orchestrator (Rust) exposes `forge_get_health`; the plugin exposes `forge_get_governance_health`.",
+      "| `forge_get_health` | Orchestrator | 5-dimension health + drift (L2) |",
+      "- `forge_get_health` / `forge_check_drift` (orchestrator-mcp, Rust)",
+    ].join("\n");
+    const verdicts = classifyDocument(GOOD);
+    expect(verdicts.length).toBe(3);
+    for (const v of verdicts) expect(v.verdict).toBe("orchestrator");
   });
 });
