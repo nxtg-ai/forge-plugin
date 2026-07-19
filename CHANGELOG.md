@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
-## [3.10.4] — 2026-07-18
+## [3.10.4] — 2026-07-19
 
 The **G-09 integration-harness suite** — machine-tested, CI-adoptable end-to-end coverage for all three Forge products at the three deployment tiers (L1 plugin-standalone · L2 plugin+orchestrator · L3 plugin+orchestrator+forge-ui). **Test infrastructure only — no runtime, tool, agent, command, or skill changes** (counts unchanged). Each leg was built refute-first and independently Codex-gated.
 
@@ -22,6 +22,8 @@ The **G-09 integration-harness suite** — machine-tested, CI-adoptable end-to-e
 
 - **L2 harness — 3 refute-first false-greens** (Codex regate-11, cured on `c6cdc26`): (C1) the harness now **executes the `.mcp.json` env contract verbatim** — a misconfigured `FORGE_PROJECT_ROOT` binds the wrong project and FAILS the identity check (was masked by a hardcoded root); (C2) the temp fixture is removed on **any** setup-command failure (no leak); (C3) the lifecycle check requires **newly-appended** `task_assigned`+`task_completed` records **scoped to the task id** (was satisfiable by pre-existing unscoped event types).
 - **L3 harness — 2 topology/validation gaps** (Codex regate-13, cured on `e3294b0`): (C1) the "three products simultaneously live" topology now **actually starts governance-mcp** — the prior build ran orchestrator + forge-ui only (execve-traced zero governance-mcp executions); governance-mcp now boots from its `.mcp.json` spec alongside the other two, with its handshake, fixture identity, and health surface proven while all three are concurrently live (re-verified by an execve trace showing `start.sh`, `forge mcp`, and `api-server.ts` all execute). (C2) `checkUiIdentity` compares **normalized/real paths for equality**, not string containment — a prefix-sharing sibling (`…-fixture-abc-stale`) no longer passes for `…-fixture-abc`.
+- **L3 harness — never repair product state to pass** (Codex regate-14, cured on `8d40e64`): the earlier build wrote identity back into the fixture's `.claude/governance.json` after forge-ui's migration mangled it, then asserted green — a gate fixing the product. Removed; the governance leg now **fails honestly** on divergence and records the finding, never mutating product-owned state.
+- **L3 harness — assert the FULL contract, not just identity** (Codex regate-15, cured on `f843451`): the post-boot check verified only `project.name` while the fixture seeded empty `workstreams`/`qualityGates` + no `metrics`, so deleting those post-boot stayed green. Now seeds non-empty sentinels for every contract field and asserts their exact post-boot values via `forge_get_governance_state` (`checkGovernanceContract`), with a seeded control replaying the deletion attack.
 
 ### Cross-product finding surfaced + resolved (L3 three-product topology)
 
@@ -29,8 +31,9 @@ The **G-09 integration-harness suite** — machine-tested, CI-adoptable end-to-e
 
 ### Gate
 
-- **vitest 65/65** · **live L1 15/15 · L2 15/15 · L3 16/16** · adversarial self-probe on each leg: missing/wrong `forge` binary, missing forge-ui checkout, estimate-source health drift, and a wrong `.mcp.json` env all **fail closed with named findings**; clean runs leave `~/.forge` byte-identical, zero orphaned processes, and zero leftover temp dirs.
-- Codex verdicts: L1 cleared first-round; L2 cleared regate-12 (all three regate-11 cures instrument-replay-verified); L3 gate pending (regate-13).
+- **vitest 66/66** · **live L1 15/15 · L2 15/15 · L3 16/16** · adversarial self-probe on each leg: missing/wrong `forge` binary, missing forge-ui checkout, estimate-source health drift, a wrong `.mcp.json` env, and the governance-contract deletion attack all **fail closed with named findings**; clean runs leave `~/.forge` byte-identical, zero orphaned processes, and zero leftover temp dirs.
+- **Codex verdicts — full trilogy cleared:** L1 cleared first-round; L2 cleared regate-12 (all three regate-11 cures instrument-replay-verified); L3 cleared **SHIP** at `f843451` (regate-14 repair-deletion + regate-15 full-contract cures verified, the live deletion attack replayed and fails correctly). G-09 complete.
+- **Local/Codex verification** substitutes for CI while GitHub Actions is org-wide billing-locked (per the v3.4.0 precedent): each leg was independently reproduced by Codex from a detached checkout; `gh release create` is an API call unaffected by the Actions lock.
 
 ### CI adoption (verbatim requirements for the CI-unlock directive)
 
