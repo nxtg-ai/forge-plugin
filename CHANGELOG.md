@@ -6,9 +6,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
-## [3.10.3] — unreleased (held for Codex re-gate, DIRECTIVE-NXTG-20260718-05)
+## [3.10.3] — 2026-07-18
 
-Completes the v3.10.2 health-tool rename in **user-facing docs** (Codex Wave-1 gate finding 2) and adds a contract test so it cannot regress. Docs-and-test only; no runtime/tool changes. Release (version bump + tag + GitHub release) is held until FPL routes the Codex re-gate on this diff.
+Completes the v3.10.2 health-tool rename in **user-facing docs** (Codex Wave-1 gate finding 2) and adds a contract test so it cannot regress. Docs-and-test only; no runtime/tool changes. Passed independent Codex re-gate (round 4, on `b2c8637`) after three hardening rounds.
 
 ### Fixed
 
