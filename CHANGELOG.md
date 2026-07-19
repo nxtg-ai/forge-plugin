@@ -6,6 +6,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.4] — 2026-07-18
+
+The **G-09 integration-harness suite** — machine-tested, CI-adoptable end-to-end coverage for all three Forge products at the three deployment tiers (L1 plugin-standalone · L2 plugin+orchestrator · L3 plugin+orchestrator+forge-ui). **Test infrastructure only — no runtime, tool, agent, command, or skill changes** (counts unchanged). Each leg was built refute-first and independently Codex-gated.
+
+### Added
+
+- **L1 integration harness** (`tests/integration/l1-journey.mjs`, DIRECTIVE-…-10) — boots the real `governance-mcp` over stdio via `start.sh` against a clean temp fixture: handshake `serverVersion == package.json`, `tools/list ==` the 8 Node tools (exposes `forge_get_governance_health`, **not** the orchestrator's `forge_get_health`), every tool shaped + fixture-bound, and the Lego-Snap degrade/resolve invariant. Codex-cleared first-round.
+- **L2 integration harness** (`tests/integration/l2-journey.mjs`, DIRECTIVE-…-11) — boots **both** MCP servers (Node governance + Rust `forge mcp`) from their verbatim `.mcp.json` specs against one fixture with the real pinned `forge` binary: dual handshake + full surfaces (8 Node + 11 Rust, live counts), cross-server contract (both health tools shaped + **distinct shapes** = the G-04 no-collision proven live; identity bound on both sides), and the task lifecycle `get→claim→complete` with a durable-state value-proof (`state.json` `task_summary` + `tasks/*.json` + newly-appended `events.jsonl` records). Codex-cleared (regate-12).
+- **L3 integration harness** (`tests/integration/l3-journey.mjs`, DIRECTIVE-…-13) — the "Ship Lord" journey: the plugin orchestrator MCP **and** forge-ui's live API+WS server snapped together against one fixture. Proves the dx-journeys cross-product contract (`data.health.score === Math.round(orchestrator forge_get_health.health_score)` with `source === "orchestrator"`; a fallback to forge-ui's own `"estimate"` computation is the named finding `UI_HEALTH_CONTRACT_DRIFT`), canonical identity binding (`data.project.name === .forge/state.json.project_name`), and a live WS round-trip (`state.update` + `ping`/`pong`) plus MCP→UI reflection. forge-ui is a **test-fixture dep** (booted from its repo, never modified); its global `~/.forge` bookkeeping is redirected to a throwaway `HOME` so the operator's real `~/.forge` stays byte-identical, and teardown reaps the forge-ui child by its own pid (never `pkill`-by-name — a concurrent forge-ui session may be live).
+- **Shared pure-check library** (`tests/lib/checks.mjs`) invoked by BOTH the live journeys and the seeded-defect controls — the tested logic is the shipped logic (no parallel reimplementation). Seeded-defect controls (`version-surface`, `l1-checks`, `l2-checks`, `l3-checks`) make each leg fail deterministically on a planted defect.
+- **One entrypoint**: `npm test` = `vitest run` → live L1 → live L2 → live L3. New `test:l1` / `test:l2` / `test:l3` run a single live leg. `UAT-GUIDE.md` §13 documents all three.
+
+### Fixed
+
+- **L2 harness — 3 refute-first false-greens** (Codex regate-11, cured on `c6cdc26`): (C1) the harness now **executes the `.mcp.json` env contract verbatim** — a misconfigured `FORGE_PROJECT_ROOT` binds the wrong project and FAILS the identity check (was masked by a hardcoded root); (C2) the temp fixture is removed on **any** setup-command failure (no leak); (C3) the lifecycle check requires **newly-appended** `task_assigned`+`task_completed` records **scoped to the task id** (was satisfiable by pre-existing unscoped event types).
+- **L3 harness — 2 topology/validation gaps** (Codex regate-13, cured on `e3294b0`): (C1) the "three products simultaneously live" topology now **actually starts governance-mcp** — the prior build ran orchestrator + forge-ui only (execve-traced zero governance-mcp executions); governance-mcp now boots from its `.mcp.json` spec alongside the other two, with its handshake, fixture identity, and health surface proven while all three are concurrently live (re-verified by an execve trace showing `start.sh`, `forge mcp`, and `api-server.ts` all execute). (C2) `checkUiIdentity` compares **normalized/real paths for equality**, not string containment — a prefix-sharing sibling (`…-fixture-abc-stale`) no longer passes for `…-fixture-abc`.
+
+### Cross-product finding surfaced + resolved (L3 three-product topology)
+
+- **`GOVERNANCE_SCHEMA_DIVERGENCE`** — the L3 harness (running governance-mcp + orchestrator + forge-ui against one fixture) surfaced that forge-ui's startup migration rewrote `.claude/governance.json` (`{project:{name},workstreams,qualityGates}` → `{version,constitution}`), **dropping the fields the plugin's governance-mcp reads** (`project.name` identity, `workstreams`, `qualityGates` — `tools.mjs:108-125`). The harness records the finding and **fails honestly — it never repairs product-owned state to pass** (Codex regate-14). The exact contract governance-mcp consumes was published as `docs/governance-mcp-governance-json-contract.md`. **Resolved:** forge-ui round-trips the contract as of forge-ui `c4c55e6` (DIRECTIVE-NXTG-20260719-18, Leg B — it now migrates a foreign `governance.json` instead of reseeding it); the L3 governance identity leg validates the round-trip end-to-end (16/16, zero test-side mutation).
+
+### Gate
+
+- **vitest 65/65** · **live L1 15/15 · L2 15/15 · L3 16/16** · adversarial self-probe on each leg: missing/wrong `forge` binary, missing forge-ui checkout, estimate-source health drift, and a wrong `.mcp.json` env all **fail closed with named findings**; clean runs leave `~/.forge` byte-identical, zero orphaned processes, and zero leftover temp dirs.
+- Codex verdicts: L1 cleared first-round; L2 cleared regate-12 (all three regate-11 cures instrument-replay-verified); L3 gate pending (regate-13).
+
+### CI adoption (verbatim requirements for the CI-unlock directive)
+
+`npm test` is CI-adoptable **unmodified** once GitHub Actions billing is unlocked, provided the runner supplies:
+
+- **L2 + L3**: the **pinned `forge` binary v1.5.2** on `PATH` (test-fixture dependency, not a package dependency; absence/mismatch is a deterministic `FORGE_ABSENT`/`WRONG_BINARY_VERSION` failure, not a skip).
+- **L3 additionally**: a **forge-ui checkout with dependencies installed**, located at the sibling path or `FORGE_UI_DIR`, plus **`127.0.0.1` (localhost) network access** for the forge-ui HTTP/WebSocket server on an ephemeral port.
+
+---
+
 ## [3.10.3] — 2026-07-18
 
 Completes the v3.10.2 health-tool rename in **user-facing docs** (Codex Wave-1 gate finding 2) and adds a contract test so it cannot regress. Docs-and-test only; no runtime/tool changes. Passed independent Codex re-gate (round 4, on `b2c8637`) after three hardening rounds.

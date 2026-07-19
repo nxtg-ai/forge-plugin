@@ -37,7 +37,19 @@ import { execFileSync, spawn } from "node:child_process";
 import { createServer } from "node:net";
 import {
   FORGE_PIN, checkBinaryVersion, checkShapedResponse, checkHealthContract, checkUiIdentity, checkWsRoundtrip,
+  checkGovernanceContract,
 } from "../lib/checks.mjs";
+
+// Non-empty sentinels for EVERY field the governance.json contract names (regate-15): forge-ui's
+// migration must round-trip ALL of them, not just project.name. Values are free of "orchestrator" so
+// leg C's ref-check cannot false-positive on governance state echoed into a payload.
+const GOV_SENTINEL = {
+  version: "3.0.0-l3-sentinel",
+  project: { name: "l3-fixture", vision: "l3 contract sentinel vision", goals: ["l3-goal-sentinel"] },
+  workstreams: [{ id: "ws-sentinel", name: "l3 sentinel workstream" }],
+  qualityGates: { "l3-gate-sentinel": true },
+  metrics: { "l3-metric-sentinel": 42 },
+};
 
 const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", ".."); // -> governance-mcp/
 const MCP_JSON = join(SERVER_DIR, "..", "..", ".mcp.json");                    // plugins/nxtg-forge/.mcp.json
@@ -89,15 +101,13 @@ function populateFixture(dir) {
     "# SPEC\n\n## Vision\nA clean fixture for the plugin L3 integration harness.\n\n" +
     "## Requirements\n- Build a hello function\n- Add a test for it\n");
   mkdirSync(join(dir, ".claude"));
-  writeFileSync(join(dir, ".claude", "governance.json"), JSON.stringify({
-    version: "3.0.0",
-    project: { name: "l3-fixture", vision: "A clean fixture for the L3 harness." },
-    workstreams: [], qualityGates: {},
-  }, null, 2));
   const fenv = { ...process.env, FORGE_PROJECT_ROOT: dir };
   execFileSync("forge", ["init", "-n", "l3-fixture", "--project", dir], { cwd: dir, env: fenv, stdio: "ignore", timeout: 30000 });
   execFileSync("forge", ["config", "brain", "rule-based", "--project", dir], { cwd: dir, env: fenv, stdio: "ignore", timeout: 30000 });
   execFileSync("forge", ["plan", "--generate", "--project", dir], { cwd: dir, env: fenv, stdio: "ignore", timeout: 60000 });
+  // Seed the full-contract sentinels LAST — `forge init` rewrites .claude/governance.json, so writing it
+  // after init guarantees forge-ui's migration operates on the pristine sentinel (regate-15).
+  writeFileSync(join(dir, ".claude", "governance.json"), JSON.stringify(GOV_SENTINEL, null, 2));
 }
 
 const canonicalProjectName = (fixture) => JSON.parse(readFileSync(join(fixture, ".forge", "state.json"), "utf8")).project_name;
@@ -241,13 +251,22 @@ async function main() {
     check("governance-mcp forge_get_governance_health → shaped non-error (Node, all three live)", ghc.ok, ghc.reason);
     const govState = await govClient.callTool({ name: "forge_get_governance_state", arguments: {} });
     const gsc = checkShapedResponse("forge_get_governance_state", govState);
-    const govName = gsc.parsed?.project?.name;
-    const idOk = gsc.ok && govName === canonical;
-    check("governance-mcp bound to fixture identity (forge_get_governance_state.project.name == canonical, all three live)",
-      idOk, `got ${govName}`);
-    if (!idOk) {
+    // Assert EVERYTHING the contract doc names round-tripped through forge-ui's migration — not just
+    // project.name (regate-15: a project.name-only check let deleting workstreams/qualityGates/metrics
+    // stay green). Fixture-name sanity: canonical (.forge/state.json) must equal the seeded identity.
+    const expected = {
+      version: GOV_SENTINEL.version,
+      project: GOV_SENTINEL.project,
+      workstreamsCount: GOV_SENTINEL.workstreams.length,
+      qualityGates: GOV_SENTINEL.qualityGates,
+      metrics: GOV_SENTINEL.metrics,
+    };
+    const gcc = checkGovernanceContract(gsc.parsed, expected);
+    check("governance.json contract fully round-trips (version/project{name,vision,goals}/workstreams/qualityGates/metrics, all three live)",
+      gsc.ok && gcc.ok && GOV_SENTINEL.project.name === canonical, gcc.problems.join("; ") || (gsc.ok ? "" : gsc.reason));
+    if (!(gsc.ok && gcc.ok)) {
       recordFinding("GOVERNANCE_SCHEMA_DIVERGENCE",
-        `governance-mcp consumes .claude/governance.json {project:{name,vision,goals}, workstreams[], qualityGates, version} (tools.mjs:108-125,643-644,736). forge-ui's startup migration rewrote it to {${Object.keys(afterBoot)}} (constitution schema), dropping 'project' → governance-mcp identity="${govName}". Incompatible shapes — NOT repaired (a gate must not fix the product). forge-ui owns the round-trip: DIRECTIVE-NXTG-20260719-18 (Leg B). Contract: docs/governance-mcp-governance-json-contract.md.`);
+        `forge-ui's migration did not round-trip the full contract (tools.mjs:108-125). Post-boot .claude/governance.json keys=[${Object.keys(afterBoot)}]; failures: ${gcc.problems.join("; ") || gsc.reason}. NOT repaired (a gate must not fix the product). forge-ui owns the round-trip: DIRECTIVE-NXTG-20260719-18. Contract: docs/governance-mcp-governance-json-contract.md.`);
     }
 
     const rustHealth = await orchClient.callTool({ name: "forge_get_health", arguments: {} });

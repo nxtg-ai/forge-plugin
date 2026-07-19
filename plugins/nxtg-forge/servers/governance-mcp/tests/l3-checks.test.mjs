@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { existsSync } from "node:fs";
-import { checkHealthContract, checkUiIdentity, checkWsRoundtrip } from "./lib/checks.mjs";
+import { checkHealthContract, checkUiIdentity, checkWsRoundtrip, checkGovernanceContract } from "./lib/checks.mjs";
 import { makeFixtureWith } from "./integration/l3-journey.mjs";
 
 describe("L3 harness checks — seeded-defect controls", () => {
@@ -55,6 +55,33 @@ describe("L3 harness checks — seeded-defect controls", () => {
     const unbound = checkWsRoundtrip({ events: ["state.update", "pong"], fixtureBound: false });
     expect(unbound.ok).toBe(false);
     expect(unbound.reason).toContain("did not bind");
+  });
+
+  it("checkGovernanceContract: full round-trip passes; deleting any contract field fails (Codex regate-15)", () => {
+    const expected = {
+      version: "3.0.0-l3-sentinel",
+      project: { name: "l3-fixture", vision: "v", goals: ["g"] },
+      workstreamsCount: 1,
+      qualityGates: { gate: true },
+      metrics: { m: 42 },
+    };
+    // Full round-trip — forge_get_governance_state returns workstreams as a COUNT (tools.mjs .length).
+    const full = { version: "3.0.0-l3-sentinel", project: { name: "l3-fixture", vision: "v", goals: ["g"] }, workstreams: 1, qualityGates: { gate: true }, metrics: { m: 42 } };
+    expect(checkGovernanceContract(full, expected).ok).toBe(true);
+
+    // The exact Codex regate-15 attack: delete workstreams/qualityGates/metrics after UI boot — must FAIL.
+    const deleted = { version: "3.0.0-l3-sentinel", project: { name: "l3-fixture", vision: "v", goals: ["g"] }, workstreams: 0, qualityGates: undefined, metrics: undefined };
+    const r = checkGovernanceContract(deleted, expected);
+    expect(r.ok).toBe(false);
+    const joined = r.problems.join(" ");
+    expect(joined).toContain("workstreams");
+    expect(joined).toContain("qualityGates");
+    expect(joined).toContain("metrics");
+
+    // Each remaining field is independently enforced (no field is unchecked).
+    expect(checkGovernanceContract({ ...full, version: "other" }, expected).ok).toBe(false);
+    expect(checkGovernanceContract({ ...full, project: { ...full.project, goals: [] } }, expected).ok).toBe(false);
+    expect(checkGovernanceContract({ ...full, project: { ...full.project, vision: "changed" } }, expected).ok).toBe(false);
   });
 
   it("makeFixtureWith: cleans its temp dir when setup (populate) throws — no leak", () => {

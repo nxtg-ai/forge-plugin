@@ -146,6 +146,25 @@ export function checkUiIdentity(uiName, uiPath, canonicalName, fixture) {
   return { ok: problems.length === 0, reason: problems.join("; ") || "ok" };
 }
 
+// forge-ui round-tripped the ENTIRE governance.json contract, not just identity? `parsed` = the Node
+// forge_get_governance_state result; `expected` = the seeded sentinels. Asserts EVERY field the contract
+// doc (docs/governance-mcp-governance-json-contract.md) names survives forge-ui's {constitution} migration:
+// version, project{name,vision,goals}, workstreams (COUNT — tools.mjs returns .length), qualityGates,
+// metrics. Deleting/emptying any of them (the Codex regate-15 attack) fails here. Returns { ok, problems[] }.
+export function checkGovernanceContract(parsed, expected) {
+  const problems = [];
+  if (!parsed || typeof parsed !== "object") return { ok: false, problems: ["no governance_state parsed"] };
+  const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  if (parsed.version !== expected.version) problems.push(`version: ${parsed.version} != ${expected.version}`);
+  if (parsed.project?.name !== expected.project.name) problems.push(`project.name: ${parsed.project?.name} != ${expected.project.name}`);
+  if (parsed.project?.vision !== expected.project.vision) problems.push(`project.vision: ${parsed.project?.vision} != ${expected.project.vision}`);
+  if (!eq(parsed.project?.goals, expected.project.goals)) problems.push(`project.goals: ${JSON.stringify(parsed.project?.goals)} != ${JSON.stringify(expected.project.goals)}`);
+  if (parsed.workstreams !== expected.workstreamsCount) problems.push(`workstreams count: ${parsed.workstreams} != ${expected.workstreamsCount}`);
+  if (!eq(parsed.qualityGates, expected.qualityGates)) problems.push(`qualityGates: ${JSON.stringify(parsed.qualityGates)} != ${JSON.stringify(expected.qualityGates)}`);
+  if (!eq(parsed.metrics, expected.metrics)) problems.push(`metrics: ${JSON.stringify(parsed.metrics)} != ${JSON.stringify(expected.metrics)}`);
+  return { ok: problems.length === 0, problems };
+}
+
 // A live WS round-trip happened AND its payload bound to the fixture? events = the WS message `type`s
 // observed; fixtureBound = whether the state.update payload carried the fixture identity. Requires a
 // state.update (server→client on connect) and a pong (client ping → server pong). Returns { ok, reason }.
