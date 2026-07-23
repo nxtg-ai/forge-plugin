@@ -1099,3 +1099,192 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
     ...(isWSL && !opened ? { hint: `Paste this URL into your Windows browser: ${browserUrl}` } : {}),
   };
 }
+
+// ---------------------------------------------------------------------------
+// governance-score-rubric-v1.0 (frozen — G3 classification pass, commit 0b0e877)
+// ---------------------------------------------------------------------------
+
+/**
+ * Frozen rubric for the deterministic governance score (v1.0).
+ *
+ * committed-tree band: checks computed purely from the HEAD commit.
+ * environment band: checks that require live worktree state, test execution, or network.
+ */
+export const GOVERNANCE_SCORE_RUBRIC = {
+  version: "1.0",
+  deterministic_max: 90,
+  bands: {
+    "committed-tree": [
+      { check: "Governance",    max: 15, input: "git ls-files .claude/governance.json" },
+      { check: "Test Coverage", max: 20, input: "git ls-files density (test/source file ratio)", mode: "density" },
+      { check: "README",        max: 10, input: "git ls-files README.md" },
+      { check: "CLAUDE.md",     max: 10, input: "git ls-files CLAUDE.md" },
+      { check: "Type Safety",   max: 10, input: "git show HEAD:tsconfig.json compilerOptions" },
+      { check: "File Size",     max: 10, input: "git show HEAD:<src> line count" },
+      { check: "Security",      max: 15, input: "git ls-files .env + git grep HEAD (secrets/eval)", note: "npm-audit excluded (env-band)" },
+    ],
+    environment: [
+      { check: "Git Clean",            max: 10, reason: "requires live worktree state" },
+      { check: "Test Coverage (real)", max: 20, reason: "requires test execution + instrumentation" },
+      { check: "Security (npm-audit)", max: 10, reason: "requires network access" },
+    ],
+  },
+};
+
+/**
+ * Deterministic governance score using committed-tree probes only (rubric v1.0).
+ *
+ * Guaranteed byte-identical across any two runners on the same HEAD commit.
+ * Excludes: Git Clean (worktree), real test coverage (execution), npm-audit (network).
+ *
+ * @param {string} root - project root (git root of the project to score)
+ * @returns {{ score: number, grade: string, maxScore: 90, rubric_version: "1.0",
+ *             head_sha: string, checks: Array<{name, status, points, note?}> }}
+ */
+export function getGovernanceScore(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
+  const appRoot = findApplicationRoot(root);
+
+  // Run git silently — returns '' on non-zero exit or any error
+  const gitQ = (args) => {
+    try {
+      return execSync(`git -C ${JSON.stringify(root)} ${args}`, {
+        encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout: 10000,
+      }).trim();
+    } catch { return ""; }
+  };
+
+  const headSha = gitQ("rev-parse HEAD");
+  let score = 0;
+  const checks = [];
+
+  // ── 1. Governance (15 pts) ────────────────────────────────────────────────────
+  if (gitQ("ls-files .claude/governance.json")) {
+    score += 15;
+    checks.push({ name: "Governance", status: "pass", points: 15 });
+  } else {
+    checks.push({ name: "Governance", status: "fail", points: 0, note: "Not initialized" });
+  }
+
+  // ── 2. Test Coverage density (20 pts) — committed-tree file counts ────────────
+  const allTracked = gitQ("ls-files").split("\n").filter(Boolean);
+  const srcRe    = /\.(js|ts|mjs|cjs|py|rs|go)$/;
+  const testRe   = /(\.(test|spec)\.(js|ts|mjs|cjs|py|rs|go)$|_test\.go$|\/__tests__\/)/;
+  const buildRe  = /\/(node_modules|dist|build|dist-ui|coverage|\.nyc_output|__pycache__|\.pytest_cache|target)\//;
+  const configRe = /\.config\.(js|ts|mjs|cjs)$/;
+  const srcFiles  = allTracked.filter(f => srcRe.test(f) && !testRe.test(f) && !buildRe.test(`/${f}/`) && !configRe.test(f));
+  const testFiles = allTracked.filter(f => testRe.test(f)                    && !buildRe.test(`/${f}/`));
+
+  if (testFiles.length > 0 && srcFiles.length > 0) {
+    const density = testFiles.length / srcFiles.length;
+    const testScore = density >= 5 ? 20 : density >= 3 ? 15 : density >= 1 ? 10 : 5;
+    score += testScore;
+    checks.push({
+      name: "Test Coverage",
+      status: testScore >= 15 ? "pass" : "warn",
+      points: testScore,
+      note: `${testFiles.length} tests / ${srcFiles.length} sources (${density.toFixed(1)}/file) — committed-tree density`,
+    });
+  } else if (testFiles.length > 0) {
+    score += 5;
+    checks.push({ name: "Test Coverage", status: "warn", points: 5, note: "test files found, no source files detected" });
+  } else {
+    checks.push({ name: "Test Coverage", status: "fail", points: 0, note: "No tests in committed tree" });
+  }
+
+  // ── 3. README (10 pts) ───────────────────────────────────────────────────────
+  const repoRoot = gitQ("rev-parse --show-toplevel") || root;
+  const relApp = appRoot.startsWith(repoRoot) ? appRoot.slice(repoRoot.length).replace(/^\//, "") : "";
+  const readmePath = relApp ? `${relApp}/README.md` : "README.md";
+  if (gitQ(`ls-files ${JSON.stringify(readmePath)}`)) {
+    score += 10;
+    checks.push({ name: "README", status: "pass", points: 10 });
+  } else {
+    checks.push({ name: "README", status: "fail", points: 0 });
+  }
+
+  // ── 4. CLAUDE.md (10 pts) ────────────────────────────────────────────────────
+  if (gitQ("ls-files CLAUDE.md")) {
+    score += 10;
+    checks.push({ name: "CLAUDE.md", status: "pass", points: 10 });
+  } else {
+    checks.push({ name: "CLAUDE.md", status: "warn", points: 0, note: "Recommended for AI-assisted development" });
+  }
+
+  // ── 5. Type Safety (0-10 pts) — read committed tsconfig / jsconfig ────────────
+  const tsPath = relApp ? `${relApp}/tsconfig.json` : "tsconfig.json";
+  const jsPath = relApp ? `${relApp}/jsconfig.json` : "jsconfig.json";
+  const tsTypeSafety = (() => {
+    const tsContent = gitQ(`show HEAD:${tsPath}`);
+    if (tsContent) {
+      try {
+        const co = JSON.parse(tsContent).compilerOptions || {};
+        const strictFlags = ["noImplicitAny","strictNullChecks","strictFunctionTypes",
+          "strictBindCallApply","strictPropertyInitialization","noImplicitThis","alwaysStrict"];
+        if (co.strict === true || strictFlags.filter(f => co[f] === true).length >= 3) {
+          return { points: 10, status: "pass", note: "strict TypeScript" };
+        }
+        return { points: 7, status: "pass", note: "TypeScript (not strict)" };
+      } catch { return { points: 7, status: "pass", note: "TypeScript" }; }
+    }
+    if (gitQ(`show HEAD:${jsPath}`)) return { points: 4, status: "info", note: "jsconfig only" };
+    return { points: 0, status: "info", note: "no type config" };
+  })();
+  score += tsTypeSafety.points;
+  checks.push({ name: "Type Safety", status: tsTypeSafety.status, points: tsTypeSafety.points, note: tsTypeSafety.note });
+
+  // ── 6. File Size (10 pts) — committed source files > 500 lines ───────────────
+  const largeCount = srcFiles.filter(f => {
+    const content = gitQ(`show HEAD:${f}`);
+    return content && content.split("\n").length > 500;
+  }).length;
+  if (largeCount === 0) {
+    score += 10;
+    checks.push({ name: "File Size", status: "pass", points: 10 });
+  } else {
+    score += 5;
+    checks.push({ name: "File Size", status: "warn", points: 5, note: `${largeCount} committed files over 500 lines` });
+  }
+
+  // ── 7. Security (15 pts) — committed-tree only; npm-audit excluded (env-band) ─
+  let securityPoints = 15;
+  const securityNotes = [];
+
+  if (gitQ("ls-files .env")) {
+    securityPoints -= 5;
+    securityNotes.push("secrets in git");
+  }
+
+  const secretPat = "sk_live_|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9_]{36}|xoxb-|AIza[0-9A-Za-z_-]{35}";
+  const secretHits = (() => {
+    try {
+      return execSync(
+        `git -C ${JSON.stringify(root)} grep -lE '${secretPat}' HEAD -- '*.js' '*.ts' '*.mjs' '*.py' 2>/dev/null | head -1`,
+        { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout: 10000 }
+      ).trim();
+    } catch { return ""; }
+  })();
+  if (secretHits) { securityPoints -= 5; securityNotes.push("hardcoded secrets"); }
+
+  const evalHits = (() => {
+    try {
+      return execSync(
+        `git -C ${JSON.stringify(root)} grep -lE 'eval\\s*\\(' HEAD -- '*.js' '*.ts' '*.mjs' 2>/dev/null | head -1`,
+        { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout: 10000 }
+      ).trim();
+    } catch { return ""; }
+  })();
+  if (evalHits) { securityPoints -= 5; securityNotes.push("eval() usage"); }
+
+  securityPoints = Math.max(0, securityPoints);
+  score += securityPoints;
+  checks.push({
+    name: "Security",
+    status: securityPoints >= 12 ? "pass" : securityPoints >= 5 ? "warn" : "fail",
+    points: securityPoints,
+    note: securityNotes.length ? securityNotes.join(", ") : "clean — committed-tree (npm-audit env-band)",
+  });
+
+  const grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+
+  return { score, grade, maxScore: 90, rubric_version: "1.0", head_sha: headSha, checks };
+}
