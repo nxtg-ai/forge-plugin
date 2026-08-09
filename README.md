@@ -4,7 +4,7 @@
 
 # forge-plugin
 
-[![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-00b4ab)](https://registry.modelcontextprotocol.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
 
 **Zero-dependency governance for Claude Code.**
 
