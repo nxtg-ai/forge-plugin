@@ -5,3 +5,10 @@
 .vscode/
 .idea/
 plugins/nxtg-forge/servers/governance-mcp/coverage/
+
+# Private NXTG operating context must never enter public repos
+.asif/
+.asif-ci
+
+# Generated internal audit output
+/tools/shipped-wrong-detector/audits/*.jsonl
