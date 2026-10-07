@@ -16,9 +16,11 @@ jobs:
   cla-assistant:
     runs-on: ubuntu-latest
     if: |
-      (github.event.comment.body == 'recheck' ||
-       github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') ||
-      github.event_name == 'pull_request_target'
+      (
+        (github.event.comment.body == 'recheck' ||
+         github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') ||
+        github.event_name == 'pull_request_target'
+      ) && github.actor != 'dependabot[bot]'
 
     steps:
       - name: CLA Assistant
@@ -29,8 +31,10 @@ jobs:
         with:
           path-to-signatures: '.github/cla-signatures.json'
           path-to-document: 'https://raw.githubusercontent.com/nxtg-ai/forge-plugin/main/CLA.md'
-          branch: 'main'
-          allowlist: 'bot*,dependabot[bot],github-actions[bot]'
+          # Signatures are committed to their own branch: main is PR-only with
+          # enforce_admins, so a direct signature commit to main is rejected.
+          branch: 'cla-signatures'
+          allowlist: 'awaliuddin,bot*,dependabot[bot],github-actions[bot]'
           create-status-check: true
           custom-pr-sign-comment: 'I have read the CLA Document and I hereby sign the CLA'
           custom-allsigned-prcomment: 'All contributors have signed the CLA. Thank you!'
