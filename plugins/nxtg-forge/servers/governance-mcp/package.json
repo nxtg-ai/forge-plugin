@@ -14,7 +14,7 @@
     "test:binding": "node tests/integration/binding-journey.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "open": "^11.0.0"
   },
   "devDependencies": {
