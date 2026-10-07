@@ -117,31 +117,31 @@ In a new Claude Code session, verify components loaded.
 
 ### 3a: Commands Available
 
-Type `/forge:` and you should see autocomplete suggestions for all 23 commands:
+Type `/nxtg-forge:` and you should see autocomplete suggestions for all 23 commands:
 
 | Command | What It Does |
 |---------|-------------|
-| `/forge:init` | Setup wizard |
-| `/forge:status` | Project health check |
-| `/forge:status-enhanced` | Detailed dashboard |
-| `/forge:test` | Run tests |
-| `/forge:feature` | Plan features |
-| `/forge:spec` | Generate specs |
-| `/forge:gap-analysis` | Find gaps |
-| `/forge:deploy` | Pre-flight checks |
-| `/forge:optimize` | Performance analysis |
-| `/forge:checkpoint` | Save state |
-| `/forge:restore` | Restore state |
-| `/forge:report` | Activity report |
-| `/forge:agent-assign` | Assign to agents |
-| `/forge:integrate` | Service integration |
-| `/forge:update` | Config gap detection |
-| `/forge:compliance` | License scanning |
-| `/forge:docs-status` | Doc health |
-| `/forge:docs-update` | Fix stale docs |
-| `/forge:docs-audit` | Full doc audit |
-| `/forge:command-center` | Central hub |
-| `/forge:dashboard` | Visual dashboard |
+| `/nxtg-forge:init` | Setup wizard |
+| `/nxtg-forge:status` | Project health check |
+| `/nxtg-forge:status-enhanced` | Detailed dashboard |
+| `/nxtg-forge:test` | Run tests |
+| `/nxtg-forge:feature` | Plan features |
+| `/nxtg-forge:spec` | Generate specs |
+| `/nxtg-forge:gap-analysis` | Find gaps |
+| `/nxtg-forge:deploy` | Pre-flight checks |
+| `/nxtg-forge:optimize` | Performance analysis |
+| `/nxtg-forge:checkpoint` | Save state |
+| `/nxtg-forge:restore` | Restore state |
+| `/nxtg-forge:report` | Activity report |
+| `/nxtg-forge:agent-assign` | Assign to agents |
+| `/nxtg-forge:integrate` | Service integration |
+| `/nxtg-forge:update` | Config gap detection |
+| `/nxtg-forge:compliance` | License scanning |
+| `/nxtg-forge:docs-status` | Doc health |
+| `/nxtg-forge:docs-update` | Fix stale docs |
+| `/nxtg-forge:docs-audit` | Full doc audit |
+| `/nxtg-forge:command-center` | Central hub |
+| `/nxtg-forge:dashboard` | Visual dashboard |
 
 **If commands don't appear:** Plugin may not be enabled. Check `~/.claude/settings.json`.
 
@@ -176,12 +176,12 @@ When you submit a prompt, you should see hook output in the response:
 
 ---
 
-## 4. Project Initialization (`/forge:init`)
+## 4. Project Initialization (`/nxtg-forge:init`)
 
 ### Step 4a: Run Init
 
 ```
-/forge:init
+/nxtg-forge:init
 ```
 
 ### Step 4b: Answer Questions
@@ -230,7 +230,7 @@ cat .claude/governance.json | head -20
 grep "NXTG-Forge" CLAUDE.md
 ```
 
-### What `/forge:init` Does NOT Create
+### What `/nxtg-forge:init` Does NOT Create
 
 These items are FROM THE PLUGIN and should NOT be in your project:
 - `.claude/agents/` — Agents come from the plugin
@@ -252,7 +252,7 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5a: Status Check
 
 ```
-/forge:status
+/nxtg-forge:status
 ```
 
 **Expected output:** A dashboard showing:
@@ -264,7 +264,7 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5b: Feature Development
 
 ```
-/forge:feature "Add user authentication"
+/nxtg-forge:feature "Add user authentication"
 ```
 
 **Expected behavior:**
@@ -277,7 +277,7 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5c: Gap Analysis
 
 ```
-/forge:gap-analysis
+/nxtg-forge:gap-analysis
 ```
 
 **Expected output:** Analysis across 5 dimensions:
@@ -290,13 +290,13 @@ These items are FROM THE PLUGIN and should NOT be in your project:
 ### 5d: Checkpoint/Restore
 
 ```
-/forge:checkpoint "Before refactoring auth"
+/nxtg-forge:checkpoint "Before refactoring auth"
 ```
 
 **Creates:** `.claude/checkpoints/{timestamp}.json`
 
 ```
-/forge:restore
+/nxtg-forge:restore
 ```
 
 **Shows:** List of saved checkpoints to restore from.
@@ -314,12 +314,12 @@ When Claude needs a specialist, it uses the Task tool to spawn an agent:
 Task tool → selects agent (e.g., security) → Claude loads the agent's .md file → executes with specialized instructions
 ```
 
-**You don't need to do anything special.** Commands like `/forge:feature` automatically invoke the right agents.
+**You don't need to do anything special.** Commands like `/nxtg-forge:feature` automatically invoke the right agents.
 
 ### Manual Agent Assignment
 
 ```
-/forge:agent-assign "optimize database queries"
+/nxtg-forge:agent-assign "optimize database queries"
 ```
 
 Claude will:
@@ -408,7 +408,7 @@ The MCP dashboard provides 8 governance tools and a visual HTML dashboard.
 ### First Use
 
 ```
-/forge:dashboard
+/nxtg-forge:dashboard
 ```
 
 **What happens:**
@@ -449,16 +449,16 @@ These come from the plugin and are available in every project:
 
 **You don't touch these files.** Plugin updates replace them.
 
-### Per-Project (Created by /forge:init)
+### Per-Project (Created by /nxtg-forge:init)
 
 These are the ONLY files Forge creates in your project:
 
 ```
 your-project/
 ├── .claude/
-│   ├── governance.json    # Created by /forge:init
-│   └── checkpoints/       # Created by /forge:checkpoint (optional)
-└── CLAUDE.md              # Updated by /forge:init
+│   ├── governance.json    # Created by /nxtg-forge:init
+│   └── checkpoints/       # Created by /nxtg-forge:checkpoint (optional)
+└── CLAUDE.md              # Updated by /nxtg-forge:init
 ```
 
 **That's it.** If you see other Forge-related files in your project, they shouldn't be there.
@@ -481,7 +481,7 @@ your-project/
 
 ## 11. Troubleshooting
 
-### "Commands don't show up when I type /forge:"
+### "Commands don't show up when I type /nxtg-forge:"
 
 1. Check plugin is enabled: `cat ~/.claude/settings.json | grep nxtg-forge`
 2. Start a new Claude Code session (plugins load on session start)
@@ -490,7 +490,7 @@ your-project/
 ### "Agents aren't being used"
 
 1. Agents are invoked by commands, not directly by users
-2. Try: `/forge:feature "small task"` — this should invoke planner + builder agents
+2. Try: `/nxtg-forge:feature "small task"` — this should invoke planner + builder agents
 3. Check agents exist: `ls ~/.claude/plugins/marketplaces/*/plugins/nxtg-forge/agents/`
 
 ### "Hooks aren't firing"
@@ -519,7 +519,7 @@ These are NOT from the Forge plugin. Possible sources:
 
 The sentinel log can accumulate many entries over time. Run:
 ```
-/forge:status
+/nxtg-forge:status
 ```
 This reads but doesn't inflate the file. To clean sentinel logs, you can manually trim the `sentinelLog` array in `.claude/governance.json`.
 
@@ -542,21 +542,21 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 2.1 | `/forge:` autocomplete | Shows list of Forge commands | | |
-| 2.2 | `/forge:init` | Wizard asks questions, creates governance.json | | |
-| 2.3 | `/forge:status` | Shows project health dashboard | | |
-| 2.4 | `/forge:test` | Runs test suite (or reports no tests) | | |
-| 2.5 | `/forge:gap-analysis` | Analyzes 5 dimensions, shows report | | |
-| 2.6 | `/forge:checkpoint` | Creates `.claude/checkpoints/` file | | |
-| 2.7 | `/forge:feature "test"` | Plans a feature, invokes agents | | |
-| 2.8 | `/forge:command-center` | Shows 4-option menu | | |
+| 2.1 | `/nxtg-forge:` autocomplete | Shows list of Forge commands | | |
+| 2.2 | `/nxtg-forge:init` | Wizard asks questions, creates governance.json | | |
+| 2.3 | `/nxtg-forge:status` | Shows project health dashboard | | |
+| 2.4 | `/nxtg-forge:test` | Runs test suite (or reports no tests) | | |
+| 2.5 | `/nxtg-forge:gap-analysis` | Analyzes 5 dimensions, shows report | | |
+| 2.6 | `/nxtg-forge:checkpoint` | Creates `.claude/checkpoints/` file | | |
+| 2.7 | `/nxtg-forge:feature "test"` | Plans a feature, invokes agents | | |
+| 2.8 | `/nxtg-forge:command-center` | Shows 4-option menu | | |
 
 ### Phase 3: Agents
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
 | 3.1 | Agents discovered | Ask "what forge agents are available" — lists agents | | |
-| 3.2 | Agent invocation | `/forge:agent-assign "task"` shows roster and invokes | | |
+| 3.2 | Agent invocation | `/nxtg-forge:agent-assign "task"` shows roster and invokes | | |
 | 3.3 | No project-level agents | `ls .claude/agents/` is empty or doesn't exist | | |
 
 ### Phase 4: Hooks
@@ -578,7 +578,7 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 6.1 | `/forge:dashboard` | Generates and opens HTML dashboard | | |
+| 6.1 | `/nxtg-forge:dashboard` | Generates and opens HTML dashboard | | |
 | 6.2 | Health score shown | Dashboard shows A-F grade with score | | |
 | 6.3 | Git status shown | Dashboard shows branch and commit info | | |
 
@@ -586,8 +586,8 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 7.1 | Open project A | `/forge:init` + `/forge:status` works | | |
-| 7.2 | Open project B | `/forge:init` + `/forge:status` works | | |
+| 7.1 | Open project A | `/nxtg-forge:init` + `/nxtg-forge:status` works | | |
+| 7.2 | Open project B | `/nxtg-forge:init` + `/nxtg-forge:status` works | | |
 | 7.3 | Projects are isolated | governance.json is different per project | | |
 | 7.4 | Commands are shared | Same 23 commands available in both projects | | |
 
@@ -595,9 +595,9 @@ Use this checklist to verify each aspect of the plugin. Mark pass/fail and add n
 
 | # | Test | Expected | Pass/Fail | Notes |
 |---|------|----------|-----------|-------|
-| 8.1 | No git repo | `/forge:status` works but shows "not a git repo" | | |
-| 8.2 | No package.json | `/forge:init` detects project type as "unknown" | | |
-| 8.3 | Empty project | `/forge:init` + `/forge:status` still work | | |
+| 8.1 | No git repo | `/nxtg-forge:status` works but shows "not a git repo" | | |
+| 8.2 | No package.json | `/nxtg-forge:init` detects project type as "unknown" | | |
+| 8.3 | Empty project | `/nxtg-forge:init` + `/nxtg-forge:status` still work | | |
 | 8.4 | Run init twice | Second run asks to keep or reset existing config | | |
 
 ---
@@ -752,7 +752,7 @@ This loads the patched plugin directly. The marketplace-installed version is ign
 
 Execute the standard test sequence:
 ```
-/forge:init → /forge:status → /forge:dashboard
+/nxtg-forge:init → /nxtg-forge:status → /nxtg-forge:dashboard
 ```
 
 Verify fixes against the acceptance criteria in the relevant directive.
@@ -764,15 +764,15 @@ Verify fixes against the acceptance criteria in the relevant directive.
 
 ### After Release: Updating on Other Machines
 
-Once the release is pushed to GitHub, use `/forge:update` on the target machine:
+Once the release is pushed to GitHub, use `/nxtg-forge:update` on the target machine:
 
 ```
-/forge:update
+/nxtg-forge:update
 ```
 
 This command works around [Claude Code #29071](https://github.com/anthropics/claude-code/issues/29071) (stale marketplace cache) by running `git pull --ff-only` on the marketplace clone before triggering `claude plugin update`. It also validates governance config and hooks after updating.
 
-After `/forge:update` completes, **restart Claude Code** to load the new MCP server code.
+After `/nxtg-forge:update` completes, **restart Claude Code** to load the new MCP server code.
 
 **Do NOT use `claude plugin update forge` directly** — it fetches without merging, leaving you on the old version.
 
@@ -782,7 +782,7 @@ After `/forge:update` completes, **restart Claude Code** to load the new MCP ser
 - Multiple `--plugin-dir` flags can be passed to load several test plugins simultaneously.
 - MCP servers still need `node_modules` installed locally — the tarball excludes them to keep the download small.
 - The HTTP server can remain running across sessions (check with `lsof -i :9999`).
-- After a formal release, always use `/forge:update` (not raw `git pull`) on target machines.
+- After a formal release, always use `/nxtg-forge:update` (not raw `git pull`) on target machines.
 
 ---
 
@@ -799,7 +799,7 @@ Plugin Install Location (GLOBAL):
   ├── .mcp.json                    ← MCP server config (auto-registered)
   └── servers/governance-mcp/      ← MCP dashboard server (starts on demand)
 
-Project Level (PER-PROJECT, created by /forge:init):
+Project Level (PER-PROJECT, created by /nxtg-forge:init):
   your-project/
   ├── .claude/governance.json      ← Project state (ONLY governance file)
   ├── .claude/checkpoints/         ← Optional snapshots

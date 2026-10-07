@@ -42,12 +42,12 @@ plugins/nxtg-forge/
 
 | Category | Commands |
 |----------|----------|
-| **Governance** | `/forge:init`, `/forge:status`, `/forge:status-enhanced`, `/forge:gap-analysis`, `/forge:compliance`, `/forge:command-center` |
-| **Feature Dev** | `/forge:feature`, `/forge:spec`, `/forge:agent-assign`, `/forge:integrate` |
-| **Quality** | `/forge:test`, `/forge:deploy`, `/forge:optimize`, `/forge:update` |
-| **State** | `/forge:checkpoint`, `/forge:restore`, `/forge:report` |
-| **Docs** | `/forge:docs-status`, `/forge:docs-update`, `/forge:docs-audit` |
-| **Dashboard** | `/forge:dashboard` |
+| **Governance** | `/nxtg-forge:init`, `/nxtg-forge:status`, `/nxtg-forge:status-enhanced`, `/nxtg-forge:gap-analysis`, `/nxtg-forge:compliance`, `/nxtg-forge:command-center` |
+| **Feature Dev** | `/nxtg-forge:feature`, `/nxtg-forge:spec`, `/nxtg-forge:agent-assign`, `/nxtg-forge:integrate` |
+| **Quality** | `/nxtg-forge:test`, `/nxtg-forge:deploy`, `/nxtg-forge:optimize`, `/nxtg-forge:update` |
+| **State** | `/nxtg-forge:checkpoint`, `/nxtg-forge:restore`, `/nxtg-forge:report` |
+| **Docs** | `/nxtg-forge:docs-status`, `/nxtg-forge:docs-update`, `/nxtg-forge:docs-audit` |
+| **Dashboard** | `/nxtg-forge:dashboard` |
 
 **Format:** Markdown with YAML frontmatter (`description` field). Body contains structured instructions for Claude Code.
 
@@ -145,11 +145,11 @@ The plugin includes its own Node.js MCP server (8 tools) separate from forge-orc
 
 ```
 forge-plugin (this repo)    ──stdio MCP──►  forge-orchestrator (9 tools)
-forge-plugin                ──spawns──►     forge-ui (http://localhost:5050)
+forge-ui (http://localhost:5050) runs separately; the plugin does not spawn it
 ```
 
 - **forge-orchestrator** (`../forge-orchestrator/`): Rust CLI + MCP server. This plugin calls its 9 MCP tools via stdio for task management, knowledge capture, drift detection. The orchestrator runs independently as a binary.
-- **forge-ui** (`../v3/`): React dashboard + Infinity Terminal. The `/forge:dashboard` command opens it in a browser.
+- **forge-ui** (`../forge-ui/`): React dashboard + Infinity Terminal. It runs from its own repo and requires sign-in since v3.4.1. `/nxtg-forge:dashboard` does NOT open it: that command writes a static HTML snapshot and needs no server.
 - **MCP is the only integration layer.** No direct imports or shared code between repos.
 
 ### Three MCP Servers
