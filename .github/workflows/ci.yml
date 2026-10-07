@@ -42,6 +42,9 @@ jobs:
       - name: Documented commands use the plugin namespace
         run: python3 .github/scripts/check-command-namespace.py
 
+      - name: plugin.json description counts match the tree
+        run: python3 .github/scripts/check-description-counts.py
+
       - name: Create issue on CI failure
         uses: jayqi/failed-build-issue-action@v1
         if: failure() && github.event.pull_request == null
