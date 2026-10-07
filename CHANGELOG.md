@@ -10,8 +10,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [3.10.5] — 2026-10-07
 
-Stage: internal (see STAGE)
-
 Compatibility with **forge-ui v3.4.1**, which now requires authentication on every `/api` route (GHSA-rc7c-r55p-923j), plus the hardening and governance work since v3.10.4. No new MCP tools, commands, agents or skills; no breaking changes.
 
 ### Fixed
