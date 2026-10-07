@@ -14,7 +14,7 @@ import json, pathlib, re, sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "nxtg-forge"
 FORMER_NAMES = {"forge"}  # 5d316c1 renamed nxtg-forge -> forge; a1a0cb0 renamed it back.
-SHIPPED = [ROOT / "README.md", ROOT / "docs", PLUGIN]
+SHIPPED = [ROOT / "README.md", ROOT / "UAT-GUIDE.md", ROOT / "CLAUDE.md", ROOT / "docs", PLUGIN]
 TEXT_EXT = {".md", ".sh", ".mjs", ".js", ".json", ".txt", ".yml", ".yaml"}
 # A slash command: "/" not preceded by a word char, "/", ":" or "." (that excludes URLs and paths).
 CMD = re.compile(r"(?<![\w/:.])/([a-z0-9][a-z0-9-]*):([a-z0-9][a-z0-9-]*)(\*)?")
