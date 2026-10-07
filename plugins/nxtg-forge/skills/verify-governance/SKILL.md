@@ -116,16 +116,26 @@ If evidence is inconclusive, **recommend manual review — do not auto-proceed.*
 
 Optional. The forge-ui Express API on port 5051 exposes `POST /api/governance/sentinel`; it
 requires `type`, `source`, `message` (400 otherwise) and is only reachable while
-`forge-ui` (`npm run dev` / the dashboard) is running:
+`forge-ui` (`npm run dev` / the dashboard) is running. Since forge-ui **v3.4.1** every `/api`
+route needs this install's access token (forge-ui `docs/api/LOCAL-CLIENT-AUTH.md`), so send it
+the way that doc's §3 shows for a server that is already running:
 ```bash
-curl -s -X POST http://localhost:5051/api/governance/sentinel \
-  -H "Content-Type: application/json" \
-  -d '{"type":"INFO","severity":"low","source":"verify-governance",
-       "message":"Verification complete: change JUSTIFIED",
-       "context":{"verdict":"JUSTIFIED","file":"src/foo.ts"}}'
+# forge-ui sentinel (local-client auth, forge-ui v3.4.1+)
+# The token is read from its file inside the pipe: printf is a shell builtin, so the value
+# never appears in any process's argv, on the terminal, or in the transcript.
+FORGE_UI_API="${FORGE_UI_API:-http://127.0.0.1:5051}"
+f="${FORGE_UI_SECRET_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/nxtg-forge/ui-secret}"
+printf 'header = "Authorization: Bearer %s"\n' "$(cat "$f")" |
+  curl -s -m 10 -K - -o /dev/null -w 'sentinel: HTTP %{http_code}\n' \
+    -X POST "$FORGE_UI_API/api/governance/sentinel" \
+    -H "Content-Type: application/json" \
+    -d '{"type":"INFO","severity":"low","source":"verify-governance",
+         "message":"Verification complete: change JUSTIFIED",
+         "context":{"verdict":"JUSTIFIED","file":"src/foo.ts"}}'
 ```
-If the server is down, skip it — the advisory hooks already write the file directly; do not
-block the verdict on a failed curl.
+`HTTP 200` = logged. `HTTP 401` = no token (the file is missing or holds another install's
+token). `HTTP 000` = the server is down. In every case, skip it: the advisory hooks already write
+the file directly, so do not block the verdict on a failed curl.
 
 ## Worked Example — code-quality flag
 
@@ -179,6 +189,10 @@ The `toBeNull()` assertion matches the contract.
   "out of scope." Scope authority is `.constitution.directive`.
 - **The sentinel curl needs a live server.** `POST /api/governance/sentinel` is served by forge-ui
   on port 5051, up only when the dashboard is running. It 400s without `type`+`source`+`message`.
+- **Since forge-ui v3.4.1 it also needs the token, and the token must stay secret.** Use the
+  Step 4 recipe as written. Never `echo`/`cat` the token, never put it in `-H "Authorization: ..."`
+  (that puts it on curl's argv, visible in `ps`), and never run forge-ui's `print-auth-url` through
+  Claude (it prints the token).
   If it's down, the hooks' own `append_sentinel_log` has already written to `.claude/governance.json` —
   never fail a verdict because the HTTP log didn't land.
 - **`.claude/governance.json` is the read authority, forge-orchestrator's `.forge/state.json` is a

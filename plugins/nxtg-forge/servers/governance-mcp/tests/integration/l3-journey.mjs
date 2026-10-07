@@ -36,7 +36,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:net";
 import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
@@ -243,6 +243,26 @@ function wsRoundtrip(base, token, canonical) {
   });
 }
 
+// The plugin's own skills tell users how to reach forge-ui under v3.4.1 auth. Leg D runs their bash
+// snippets VERBATIM (extracted from SKILL.md by a marker line), so the documented recipe and this
+// proof cannot drift apart.
+const SKILLS_DIR = join(SERVER_DIR, "..", "..", "skills");
+function skillSnippet(skill, marker) {
+  const md = readFileSync(join(SKILLS_DIR, skill, "SKILL.md"), "utf8").replace(/\r\n/g, "\n");
+  const block = [...md.matchAll(/```bash\n([\s\S]*?)```/g)].map((m) => m[1]).find((b) => b.includes(marker));
+  if (!block) throw new Error(`${skill}/SKILL.md: no bash block with marker "${marker}"`);
+  return block;
+}
+// Run a snippet as a user would, with a minimal env: the user's HOME, the API base, and the token
+// file. No XDG_CONFIG_HOME, so nothing can resolve to the operator's real token file.
+function runSnippet(snippet, { home, api, secretFile }) {
+  const r = spawnSync("bash", ["-c", snippet], {
+    env: { PATH: process.env.PATH, HOME: home, FORGE_UI_API: api, FORGE_UI_SECRET_FILE: secretFile },
+    encoding: "utf8", timeout: 20000,
+  });
+  return { code: r.status, out: `${r.stdout || ""}${r.stderr || ""}` };
+}
+
 async function uiStatus(base) {
   const r = await uiFetch(base, "/api/forge/status");
   const j = await r.json();
@@ -373,6 +393,36 @@ async function main() {
     const reflect = checkHealthContract(statusAfter.health?.score, statusAfter.health?.source, freshRust);
     check("post-mutation: UI health still == Math.round(fresh orchestrator health) [live read, not stale]", reflect.ok, reflect.reason);
     if (!reflect.ok) recordFinding("UI_HEALTH_CONTRACT_DRIFT", `post-mutation: ${reflect.reason}`);
+
+    // ── Leg D: the plugin skills' own forge-ui recipes, against v3.4.1 auth (DIRECTIVE-NXTG-20261007-14) ──
+    console.log("\n[Leg D] skill recipes vs forge-ui auth: verify-governance sentinel + browser-debugging health");
+    const secretFile = join(uiHome, "ui-secret-for-skills");
+    writeFileSync(secretFile, uiToken, { mode: 0o600 });
+    const absent = join(uiHome, "no-such-ui-secret");
+    const tokenFree = (out) => !out.includes(uiToken);
+
+    const sentinel = skillSnippet("verify-governance", "# forge-ui sentinel (local-client auth");
+    const sOk = runSnippet(sentinel, { home: uiHome, api: ui.base, secretFile });
+    // forge-ui v3.4.1 keeps sentinelLog in RUNTIME state (.forge/governance-runtime.json), not in the
+    // versioned .claude/governance.json (forge-ui src/services/governance-state-manager.ts:26,60).
+    const runtimePath = join(fixture, ".forge", "governance-runtime.json");
+    const sentinelLog = existsSync(runtimePath) ? (JSON.parse(readFileSync(runtimePath, "utf8")).sentinelLog || []) : [];
+    const logged = sentinelLog.some((e) => e?.source === "verify-governance" && /change JUSTIFIED/.test(e?.message || ""));
+    check("verify-governance sentinel recipe WITH the token → HTTP 200, entry in sentinelLog, token never printed",
+      /sentinel: HTTP 200\b/.test(sOk.out) && logged && tokenFree(sOk.out), `out=${sOk.out.trim()} logged=${logged}`);
+    const sNo = runSnippet(sentinel, { home: uiHome, api: ui.base, secretFile: absent });
+    check("verify-governance sentinel recipe WITHOUT a token → HTTP 401", /sentinel: HTTP 401\b/.test(sNo.out) && tokenFree(sNo.out),
+      `out=${sNo.out.trim()}`);
+
+    const health = skillSnippet("browser-debugging", "# forge-ui health (local-client auth");
+    const hOk = runSnippet(health, { home: uiHome, api: ui.base, secretFile });
+    check("browser-debugging health recipe WITH the token → \"API up\", token never printed",
+      /API up/.test(hOk.out) && tokenFree(hOk.out), `code=${hOk.code} out=${hOk.out.trim()}`);
+    const hNo = runSnippet(health, { home: uiHome, api: ui.base, secretFile: absent });
+    // Exit 22 is curl -f's "HTTP error >= 400": the server answered and refused. A timeout (28) or a
+    // dead server (7) must not pass as a refusal.
+    check("browser-debugging health recipe WITHOUT a token → refused by the server (curl exit 22, no \"API up\")",
+      !/API up/.test(hNo.out) && hNo.code === 22, `code=${hNo.code} out=${hNo.out.trim()}`);
   } finally {
     for (const c of [orchClient, govClient]) { try { if (c) await c.close(); } catch { /* */ } }
     for (const t of [orchTransport, govTransport]) { try { if (t) await t.close(); } catch { /* */ } }
