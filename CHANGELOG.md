@@ -8,6 +8,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.5] — 2026-10-07
+
+Compatibility with **forge-ui v3.4.1**, which now requires authentication on every `/api` route (GHSA-rc7c-r55p-923j), plus the hardening and governance work since v3.10.4. No new MCP tools, commands, agents or skills; no breaking changes.
+
+### Fixed
+
+- **`verify-governance` skill: the sentinel log call works against forge-ui v3.4.1.** It used to get `401`. It now authenticates as a local client (forge-ui `docs/api/LOCAL-CLIENT-AUTH.md`): the token is read from its file inside a pipe (`printf` → `curl -K -`), so it never reaches a command line, the terminal or the transcript. The call uses `127.0.0.1` and prints only the HTTP status (#47).
+- **`browser-debugging` skill:** the health check authenticates. It used to get `401` from v3.4.1 and never report "API up". Both curls now time out (`-m 5`) instead of hanging on a dead WSL2 `localhost` port. A one-line sign-in step was added: the user runs forge-ui's `print-auth-url` in their own terminal, not through Claude (#47).
+- **`core-nxtg-forge` skill:** removed the false claim that `/forge:dashboard` spawns forge-ui. `/forge:dashboard` opens a static HTML snapshot and needs no server; forge-ui runs from its own repo (#47).
+- **governance-mcp dependencies:** cleared all high/critical npm advisories (`@modelcontextprotocol/sdk`, `fast-uri`, `ip-address`, `nanoid`, `source-map-js`, `proxy-addr`). This is a lockfile-only change with no dependency-range changes (#38).
+
+### Added
+
+- **Release stage:** a root `STAGE` file (`internal`) is the one constant. The README badge and stage line, this CHANGELOG, the plugin and marketplace descriptions, and `/forge:status` (including `--json`) all state it, and CI fails if any surface disagrees (#44).
+- **Deterministic governance score (library):** `getGovernanceScore()` and the frozen `GOVERNANCE_SCORE_RUBRIC` v1.0 in governance-mcp. It scores committed-tree checks only, out of 90, and two runs on the same HEAD give byte-identical results. It is not exposed as an MCP tool (`728674c`).
+
+### Tests and CI
+
+- **L3 harness under forge-ui v3.4.1:** it authenticates as a local client (an in-memory token, a Bearer header, readiness on an authenticated `200`). New legs:
+  - **A0:** six probes with no credential, a wrong credential or a foreign Origin must be refused, with no project data in the response.
+  - **D:** runs the two skills' snippets verbatim, with and without the token.
+  - 26/26 against v3.4.1 (#46, #47).
+- **Node `-16` binding contract** pinned with tests (`01553bb`).
+- **CI:**
+  - `main` is PR-only with 7 required checks and `enforce_admins`.
+  - The CLA bot writes signatures to its own `cla-signatures` branch.
+  - PR Summary uses `GITHUB_TOKEN` (#39).
+
 ## [3.10.4] — 2026-07-19
 
 The **G-09 integration-harness suite** — machine-tested, CI-adoptable end-to-end coverage for all three Forge products at the three deployment tiers (L1 plugin-standalone · L2 plugin+orchestrator · L3 plugin+orchestrator+forge-ui). **Test infrastructure only — no runtime, tool, agent, command, or skill changes** (counts unchanged). Each leg was built refute-first and independently Codex-gated.
