@@ -46,12 +46,27 @@ Start both servers from `forge-ui/` (one command starts Vite :5050 + Express API
 cd forge-ui && npm run dev
 ```
 
-Confirm they're up before driving the browser:
+Confirm they're up before driving the browser. Since forge-ui **v3.4.1** every `/api` route,
+health included, needs this install's access token (forge-ui `docs/api/LOCAL-CLIENT-AUTH.md`), so
+an unauthenticated health check gets `401` and never prints "API up":
 
 ```bash
-curl -sf http://localhost:5050 >/dev/null && echo "UI up"
-curl -sf http://localhost:5051/api/health >/dev/null && echo "API up"
+# forge-ui health (local-client auth, forge-ui v3.4.1+)
+curl -sf -m 5 http://localhost:5050 >/dev/null && echo "UI up"
+FORGE_UI_API="${FORGE_UI_API:-http://127.0.0.1:5051}"
+f="${FORGE_UI_SECRET_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/nxtg-forge/ui-secret}"
+printf 'header = "Authorization: Bearer %s"\n' "$(cat "$f")" |
+  curl -sf -m 5 -K - -o /dev/null "$FORGE_UI_API/api/health" && echo "API up"
 ```
+
+The token is read inside the pipe (`printf` is a builtin), so it never reaches argv or the
+transcript. Use `127.0.0.1` for the API: `localhost` may resolve to `::1`, where it does not listen.
+`-m 5` matters on WSL2: there a dead `localhost` port can hang instead of refusing.
+
+**Sign-in.** Since v3.4.1 the dashboard opens on a sign-in screen. To get past it, the user runs
+this **in their own terminal, not through Claude** (it prints the token):
+`cd forge-ui && npx tsx src/server/auth/print-auth-url.ts` (a release archive: `node dist/server/auth/print-auth-url.js`),
+then opens the printed link.
 
 ## Core tools (Playwright MCP)
 
@@ -108,6 +123,10 @@ find the element, then act on its ref.
   cookies, auth, or localStorage carry over. A screenshot shows what a clean anonymous session
   renders, not "what the user sees" in their logged-in Windows Chrome. If a bug depends on auth
   state you must reproduce that state in the headless session first.
+- **Since forge-ui v3.4.1 the headless session lands on the sign-in screen.** Claude has no
+  token-safe way to sign it in: navigating to the `forge_token` link puts the token into the tool
+  call. Debug the sign-in screen itself, or ask the user to check signed-in views in their own
+  browser.
 - **`--console-level debug` means console output is noisy.** Absence of a visible error at the
   tail of `browser_console_messages` is not proof of no error — filter the full list for `error`.
 - **Snapshot before you interact.** `browser_click`/`browser_type` require a `ref` from
@@ -128,7 +147,8 @@ find the element, then act on its ref.
 
 If Playwright can't reach the UI:
 1. `curl -sf http://localhost:5050` — Vite up?
-2. `curl -sf http://localhost:5051/api/health` — API up?
+2. The authenticated health check under Prerequisites — API up? (A plain unauthenticated
+   `curl` gets `401` since forge-ui v3.4.1; that means "up, needs the token", not "down".)
 3. Restart with `cd forge-ui && npm run dev` if either fails.
 4. If the `browser_*` tools themselves are missing, confirm the session loaded
    `forge-ui/.mcp.json` (you're in the `forge-ui/` repo), then reconnect the MCP server.

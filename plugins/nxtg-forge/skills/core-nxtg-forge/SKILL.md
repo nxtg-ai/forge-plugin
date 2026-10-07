@@ -27,7 +27,7 @@ asserting behavior, because earlier docs invented CLI that never shipped (see Go
 |------|-----------|-------------|
 | `forge-orchestrator` | Rust binary `forge` (CLI + stdio MCP server, ~4 MB) | orchestrator-mcp (Rust) |
 | `forge-plugin` | Pure-markdown Claude Code plugin — commands, agents, skills, hooks + a Node MCP server | governance-mcp (Node) |
-| `forge-ui` | Vite 7 + React 19 dashboard on :5050 | spawned by `/forge:dashboard` |
+| `forge-ui` | Vite 7 + React 19 dashboard on :5050; sign-in required since v3.4.1 | runs from its own repo (`npm run dev`), not spawned by the plugin. `/forge:dashboard` is a separate static HTML snapshot that needs no server |
 
 ## The `forge` CLI (forge-orchestrator binary)
 
