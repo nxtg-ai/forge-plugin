@@ -112,7 +112,7 @@ export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || proc
   if (!gov) {
     return {
       initialized: false,
-      message: "No governance.json found. Run /forge:init to set up Forge.",
+      message: "No governance.json found. Run /nxtg-forge:init to set up Forge.",
       path: govPath,
     };
   }
@@ -526,7 +526,7 @@ export function getTestResults(root = process.env.FORGE_PROJECT_ROOT || process.
 export function listCheckpoints(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const checkpointDir = join(root, ".claude", "checkpoints");
   if (!existsSync(checkpointDir)) {
-    return { checkpoints: [], message: "No checkpoints found. Use /forge:checkpoint to create one." };
+    return { checkpoints: [], message: "No checkpoints found. Use /nxtg-forge:checkpoint to create one." };
   }
 
   const files = readdirSync(checkpointDir)
@@ -903,9 +903,9 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
           <h4 class="text-lg font-bold mb-1">🎮 Vibe Coder</h4>
           <p class="text-slate-400 text-xs mb-3">22 AI agents. Governance on autopilot. Ship faster with guardrails.</p>
           <div class="space-y-1.5 text-xs text-slate-300">
-            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /forge:status — project health at a glance</div>
-            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /forge:feature — plan and build features</div>
-            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /forge:test — run tests with analysis</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /nxtg-forge:status — project health at a glance</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /nxtg-forge:feature — plan and build features</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /nxtg-forge:test — run tests with analysis</div>
             <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 22 specialized agents on demand</div>
           </div>
           <div class="mt-3 pt-3 border-t border-slate-700/50">
@@ -965,28 +965,28 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
             <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
             <div>
               <p class="text-sm text-slate-200 font-medium">Initialize governance</p>
-              <code class="text-xs text-slate-400">/forge:init</code>
+              <code class="text-xs text-slate-400">/nxtg-forge:init</code>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
             <div>
               <p class="text-sm text-slate-200 font-medium">Plan your first feature</p>
-              <code class="text-xs text-slate-400">/forge:feature "add user auth"</code>
+              <code class="text-xs text-slate-400">/nxtg-forge:feature "add user auth"</code>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
             <div>
               <p class="text-sm text-slate-200 font-medium">Check health anytime</p>
-              <code class="text-xs text-slate-400">/forge:status</code>
+              <code class="text-xs text-slate-400">/nxtg-forge:status</code>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
             <div>
               <p class="text-sm text-slate-200 font-medium">Find gaps before shipping</p>
-              <code class="text-xs text-slate-400">/forge:gap-analysis</code>
+              <code class="text-xs text-slate-400">/nxtg-forge:gap-analysis</code>
             </div>
           </div>
         </div>

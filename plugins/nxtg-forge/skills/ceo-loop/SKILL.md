@@ -3,7 +3,7 @@ name: ceo-loop
 description: >
   CEO Decision Loop — the ORBIT execution protocol (OBSERVE → REASON → BUILD → INSPECT → TURN) for
   one iteration of NXTG-Forge autonomous product governance. Preloaded into the nxtg-ceo-loop agent and
-  started by the /forge:ceo-loop command; the ceo-loop-stop.sh Stop hook re-invokes it each iteration
+  started by the /nxtg-forge:ceo-loop command; the ceo-loop-stop.sh Stop hook re-invokes it each iteration
   until the queue empties or limits hit. Use when running or resuming a CEO-LOOP: classify pending
   decisions by depth, apply the impact×reversibility matrix, write the append-only decision journal +
   progress file, run retrograde verification, update trust calibration, and decide continue-or-stop.
@@ -119,7 +119,7 @@ If this file is absent, CEO-LOOP does a proactive scan instead (see OBSERVE phas
 
 Real failure modes of the loop mechanism (`hooks/scripts/ceo-loop-stop.sh` + the `nxtg-ceo-loop` agent). Read before running.
 
-1. **State is keyed to the current working directory, not a fixed project.** The Stop hook sets `PROJECT_ROOT="$(pwd)"` and looks for `.claude/ceo-loop-state.json` under it (Guard 1). If the loop is running from a different CWD than where the state file was written, the hook silently exits 0 — the loop dies with **no error and no re-feed**. Always run from the same project root where `/forge:ceo-loop` wrote the state.
+1. **State is keyed to the current working directory, not a fixed project.** The Stop hook sets `PROJECT_ROOT="$(pwd)"` and looks for `.claude/ceo-loop-state.json` under it (Guard 1). If the loop is running from a different CWD than where the state file was written, the hook silently exits 0 — the loop dies with **no error and no re-feed**. Always run from the same project root where `/nxtg-forge:ceo-loop` wrote the state.
 
 2. **No `jq` → the loop dies silently.** Guard 2 exits 0 if `jq` is not on PATH — no warning. Independently, the time-limit check needs `python3`; if it is missing, `ELAPSED=0` and the **time limit never fires** — only `max_iterations` or a manual `active:false` can stop the loop.
 
@@ -133,7 +133,7 @@ Real failure modes of the loop mechanism (`hooks/scripts/ceo-loop-stop.sh` + the
 
 7. **Trust calibration only moves if INSPECT updates the counters.** `correct_decisions`/`incorrect_decisions` in the state file are the sole inputs to `trust_level` and the accuracy line the hook injects. If a retrograde check does not increment them, trust never changes and the injected accuracy line stays blank.
 
-8. **Inside the `nxtg-ceo-loop` agent there is no Bash tool.** That agent's allowlist is `Read, Grep, Glob, TodoWrite, Task, Write, Edit` — no Bash. When this skill runs under that agent, the `cat`/`jq`/`git`/`grep -r` snippets below **will not execute**; read state files with `Read` and scan with `Grep`/`Glob` instead. The Bash snippets apply when the loop is driven directly by the `/forge:ceo-loop` command (whose `allowed-tools` does grant Bash).
+8. **Inside the `nxtg-ceo-loop` agent there is no Bash tool.** That agent's allowlist is `Read, Grep, Glob, TodoWrite, Task, Write, Edit` — no Bash. When this skill runs under that agent, the `cat`/`jq`/`git`/`grep -r` snippets below **will not execute**; read state files with `Read` and scan with `Grep`/`Glob` instead. The Bash snippets apply when the loop is driven directly by the `/nxtg-forge:ceo-loop` command (whose `allowed-tools` does grant Bash).
 
 ---
 
@@ -380,5 +380,5 @@ Queue status: EMPTY / {N} remaining (time limit reached)
 
 Vision alignment check: {all decisions aligned | N misaligned — see journal}
 
-Next session: Re-run /forge:ceo-loop when decisions accumulate.
+Next session: Re-run /nxtg-forge:ceo-loop when decisions accumulate.
 ```

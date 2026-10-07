@@ -1,4 +1,4 @@
-# /forge:docs-audit
+# /nxtg-forge:docs-audit
 
 > Comprehensive documentation quality audit covering JSDoc coverage, key file inventory, link validation, code example verification, and freshness scoring.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Documentation |
-| **Syntax** | `/forge:docs-audit` |
+| **Syntax** | `/nxtg-forge:docs-audit` |
 
 ---
 
 ## What It Does
 
-`/forge:docs-audit` is the deep documentation quality assessment. It runs five audit dimensions: coverage analysis (what percentage of exported symbols have JSDoc), file inventory (which key files like README, CHANGELOG, CONTRIBUTING, and LICENSE exist), link validation (do internal markdown links point to real files), code example validation (do code blocks in docs reference existing functions and files), and freshness scoring (how recently were docs updated relative to source).
+`/nxtg-forge:docs-audit` is the deep documentation quality assessment. It runs five audit dimensions: coverage analysis (what percentage of exported symbols have JSDoc), file inventory (which key files like README, CHANGELOG, CONTRIBUTING, and LICENSE exist), link validation (do internal markdown links point to real files), code example validation (do code blocks in docs reference existing functions and files), and freshness scoring (how recently were docs updated relative to source).
 
 The output is a multi-score report: Coverage %, Completeness %, Freshness %, and Link Health %, plus an overall average. Each dimension lists specific findings -- undocumented exports, missing key files, broken links, stale pages -- so you know exactly what to fix. The issues are severity-ranked and the recommendations are prioritized by impact.
 
-Without this command, auditing documentation quality means manually checking for broken links, eyeballing JSDoc coverage by scrolling through code, and hoping someone notices when key files are missing. `/forge:docs-audit` automates the entire audit and gives you concrete scores to track over time.
+Without this command, auditing documentation quality means manually checking for broken links, eyeballing JSDoc coverage by scrolling through code, and hoping someone notices when key files are missing. `/nxtg-forge:docs-audit` automates the entire audit and gives you concrete scores to track over time.
 
 ## Syntax & Options
 
 ```
-/forge:docs-audit
+/nxtg-forge:docs-audit
 ```
 
 This command takes no arguments. It always runs the full five-dimension audit.
@@ -32,14 +32,14 @@ This command takes no arguments. It always runs the full five-dimension audit.
 - **New maintainer onboarding**: Audit the project's documentation to identify what a new contributor would need.
 - **Quarterly documentation review**: Run it periodically to catch documentation decay.
 
-For a quick health check without the full audit, use `/forge:docs-status`. For fixing issues found by the audit, use `/forge:docs-update`.
+For a quick health check without the full audit, use `/nxtg-forge:docs-status`. For fixing issues found by the audit, use `/nxtg-forge:docs-update`.
 
 ## Examples
 
 ### Example 1: Full Audit Report
 
 ```
-/forge:docs-audit
+/nxtg-forge:docs-audit
 ```
 
 ```
@@ -78,13 +78,13 @@ ISSUES FOUND
 
 RECOMMENDATIONS
   1. [HIGH] Create CONTRIBUTING.md for open-source readiness
-  2. [HIGH] Add JSDoc to 35 undocumented exports (/forge:docs-update --jsdoc)
+  2. [HIGH] Add JSDoc to 35 undocumented exports (/nxtg-forge:docs-update --jsdoc)
   3. [MEDIUM] Update docs/API.md to match current source
 
 ---
 Actions:
-  /forge:docs-update           Fix stale docs
-  /forge:docs-update --jsdoc   Add missing JSDoc
+  /nxtg-forge:docs-update           Fix stale docs
+  /nxtg-forge:docs-update --jsdoc   Add missing JSDoc
 ```
 
 ## Power Use Cases
@@ -97,9 +97,9 @@ Use the link validation dimension as a pre-merge check. Broken internal links in
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:docs-status** | Quick health check; audit is the deep dive |
-| **/forge:docs-update** | Audit finds the problems; update fixes them |
-| **/forge:gap-analysis** | Gap analysis includes a documentation dimension, but audit goes deeper on docs specifically |
+| **/nxtg-forge:docs-status** | Quick health check; audit is the deep dive |
+| **/nxtg-forge:docs-update** | Audit finds the problems; update fixes them |
+| **/nxtg-forge:gap-analysis** | Gap analysis includes a documentation dimension, but audit goes deeper on docs specifically |
 | **docs agent** | For large documentation rewrites, assign the docs agent to handle complex updates |
 
 ## Level Progression

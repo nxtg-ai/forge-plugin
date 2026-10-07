@@ -102,8 +102,8 @@ Oracle:
 | **Builder agent** | Oracle monitors in parallel while Builder implements -- non-blocking oversight |
 | **Guardian agent** | Oracle checks strategic alignment; Guardian checks technical quality. Together: "right thing, built right" |
 | **Governance Verifier** | Oracle provides ongoing monitoring; Verifier adjudicates specific flagged concerns |
-| **/forge:status** | Oracle findings surface in the governance status display |
-| **/forge:compliance** | Full compliance check includes Oracle's scope and drift analysis |
+| **/nxtg-forge:status** | Oracle findings surface in the governance status display |
+| **/nxtg-forge:compliance** | Full compliance check includes Oracle's scope and drift analysis |
 
 ## Level Progression
 

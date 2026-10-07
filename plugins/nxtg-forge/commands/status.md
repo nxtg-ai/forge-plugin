@@ -184,10 +184,10 @@ Example options (adapt based on actual health data):
 
 **13. Handle the selection:**
 - If "Commit changes" → run the `/commit` skill
-- If "Add tests" → run `/forge:feature "Add comprehensive tests for the project"`
-- If "Run gap analysis" → run `/forge:gap-analysis`
-- If "Plan a feature" → run `/forge:feature`
-- If "Initialize governance" → run `/forge:init`
+- If "Add tests" → run `/nxtg-forge:feature "Add comprehensive tests for the project"`
+- If "Run gap analysis" → run `/nxtg-forge:gap-analysis`
+- If "Plan a feature" → run `/nxtg-forge:feature`
+- If "Initialize governance" → run `/nxtg-forge:init`
 - If user types something custom → treat it as a new task and proceed
 
 CRITICAL REMINDERS:

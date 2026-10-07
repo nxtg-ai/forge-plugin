@@ -70,8 +70,8 @@ User: "What have you learned about my workflow?"
 
 Learning agent:
   - Analyzes session history
-  - Reports: "You typically run /forge:status before starting
-    work, then /forge:feature, then build, then test. You
+  - Reports: "You typically run /nxtg-forge:status before starting
+    work, then /nxtg-forge:feature, then build, then test. You
     always run tests before committing. You prefer conventional
     commits with scope."
   - Result: Surfaces patterns the user may not have noticed,
@@ -93,7 +93,7 @@ Learning agent:
 | **Builder agent** | Preferences inform code generation -- import style, naming conventions, test framework |
 | **Testing agent** | Framework preference, coverage targets, and test style are all learned parameters |
 | **Guardian agent** | Quality gate thresholds adapt to your project's specific standards |
-| **/forge:init** | Initial preferences can be seeded during project initialization |
+| **/nxtg-forge:init** | Initial preferences can be seeded during project initialization |
 
 ## Level Progression
 

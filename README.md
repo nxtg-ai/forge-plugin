@@ -44,12 +44,12 @@ That's it. No build step. No config files. No runtime dependencies.
 ## Key Commands
 
 ```
-/forge:status              → Project health score at a glance
-/forge:gap-analysis        → Find missing tests, docs, security gaps
-/forge:feature "desc"      → Multi-agent feature development
-/forge:checkpoint           → Save restorable project state
-/forge:test                 → Run tests with detailed analysis
-/forge:deploy               → Deploy with pre-flight validation
+/nxtg-forge:status              → Project health score at a glance
+/nxtg-forge:gap-analysis        → Find missing tests, docs, security gaps
+/nxtg-forge:feature "desc"      → Multi-agent feature development
+/nxtg-forge:checkpoint           → Save restorable project state
+/nxtg-forge:test                 → Run tests with detailed analysis
+/nxtg-forge:deploy               → Deploy with pre-flight validation
 ```
 
 ## How It Works

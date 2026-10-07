@@ -108,7 +108,7 @@ After showing results, provide analysis:
 All tests passing. Test health is good.
 
 Suggestions:
-  - Consider adding tests for uncovered files (use /forge:gap-analysis --scope testing)
+  - Consider adding tests for uncovered files (use /nxtg-forge:gap-analysis --scope testing)
   - Current test file count: {count}
 ```
 
@@ -127,7 +127,7 @@ Quick fix hints:
 **If no tests exist:**
 ```
 No tests found. Consider adding tests:
-  - Run /forge:gap-analysis --scope testing to identify coverage gaps
+  - Run /nxtg-forge:gap-analysis --scope testing to identify coverage gaps
   - Test files should be in src/**/__tests__/ or src/**/*.test.ts
 ```
 
@@ -151,7 +151,7 @@ Try:
 After test run, offer next steps:
 ```
 Next steps:
-  /forge:status       View overall project health
-  /forge:checkpoint   Save current state
-  /forge:report       Generate session report
+  /nxtg-forge:status       View overall project health
+  /nxtg-forge:checkpoint   Save current state
+  /nxtg-forge:report       Generate session report
 ```

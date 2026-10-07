@@ -119,10 +119,10 @@ classic `.git/hooks` pre-commit scripts:
 |---|---|
 | `security-command-guard.sh` (PreToolUse: Bash) | **Blocks** force-push to main/master and `git reset --hard origin/*` (exit 2 = deny) |
 | `pre-task.sh` (UserPromptSubmit) | Advisory: warns of uncommitted changes past the >10-file / >30-min threshold; posts branch + dirty count to session tracking |
-| `post-task.sh` (Stop) | Advisory: suggests `/forge:checkpoint` after major work, hints at smaller commits |
+| `post-task.sh` (Stop) | Advisory: suggests `/nxtg-forge:checkpoint` after major work, hints at smaller commits |
 | `smoke-test-reminder.sh` (Stop) | Advisory: reminds you to smoke-test after editing server/test files |
 
-`/forge:checkpoint` and `/forge:restore` provide governance-state snapshots that complement
+`/nxtg-forge:checkpoint` and `/nxtg-forge:restore` provide governance-state snapshots that complement
 git — use them at milestone boundaries, not as a replacement for commits.
 
 ## Additional resources

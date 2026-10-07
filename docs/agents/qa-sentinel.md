@@ -121,7 +121,7 @@ QA Sentinel:
 | **Testing agent** | QA Sentinel designs the strategy; Testing agent writes the tests |
 | **CRUCIBLE Detective** | QA Sentinel enforces gates proactively; Detective audits retroactively |
 | **Guardian agent** | Guardian enforces quality gates at commit time; QA Sentinel designs what those gates should check |
-| **/forge:test** | Run the test suite, then use QA Sentinel to evaluate whether the results are meaningful |
+| **/nxtg-forge:test** | Run the test suite, then use QA Sentinel to evaluate whether the results are meaningful |
 
 ## Level Progression
 

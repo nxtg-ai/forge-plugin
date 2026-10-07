@@ -1,4 +1,4 @@
-# /forge:optimize
+# /nxtg-forge:optimize
 
 > Analyze your codebase across seven dimensions -- large files, type safety, dead code, dependencies, duplication, console statements, and TODO debt -- then optionally apply safe fixes.
 
@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Quality & Testing |
-| **Syntax** | `/forge:optimize [--scope performance|bundle|deps|code-quality|types] [--fix] [--report]` |
+| **Syntax** | `/nxtg-forge:optimize [--scope performance|bundle|deps|code-quality|types] [--fix] [--report]` |
 
 ---
 
 ## What It Does
 
-`/forge:optimize` is the codebase health scanner. It examines seven dimensions of code quality: large files that need refactoring (over 300 lines), type safety issues (`as any` and `as unknown` casts), dead code (exported symbols never imported elsewhere), dependency health (outdated, unused, and vulnerable packages), code duplication (repeated patterns across files), console statements in production code, and TODO/FIXME/HACK technical debt markers.
+`/nxtg-forge:optimize` is the codebase health scanner. It examines seven dimensions of code quality: large files that need refactoring (over 300 lines), type safety issues (`as any` and `as unknown` casts), dead code (exported symbols never imported elsewhere), dependency health (outdated, unused, and vulnerable packages), code duplication (repeated patterns across files), console statements in production code, and TODO/FIXME/HACK technical debt markers.
 
 When the Task tool is available, the command spawns three parallel agents -- a detective for code quality, a performance agent for dependencies, and another detective for dead code -- cutting analysis time by roughly 3x compared to sequential scanning. The results are merged into a single optimization report with a 0-100 score and five prioritized recommendations.
 
@@ -21,7 +21,7 @@ The `--fix` flag enables safe automated fixes, but never without approval. It ru
 ## Syntax & Options
 
 ```
-/forge:optimize [--scope performance|bundle|deps|code-quality|types] [--fix] [--report]
+/nxtg-forge:optimize [--scope performance|bundle|deps|code-quality|types] [--fix] [--report]
 ```
 
 | Option | Description |
@@ -36,14 +36,14 @@ The `--fix` flag enables safe automated fixes, but never without approval. It ru
 - **Before a refactoring session**: Get the data on which files are largest, which exports are unused, and where duplication exists.
 - **Dependency maintenance**: Use `--scope deps` to focus on outdated and unused packages.
 
-For a broader project assessment that includes testing gaps, documentation, and security, use `/forge:gap-analysis`. For deployment readiness that includes build and test validation, use `/forge:deploy --validate-only`.
+For a broader project assessment that includes testing gaps, documentation, and security, use `/nxtg-forge:gap-analysis`. For deployment readiness that includes build and test validation, use `/nxtg-forge:deploy --validate-only`.
 
 ## Examples
 
 ### Example 1: Full Optimization Report
 
 ```
-/forge:optimize
+/nxtg-forge:optimize
 ```
 
 ```
@@ -88,7 +88,7 @@ TOP RECOMMENDATIONS
 ### Example 2: Fix Mode
 
 ```
-/forge:optimize --fix
+/nxtg-forge:optimize --fix
 ```
 
 Runs the full analysis, then presents:
@@ -107,7 +107,7 @@ Proceed with fixes? (yes / modify / cancel)
 
 ## Power Use Cases
 
-Run `/forge:optimize --scope types` before a TypeScript strict-mode migration to catalog every `as any` cast that needs fixing. The report gives you the exact file and line for each one.
+Run `/nxtg-forge:optimize --scope types` before a TypeScript strict-mode migration to catalog every `as any` cast that needs fixing. The report gives you the exact file and line for each one.
 
 Use parallel agent execution for large codebases. When the Task tool is available, the three-agent split (code quality + dependency health + dead code) processes the analysis concurrently.
 
@@ -115,9 +115,9 @@ Use parallel agent execution for large codebases. When the Task tool is availabl
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:gap-analysis** | Gap analysis is breadth; optimize is depth on code quality specifically |
-| **/forge:test** | Run tests after applying optimizations to verify nothing broke |
-| **/forge:status** | Status shows the health score; optimize shows what is dragging it down |
+| **/nxtg-forge:gap-analysis** | Gap analysis is breadth; optimize is depth on code quality specifically |
+| **/nxtg-forge:test** | Run tests after applying optimizations to verify nothing broke |
+| **/nxtg-forge:status** | Status shows the health score; optimize shows what is dragging it down |
 | **refactor agent** | For complex refactoring beyond simple fixes, assign the refactor agent |
 | **performance agent** | For runtime performance profiling beyond static analysis |
 
@@ -134,7 +134,7 @@ Use parallel agent execution for large codebases. When the Task tool is availabl
 - The `--fix` flag always shows a plan and waits for confirmation. It never writes files without your approval.
 - "Dead exports" detection checks whether an exported symbol is imported anywhere in the project. It may flag symbols that are used by external consumers -- review before removing.
 - Console statement detection excludes test files by default. Production code console usage is what gets flagged.
-- The 0-100 optimization score is separate from the health score in `/forge:status`. They measure different things.
+- The 0-100 optimization score is separate from the health score in `/nxtg-forge:status`. They measure different things.
 
 ---
 

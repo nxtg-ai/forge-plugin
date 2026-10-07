@@ -89,7 +89,7 @@ Detect the test runner (vitest, jest, or pytest) and execute the test suite. May
 
 ### forge_list_checkpoints
 
-List all saved governance checkpoints with their names and creation dates. Checkpoints are snapshots of governance state created by `/forge:checkpoint`.
+List all saved governance checkpoints with their names and creation dates. Checkpoints are snapshots of governance state created by `/nxtg-forge:checkpoint`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -267,16 +267,16 @@ Users do not invoke MCP tools directly. Agents, hooks, and commands call them au
 
 **Governance tools are called when:**
 - The `guardian` agent runs a pre-commit quality check (calls `forge_get_governance_health`, `forge_security_scan`)
-- `/forge:status` displays project health (calls `forge_get_governance_health`, `forge_get_git_status`, `forge_get_code_metrics`)
-- `/forge:dashboard` opens the visual dashboard (calls `forge_open_dashboard`)
+- `/nxtg-forge:status` displays project health (calls `forge_get_governance_health`, `forge_get_git_status`, `forge_get_code_metrics`)
+- `/nxtg-forge:dashboard` opens the visual dashboard (calls `forge_open_dashboard`)
 - The `pre-task.sh` hook syncs state at session start (calls `forge_get_governance_state`)
 
 **Orchestrator tools are called when:**
 - The `orchestrator` agent assigns work to sub-agents (calls `forge_get_tasks`, `forge_claim_task`)
 - An agent finishes a task (calls `forge_complete_task` with a result summary)
-- `/forge:status-enhanced` shows the full task board (calls `forge_get_tasks`, `forge_get_state`)
+- `/nxtg-forge:status-enhanced` shows the full task board (calls `forge_get_tasks`, `forge_get_state`)
 - The `learning` agent captures a decision or pattern (calls `forge_capture_knowledge`)
-- `/forge:gap-analysis` checks for vision drift (calls `forge_check_drift`)
+- `/nxtg-forge:gap-analysis` checks for vision drift (calls `forge_check_drift`)
 
 ---
 
@@ -292,4 +292,4 @@ Each server has its own health tool — **different names, different focus** (`f
 | **Requires** | Any codebase | `forge init` (initialized project) |
 | **Score** | 0-100 with letter grade (A-F) | 0-100 with dimensional breakdown |
 
-When `/forge:status` runs at L1 (no `forge` binary) it calls `forge_get_governance_health`; at L2 it also calls the orchestrator's `forge_get_health` for the drift/governance dimensions. When `forge status` runs from the CLI, it uses the orchestrator version. See [Health Scoring](C-14-health-scoring.md) for the full scoring methodology.
+When `/nxtg-forge:status` runs at L1 (no `forge` binary) it calls `forge_get_governance_health`; at L2 it also calls the orchestrator's `forge_get_health` for the drift/governance dimensions. When `forge status` runs from the CLI, it uses the orchestrator version. See [Health Scoring](C-14-health-scoring.md) for the full scoring methodology.

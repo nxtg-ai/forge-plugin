@@ -266,8 +266,8 @@ CEO-LOOP: "Is dark mode in the vision? No. Is it critical for saving lives? No.
 
 The loop runs via the **ORBIT model** — five phases per iteration, persistent across context windows.
 
-**Activate with**: `/forge:ceo-loop [max-iterations] [time-limit-minutes]`
-**Cancel with**: `/forge:ceo-loop-cancel`
+**Activate with**: `/nxtg-forge:ceo-loop [max-iterations] [time-limit-minutes]`
+**Cancel with**: `/nxtg-forge:ceo-loop-cancel`
 
 The Stop hook (`ceo-loop-stop.sh`) handles loop persistence — it reads `.claude/ceo-loop-state.json`, increments the iteration counter, and re-feeds an adaptive prompt drawn from the progress file. You don't need to re-invoke manually.
 

@@ -107,7 +107,7 @@ Security:
 | **Guardian** | Guardian spawns Security as a parallel subagent during quality gates. Security provides the deep scan; Guardian aggregates with other dimensions. |
 | **Compliance** | Security handles technical vulnerabilities; Compliance handles legal and regulatory. Together they cover the full risk surface for release readiness. |
 | **Detective** | Detective includes a security dimension in its health score. For deep dives, Detective delegates to the Security agent. |
-| **/forge:deploy** | Deployment workflows should include a Security scan. Critical findings block deployment; medium findings are logged. |
+| **/nxtg-forge:deploy** | Deployment workflows should include a Security scan. Critical findings block deployment; medium findings are logged. |
 
 ## Level Progression
 
@@ -137,4 +137,4 @@ Security:
 
 ---
 
-*See also: [Guardian](guardian.md) | [Compliance](compliance.md) | [/forge:deploy](../commands/deploy.md)*
+*See also: [Guardian](guardian.md) | [Compliance](compliance.md) | [/nxtg-forge:deploy](../commands/deploy.md)*

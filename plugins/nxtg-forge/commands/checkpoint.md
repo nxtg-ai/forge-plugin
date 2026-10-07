@@ -72,7 +72,7 @@ Checkpoint saved: {id}
   Uncommitted changes: {yes/no}
   Location: .claude/checkpoints/{id}.json
 
-Restore with: /forge:checkpoint restore {id}
+Restore with: /nxtg-forge:checkpoint restore {id}
 ```
 
 ### Restore Checkpoint
@@ -131,15 +131,15 @@ NXTG-Forge Checkpoints
 Total: {count} checkpoint(s)
 
 Actions:
-  /forge:checkpoint restore <id>
-  /forge:checkpoint clear <id>
+  /nxtg-forge:checkpoint restore <id>
+  /nxtg-forge:checkpoint clear <id>
 ```
 
 If no checkpoints exist:
 ```
 No checkpoints found.
 
-Save one with: /forge:checkpoint save [name]
+Save one with: /nxtg-forge:checkpoint save [name]
 ```
 
 ### Clear Checkpoint

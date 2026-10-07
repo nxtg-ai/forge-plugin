@@ -15,9 +15,9 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 **What you get:** All 33 agents, 23 slash commands, 33 skills, and 13 hooks (4 blocking security guards + 9 advisory governance) — working inside Claude Code with zero additional setup.
 
 **Start here:**
-1. [/forge:init](commands/init.md) — 60-second setup wizard
-2. [/forge:status](commands/status.md) — see your project's health at a glance
-3. [/forge:feature](commands/feature.md) — build your first feature with agent orchestration
+1. [/nxtg-forge:init](commands/init.md) — 60-second setup wizard
+2. [/nxtg-forge:status](commands/status.md) — see your project's health at a glance
+3. [/nxtg-forge:feature](commands/feature.md) — build your first feature with agent orchestration
 
 **Read:** [Commands Reference](commands/README.md) for what you can do right now.
 
@@ -30,7 +30,7 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 **Start here:**
 1. Install: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`
 2. Initialize: `forge init` in your project
-3. [/forge:command-center](commands/command-center.md) — activate the orchestrator
+3. [/nxtg-forge:command-center](commands/command-center.md) — activate the orchestrator
 
 **Read:** [Agents Reference](agents/README.md) to see which agents gain orchestrator superpowers.
 
@@ -42,7 +42,7 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 
 **Start here:**
 1. Clone and run: `cd forge-ui && npm install && npm run dev`
-2. [/forge:dashboard](commands/dashboard.md) — open the dashboard
+2. [/nxtg-forge:dashboard](commands/dashboard.md) — open the dashboard
 
 **Read:** The L3 sections in individual agent/command docs to see what becomes visual.
 
@@ -64,17 +64,17 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 
 ```mermaid
 graph TD
-    U[You in Claude Code] -->|/forge:feature| F[Feature Pipeline]
+    U[You in Claude Code] -->|/nxtg-forge:feature| F[Feature Pipeline]
     F --> P[Planner agent]
     P -->|approved plan| B[Builder agent]
     P -->|approved plan| T[Testing agent]
     B & T -->|code + tests| G[Guardian agent]
     G -->|quality gates pass| S[Ship it]
 
-    U -->|/forge:status| H[Governance MCP]
+    U -->|/nxtg-forge:status| H[Governance MCP]
     H --> HR[Health report: score, grade, gaps]
 
-    U -->|/forge:command-center| O[Orchestrator MCP - L2]
+    U -->|/nxtg-forge:command-center| O[Orchestrator MCP - L2]
     O --> TM[Tasks + Knowledge + Drift Detection]
 ```
 
@@ -97,11 +97,11 @@ No code dependencies between products. MCP is the only integration layer. Each w
 ### Most-Used Commands
 | Command | What It Does |
 |---------|-------------|
-| `/forge:status` | Project health at a glance |
-| `/forge:feature "X"` | Build a feature with full agent orchestration |
-| `/forge:test` | Run tests with detailed analysis |
-| `/forge:gap-analysis` | Find gaps in testing, docs, security, architecture |
-| `/forge:checkpoint` | Save state before risky changes |
+| `/nxtg-forge:status` | Project health at a glance |
+| `/nxtg-forge:feature "X"` | Build a feature with full agent orchestration |
+| `/nxtg-forge:test` | Run tests with detailed analysis |
+| `/nxtg-forge:gap-analysis` | Find gaps in testing, docs, security, architecture |
+| `/nxtg-forge:checkpoint` | Save state before risky changes |
 
 ### Most-Used Agents
 | Agent | When You Need It |

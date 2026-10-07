@@ -184,7 +184,7 @@ Always show what was changed and confirm before applying.
 
 ```
 Next steps:
-  /forge:test         Verify optimizations don't break tests
-  /forge:status       View updated project state
-  /forge:gap-analysis Full gap analysis
+  /nxtg-forge:test         Verify optimizations don't break tests
+  /nxtg-forge:status       View updated project state
+  /nxtg-forge:gap-analysis Full gap analysis
 ```

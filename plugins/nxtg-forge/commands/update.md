@@ -110,7 +110,7 @@ Display any config issues found.
 | Governance | {valid / needs init / migrated} |
 | Hooks | {active / not configured} |
 
-**Next:** Restart Claude Code to load the new version, then `/forge:status`
+**Next:** Restart Claude Code to load the new version, then `/nxtg-forge:status`
 ```
 
 ## Error Handling

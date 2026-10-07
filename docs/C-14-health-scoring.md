@@ -6,7 +6,7 @@ Forge assigns your project a health score from 0 to 100, displayed as a letter g
 
 **L1 (plugin)**:
 ```
-/forge:status
+/nxtg-forge:status
 ```
 
 **L2 (orchestrator)**:

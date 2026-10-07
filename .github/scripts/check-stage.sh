@@ -49,9 +49,9 @@ desc_check .claude-plugin/marketplace.json              '.description'          
 desc_check .claude-plugin/marketplace.json              '.plugins[0].description'   "marketplace plugin entry description"
 
 STATUS=plugins/nxtg-forge/commands/status.md
-has        "$STATUS" "**Stage: $S.**"                       "/forge:status stage line"
-has        "$STATUS" "\"stage\": \"$S\""                    "/forge:status --json stage field"
-none_other "$STATUS" '(\*\*Stage: STAGE_ALT\.|"stage": "STAGE_ALT")' "/forge:status has no other stage"
+has        "$STATUS" "**Stage: $S.**"                       "/nxtg-forge:status stage line"
+has        "$STATUS" "\"stage\": \"$S\""                    "/nxtg-forge:status --json stage field"
+none_other "$STATUS" '(\*\*Stage: STAGE_ALT\.|"stage": "STAGE_ALT")' "/nxtg-forge:status has no other stage"
 
 echo "stage-check: $fail red over $checked checked"
 [ "$fail" -eq 0 ]

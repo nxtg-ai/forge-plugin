@@ -133,7 +133,7 @@ Docs:
 | **Detective** | Detective spawns Docs as a subagent for documentation coverage scoring during health checks. |
 | **Planner** | After feature implementation, Planner routes to Docs for TSDoc generation on new exports. |
 | **Guardian** | Guardian checks for missing documentation as part of its quality gate. Docs generates the documentation to close the gaps. |
-| **/forge:docs-audit** | The `/forge:docs-audit` command triggers the Docs agent in audit mode for a quick coverage check. |
+| **/nxtg-forge:docs-audit** | The `/nxtg-forge:docs-audit` command triggers the Docs agent in audit mode for a quick coverage check. |
 
 ## Level Progression
 
@@ -153,4 +153,4 @@ Docs:
 
 ---
 
-*See also: [Detective](detective.md) | [Guardian](guardian.md) | [/forge:docs-audit](../commands/docs-audit.md)*
+*See also: [Detective](detective.md) | [Guardian](guardian.md) | [/nxtg-forge:docs-audit](../commands/docs-audit.md)*

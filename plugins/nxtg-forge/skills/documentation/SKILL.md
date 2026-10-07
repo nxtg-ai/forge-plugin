@@ -5,7 +5,7 @@ description: >
   annotations, README/CHANGELOG structure, auto-generated API reference, doc-tree layout, and
   staleness detection. Use when writing or reviewing docs, adding JSDoc to exported functions,
   structuring a docs/ tree, deciding what to document vs auto-generate, or running the Forge
-  docs commands (/forge:docs-status, /forge:docs-audit, /forge:docs-update).
+  docs commands (/nxtg-forge:docs-status, /nxtg-forge:docs-audit, /nxtg-forge:docs-update).
 when_to_use: >
   Trigger phrases: "document this", "add JSDoc", "write the README", "generate API docs",
   "is our documentation stale", "docs audit", "documentation coverage", "changelog", "ADR",
@@ -227,12 +227,12 @@ These are namespaced under `forge:` and are **user-typed only** — each carries
 
 | Command | Purpose | Arguments |
 |---------|---------|-----------|
-| `/forge:docs-status` | Show documentation health & coverage | none |
-| `/forge:docs-audit` | Comprehensive quality audit (coverage, inventory, links) | none |
-| `/forge:docs-update` | Find and update stale docs | `--file <path>`, `--dry-run`, `--jsdoc`, or none = all |
+| `/nxtg-forge:docs-status` | Show documentation health & coverage | none |
+| `/nxtg-forge:docs-audit` | Comprehensive quality audit (coverage, inventory, links) | none |
+| `/nxtg-forge:docs-update` | Find and update stale docs | `--file <path>`, `--dry-run`, `--jsdoc`, or none = all |
 
 There is **no** `docs-generate` command in this plugin. To create a doc from a template, invoke
-the `docs` agent or use `/forge:docs-update --jsdoc` for source annotations.
+the `docs` agent or use `/nxtg-forge:docs-update --jsdoc` for source annotations.
 
 ---
 
@@ -240,8 +240,8 @@ the `docs` agent or use `/forge:docs-update --jsdoc` for source annotations.
 
 - **`/docs-generate` does not exist.** Earlier revisions of this skill listed it; the plugin ships
   only `docs-status`, `docs-audit`, `docs-update`. Do not tell a user to run it.
-- **Commands are namespaced `/forge:docs-*`, not bare `/docs-*`.** A bare `/docs-status` will not
-  resolve.
+- **Commands are namespaced `/nxtg-forge:docs-*`, not bare `/docs-*`.** Claude Code namespaces plugin
+  commands by the plugin `name` (`nxtg-forge`). A bare name, or the old `forge` namespace, does not resolve.
 - **These commands do not auto-trigger.** All three have `disable-model-invocation: true`. Saying
   "check the docs" does not fire them — the user must type the slash command, or you run the
   underlying analysis yourself with Grep/Glob/Bash.

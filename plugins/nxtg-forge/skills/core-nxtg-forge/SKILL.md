@@ -1,15 +1,15 @@
 ---
 name: Core NXTG-Forge
 description: >
-  Ground truth for the NXTG-Forge platform — the real forge CLI subcommands, the /forge:*
+  Ground truth for the NXTG-Forge platform — the real forge CLI subcommands, the /nxtg-forge:*
   slash commands, the .forge/state.json + events.jsonl model, both MCP servers (Rust
   orchestrator + Node governance), the agent roster, and the security hooks. Use when working
   inside or on NXTG-Forge (the forge-plugin, forge-orchestrator, or forge-ui repos), when a
   user asks "what does forge <x> do", how state/checkpoints/drift work, which MCP tool to call,
-  which agent to invoke, or when a task references `forge init/plan/run/status`, `/forge:...`,
+  which agent to invoke, or when a task references `forge init/plan/run/status`, `/nxtg-forge:...`,
   `.forge/`, governance health, or the two forge MCP servers.
 when_to_use: >
-  Triggers: "forge init / plan / run / status / start / verify / ship", "/forge:...",
+  Triggers: "forge init / plan / run / status / start / verify / ship", "/nxtg-forge:...",
   ".forge/state.json", "forge_get_state / forge_check_drift / forge_get_health",
   "governance-mcp vs orchestrator-mcp", "which forge agent", "how do checkpoints work",
   "forge governance score", "NXTG-Forge architecture".
@@ -27,7 +27,7 @@ asserting behavior, because earlier docs invented CLI that never shipped (see Go
 |------|-----------|-------------|
 | `forge-orchestrator` | Rust binary `forge` (CLI + stdio MCP server, ~4 MB) | orchestrator-mcp (Rust) |
 | `forge-plugin` | Pure-markdown Claude Code plugin — commands, agents, skills, hooks + a Node MCP server | governance-mcp (Node) |
-| `forge-ui` | Vite 7 + React 19 dashboard on :5050; sign-in required since v3.4.1 | runs from its own repo (`npm run dev`), not spawned by the plugin. `/forge:dashboard` is a separate static HTML snapshot that needs no server |
+| `forge-ui` | Vite 7 + React 19 dashboard on :5050; sign-in required since v3.4.1 | runs from its own repo (`npm run dev`), not spawned by the plugin. `/nxtg-forge:dashboard` is a separate static HTML snapshot that needs no server |
 
 ## The `forge` CLI (forge-orchestrator binary)
 
@@ -51,24 +51,24 @@ forge uninstall [--force]
 
 There is **no** `forge checkpoint`, `forge restore`, `forge recovery`, `forge feature`,
 `forge health`, `forge gap-analysis`, `forge quality`, `forge generate`, or `forge spec`
-binary subcommand. Those verbs exist only as `/forge:*` slash commands (below).
+binary subcommand. Those verbs exist only as `/nxtg-forge:*` slash commands (below).
 
-## `/forge:*` Slash Commands (forge-plugin, 23 total)
+## `/nxtg-forge:*` Slash Commands (forge-plugin, 23 total)
 
-Loaded by Claude Code from `commands/*.md`. Invoke as `/forge:<name>`. Each is a markdown
+Loaded by Claude Code from `commands/*.md`. Invoke as `/nxtg-forge:<name>`. Each is a markdown
 prompt with `disable-model-invocation: true` (won't auto-fire; user must type it).
 
 | Group | Commands |
 |-------|----------|
-| Governance | `/forge:init` `/forge:status` `/forge:status-enhanced` `/forge:gap-analysis` `/forge:compliance` `/forge:command-center` |
-| Feature dev | `/forge:feature` `/forge:spec` `/forge:agent-assign` `/forge:integrate` |
-| Quality | `/forge:test` `/forge:deploy` `/forge:optimize` `/forge:update` |
-| State | `/forge:checkpoint` `/forge:restore` `/forge:report` |
-| Docs | `/forge:docs-status` `/forge:docs-update` `/forge:docs-audit` |
-| Loop | `/forge:ceo-loop` `/forge:ceo-loop-cancel` |
-| Dashboard | `/forge:dashboard` |
+| Governance | `/nxtg-forge:init` `/nxtg-forge:status` `/nxtg-forge:status-enhanced` `/nxtg-forge:gap-analysis` `/nxtg-forge:compliance` `/nxtg-forge:command-center` |
+| Feature dev | `/nxtg-forge:feature` `/nxtg-forge:spec` `/nxtg-forge:agent-assign` `/nxtg-forge:integrate` |
+| Quality | `/nxtg-forge:test` `/nxtg-forge:deploy` `/nxtg-forge:optimize` `/nxtg-forge:update` |
+| State | `/nxtg-forge:checkpoint` `/nxtg-forge:restore` `/nxtg-forge:report` |
+| Docs | `/nxtg-forge:docs-status` `/nxtg-forge:docs-update` `/nxtg-forge:docs-audit` |
+| Loop | `/nxtg-forge:ceo-loop` `/nxtg-forge:ceo-loop-cancel` |
+| Dashboard | `/nxtg-forge:dashboard` |
 
-`/forge:checkpoint` args: `[save|restore|list] [name]`. `/forge:status` args: `[--json] [--verbose]`.
+`/nxtg-forge:checkpoint` args: `[save|restore|list] [name]`. `/nxtg-forge:status` args: `[--json] [--verbose]`.
 
 ## State Model — `.forge/state.json`
 
@@ -154,7 +154,7 @@ deterministic.
 
 ```text
 Goal: pick up work after a cold start, no transcript.
-1. forge status --events           # (or /forge:status) → phase, task board, recent events
+1. forge status --events           # (or /nxtg-forge:status) → phase, task board, recent events
 2. read .forge/state.json          # current_phase, task_summary, active_locks
 3. forge_check_drift  (MCP)         # has reality diverged from the plan?
 4. forge_list_checkpoints (MCP)     # newest snapshot to restore from if drifted
@@ -170,8 +170,8 @@ never reconstruct project state from memory.
   version of this skill) said `.claude/` — wrong. `.claude/` holds Claude Code config; `.forge/`
   holds orchestration state.
 - **`forge checkpoint`/`restore`/`recovery`/`feature`/`health`/`gap-analysis`/`quality`/`generate`
-  are NOT binary subcommands.** They only exist as `/forge:*` slash commands (or MCP tools). Typing
-  `forge checkpoint` at a shell fails. Use `/forge:checkpoint` or `forge_list_checkpoints`.
+  are NOT binary subcommands.** They only exist as `/nxtg-forge:*` slash commands (or MCP tools). Typing
+  `forge checkpoint` at a shell fails. Use `/nxtg-forge:checkpoint` or `forge_list_checkpoints`.
 - **Two MCP servers, both use the `forge_*` prefix, and both expose a health tool**
   (`forge_get_health` on Rust, `forge_get_governance_health` on Node). Name-matching a tool to a
   server is unreliable — orchestrator tools need the `forge` binary; governance tools always work.

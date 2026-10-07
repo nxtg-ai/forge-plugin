@@ -1,4 +1,4 @@
-# /forge:dashboard
+# /nxtg-forge:dashboard
 
 > Open the visual governance dashboard in your browser -- a self-contained HTML snapshot of project health, metrics, and status powered by Tailwind CSS.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L3 Ship Lord |
 | **Category** | Governance |
-| **Syntax** | `/forge:dashboard` |
+| **Syntax** | `/nxtg-forge:dashboard` |
 
 ---
 
 ## What It Does
 
-`/forge:dashboard` generates and opens a visual HTML dashboard in your browser. The dashboard is created by the governance MCP server's `forge_open_dashboard` tool, which reads live project data (health scores, governance state, git status, code metrics) at generation time and produces a self-contained HTML file with Tailwind CSS styling. No running server is required -- it is a static snapshot that opens as a local file.
+`/nxtg-forge:dashboard` generates and opens a visual HTML dashboard in your browser. The dashboard is created by the governance MCP server's `forge_open_dashboard` tool, which reads live project data (health scores, governance state, git status, code metrics) at generation time and produces a self-contained HTML file with Tailwind CSS styling. No running server is required -- it is a static snapshot that opens as a local file.
 
 The dashboard shows your project name, health score with letter grade, and detailed metrics in a visually designed interface. It works across platforms: on WSL2 it opens via the Windows browser, on macOS via the default browser, and on Linux via xdg-open. If auto-open fails, the command displays a clickable file URL you can copy into your browser.
 
-Without this command, visualizing project health means reading terminal output from `/forge:status` and mentally mapping numbers to a picture. The dashboard gives you an at-a-glance visual representation that is easier to scan, share with stakeholders, and screenshot for reports.
+Without this command, visualizing project health means reading terminal output from `/nxtg-forge:status` and mentally mapping numbers to a picture. The dashboard gives you an at-a-glance visual representation that is easier to scan, share with stakeholders, and screenshot for reports.
 
 ## Syntax & Options
 
 ```
-/forge:dashboard
+/nxtg-forge:dashboard
 ```
 
 This command takes no arguments. It generates and opens the dashboard.
@@ -32,14 +32,14 @@ This command takes no arguments. It generates and opens the dashboard.
 - **Team standups**: Display the dashboard on a shared screen for a quick visual status check.
 - **Personal orientation**: When you want a graphical overview instead of a text-based one.
 
-For text-based status that stays in the terminal, use `/forge:status`. For the full React-based dashboard with real-time updates and the Infinity Terminal, install forge-ui and visit localhost:5050.
+For text-based status that stays in the terminal, use `/nxtg-forge:status`. For the full React-based dashboard with real-time updates and the Infinity Terminal, install forge-ui and visit localhost:5050.
 
 ## Examples
 
 ### Example 1: Open Dashboard
 
 ```
-/forge:dashboard
+/nxtg-forge:dashboard
 ```
 
 ```
@@ -66,9 +66,9 @@ On WSL2, the dashboard opens in your Windows browser automatically. This bridge 
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:status** | Text-based alternative that stays in the terminal |
-| **/forge:status-enhanced** | Deeper metrics that feed into the dashboard's data |
-| **/forge:gap-analysis** | Run analysis first, then open the dashboard to see the updated health score |
+| **/nxtg-forge:status** | Text-based alternative that stays in the terminal |
+| **/nxtg-forge:status-enhanced** | Deeper metrics that feed into the dashboard's data |
+| **/nxtg-forge:gap-analysis** | Run analysis first, then open the dashboard to see the updated health score |
 | **forge-ui** | The full React dashboard at localhost:5050 provides real-time updates; this command provides static snapshots |
 
 ## Level Progression

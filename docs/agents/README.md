@@ -8,7 +8,7 @@
 
 Agents are autonomous specialists that Claude Code delegates to when it recognizes a task matches an agent's expertise. You don't need to invoke them directly — Claude reads your prompt, picks the right agent, and routes your request.
 
-But you *can* invoke them directly through commands like `/forge:feature` (which orchestrates Planner → Builder → Testing → Guardian) or through the [/forge:agent-assign](../commands/agent-assign.md) command.
+But you *can* invoke them directly through commands like `/nxtg-forge:feature` (which orchestrates Planner → Builder → Testing → Guardian) or through the [/nxtg-forge:agent-assign](../commands/agent-assign.md) command.
 
 ```mermaid
 graph TD

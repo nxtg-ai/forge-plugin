@@ -96,7 +96,7 @@ Governance Verifier:
 | **Oracle** | Oracle provides strategic alignment; Governance Verifier provides tactical, per-change verification |
 | **PostToolUse hooks** | Hooks flag concerns; Verifier adjudicates them with evidence |
 | **Guardian agent** | Guardian enforces quality gates; Verifier handles governance disputes |
-| **/forge:compliance** | Full compliance check that aggregates Governance Verifier history |
+| **/nxtg-forge:compliance** | Full compliance check that aggregates Governance Verifier history |
 
 ## Level Progression
 

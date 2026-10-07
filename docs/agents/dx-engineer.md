@@ -108,7 +108,7 @@ DX Engineer:
 | **Design Vanguard** | DX Engineer designs the interaction model; Design Vanguard designs the visual surface |
 | **Wordsmith** | DX Engineer identifies what text needs improvement; Wordsmith writes it |
 | **Master Architect** | Architect designs the system; DX Engineer ensures it is pleasant to use |
-| **/forge:docs-audit** | Documentation audit feeds into the DX Engineer's review of docs architecture |
+| **/nxtg-forge:docs-audit** | Documentation audit feeds into the DX Engineer's review of docs architecture |
 
 ## Level Progression
 

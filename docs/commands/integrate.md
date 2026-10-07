@@ -1,4 +1,4 @@
-# /forge:integrate
+# /nxtg-forge:integrate
 
 > Set up third-party service integrations with scaffolded client code, environment variable guides, and connectivity testing.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Feature Development |
-| **Syntax** | `/forge:integrate [service-name] [--list] [--test] [--scaffold]` |
+| **Syntax** | `/nxtg-forge:integrate [service-name] [--list] [--test] [--scaffold]` |
 
 ---
 
 ## What It Does
 
-`/forge:integrate` is the integration assistant for connecting your project to external services. It covers version control (GitHub, GitLab), monitoring (Sentry, Datadog), communication (Slack, Discord), databases (PostgreSQL, Redis, MongoDB), and cloud platforms (AWS, GCP, Vercel, Netlify). For each service, it checks your current setup, identifies what is already configured, and provides the exact npm packages, environment variables, configuration code, and testing instructions needed.
+`/nxtg-forge:integrate` is the integration assistant for connecting your project to external services. It covers version control (GitHub, GitLab), monitoring (Sentry, Datadog), communication (Slack, Discord), databases (PostgreSQL, Redis, MongoDB), and cloud platforms (AWS, GCP, Vercel, Netlify). For each service, it checks your current setup, identifies what is already configured, and provides the exact npm packages, environment variables, configuration code, and testing instructions needed.
 
 The command does not blindly generate boilerplate. It first reads your `package.json` for existing SDK packages, checks `.env` and `.env.example` for existing configuration, and scans `src/` for existing integration code. This means it only suggests what is actually missing and avoids duplicating what you already have.
 
-Without this command, integrating a service means reading its documentation, figuring out which SDK to install, creating a client wrapper, setting up environment variables, and writing a connectivity test -- all separately. `/forge:integrate` packages all of that into a single guided flow.
+Without this command, integrating a service means reading its documentation, figuring out which SDK to install, creating a client wrapper, setting up environment variables, and writing a connectivity test -- all separately. `/nxtg-forge:integrate` packages all of that into a single guided flow.
 
 ## Syntax & Options
 
 ```
-/forge:integrate [service-name] [--list] [--test] [--scaffold]
+/nxtg-forge:integrate [service-name] [--list] [--test] [--scaffold]
 ```
 
 | Option | Description |
@@ -33,18 +33,18 @@ Without this command, integrating a service means reading its documentation, fig
 
 ## When to Use It
 
-- **Adding a new service**: Need Sentry for error tracking? Run `/forge:integrate sentry` to get the complete setup guide.
-- **Verifying connections**: Run `/forge:integrate --test` after configuring environment variables to verify everything connects.
-- **Discovering options**: Run `/forge:integrate --list` to see all supported services organized by category.
+- **Adding a new service**: Need Sentry for error tracking? Run `/nxtg-forge:integrate sentry` to get the complete setup guide.
+- **Verifying connections**: Run `/nxtg-forge:integrate --test` after configuring environment variables to verify everything connects.
+- **Discovering options**: Run `/nxtg-forge:integrate --list` to see all supported services organized by category.
 
-For deploying to a specific platform, use `/forge:deploy` which handles the full deployment pipeline including pre-flight validation.
+For deploying to a specific platform, use `/nxtg-forge:deploy` which handles the full deployment pipeline including pre-flight validation.
 
 ## Examples
 
 ### Example 1: Setting Up Sentry
 
 ```
-/forge:integrate sentry
+/nxtg-forge:integrate sentry
 ```
 
 ```
@@ -71,7 +71,7 @@ Documentation:
 ### Example 2: Listing Available Integrations
 
 ```
-/forge:integrate --list
+/nxtg-forge:integrate --list
 ```
 
 Shows services grouped by category: Version Control, Monitoring, Communication, Databases, and Cloud.
@@ -80,15 +80,15 @@ Shows services grouped by category: Version Control, Monitoring, Communication, 
 
 Use `--scaffold` to generate a typed client wrapper at `src/integrations/{service}-client.ts` with proper TypeScript interfaces. This gives you a clean abstraction layer instead of raw SDK calls scattered throughout your codebase.
 
-Chain `/forge:integrate postgres --scaffold` followed by `/forge:test` to generate the integration code and immediately verify it compiles and any existing tests still pass.
+Chain `/nxtg-forge:integrate postgres --scaffold` followed by `/nxtg-forge:test` to generate the integration code and immediately verify it compiles and any existing tests still pass.
 
 ## Combines With
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:feature** | Plan a feature that depends on an integration, then set up the integration first |
-| **/forge:deploy** | After integrating a cloud platform, use deploy for the full deployment pipeline |
-| **/forge:compliance** | Check that new dependencies introduced by integrations have compatible licenses |
+| **/nxtg-forge:feature** | Plan a feature that depends on an integration, then set up the integration first |
+| **/nxtg-forge:deploy** | After integrating a cloud platform, use deploy for the full deployment pipeline |
+| **/nxtg-forge:compliance** | Check that new dependencies introduced by integrations have compatible licenses |
 | **integration agent** | For complex multi-service integrations, assign the integration agent directly |
 
 ## Level Progression

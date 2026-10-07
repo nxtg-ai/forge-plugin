@@ -1,4 +1,4 @@
-# /forge:restore
+# /nxtg-forge:restore
 
 > Restore project state from a previously saved checkpoint with preview, diff comparison, and safety warnings.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | State Management |
-| **Syntax** | `/forge:restore [checkpoint-name] [--preview]` |
+| **Syntax** | `/nxtg-forge:restore [checkpoint-name] [--preview]` |
 
 ---
 
 ## What It Does
 
-`/forge:restore` is the dedicated restoration command -- a focused shortcut for `/forge:checkpoint restore`. When you provide a checkpoint ID, it reads the saved state, displays a side-by-side comparison of the checkpoint state versus your current state (branch, commit, uncommitted changes), and offers to restore the governance configuration. When no ID is provided, it lists all available checkpoints and lets you choose interactively.
+`/nxtg-forge:restore` is the dedicated restoration command -- a focused shortcut for `/nxtg-forge:checkpoint restore`. When you provide a checkpoint ID, it reads the saved state, displays a side-by-side comparison of the checkpoint state versus your current state (branch, commit, uncommitted changes), and offers to restore the governance configuration. When no ID is provided, it lists all available checkpoints and lets you choose interactively.
 
 The command prioritizes safety. It shows you exactly what will change before doing anything, warns if you have uncommitted changes that could be affected, and suggests creating a new checkpoint of your current state before restoring. Git state is displayed for reference but not automatically restored -- you get the exact git commands to run if you want to return to the checkpoint's code state, keeping destructive operations under your explicit control.
 
-Without this command, restoring means remembering which checkpoint file to read, manually parsing the JSON, comparing it to your current state, and copying governance values by hand. `/forge:restore` handles all of that with safety checks at every step.
+Without this command, restoring means remembering which checkpoint file to read, manually parsing the JSON, comparing it to your current state, and copying governance values by hand. `/nxtg-forge:restore` handles all of that with safety checks at every step.
 
 ## Syntax & Options
 
 ```
-/forge:restore [checkpoint-name] [--preview]
+/nxtg-forge:restore [checkpoint-name] [--preview]
 ```
 
 | Option | Description |
@@ -32,17 +32,17 @@ Without this command, restoring means remembering which checkpoint file to read,
 ## When to Use It
 
 - **After a failed experiment**: Your refactoring broke something and you want to get back to a known-good state.
-- **After deployment issues**: Roll back to the pre-deploy checkpoint created by `/forge:deploy`.
+- **After deployment issues**: Roll back to the pre-deploy checkpoint created by `/nxtg-forge:deploy`.
 - **Session recovery**: Restore the checkpoint from the end of your last session to regain context.
 
-This command is a shortcut for `/forge:checkpoint restore`. For the full checkpoint management suite (save, list, clear), use `/forge:checkpoint`.
+This command is a shortcut for `/nxtg-forge:checkpoint restore`. For the full checkpoint management suite (save, list, clear), use `/nxtg-forge:checkpoint`.
 
 ## Examples
 
 ### Example 1: Restore a Specific Checkpoint
 
 ```
-/forge:restore before-auth-refactor
+/nxtg-forge:restore before-auth-refactor
 ```
 
 ```
@@ -62,13 +62,13 @@ This will restore:
   - Governance state from checkpoint
   - Git info displayed for reference (not auto-restored)
 
-Tip: Save current state first with /forge:checkpoint save before-restore
+Tip: Save current state first with /nxtg-forge:checkpoint save before-restore
 ```
 
 ### Example 2: Interactive Selection
 
 ```
-/forge:restore
+/nxtg-forge:restore
 ```
 
 Lists all checkpoints and asks you to choose:
@@ -84,7 +84,7 @@ Which checkpoint to restore?
 ### Example 3: Preview Only
 
 ```
-/forge:restore before-auth-refactor --preview
+/nxtg-forge:restore before-auth-refactor --preview
 ```
 
 Shows the full diff between checkpoint state and current state without making any changes.
@@ -93,15 +93,15 @@ Shows the full diff between checkpoint state and current state without making an
 
 Use `--preview` to compare your current state against multiple checkpoints before deciding which one to restore. This is useful when you have several experimental branches and want to see which checkpoint represents the best starting point.
 
-Chain `/forge:checkpoint save safety-net` then `/forge:restore {target}` to create a rollback point for the rollback itself -- belt and suspenders when working with critical code.
+Chain `/nxtg-forge:checkpoint save safety-net` then `/nxtg-forge:restore {target}` to create a rollback point for the rollback itself -- belt and suspenders when working with critical code.
 
 ## Combines With
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:checkpoint** | Full checkpoint management (save, list, clear); restore is a focused shortcut |
-| **/forge:deploy** | Restore from automatic pre-deploy checkpoints when deployments cause issues |
-| **/forge:status** | Check project health after restoring to verify the restored state is healthy |
+| **/nxtg-forge:checkpoint** | Full checkpoint management (save, list, clear); restore is a focused shortcut |
+| **/nxtg-forge:deploy** | Restore from automatic pre-deploy checkpoints when deployments cause issues |
+| **/nxtg-forge:status** | Check project health after restoring to verify the restored state is healthy |
 
 ## Level Progression
 

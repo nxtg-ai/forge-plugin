@@ -106,8 +106,8 @@ Save to `.claude/plans/{feature-slug}-spec.md`
 Spec saved: .claude/plans/{feature-slug}-spec.md
 
 Next steps:
-  /forge:feature {feature_name}   Implement this feature
-  /forge:checkpoint save           Save state before starting
+  /nxtg-forge:feature {feature_name}   Implement this feature
+  /nxtg-forge:checkpoint save           Save state before starting
 ```
 
 ## Interactive Mode (`--interactive`)

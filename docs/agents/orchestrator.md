@@ -20,7 +20,7 @@ The Orchestrator is also the delegation layer. When you choose to plan a feature
 
 ## When to Use It
 
-- **Starting a development session**: When you activate Forge with `/enable-forge` or similar, the Orchestrator presents the command center and helps you orient.
+- **Starting a development session**: When you activate Forge with `/nxtg-forge:command-center` or similar, the Orchestrator presents the command center and helps you orient.
 - **Resuming previous work**: When you say "pick up where we left off" or "continue from yesterday," the Orchestrator restores your full context including branch, tasks, and plan state.
 - **Needing strategic advice**: When you want to discuss approaches, architectural trade-offs, or priorities without committing to implementation.
 - **Checking project health**: When you want a comprehensive view of code quality, test coverage, security posture, task completion rates, and vision alignment.
@@ -64,7 +64,7 @@ The Orchestrator follows a structured protocol for each of its four options:
 ### Example 1: Morning Session Resume
 
 ```
-User: "/enable-forge" then "1" (Continue)
+User: "/nxtg-forge:command-center" then "1" (Continue)
 
 Orchestrator:
   - Restores context: "Last session: 2h ago, branch: feat/notifications"
@@ -125,7 +125,7 @@ Orchestrator:
 | **Detective** | Orchestrator invokes Detective for Option 3 (Soundboard) analysis and Option 4 (Health Check) diagnostics. |
 | **Guardian** | After implementation tasks complete, Orchestrator queues Guardian for quality validation before marking tasks done. |
 | **All Specialists** | The Orchestrator is the dispatcher. Every specialist agent can be reached through it. |
-| **/forge:command-center** | The `/forge:command-center` command directly opens the Orchestrator's 4-option menu. |
+| **/nxtg-forge:command-center** | The `/nxtg-forge:command-center` command directly opens the Orchestrator's 4-option menu. |
 
 ## Level Progression
 
@@ -144,4 +144,4 @@ Orchestrator:
 
 ---
 
-*See also: [Planner](planner.md) | [Detective](detective.md) | [/forge:command-center](../commands/command-center.md)*
+*See also: [Planner](planner.md) | [Detective](detective.md) | [/nxtg-forge:command-center](../commands/command-center.md)*

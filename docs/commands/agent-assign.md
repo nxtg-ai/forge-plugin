@@ -1,4 +1,4 @@
-# /forge:agent-assign
+# /nxtg-forge:agent-assign
 
 > Intelligently match tasks to the best specialized agent by analyzing task domain, complexity, and required skills, then launch the agent to execute autonomously.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Feature Development |
-| **Syntax** | `/forge:agent-assign [task description] [--list] [--auto] [--agent <name>]` |
+| **Syntax** | `/nxtg-forge:agent-assign [task description] [--list] [--auto] [--agent <name>]` |
 
 ---
 
 ## What It Does
 
-`/forge:agent-assign` is the intelligent dispatcher for Forge's 22 specialized agents. You describe a task, and the command analyzes its domain (architecture, backend, frontend, testing, devops, security, docs), complexity, and required skills, then recommends the best-fit agent with a match score and reasoning. It also suggests alternative agents in case you want a different approach.
+`/nxtg-forge:agent-assign` is the intelligent dispatcher for Forge's 22 specialized agents. You describe a task, and the command analyzes its domain (architecture, backend, frontend, testing, devops, security, docs), complexity, and required skills, then recommends the best-fit agent with a match score and reasoning. It also suggests alternative agents in case you want a different approach.
 
 Behind the scenes, the command uses keyword mapping to score each agent against the task description. Terms like "refactor" and "pattern" score high for the architect agents; "deploy" and "docker" score high for the devops agent; "vulnerability" and "audit" score high for the security agent. The scoring is transparent -- you see why a particular agent was chosen.
 
-Without this command, you would need to memorize which of the 22 agents handles what, manually invoke the Task tool with the right agent type and prompt, and handle orchestrator task claiming yourself. `/forge:agent-assign` automates the matching, handles orchestrator integration (claiming tasks, locking files, recording knowledge), and confirms before launching.
+Without this command, you would need to memorize which of the 22 agents handles what, manually invoke the Task tool with the right agent type and prompt, and handle orchestrator task claiming yourself. `/nxtg-forge:agent-assign` automates the matching, handles orchestrator integration (claiming tasks, locking files, recording knowledge), and confirms before launching.
 
 ## Syntax & Options
 
 ```
-/forge:agent-assign [task description] [--list] [--auto] [--agent <name>]
+/nxtg-forge:agent-assign [task description] [--list] [--auto] [--agent <name>]
 ```
 
 | Option | Description |
@@ -37,14 +37,14 @@ Without this command, you would need to memorize which of the 22 agents handles 
 - **Exploring available agents**: Run `--list` to see all 22 agents and what they can do.
 - **Connecting orchestrator tasks to agents**: The command checks the orchestrator task board for pending tasks and offers to assign agents to them.
 
-For full-lifecycle feature implementation with specs and quality gates, use `/forge:feature` instead. For running multiple agents in a coordinated pipeline, use the orchestrator agent or `/forge:command-center`.
+For full-lifecycle feature implementation with specs and quality gates, use `/nxtg-forge:feature` instead. For running multiple agents in a coordinated pipeline, use the orchestrator agent or `/nxtg-forge:command-center`.
 
 ## Examples
 
 ### Example 1: Auto-Matched Assignment
 
 ```
-/forge:agent-assign "Add comprehensive unit tests for the payment service"
+/nxtg-forge:agent-assign "Add comprehensive unit tests for the payment service"
 ```
 
 ```
@@ -69,7 +69,7 @@ After confirmation, the testing agent is launched with the Task tool.
 ### Example 2: Listing All Agents
 
 ```
-/forge:agent-assign --list
+/nxtg-forge:agent-assign --list
 ```
 
 Displays all 22 agents with descriptions, available tools, and specialties. Useful for discovering agents you did not know existed.
@@ -77,7 +77,7 @@ Displays all 22 agents with descriptions, available tools, and specialties. Usef
 ### Example 3: Manual Assignment
 
 ```
-/forge:agent-assign --agent security "Review all API endpoints for OWASP Top 10"
+/nxtg-forge:agent-assign --agent security "Review all API endpoints for OWASP Top 10"
 ```
 
 Bypasses the matching algorithm and directly assigns to the security agent.
@@ -92,8 +92,8 @@ After an agent completes its work, the command calls `forge_complete_task` and `
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:feature** | Feature uses agents internally; agent-assign is for standalone tasks |
-| **/forge:command-center** | Command center's "Continue" option shows pending tasks that can be assigned to agents |
+| **/nxtg-forge:feature** | Feature uses agents internally; agent-assign is for standalone tasks |
+| **/nxtg-forge:command-center** | Command center's "Continue" option shows pending tasks that can be assigned to agents |
 | **orchestrator MCP** | Tasks from `forge_get_tasks` can be claimed and completed through agent assignment |
 | **guardian agent** | Assign the guardian after other agents finish to run quality gates on their output |
 

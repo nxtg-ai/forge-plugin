@@ -319,8 +319,8 @@ After analysis:
 2. Offer next steps:
 ```
 Next steps:
-  /forge:test         Run test suite
-  /forge:status       View current state
-  /forge:checkpoint   Save state before fixes
-  /forge:feature      Plan feature to address gaps
+  /nxtg-forge:test         Run test suite
+  /nxtg-forge:status       View current state
+  /nxtg-forge:checkpoint   Save state before fixes
+  /nxtg-forge:feature      Plan feature to address gaps
 ```

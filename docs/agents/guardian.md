@@ -106,7 +106,7 @@ Guardian:
 | **Testing** | Guardian spawns Testing as a parallel subagent for deep coverage analysis, while Guardian handles security and types. |
 | **Security** | Guardian spawns Security as a parallel subagent for OWASP scanning, while Guardian handles tests and code quality. |
 | **Detective** | Detective identifies problems; Guardian prevents them. Run Detective for analysis, Guardian before commits. |
-| **/forge:deploy** | The `/forge:deploy` command triggers Guardian quality gates before any deployment proceeds. |
+| **/nxtg-forge:deploy** | The `/nxtg-forge:deploy` command triggers Guardian quality gates before any deployment proceeds. |
 
 ## Level Progression
 
@@ -135,6 +135,6 @@ Guardian:
 
 ---
 
-*See also: [Testing](testing.md) | [Security](security.md) | [Compliance](compliance.md) | [/forge:test](../commands/test.md) | [/forge:deploy](../commands/deploy.md)*
+*See also: [Testing](testing.md) | [Security](security.md) | [Compliance](compliance.md) | [/nxtg-forge:test](../commands/test.md) | [/nxtg-forge:deploy](../commands/deploy.md)*
 
-*Part of the feature pipeline: [/forge:feature](../commands/feature.md) → [Planner](planner.md) → [Builder](builder.md) → [Testing](testing.md) → **Guardian** (you are here)*
+*Part of the feature pipeline: [/nxtg-forge:feature](../commands/feature.md) → [Planner](planner.md) → [Builder](builder.md) → [Testing](testing.md) → **Guardian** (you are here)*

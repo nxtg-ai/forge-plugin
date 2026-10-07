@@ -115,7 +115,7 @@ Master Architect:
 | **Incident Commander** | Architect designs for resilience; Commander handles when resilience fails |
 | **CEO Loop** | Architect advises on one-way door decisions; CEO Loop makes the final call |
 | **DX Engineer** | Architect designs the system internals; DX Engineer ensures the external surface is pleasant |
-| **/forge:spec** | Architecture decisions feed directly into feature specifications |
+| **/nxtg-forge:spec** | Architecture decisions feed directly into feature specifications |
 
 ## Level Progression
 
