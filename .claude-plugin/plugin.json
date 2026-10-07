@@ -1,7 +1,7 @@
 {
   "name": "nxtg-forge",
   "version": "3.10.4",
-  "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code",
+  "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code (stage: internal)",
   "author": {
     "name": "NXTG AI",
     "url": "https://github.com/nxtg-ai"

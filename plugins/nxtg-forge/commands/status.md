@@ -116,6 +116,10 @@ Here is the EXACT structure to output (substitute real values for placeholders):
 
 **2. Project line:** Output `**{name}** v{version} on \`{branch}\` @ \`{short_hash}\``
 
+**2b. Stage line:** Output this line verbatim (Forge's release stage, from the repo's `STAGE` file; CI checks they match):
+
+**Stage: internal.** Built for and used inside NXTG. The source is public, but it is not yet offered or supported for outside use: no SLA, and interfaces may change without notice.
+
 **3. Horizontal rule:** Output `---`
 
 **4. Git section:** Output `## Git` then this table:
@@ -196,7 +200,7 @@ CRITICAL REMINDERS:
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu)
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "internal"` at the top level.
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
