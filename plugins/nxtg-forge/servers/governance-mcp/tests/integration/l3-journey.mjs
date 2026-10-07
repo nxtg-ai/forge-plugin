@@ -138,20 +138,59 @@ function bootForgeUi(fixture, port, home) {
   const entry = join(FORGE_UI_DIR, "src", "server", "api-server.ts");
   const child = spawn("node", ["--import", tsxLoader, entry], {
     cwd: fixture,
-    env: { ...process.env, HOME: home, PORT: String(port), ALLOWED_ORIGINS: "http://localhost:5050", FORGE_BIN: process.env.FORGE_BIN || "forge" },
+    // FORGE_UI_SECRET_FILE pins forge-ui's per-install secret (v3.4.1+) inside the throwaway home, even
+    // when the operator's env sets XDG_CONFIG_HOME, so the harness never reads or writes a real secret.
+    env: { ...process.env, HOME: home, FORGE_UI_SECRET_FILE: uiSecretFile(home), PORT: String(port), ALLOWED_ORIGINS: "http://localhost:5050", FORGE_BIN: process.env.FORGE_BIN || "forge" },
     stdio: "ignore",
     detached: true,
   });
   return { child, base: `http://127.0.0.1:${port}` };
 }
 
-async function waitForHttp(base, child, ms = 30000) {
+const uiSecretFile = (home) => join(home, "nxtg-forge-ui-secret");
+
+// "Listening" = the server answers HTTP at all. Since forge-ui v3.4.1 every /api route (health included)
+// requires the per-install secret, so an unauthenticated probe answers 401; that answer is enough to
+// know the server is up, without holding a credential.
+async function waitForListening(base, child, ms = 30000) {
   for (let i = 0; i < ms / 200; i++) {
     if (child.exitCode !== null) return false; // child died during startup
-    try { const r = await fetch(`${base}/api/health`); if (r.ok) return true; } catch { /* not up yet */ }
+    try { await fetch(`${base}/api/health`); return true; } catch { /* not up yet */ }
     await new Promise((res) => setTimeout(res, 200));
   }
   return false;
+}
+
+// Every harness call to forge-ui's API goes through here, so the local-client credential
+// (DIRECTIVE-NXTG-20261007-12 item 2) is added in exactly one place.
+function uiFetch(base, path, init = {}) {
+  return fetch(`${base}${path}`, init);
+}
+
+// Routes that return project data, so they must refuse a caller without the secret
+// (contract dx-journeys L3 Step 1b, GHSA-rc7c-r55p-923j): every /health route, plus the status route
+// leg B reads. The runspace id is a probe value; auth is checked before routing, so it never resolves.
+const PROTECTED_ROUTES = ["/api/health", "/api/workers/health", "/api/runspaces/l3-probe/health", "/api/forge/status"];
+const REFUSED = new Set([401, 403]);
+
+// Leg A0, the client-side half of Step 1b: a caller WITHOUT the secret is refused and learns nothing.
+// Raw fetch on purpose (never uiFetch), so this arm can never pick up the harness credential.
+async function assertUnauthenticatedRefused(base, fixture, canonical) {
+  const leaks = (body) => body.includes(fixture) || body.includes(canonical);
+  for (const route of PROTECTED_ROUTES) {
+    const r = await fetch(`${base}${route}`);
+    const body = await r.text();
+    check(`unauthenticated GET ${route} → refused (401/403), no project data`, REFUSED.has(r.status) && !leaks(body),
+      `got ${r.status}${leaks(body) ? ", body carries project data" : ""}`);
+  }
+  const wrong = await fetch(`${base}/api/health`, { headers: { Authorization: "Bearer l3-wrong-credential-not-the-secret" } });
+  const wrongBody = await wrong.text();
+  check("GET /api/health with a WRONG credential → refused (401/403), no project data",
+    REFUSED.has(wrong.status) && !leaks(wrongBody), `got ${wrong.status}`);
+  const foreign = await fetch(`${base}/api/health`, { headers: { Origin: "http://l3-foreign.invalid" } });
+  const foreignBody = await foreign.text();
+  check("GET /api/health from a foreign Origin → refused (401/403), no project data",
+    REFUSED.has(foreign.status) && !leaks(foreignBody), `got ${foreign.status}`);
 }
 
 // Reap the forge-ui child SCOPED TO ITS OWN PID (detached → its own process group). Never pkill-by-name.
@@ -188,7 +227,7 @@ function wsRoundtrip(base, token, canonical) {
 }
 
 async function uiStatus(base) {
-  const r = await fetch(`${base}/api/forge/status`);
+  const r = await uiFetch(base, "/api/forge/status");
   const j = await r.json();
   return j.data;
 }
@@ -229,10 +268,14 @@ async function main() {
 
     const ui = bootForgeUi(fixture, port, uiHome);
     uiChild = ui.child;
-    const up = await waitForHttp(ui.base, uiChild);
-    check(`forge-ui API up on ephemeral :${port} (/api/health)`, up, up ? "" : "server did not become healthy");
+    const up = await waitForListening(ui.base, uiChild);
+    check(`forge-ui API listening on ephemeral :${port}`, up, up ? "" : "server never answered HTTP");
     if (!up) throw new Error("forge-ui failed to boot");
-    const healthResp = await fetch(`${ui.base}/api/health`).then((r) => r.json()).catch(() => ({}));
+
+    console.log("\n[Leg A0] auth contract, client side: no secret → refused, nothing leaked (dx-journeys L3 Step 1b)");
+    await assertUnauthenticatedRefused(ui.base, fixture, canonical);
+
+    const healthResp = await uiFetch(ui.base, "/api/health").then((r) => r.json()).catch(() => ({}));
     check("forge-ui /api/health status == healthy", healthResp.status === "healthy", `got ${healthResp.status}`);
 
     // Cross-product interaction the three-live topology surfaces: forge-ui's startup migration rewrites the
@@ -294,7 +337,7 @@ async function main() {
 
     // ── Leg C: liveness — WS round-trip + MCP→UI reflection (task-scoped) ──
     console.log("\n[Leg C] liveness: WS state.update+ping/pong; complete T-001 via MCP → UI reflects live");
-    const tokenResp = await fetch(`${ui.base}/api/auth/ws-token`, { method: "POST", headers: { Origin: "http://localhost:5050" } }).then((r) => r.json());
+    const tokenResp = await uiFetch(ui.base, "/api/auth/ws-token", { method: "POST", headers: { Origin: "http://localhost:5050" } }).then((r) => r.json());
     const token = tokenResp?.data?.token;
     check("POST /api/auth/ws-token → token issued", typeof token === "string" && token.length > 0);
     const rt = await wsRoundtrip(ui.base, token, canonical);
