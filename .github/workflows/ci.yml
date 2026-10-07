@@ -36,6 +36,9 @@ jobs:
           test -d plugins/nxtg-forge/hooks && echo "hooks/ exists"
           test -f plugins/nxtg-forge/servers/governance-mcp/index.mjs && echo "MCP server exists"
 
+      - name: Release stage matches STAGE
+        run: bash .github/scripts/check-stage.sh
+
       - name: Create issue on CI failure
         uses: jayqi/failed-build-issue-action@v1
         if: failure() && github.event.pull_request == null

@@ -4,7 +4,9 @@
 
 # forge-plugin
 
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-00b4ab)](https://registry.modelcontextprotocol.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
+[![stage: internal](https://img.shields.io/badge/stage-internal-grey)](STAGE) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-00b4ab)](https://registry.modelcontextprotocol.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
+
+**Stage: internal.** Built for and used inside NXTG. The source is public, but it is not yet offered or supported for outside use: no SLA, and interfaces may change without notice.
 
 **Zero-dependency governance for Claude Code.**
 
