@@ -104,6 +104,6 @@ RECOMMENDATIONS
 
 ---
 Actions:
-  /forge:docs-update           Fix stale docs
-  /forge:docs-update --jsdoc   Add missing JSDoc
+  /nxtg-forge:docs-update           Fix stale docs
+  /nxtg-forge:docs-update --jsdoc   Add missing JSDoc
 ```

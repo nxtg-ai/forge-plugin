@@ -1,4 +1,4 @@
-# /forge:feature
+# /nxtg-forge:feature
 
 > Design, plan, and implement a new feature end-to-end with structured specs, parallel agent teams, and quality gates.
 
@@ -6,7 +6,7 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Feature Development |
-| **Syntax** | `/forge:feature [feature name or description]` |
+| **Syntax** | `/nxtg-forge:feature [feature name or description]` |
 
 ---
 
@@ -14,7 +14,7 @@
 
 ```mermaid
 graph LR
-    A["/forge:feature 'add auth'"] --> B["Phase A: Planner"]
+    A["/nxtg-forge:feature 'add auth'"] --> B["Phase A: Planner"]
     B -->|approved spec| C["Phase B: Builder"]
     B -->|approved spec| D["Phase B: Testing"]
     C & D -->|code + tests| E["Phase C: Guardian"]
@@ -25,16 +25,16 @@ graph LR
 
 ## What It Does
 
-`/forge:feature` is the full-lifecycle feature builder. It takes a feature idea from description through codebase analysis, spec generation, implementation, testing, and validation -- all in one command. The intelligence behind it is a three-phase agent pipeline: Phase A locks interface contracts via the planner agent, Phase B spawns builder and testing agents in parallel to write code and tests simultaneously, and Phase C runs a guardian agent quality gate to catch type errors, test failures, and security issues before you commit.
+`/nxtg-forge:feature` is the full-lifecycle feature builder. It takes a feature idea from description through codebase analysis, spec generation, implementation, testing, and validation -- all in one command. The intelligence behind it is a three-phase agent pipeline: Phase A locks interface contracts via the planner agent, Phase B spawns builder and testing agents in parallel to write code and tests simultaneously, and Phase C runs a guardian agent quality gate to catch type errors, test failures, and security issues before you commit.
 
 Before writing a single line, the command analyzes your existing codebase: directory structure, existing patterns, test conventions, and available dependencies. This means the generated spec accounts for how your project actually works, not how a generic project might work. The spec is saved to `.claude/plans/` so you can review, modify, or revisit it later.
 
-Without this command, planning a feature means mentally mapping the codebase, writing a spec document by hand, implementing sequentially (code first, tests after), and hoping you catch integration issues. `/forge:feature` parallelizes the build-and-test phase, enforces quality gates, and records the implementation as knowledge in the orchestrator for future reference.
+Without this command, planning a feature means mentally mapping the codebase, writing a spec document by hand, implementing sequentially (code first, tests after), and hoping you catch integration issues. `/nxtg-forge:feature` parallelizes the build-and-test phase, enforces quality gates, and records the implementation as knowledge in the orchestrator for future reference.
 
 ## Syntax & Options
 
 ```
-/forge:feature [feature name or description]
+/nxtg-forge:feature [feature name or description]
 ```
 
 | Option | Description |
@@ -47,14 +47,14 @@ Without this command, planning a feature means mentally mapping the codebase, wr
 - **Implementing a spec you already have**: If a spec file exists in `.claude/plans/`, reference it and skip straight to implementation.
 - **Rapid prototyping**: Even for small features, the structured spec and parallel test generation save time over ad-hoc implementation.
 
-For generating just the spec without implementation, use `/forge:spec` instead. For assigning a task to a specific agent without the full pipeline, use `/forge:agent-assign`.
+For generating just the spec without implementation, use `/nxtg-forge:spec` instead. For assigning a task to a specific agent without the full pipeline, use `/nxtg-forge:agent-assign`.
 
 ## Examples
 
 ### Example 1: Feature from Description
 
 ```
-/forge:feature "rate limiting middleware for the API"
+/nxtg-forge:feature "rate limiting middleware for the API"
 ```
 
 Forge analyzes the codebase, finds existing middleware patterns, and generates a spec:
@@ -85,14 +85,14 @@ After you approve, parallel agents build the code and tests simultaneously.
 ### Example 2: Interactive Feature Discovery
 
 ```
-/forge:feature
+/nxtg-forge:feature
 ```
 
 Without arguments, the command asks what you want to build and what scope to target (small/medium/large), then proceeds with the same pipeline.
 
 ## Power Use Cases
 
-Chain `/forge:spec "feature name"` to create and refine a spec, then `/forge:feature "feature name"` to implement it. The feature command detects existing specs in `.claude/plans/` and uses them directly.
+Chain `/nxtg-forge:spec "feature name"` to create and refine a spec, then `/nxtg-forge:feature "feature name"` to implement it. The feature command detects existing specs in `.claude/plans/` and uses them directly.
 
 For large features, the parallel agent pipeline (Phase B) can cut implementation time significantly. The builder agent writes source files while the testing agent writes test files -- they never conflict because the spec defines file boundaries upfront in Phase A.
 
@@ -100,10 +100,10 @@ For large features, the parallel agent pipeline (Phase B) can cut implementation
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:spec** | Generate a spec first, refine it, then hand off to feature for implementation |
-| **/forge:test** | Run after feature completion to verify the full test suite still passes |
-| **/forge:checkpoint** | Save state before starting a feature so you can roll back if needed |
-| **/forge:agent-assign** | Use for simpler tasks that do not need the full three-phase pipeline |
+| **/nxtg-forge:spec** | Generate a spec first, refine it, then hand off to feature for implementation |
+| **/nxtg-forge:test** | Run after feature completion to verify the full test suite still passes |
+| **/nxtg-forge:checkpoint** | Save state before starting a feature so you can roll back if needed |
+| **/nxtg-forge:agent-assign** | Use for simpler tasks that do not need the full three-phase pipeline |
 | **guardian agent** | Phase C quality gate runs automatically; you can also invoke the guardian manually |
 
 ## Level Progression
@@ -123,6 +123,6 @@ For large features, the parallel agent pipeline (Phase B) can cut implementation
 
 ---
 
-*See also: [/forge:spec](spec.md) | [/forge:agent-assign](agent-assign.md) | [/forge:test](test.md)*
+*See also: [/nxtg-forge:spec](spec.md) | [/nxtg-forge:agent-assign](agent-assign.md) | [/nxtg-forge:test](test.md)*
 
 *Agents in the pipeline: [Planner](../agents/planner.md) (Phase A) | [Builder](../agents/builder.md) + [Testing](../agents/testing.md) (Phase B, parallel) | [Guardian](../agents/guardian.md) (Phase C)*

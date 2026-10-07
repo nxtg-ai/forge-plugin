@@ -71,8 +71,8 @@ Recommendations:
 
 ---
 Actions:
-  /forge:docs-audit    Detailed documentation audit
-  /forge:docs-update   Update stale documentation
+  /nxtg-forge:docs-audit    Detailed documentation audit
+  /nxtg-forge:docs-update   Update stale documentation
 ```
 
 ## Error Handling

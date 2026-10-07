@@ -115,7 +115,7 @@ Performance:
 | **Detective** | Detective spawns Performance as a subagent during health checks. Performance provides the bundle size and resource metrics for the health score. |
 | **Planner** | For performance-critical features, Planner includes Performance in the quality gate phase to verify budgets are met. |
 | **UI** | Performance identifies React render issues; UI agent implements the optimized component patterns (memo, lazy, virtual scroll). |
-| **/forge:optimize** | The `/forge:optimize` command provides a quick optimization pass. The Performance agent provides deep profiling and budget enforcement. |
+| **/nxtg-forge:optimize** | The `/nxtg-forge:optimize` command provides a quick optimization pass. The Performance agent provides deep profiling and budget enforcement. |
 
 ## Level Progression
 
@@ -134,4 +134,4 @@ Performance:
 
 ---
 
-*See also: [UI](ui.md) | [Detective](detective.md) | [/forge:optimize](../commands/optimize.md)*
+*See also: [UI](ui.md) | [Detective](detective.md) | [/nxtg-forge:optimize](../commands/optimize.md)*

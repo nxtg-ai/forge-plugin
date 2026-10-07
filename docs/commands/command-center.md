@@ -1,4 +1,4 @@
-# /forge:command-center
+# /nxtg-forge:command-center
 
 > The canonical four-option mission control menu providing intelligent project orchestration: continue work, plan features, soundboard strategy, or run health checks.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L2 Pro Builder |
 | **Category** | Governance |
-| **Syntax** | `/forge:command-center` |
+| **Syntax** | `/nxtg-forge:command-center` |
 
 ---
 
 ## What It Does
 
-`/forge:command-center` is the command you run when you sit down and ask "what should I work on?" It presents a four-option menu -- Continue/Resume, Review & Plan Features, Soundboard, and Health Check -- each backed by real data from both local state and the forge-orchestrator. Before showing the menu, it runs a pre-flight check: governance.json exists, git is initialized, and the orchestrator connection is verified.
+`/nxtg-forge:command-center` is the command you run when you sit down and ask "what should I work on?" It presents a four-option menu -- Continue/Resume, Review & Plan Features, Soundboard, and Health Check -- each backed by real data from both local state and the forge-orchestrator. Before showing the menu, it runs a pre-flight check: governance.json exists, git is initialized, and the orchestrator connection is verified.
 
-Option 1 (Continue) restores your full context: governance directive, recent git activity, uncommitted work, saved checkpoints, AND the orchestrator task board showing pending, in-progress, and blocked tasks plus drift detection. Option 2 (Plan Features) lets you design new work with access to the existing master plan and task decomposition from the orchestrator. Option 3 (Soundboard) opens a strategic discussion grounded in real project data. Option 4 (Health Check) runs a comprehensive health analysis equivalent to `/forge:gap-analysis`.
+Option 1 (Continue) restores your full context: governance directive, recent git activity, uncommitted work, saved checkpoints, AND the orchestrator task board showing pending, in-progress, and blocked tasks plus drift detection. Option 2 (Plan Features) lets you design new work with access to the existing master plan and task decomposition from the orchestrator. Option 3 (Soundboard) opens a strategic discussion grounded in real project data. Option 4 (Health Check) runs a comprehensive health analysis equivalent to `/nxtg-forge:gap-analysis`.
 
 The command also handles natural language input. Instead of typing "1", you can say "let's keep going" or "how are we doing?" and it maps your intent to the right option.
 
 ## Syntax & Options
 
 ```
-/forge:command-center
+/nxtg-forge:command-center
 ```
 
 This command takes no arguments. It presents an interactive menu.
@@ -32,14 +32,14 @@ This command takes no arguments. It presents an interactive menu.
 - **Context recovery**: After a break, compaction, or context switch, use it to restore your bearings.
 - **Decision point**: When you have finished a task and need to decide what comes next.
 
-For a non-interactive status overview, use `/forge:status`. For going directly into feature development, use `/forge:feature`.
+For a non-interactive status overview, use `/nxtg-forge:status`. For going directly into feature development, use `/nxtg-forge:feature`.
 
 ## Examples
 
 ### Example 1: Launching the Command Center
 
 ```
-/forge:command-center
+/nxtg-forge:command-center
 ```
 
 ```
@@ -100,9 +100,9 @@ The Soundboard option is underutilized. It enters an open discussion mode ground
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:status** | Command center runs status-level analysis internally; use status for quick non-interactive checks |
-| **/forge:feature** | Planning option feeds into feature development |
-| **/forge:gap-analysis** | Health check option runs gap-analysis-level analysis |
+| **/nxtg-forge:status** | Command center runs status-level analysis internally; use status for quick non-interactive checks |
+| **/nxtg-forge:feature** | Planning option feeds into feature development |
+| **/nxtg-forge:gap-analysis** | Health check option runs gap-analysis-level analysis |
 | **forge-orchestrator** | Task board, plan, drift, and knowledge all come from the orchestrator MCP |
 
 ## Level Progression
@@ -115,7 +115,7 @@ The Soundboard option is underutilized. It enters an open discussion mode ground
 
 ## Tips & Gotchas
 
-- The command checks for `.claude/governance.json` on startup. If it is missing, it suggests running `/forge:init` first.
+- The command checks for `.claude/governance.json` on startup. If it is missing, it suggests running `/nxtg-forge:init` first.
 - Orchestrator connection is checked via `forge_get_state`. If the orchestrator is not running, the command still works with local data only and shows the connection status.
 - Natural language mapping is keyword-based: "continue/resume" maps to option 1, "plan/feature/design" to option 2, "discuss/think/advice" to option 3, "health/quality/metrics" to option 4.
 - After completing any option, the command offers to return to the command center for the next action.

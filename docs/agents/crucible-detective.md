@@ -106,7 +106,7 @@ CRUCIBLE Detective:
 | **QA Sentinel** | Detective finds the fraud; QA Sentinel designs the strategy to fix it |
 | **Testing agent** | Detective identifies what is hollow; Testing agent rewrites with meaningful assertions |
 | **Guardian agent** | CRUCIBLE audit results feed into governance quality gates |
-| **/forge:test** | Run tests first, then audit the results with the Detective |
+| **/nxtg-forge:test** | Run tests first, then audit the results with the Detective |
 
 ## Level Progression
 

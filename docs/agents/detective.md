@@ -109,7 +109,7 @@ Detective:
 | **Orchestrator** | Orchestrator delegates health checks (Option 4) and soundboard analysis (Option 3) to the Detective. Findings feed back into the Orchestrator's recommendations. |
 | **Planner** | Detective's analysis informs Planner's architecture decisions. "Current complexity is 14, target is <10" gives the Planner concrete refactoring constraints. |
 | **Guardian** | Detective diagnoses; Guardian enforces. Run Detective to find problems, Guardian to prevent new ones. |
-| **/forge:status** | The `/forge:status` command provides a quick health summary; the Detective provides the deep investigation when the summary reveals issues. |
+| **/nxtg-forge:status** | The `/nxtg-forge:status` command provides a quick health summary; the Detective provides the deep investigation when the summary reveals issues. |
 
 ## Level Progression
 
@@ -128,4 +128,4 @@ Detective:
 
 ---
 
-*See also: [Orchestrator](orchestrator.md) | [Guardian](guardian.md) | [/forge:status](../commands/status.md)*
+*See also: [Orchestrator](orchestrator.md) | [Guardian](guardian.md) | [/nxtg-forge:status](../commands/status.md)*

@@ -1,18 +1,18 @@
 ---
-description: "Activate the CEO Decision Loop in ORBIT mode. Starts a continuous multi-iteration governance cycle: OBSERVE pending decisions → REASON with precedent → BUILD decisions → INSPECT retrograde → TURN for next iteration. The Stop hook keeps the loop alive until the queue is empty or limits are reached. Usage: /forge:ceo-loop [max-iterations] [time-limit-minutes]"
+description: "Activate the CEO Decision Loop in ORBIT mode. Starts a continuous multi-iteration governance cycle: OBSERVE pending decisions → REASON with precedent → BUILD decisions → INSPECT retrograde → TURN for next iteration. The Stop hook keeps the loop alive until the queue is empty or limits are reached. Usage: /nxtg-forge:ceo-loop [max-iterations] [time-limit-minutes]"
 disable-model-invocation: true
 argument-hint: "[max-iterations] [time-limit-minutes]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, TodoWrite, Task
 ---
 
-# /forge:ceo-loop — Activate CEO Decision Loop (ORBIT Mode)
+# /nxtg-forge:ceo-loop — Activate CEO Decision Loop (ORBIT Mode)
 
 Initialise and start the CEO-LOOP ORBIT cycle for this project.
 
 ## Usage
 
 ```
-/forge:ceo-loop [max-iterations] [time-limit-minutes]
+/nxtg-forge:ceo-loop [max-iterations] [time-limit-minutes]
 ```
 
 **Defaults**: max-iterations=20, time-limit=30
@@ -39,7 +39,7 @@ git log --oneline -5 2>/dev/null
 git status --short 2>/dev/null | head -10
 ```
 
-**If a loop is already active** (`active: true`): Do NOT re-initialize. Report current state and ask if the user wants to cancel first (`/forge:ceo-loop-cancel`).
+**If a loop is already active** (`active: true`): Do NOT re-initialize. Report current state and ask if the user wants to cancel first (`/nxtg-forge:ceo-loop-cancel`).
 
 ## Step 2 — Parse arguments
 
@@ -129,6 +129,6 @@ When you complete Iteration 1, the Stop hook (`ceo-loop-stop.sh`) will automatic
 
 - State files live in `.claude/` (user's project directory, not plugin directory)
 - The loop runs until: queue empty, max iterations reached, time limit reached, or user cancels
-- Cancel anytime with `/forge:ceo-loop-cancel`
+- Cancel anytime with `/nxtg-forge:ceo-loop-cancel`
 - The decision journal (`.claude/ceo-loop-decisions.jsonl`) is append-only — never deleted
 - If context compaction occurs, the progress file bridges the gap — the hook re-feeds it

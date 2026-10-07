@@ -6,11 +6,11 @@ description: >
   patterns. Use when the user reports something is slow ("dashboard takes forever",
   "API is laggy", "bundle is 2MB", "memory keeps growing"), asks to profile,
   benchmark, reduce latency/bundle-size, or fix N+1 queries — and to interpret the
-  output of the /forge:optimize command or the `performance` agent.
+  output of the /nxtg-forge:optimize command or the `performance` agent.
 when_to_use: >
   Triggers: "it's slow", "profile this", "reduce bundle size", "optimize this query",
   "memory leak", "N+1 queries", "improve response time", "benchmark", "the app lags",
-  "cut load time", "why is this taking so long". Also when reviewing /forge:optimize
+  "cut load time", "why is this taking so long". Also when reviewing /nxtg-forge:optimize
   output or briefing the `performance` agent (agents/performance.md).
 user-invocable: false
 allowed-tools: Read, Grep, Glob, Bash
@@ -19,7 +19,7 @@ allowed-tools: Read, Grep, Glob, Bash
 # Performance Optimization
 
 Diagnose and fix performance problems **from measurement, never from guessing**. This
-skill is the reasoning layer; the deterministic scan lives in the `/forge:optimize`
+skill is the reasoning layer; the deterministic scan lives in the `/nxtg-forge:optimize`
 command and the `performance` agent.
 
 ## The one rule
@@ -34,11 +34,11 @@ prove the delta, then re-profile — the bottleneck usually moves.
 
 | Surface | What it does | When |
 |---|---|---|
-| `/forge:optimize` (command) | Deterministic 7-dimension static scan (large files, `as any`, dead exports, deps, dup, console, TODO debt) + optional `--fix` | Codebase-health sweep, refactor triage |
+| `/nxtg-forge:optimize` (command) | Deterministic 7-dimension static scan (large files, `as any`, dead exports, deps, dup, console, TODO debt) + optional `--fix` | Codebase-health sweep, refactor triage |
 | `performance` agent (`agents/performance.md`) | Bundle analysis, React render profiling, memory-leak hunting, API latency | Deep dive on a specific slow surface |
 | This skill | The measure-first method + fix patterns both of the above apply | Any "it's slow" reasoning |
 
-`/forge:optimize` is a TypeScript-oriented static-quality scan — it does **not** run a
+`/nxtg-forge:optimize` is a TypeScript-oriented static-quality scan — it does **not** run a
 profiler. For actual runtime numbers you still profile (browser DevTools, `cargo
 flamegraph`, `node --prof`, `EXPLAIN ANALYZE`). Read `reference/patterns.md` for the
 full per-domain fix catalog; keep this file for triage.
@@ -94,7 +94,7 @@ Deep catalog with concrete code lives in [reference/patterns.md](reference/patte
 
 ## Gotchas
 
-- **`/forge:optimize` grep-excludes any path containing the substring `test`** (`grep
+- **`/nxtg-forge:optimize` grep-excludes any path containing the substring `test`** (`grep
   -v test`). A file named `contest.ts` or a dir like `latest/` is silently dropped from
   the type-safety / console / dead-code counts. Don't treat its "0 console statements"
   as proof — spot-check.

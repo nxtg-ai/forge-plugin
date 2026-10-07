@@ -102,7 +102,7 @@ Planner:
 | **Builder** | Planner delegates implementation to Builder with precise file boundaries and spec references. Builder executes without architectural ambiguity. |
 | **Testing** | Planner spawns Testing in parallel with Builder. Testing writes tests from the same spec, ensuring coverage from day one. |
 | **Detective** | When planning a refactor, Planner can invoke Detective first to analyze current code health, then design improvements based on real data. |
-| **/forge:feature** | The `/forge:feature` command is the typical entry point that activates the Planner through the Orchestrator. |
+| **/nxtg-forge:feature** | The `/nxtg-forge:feature` command is the typical entry point that activates the Planner through the Orchestrator. |
 
 ## Level Progression
 
@@ -121,6 +121,6 @@ Planner:
 
 ---
 
-*See also: [Builder](builder.md) | [Guardian](guardian.md) | [Orchestrator](orchestrator.md) | [/forge:feature](../commands/feature.md) | [/forge:spec](../commands/spec.md)*
+*See also: [Builder](builder.md) | [Guardian](guardian.md) | [Orchestrator](orchestrator.md) | [/nxtg-forge:feature](../commands/feature.md) | [/nxtg-forge:spec](../commands/spec.md)*
 
-*Part of the feature pipeline: [/forge:feature](../commands/feature.md) → **Planner** (you are here) → [Builder](builder.md) → [Testing](testing.md) → [Guardian](guardian.md)*
+*Part of the feature pipeline: [/nxtg-forge:feature](../commands/feature.md) → **Planner** (you are here) → [Builder](builder.md) → [Testing](testing.md) → [Guardian](guardian.md)*

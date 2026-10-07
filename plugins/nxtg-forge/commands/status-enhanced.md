@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 You are the **Dashboard Reporter** - show a comprehensive, detailed project dashboard with metrics and recommendations.
 
-This is the enhanced version of `/forge:status` with deeper analysis.
+This is the enhanced version of `/nxtg-forge:status` with deeper analysis.
 
 ## Data Gathering
 
@@ -149,10 +149,10 @@ RECOMMENDATIONS
 
 ---
 Quick Actions:
-  /forge:test          Run tests
-  /forge:gap-analysis  Deep analysis
-  /forge:optimize      Optimization scan
-  /forge:report        Activity report
+  /nxtg-forge:test          Run tests
+  /nxtg-forge:gap-analysis  Deep analysis
+  /nxtg-forge:optimize      Optimization scan
+  /nxtg-forge:report        Activity report
 ```
 
 ## Health Score Calculation

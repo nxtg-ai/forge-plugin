@@ -1,4 +1,4 @@
-# /forge:ceo-loop
+# /nxtg-forge:ceo-loop
 
 > Activate the CEO Decision Loop in ORBIT mode -- a continuous multi-iteration governance cycle that observes pending decisions, reasons with precedent, builds decisions, inspects via retrograde, and turns for the next iteration.
 
@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | CEO Decision Loop |
-| **Syntax** | `/forge:ceo-loop [max-iterations] [time-limit-minutes]` |
+| **Syntax** | `/nxtg-forge:ceo-loop [max-iterations] [time-limit-minutes]` |
 
 ---
 
 ## What It Does
 
-`/forge:ceo-loop` starts an autonomous decision-making engine that runs in a continuous ORBIT cycle: OBSERVE pending decisions and project state, REASON about each decision using precedent from the decision journal, BUILD the actual decisions (approve, modify, escalate), INSPECT via retrograde analysis of previous decisions to calibrate accuracy, and TURN to prepare for the next iteration. The loop persists across Claude Code's Stop events via a hook (`ceo-loop-stop.sh`) that automatically triggers the next iteration.
+`/nxtg-forge:ceo-loop` starts an autonomous decision-making engine that runs in a continuous ORBIT cycle: OBSERVE pending decisions and project state, REASON about each decision using precedent from the decision journal, BUILD the actual decisions (approve, modify, escalate), INSPECT via retrograde analysis of previous decisions to calibrate accuracy, and TURN to prepare for the next iteration. The loop persists across Claude Code's Stop events via a hook (`ceo-loop-stop.sh`) that automatically triggers the next iteration.
 
 The loop manages its own state: `.claude/ceo-loop-state.json` tracks iteration count, trust level, accuracy metrics, and timing. `.claude/ceo-loop-decisions.jsonl` is an append-only journal of every decision made. `.claude/ceo-loop-progress.md` bridges context across compaction events. The trust system starts at "standard" and can escalate based on decision accuracy -- more correct decisions earn higher trust, which unlocks deeper autonomous authority.
 
@@ -21,7 +21,7 @@ Without this command, governance decisions accumulate in `.claude/ceo-decisions-
 ## Syntax & Options
 
 ```
-/forge:ceo-loop [max-iterations] [time-limit-minutes]
+/nxtg-forge:ceo-loop [max-iterations] [time-limit-minutes]
 ```
 
 | Option | Description |
@@ -42,7 +42,7 @@ When you want to make a single decision manually, just review the pending decisi
 ### Example 1: Default Loop
 
 ```
-/forge:ceo-loop
+/nxtg-forge:ceo-loop
 ```
 
 ```
@@ -58,7 +58,7 @@ The loop then runs OBSERVE-REASON-BUILD-INSPECT-TURN for each iteration. After e
 ### Example 2: Custom Limits
 
 ```
-/forge:ceo-loop 10 60
+/nxtg-forge:ceo-loop 10 60
 ```
 
 Runs up to 10 iterations with a 60-minute time limit. Useful for longer strategy sessions.
@@ -66,7 +66,7 @@ Runs up to 10 iterations with a 60-minute time limit. Useful for longer strategy
 ### Example 3: Resuming a Previous Session
 
 ```
-/forge:ceo-loop
+/nxtg-forge:ceo-loop
 ```
 
 If a previous loop was cancelled, the command detects the existing state file and decision journal. It starts a new session but the journal history informs the retrograde analysis, creating continuity across sessions.
@@ -81,9 +81,9 @@ The retrograde inspection phase is where the loop learns. It reviews previous de
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:ceo-loop-cancel** | Gracefully stop the loop at any time, preserving the decision journal |
-| **/forge:status** | Check project health before starting the loop to set context |
-| **/forge:command-center** | Command center shows pending decisions that the loop can process |
+| **/nxtg-forge:ceo-loop-cancel** | Gracefully stop the loop at any time, preserving the decision journal |
+| **/nxtg-forge:status** | Check project health before starting the loop to set context |
+| **/nxtg-forge:command-center** | Command center shows pending decisions that the loop can process |
 | **nxtg-ceo-loop agent** | The agent that powers each ORBIT iteration within the loop |
 
 ## Level Progression
@@ -96,7 +96,7 @@ The retrograde inspection phase is where the loop learns. It reviews previous de
 
 ## Tips & Gotchas
 
-- If a loop is already active (`active: true` in state file), the command refuses to double-start and suggests using `/forge:ceo-loop-cancel` first.
+- If a loop is already active (`active: true` in state file), the command refuses to double-start and suggests using `/nxtg-forge:ceo-loop-cancel` first.
 - The decision journal (`.claude/ceo-loop-decisions.jsonl`) is append-only and never deleted, even when the loop is cancelled. This creates a permanent audit trail.
 - The Stop hook (`ceo-loop-stop.sh`) is what keeps the loop running between iterations. It reads the state file and re-triggers the ORBIT cycle.
 - Trust levels affect decision depth: "standard" analyzes all decisions normally; higher trust levels auto-approve low-risk decisions. Trust cannot be manually set -- it is earned through accuracy.

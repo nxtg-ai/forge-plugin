@@ -65,7 +65,7 @@ The web dashboard is a **separate product** from the L2 TUI dashboard. They are 
 - `forge dashboard --pty` = L2 TUI dashboard (runs in your terminal, part of the orchestrator binary)
 - `npm run dev` in forge-ui = L3 web dashboard (runs in your browser, separate React application)
 
-From the L1 plugin, the `/forge:dashboard` command can launch the web dashboard. Or run it standalone with `npm run dev` — no plugin required.
+From the L1 plugin, the `/nxtg-forge:dashboard` command can launch the web dashboard. Or run it standalone with `npm run dev` — no plugin required.
 
 The web dashboard reads state from the forge-orchestrator via its API. The architecture is one-directional: the UI reads and displays, the orchestrator makes decisions.
 

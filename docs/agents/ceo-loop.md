@@ -98,8 +98,8 @@ The ORBIT loop cycles through five phases per iteration:
 | **Builder agent** | CEO Loop unblocks Builder by approving or rejecting pending decisions |
 | **Product Strategist** | Strategist provides market context; CEO Loop makes the final call |
 | **Oracle** | Oracle detects drift; CEO Loop decides whether to correct course or accept the drift |
-| **/forge:ceo-loop** | Activates the loop with configurable iteration and time limits |
-| **/forge:ceo-loop-cancel** | Gracefully stops the loop, preserving the decision journal |
+| **/nxtg-forge:ceo-loop** | Activates the loop with configurable iteration and time limits |
+| **/nxtg-forge:ceo-loop-cancel** | Gracefully stops the loop, preserving the decision journal |
 
 ## Level Progression
 
@@ -111,7 +111,7 @@ The ORBIT loop cycles through five phases per iteration:
 
 ## Tips & Gotchas
 
-- **Do**: Set realistic iteration and time limits. `/forge:ceo-loop 10 30` runs up to 10 iterations or 30 minutes.
+- **Do**: Set realistic iteration and time limits. `/nxtg-forge:ceo-loop 10 30` runs up to 10 iterations or 30 minutes.
 - **Do**: Review the decision journal (`ceo-loop-decisions.jsonl`) periodically to ensure decisions align with your actual preferences.
 - **Don't**: Leave the CEO Loop running indefinitely without review -- it is autonomous but not infallible.
 - **Don't**: Use it for decisions that require user research or market data it does not have -- those should go to the Product Strategist or Scout first.

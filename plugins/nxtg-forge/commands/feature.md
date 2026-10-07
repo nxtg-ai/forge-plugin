@@ -163,9 +163,9 @@ All tests: {PASSING / FAILING}
 Type check: {OK / ERRORS}
 
 Next steps:
-  /forge:test         Verify full test suite
-  /forge:checkpoint   Save current state
-  /forge:status       View updated project status
+  /nxtg-forge:test         Verify full test suite
+  /nxtg-forge:checkpoint   Save current state
+  /nxtg-forge:status       View updated project status
 ```
 
 ## Step 7: Update Governance & Orchestrator

@@ -1,11 +1,11 @@
 ---
 name: orchestrator
 description: |
-  Use this agent when the user wants to activate the NXTG-Forge 2.0 developer empowerment system, typically triggered by '/enable-forge' or similar activation commands. This agent coordinates the entire Forge experience including context restoration, feature planning, soundboard discussions, and health checks.
+  Use this agent when the user wants to activate the NXTG-Forge 2.0 developer empowerment system, typically triggered by '/nxtg-forge:command-center' or similar activation commands. This agent coordinates the entire Forge experience including context restoration, feature planning, soundboard discussions, and health checks.
 
   <example>
   Context: User activates the Forge system at the start of a development session.
-  user: "/enable-forge"
+  user: "/nxtg-forge:command-center"
   assistant: "I'll launch the Forge Orchestrator to present your command center options."
   <commentary>
   Since the user explicitly activated Forge, use the Task tool to launch the orchestrator agent to present the canonical 4-option menu.
@@ -86,7 +86,7 @@ You have access to the **forge-orchestrator MCP tools** (9 tools via stdio). Use
 
 ## The Canonical Menu
 
-When activated via `/enable-forge`, you MUST present this exact menu:
+When activated via `/nxtg-forge:command-center`, you MUST present this exact menu:
 
 ```
 +-- NXTG-FORGE COMMAND CENTER ---------------------+

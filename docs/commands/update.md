@@ -1,4 +1,4 @@
-# /forge:update
+# /nxtg-forge:update
 
 > Update the Forge plugin to the latest version with a built-in workaround for Claude Code's stale marketplace cache (bug #29071).
 
@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Setup & Maintenance |
-| **Syntax** | `/forge:update [--check] [--plugin] [--config]` |
+| **Syntax** | `/nxtg-forge:update [--check] [--plugin] [--config]` |
 
 ---
 
 ## What It Does
 
-`/forge:update` handles the full plugin update lifecycle, including a workaround for a known Claude Code issue (#29071) where `plugin update` fetches new content but never merges it into the local marketplace clone. The command first detects your current installation (plugin name, scope, marketplace version), then manually pulls the latest from the marketplace git clone, and finally runs the standard update command. If the standard update fails, it escalates through progressively more aggressive methods: scope-specific updates, full reinstall, and finally a nuclear clean install.
+`/nxtg-forge:update` handles the full plugin update lifecycle, including a workaround for a known Claude Code issue (#29071) where `plugin update` fetches new content but never merges it into the local marketplace clone. The command first detects your current installation (plugin name, scope, marketplace version), then manually pulls the latest from the marketplace git clone, and finally runs the standard update command. If the standard update fails, it escalates through progressively more aggressive methods: scope-specific updates, full reinstall, and finally a nuclear clean install.
 
 After the plugin update, the command also checks your project configuration: verifying `governance.json` is valid, checking if the schema needs migration, and confirming hooks are configured. This ensures that both the plugin and your project config are current.
 
@@ -21,7 +21,7 @@ The critical detail: after any update, commands, agents, and skills only reload 
 ## Syntax & Options
 
 ```
-/forge:update [--check] [--plugin] [--config]
+/nxtg-forge:update [--check] [--plugin] [--config]
 ```
 
 | Option | Description |
@@ -36,14 +36,14 @@ The critical detail: after any update, commands, agents, and skills only reload 
 - **When commands seem outdated**: If a command is missing features documented online, you may be on a stale version.
 - **Troubleshooting plugin issues**: The escalation chain (standard update -> reinstall -> clean install) resolves most plugin problems.
 
-For initial installation, use `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge`. For project-level initialization, use `/forge:init`.
+For initial installation, use `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge`. For project-level initialization, use `/nxtg-forge:init`.
 
 ## Examples
 
 ### Example 1: Standard Update
 
 ```
-/forge:update
+/nxtg-forge:update
 ```
 
 ```
@@ -64,13 +64,13 @@ Updating plugin... Updated.
 | Governance | valid |
 | Hooks | active |
 
-**Next:** Restart Claude Code to load the new version, then /forge:status
+**Next:** Restart Claude Code to load the new version, then /nxtg-forge:status
 ```
 
 ### Example 2: Check Only
 
 ```
-/forge:update --check
+/nxtg-forge:update --check
 ```
 
 Reports the available version without making any changes. Useful for checking whether an update is available before committing to it.
@@ -89,16 +89,16 @@ Updated. Restart your Claude Code session to load the new version.
 
 ## Power Use Cases
 
-Run `/forge:update --check` periodically to see if new versions are available without disrupting your session. When ready to update, run `/forge:update` and then restart Claude Code.
+Run `/nxtg-forge:update --check` periodically to see if new versions are available without disrupting your session. When ready to update, run `/nxtg-forge:update` and then restart Claude Code.
 
-If you are testing a pre-release version with `--plugin-dir`, use `/forge:update --config` to only check project config without touching the plugin installation.
+If you are testing a pre-release version with `--plugin-dir`, use `/nxtg-forge:update --config` to only check project config without touching the plugin installation.
 
 ## Combines With
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:init** | Init sets up the project; update keeps the plugin current |
-| **/forge:status** | Run status after updating and restarting to verify everything works |
+| **/nxtg-forge:init** | Init sets up the project; update keeps the plugin current |
+| **/nxtg-forge:status** | Run status after updating and restarting to verify everything works |
 | **governance MCP** | MCP server code updates require a session restart to take effect |
 
 ## Level Progression

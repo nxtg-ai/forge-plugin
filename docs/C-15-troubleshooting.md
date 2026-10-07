@@ -367,9 +367,9 @@ Claude Code spawns the MCP server using the PATH it inherits. If forge isn't fin
 
 ## Plugin Issues
 
-### `/forge:status` command not found
+### `/nxtg-forge:status` command not found
 
-**Symptom**: Typing `/forge:status` in Claude Code gives "command not found" or similar.
+**Symptom**: Typing `/nxtg-forge:status` in Claude Code gives "command not found" or similar.
 
 **Fix**: The forge plugin must be installed in Claude Code:
 ```bash

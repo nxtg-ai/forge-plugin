@@ -119,7 +119,7 @@ Wordsmith:
 | **DX Engineer** | DX Engineer identifies text that needs improvement; Wordsmith rewrites it |
 | **Design Vanguard** | Design Vanguard handles visual communication; Wordsmith handles verbal communication |
 | **Release Sentinel** | Sentinel identifies docs that need updating; Wordsmith writes the updates |
-| **/forge:docs-update** | Triggers documentation updates that the Wordsmith can execute |
+| **/nxtg-forge:docs-update** | Triggers documentation updates that the Wordsmith can execute |
 
 ## Level Progression
 

@@ -48,7 +48,7 @@ The `description` is Claude's decision engine for whether to load the skill — 
 **Shape:** `<what it does>. Use when <concrete trigger scenarios + words a user would actually type>.`
 
 - Put the **primary use case first** — the listing truncates around 1,536 chars.
-- Pack in the **literal trigger phrases** and command names a user says ("run the docs commands", "/forge:docs-audit", "add JSDoc"). Claude matches on these.
+- Pack in the **literal trigger phrases** and command names a user says ("run the docs commands", "/nxtg-forge:docs-audit", "add JSDoc"). Claude matches on these.
 - Name what it does NOT cover if a sibling skill is easy to confuse with.
 
 Worked example — turning a weak description into a routing rule:
@@ -62,7 +62,7 @@ description: >
   Documentation standards and code-to-docs sync — JSDoc/TSDoc, README/CHANGELOG
   structure, auto-generated API reference, staleness detection. Use when writing or
   reviewing docs, adding JSDoc to exported functions, structuring a docs/ tree, or
-  running /forge:docs-status, /forge:docs-audit, /forge:docs-update.
+  running /nxtg-forge:docs-status, /nxtg-forge:docs-audit, /nxtg-forge:docs-update.
 ```
 
 ## Progressive disclosure — split when oversized

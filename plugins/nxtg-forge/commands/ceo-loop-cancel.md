@@ -4,7 +4,7 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash
 ---
 
-# /forge:ceo-loop-cancel — Cancel CEO Decision Loop
+# /nxtg-forge:ceo-loop-cancel — Cancel CEO Decision Loop
 
 Graceful exit from the CEO-LOOP ORBIT cycle.
 
@@ -67,7 +67,7 @@ Append a final section to `.claude/ceo-loop-progress.md`:
 - Remaining pending decisions: <PENDING>
 - Decision journal preserved at: `.claude/ceo-loop-decisions.jsonl`
 
-Resume next session with: `/forge:ceo-loop` (will pick up from journal)
+Resume next session with: `/nxtg-forge:ceo-loop` (will pick up from journal)
 ```
 
 ## Step 4 — Set loop inactive
@@ -87,7 +87,7 @@ Output:
 ├─ Decision accuracy: <pct>% (<correct>/<total with retrograde>)
 ├─ Remaining in queue: <pending>
 ├─ Journal preserved: .claude/ceo-loop-decisions.jsonl
-└─ Resume with: /forge:ceo-loop
+└─ Resume with: /nxtg-forge:ceo-loop
 ```
 
 ## What is preserved
@@ -97,7 +97,7 @@ Output:
 - `.claude/ceo-loop-state.json` — State file with `active: false`
 - `.claude/ceo-decisions-pending.json` — Unprocessed decisions remain for next session
 
-## What is reset on next /forge:ceo-loop
+## What is reset on next /nxtg-forge:ceo-loop
 
 - `active` → true
 - `iteration` → 0

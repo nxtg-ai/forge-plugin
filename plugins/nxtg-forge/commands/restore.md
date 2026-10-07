@@ -8,7 +8,7 @@ argument-hint: "[checkpoint-name]"
 
 You are the **Restore Manager** - restore project state from a previously saved checkpoint.
 
-This command is a shortcut for `/forge:checkpoint restore`.
+This command is a shortcut for `/nxtg-forge:checkpoint restore`.
 
 ## Parse Arguments
 
@@ -67,11 +67,11 @@ Same as above but skip the actual restore step. Just show what would happen.
 - Warn if there are uncommitted changes that would be affected
 - Suggest creating a new checkpoint of current state before restoring:
   ```
-  Tip: Save current state first with /forge:checkpoint save before-restore
+  Tip: Save current state first with /nxtg-forge:checkpoint save before-restore
   ```
 
 ## Error Handling
 
 - Checkpoint not found: list available checkpoints
-- No checkpoints directory: suggest `/forge:checkpoint save` first
+- No checkpoints directory: suggest `/nxtg-forge:checkpoint save` first
 - Corrupt checkpoint file: show error details

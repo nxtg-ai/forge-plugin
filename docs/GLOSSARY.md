@@ -8,18 +8,18 @@
 
 **Like:** A specialist you hire for a specific job — one does plumbing, another does electrical.
 **Definition:** An autonomous AI subprocess with a defined role, model, and tool access. Agents run inside Claude Code and handle specific domains (security, testing, API design, etc.).
-**In Forge:** 33 markdown files define agent personalities. Each has a system prompt, a model assignment (Sonnet/Opus/Haiku), and a list of allowed tools. Claude Code picks the right agent based on your prompt, or you invoke them through commands like `/forge:feature`. See [Agents Reference](agents/README.md).
+**In Forge:** 33 markdown files define agent personalities. Each has a system prompt, a model assignment (Sonnet/Opus/Haiku), and a list of allowed tools. Claude Code picks the right agent based on your prompt, or you invoke them through commands like `/nxtg-forge:feature`. See [Agents Reference](agents/README.md).
 
 ## Checkpoint
 
 **Like:** A save point in a video game — snapshot your state before a boss fight.
 **Definition:** A serialized copy of your governance configuration at a point in time.
-**In Forge:** `/forge:checkpoint` saves your `.claude/governance.json` state. `/forge:restore` rolls back to it. Use before risky changes. See [/forge:checkpoint](commands/checkpoint.md).
+**In Forge:** `/nxtg-forge:checkpoint` saves your `.claude/governance.json` state. `/nxtg-forge:restore` rolls back to it. Use before risky changes. See [/nxtg-forge:checkpoint](commands/checkpoint.md).
 
 ## Command (Slash Command)
 
 **Like:** A recipe card — step-by-step instructions for a specific task.
-**Definition:** A user-invocable action triggered by typing `/forge:{name}` in Claude Code. Commands are markdown files with YAML frontmatter that Claude reads and executes.
+**Definition:** A user-invocable action triggered by typing `/nxtg-forge:{name}` in Claude Code. Commands are markdown files with YAML frontmatter that Claude reads and executes.
 **In Forge:** 23 commands cover setup, feature development, testing, deployment, documentation, and governance. See [Commands Reference](commands/README.md).
 
 ## Drift Detection
@@ -44,19 +44,19 @@
 
 **Like:** A mission control dashboard — visual displays showing everything at once.
 **Definition:** A React web application providing visual governance, real-time agent feeds, and the Infinity Terminal. The L3 product.
-**In Forge:** Runs at `localhost:5050`. Launched via `/forge:dashboard` or `cd forge-ui && npm run dev`.
+**In Forge:** Runs at `localhost:5050`. Launched via `/nxtg-forge:dashboard` or `cd forge-ui && npm run dev`.
 
 ## Governance
 
 **Like:** A building inspector who checks that construction follows code.
 **Definition:** Automated quality enforcement — health scoring, gap analysis, security scanning, and compliance checking applied to your codebase continuously.
-**In Forge:** Governance state lives in `.claude/governance.json`. Hooks check quality on every prompt submission and task completion. MCP tools report health scores (0-100, A-F grade). See [/forge:status](commands/status.md).
+**In Forge:** Governance state lives in `.claude/governance.json`. Hooks check quality on every prompt submission and task completion. MCP tools report health scores (0-100, A-F grade). See [/nxtg-forge:status](commands/status.md).
 
 ## Health Score
 
 **Like:** A credit score for your codebase — one number summarizing overall quality.
 **Definition:** A 0-100 score across 5 dimensions: testing, documentation, security, architecture, and governance. Displayed as a letter grade (A-F).
-**In Forge:** Computed by the governance-mcp server via `forge_get_governance_health` (the orchestrator's `forge_get_health` adds the drift dimension at L2). Visible in `/forge:status` output and the L3 dashboard.
+**In Forge:** Computed by the governance-mcp server via `forge_get_governance_health` (the orchestrator's `forge_get_health` adds the drift dimension at L2). Visible in `/nxtg-forge:status` output and the L3 dashboard.
 
 ## Hook
 
@@ -92,7 +92,7 @@
 
 **Like:** A satellite orbiting Earth — continuous observation from above.
 **Definition:** The governance loop model: **O**bserve → **R**eason → **B**uild → **I**nspect → **T**urn. Each iteration goes deeper.
-**In Forge:** Used by the [CEO Loop](agents/ceo-loop.md) agent for autonomous strategic governance. Activated via `/forge:ceo-loop`.
+**In Forge:** Used by the [CEO Loop](agents/ceo-loop.md) agent for autonomous strategic governance. Activated via `/nxtg-forge:ceo-loop`.
 
 ## Skill
 

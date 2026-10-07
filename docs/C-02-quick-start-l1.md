@@ -16,7 +16,7 @@ That's it. The plugin loads 23 agents, 23 slash commands, 32 knowledge skills, a
 Open Claude Code in any project and run:
 
 ```
-/forge:status
+/nxtg-forge:status
 ```
 
 You'll see:
@@ -31,7 +31,7 @@ You'll see:
 ## Find What's Missing
 
 ```
-/forge:gap-analysis
+/nxtg-forge:gap-analysis
 ```
 
 This scans your project across 5 dimensions and tells you exactly what's missing:
@@ -49,7 +49,7 @@ Each gap comes with an actionable recommendation and priority level.
 ## Build a Feature
 
 ```
-/forge:feature "add user authentication"
+/nxtg-forge:feature "add user authentication"
 ```
 
 This spawns a multi-agent team inside Claude Code:
@@ -82,13 +82,13 @@ These tools run automatically — agents and hooks call them as needed. You don'
 
 | Command | What It Does |
 |---------|-------------|
-| `/forge:status` | Project health at a glance |
-| `/forge:gap-analysis` | Find missing tests, docs, security gaps |
-| `/forge:feature "desc"` | Multi-agent feature development |
-| `/forge:test` | Run tests with analysis |
-| `/forge:checkpoint` | Save restorable project state |
-| `/forge:deploy` | Deploy with pre-flight checks |
-| `/forge:docs-audit` | Check documentation coverage |
+| `/nxtg-forge:status` | Project health at a glance |
+| `/nxtg-forge:gap-analysis` | Find missing tests, docs, security gaps |
+| `/nxtg-forge:feature "desc"` | Multi-agent feature development |
+| `/nxtg-forge:test` | Run tests with analysis |
+| `/nxtg-forge:checkpoint` | Save restorable project state |
+| `/nxtg-forge:deploy` | Deploy with pre-flight checks |
+| `/nxtg-forge:docs-audit` | Check documentation coverage |
 
 ## When to Upgrade
 

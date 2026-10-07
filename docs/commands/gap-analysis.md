@@ -1,4 +1,4 @@
-# /forge:gap-analysis
+# /nxtg-forge:gap-analysis
 
 > Comprehensive five-dimension project analysis covering testing, documentation, security, architecture, and performance -- with severity-ranked findings and phased remediation plans.
 
@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Governance |
-| **Syntax** | `/forge:gap-analysis [--scope testing|docs|security|architecture|performance] [--severity critical|high] [--fix] [--json]` |
+| **Syntax** | `/nxtg-forge:gap-analysis [--scope testing|docs|security|architecture|performance] [--severity critical|high] [--fix] [--json]` |
 
 ---
 
 ## What It Does
 
-`/forge:gap-analysis` is the deepest diagnostic command in Forge. It spawns five parallel agents (testing, docs, security, detective, performance) that simultaneously analyze your project across every quality dimension. The testing agent maps source files to test files and calculates file-level coverage. The docs agent checks for README, CHANGELOG, JSDoc on exports, and API documentation. The security agent scans for hardcoded secrets, dangerous patterns (eval, innerHTML), dependency vulnerabilities, and committed `.env` files. The detective agent finds large files, coupling indicators, type safety issues, and technical debt markers. The performance agent measures bundle size, dependency counts, and production console usage.
+`/nxtg-forge:gap-analysis` is the deepest diagnostic command in Forge. It spawns five parallel agents (testing, docs, security, detective, performance) that simultaneously analyze your project across every quality dimension. The testing agent maps source files to test files and calculates file-level coverage. The docs agent checks for README, CHANGELOG, JSDoc on exports, and API documentation. The security agent scans for hardcoded secrets, dangerous patterns (eval, innerHTML), dependency vulnerabilities, and committed `.env` files. The detective agent finds large files, coupling indicators, type safety issues, and technical debt markers. The performance agent measures bundle size, dependency counts, and production console usage.
 
 Before running local analysis, the command pulls orchestrator data if available -- governance health, drift detection against your project vision, and existing knowledge base entries. This means gap-analysis findings account for strategic alignment, not just code metrics.
 
@@ -21,7 +21,7 @@ The output is a severity-ranked list of gaps (CRITICAL, HIGH, MEDIUM, LOW) with 
 ## Syntax & Options
 
 ```
-/forge:gap-analysis [--scope testing|docs|security|architecture|performance] [--severity critical|high] [--fix] [--json]
+/nxtg-forge:gap-analysis [--scope testing|docs|security|architecture|performance] [--severity critical|high] [--fix] [--json]
 ```
 
 | Option | Description |
@@ -37,14 +37,14 @@ The output is a severity-ranked list of gaps (CRITICAL, HIGH, MEDIUM, LOW) with 
 - **Sprint planning**: Use `--fix` to generate a prioritized backlog of technical debt items with effort estimates.
 - **Targeted investigation**: Use `--scope security` to focus exclusively on security gaps when preparing for an audit.
 
-For code quality specifics (type safety, dead code, duplication), use `/forge:optimize`. For a quick health overview without the deep dive, use `/forge:status`.
+For code quality specifics (type safety, dead code, duplication), use `/nxtg-forge:optimize`. For a quick health overview without the deep dive, use `/nxtg-forge:status`.
 
 ## Examples
 
 ### Example 1: Full Analysis
 
 ```
-/forge:gap-analysis
+/nxtg-forge:gap-analysis
 ```
 
 ```
@@ -71,7 +71,7 @@ Top 5 Priority Items:
 ### Example 2: Scoped to Security
 
 ```
-/forge:gap-analysis --scope security
+/nxtg-forge:gap-analysis --scope security
 ```
 
 Runs only the security dimension, showing dependency vulnerabilities, hardcoded secrets, dangerous patterns, and committed environment files.
@@ -79,7 +79,7 @@ Runs only the security dimension, showing dependency vulnerabilities, hardcoded 
 ### Example 3: With Remediation Plan
 
 ```
-/forge:gap-analysis --fix
+/nxtg-forge:gap-analysis --fix
 ```
 
 After the analysis, appends a phased plan:
@@ -103,7 +103,7 @@ Phase 3: Medium Priority (Backlog)
 
 ## Power Use Cases
 
-Run `/forge:gap-analysis` with all five agents in parallel for a sub-minute comprehensive audit, then feed the `--fix` output directly into sprint planning. Each item includes an effort estimate to help with capacity planning.
+Run `/nxtg-forge:gap-analysis` with all five agents in parallel for a sub-minute comprehensive audit, then feed the `--fix` output directly into sprint planning. Each item includes an effort estimate to help with capacity planning.
 
 Combine with orchestrator knowledge: gap analysis findings are recorded via `forge_capture_knowledge` (category: "research"), building a history of project assessments over time. Compare findings across sessions to measure improvement.
 
@@ -111,11 +111,11 @@ Combine with orchestrator knowledge: gap analysis findings are recorded via `for
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:status** | Status shows the score; gap-analysis explains every deduction |
-| **/forge:optimize** | Optimize goes deeper on code quality; gap-analysis covers all dimensions |
-| **/forge:feature** | Use gap findings to plan features that address the most critical gaps |
-| **/forge:test** | Testing dimension identifies untested files; run test after adding them |
-| **/forge:checkpoint** | Save state before applying gap-analysis fix recommendations |
+| **/nxtg-forge:status** | Status shows the score; gap-analysis explains every deduction |
+| **/nxtg-forge:optimize** | Optimize goes deeper on code quality; gap-analysis covers all dimensions |
+| **/nxtg-forge:feature** | Use gap findings to plan features that address the most critical gaps |
+| **/nxtg-forge:test** | Testing dimension identifies untested files; run test after adding them |
+| **/nxtg-forge:checkpoint** | Save state before applying gap-analysis fix recommendations |
 
 ## Level Progression
 

@@ -122,7 +122,7 @@ Testing:
 | **Planner** | Planner spawns Testing in parallel with Builder. Testing writes tests from the same spec so coverage starts at 100% for new features. |
 | **Guardian** | Guardian spawns Testing as a subagent during quality gates. Testing provides coverage analysis; Guardian aggregates with security and types. |
 | **Refactor** | Before refactoring, verify tests exist (Testing generates them if missing). After refactoring, verify tests still pass. Testing is the safety net for Refactor. |
-| **/forge:test** | The `/forge:test` command provides quick test execution. The Testing agent provides deep generation, diagnosis, and coverage analysis. |
+| **/nxtg-forge:test** | The `/nxtg-forge:test` command provides quick test execution. The Testing agent provides deep generation, diagnosis, and coverage analysis. |
 
 ## Level Progression
 
@@ -141,4 +141,4 @@ Testing:
 
 ---
 
-*See also: [Guardian](guardian.md) | [Refactor](refactor.md) | [/forge:test](../commands/test.md)*
+*See also: [Guardian](guardian.md) | [Refactor](refactor.md) | [/nxtg-forge:test](../commands/test.md)*

@@ -136,10 +136,10 @@ RECOMMENDATIONS
 
 ---
 Next steps:
-  /forge:status       Check current state
-  /forge:test         Run test suite
-  /forge:checkpoint   Save checkpoint
-  /forge:gap-analysis Identify remaining gaps
+  /nxtg-forge:status       Check current state
+  /nxtg-forge:test         Run test suite
+  /nxtg-forge:checkpoint   Save checkpoint
+  /nxtg-forge:gap-analysis Identify remaining gaps
 ```
 
 ### JSON Output (`--json`)
@@ -170,5 +170,5 @@ Not a git repository. Session report requires git history.
 If no commits found in timeframe:
 ```
 No commits found in the specified timeframe.
-Try: /forge:report --since "7 days ago"
+Try: /nxtg-forge:report --since "7 days ago"
 ```

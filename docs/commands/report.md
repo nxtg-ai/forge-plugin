@@ -1,4 +1,4 @@
-# /forge:report
+# /nxtg-forge:report
 
 > Generate a comprehensive session activity report from real git history, PR status, test results, governance changes, and checkpoint history.
 
@@ -6,22 +6,22 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | State Management |
-| **Syntax** | `/forge:report [--brief] [--since <timespec>] [--json] [--branch <name>]` |
+| **Syntax** | `/nxtg-forge:report [--brief] [--since <timespec>] [--json] [--branch <name>]` |
 
 ---
 
 ## What It Does
 
-`/forge:report` builds an activity report from real project data. It pulls commits from git history, calculates lines changed, identifies the most-modified files, checks for open pull requests on the current branch, counts test files, reads governance sentinel log entries, and lists saved checkpoints. The result is a structured report that answers "what happened during this session?" with concrete data rather than memory.
+`/nxtg-forge:report` builds an activity report from real project data. It pulls commits from git history, calculates lines changed, identifies the most-modified files, checks for open pull requests on the current branch, counts test files, reads governance sentinel log entries, and lists saved checkpoints. The result is a structured report that answers "what happened during this session?" with concrete data rather than memory.
 
 The report works by default on the last 24 hours of activity, or since the current branch diverged from main. You can customize the window with `--since` to generate weekly, sprint, or custom-range reports. The brief mode gives you a one-liner summary; JSON mode gives you machine-readable output for integration with other tools.
 
-Without this command, summarizing a session means scanning git log, counting changes manually, checking PR status separately, and trying to remember what governance decisions were made. `/forge:report` gathers all of this in parallel and presents it in a single document with recommendations for what to do next.
+Without this command, summarizing a session means scanning git log, counting changes manually, checking PR status separately, and trying to remember what governance decisions were made. `/nxtg-forge:report` gathers all of this in parallel and presents it in a single document with recommendations for what to do next.
 
 ## Syntax & Options
 
 ```
-/forge:report [--brief] [--since <timespec>] [--json] [--branch <name>]
+/nxtg-forge:report [--brief] [--since <timespec>] [--json] [--branch <name>]
 ```
 
 | Option | Description |
@@ -37,14 +37,14 @@ Without this command, summarizing a session means scanning git log, counting cha
 - **Standup preparation**: Use `--brief` to get a quick summary for your daily standup.
 - **Sprint retrospective**: Use `--since "14 days ago"` to generate a two-week activity report.
 
-For real-time project state, use `/forge:status`. For deep quality analysis, use `/forge:gap-analysis`.
+For real-time project state, use `/nxtg-forge:status`. For deep quality analysis, use `/nxtg-forge:gap-analysis`.
 
 ## Examples
 
 ### Example 1: Full Session Report
 
 ```
-/forge:report
+/nxtg-forge:report
 ```
 
 ```
@@ -78,14 +78,14 @@ PULL REQUEST
 
 RECOMMENDATIONS
   1. Tests are passing -- consider merging the PR
-  2. 3 new files lack JSDoc -- run /forge:docs-update --jsdoc
-  3. Save a checkpoint before merging: /forge:checkpoint save pre-merge
+  2. 3 new files lack JSDoc -- run /nxtg-forge:docs-update --jsdoc
+  3. Save a checkpoint before merging: /nxtg-forge:checkpoint save pre-merge
 ```
 
 ### Example 2: Brief Summary
 
 ```
-/forge:report --brief
+/nxtg-forge:report --brief
 ```
 
 ```
@@ -101,7 +101,7 @@ Last commit: a1b2c3d Add WebSocket notification handler (2 hours ago)
 ### Example 3: Weekly Report
 
 ```
-/forge:report --since "7 days ago"
+/nxtg-forge:report --since "7 days ago"
 ```
 
 Generates a report covering the full week's activity.
@@ -116,10 +116,10 @@ Use `--branch main` to see what landed on main recently, even when you are worki
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:status** | Status shows current state; report shows how you got here |
-| **/forge:checkpoint** | Checkpoint history appears in the report |
-| **/forge:gap-analysis** | Recommendations in the report may suggest running gap analysis |
-| **/forge:test** | Test file counts appear in the report; run test for full results |
+| **/nxtg-forge:status** | Status shows current state; report shows how you got here |
+| **/nxtg-forge:checkpoint** | Checkpoint history appears in the report |
+| **/nxtg-forge:gap-analysis** | Recommendations in the report may suggest running gap analysis |
+| **/nxtg-forge:test** | Test file counts appear in the report; run test for full results |
 
 ## Level Progression
 

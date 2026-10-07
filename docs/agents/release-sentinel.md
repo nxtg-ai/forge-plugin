@@ -99,9 +99,9 @@ Release Sentinel:
 |---------|---------|
 | **Wordsmith agent** | Release Sentinel identifies what needs updating; Wordsmith writes the actual content |
 | **Guardian agent** | Documentation coverage becomes a quality gate in the governance pipeline |
-| **/forge:deploy** | Pre-deployment docs audit ensures documentation ships alongside code |
-| **/forge:docs-status** | Quick access to documentation health without running a full audit |
-| **/forge:docs-audit** | Triggers a comprehensive Release Sentinel audit on demand |
+| **/nxtg-forge:deploy** | Pre-deployment docs audit ensures documentation ships alongside code |
+| **/nxtg-forge:docs-status** | Quick access to documentation health without running a full audit |
+| **/nxtg-forge:docs-audit** | Triggers a comprehensive Release Sentinel audit on demand |
 
 ## Level Progression
 

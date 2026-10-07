@@ -118,7 +118,7 @@ Product Strategist:
 | **Scout** | Scout gathers competitive intelligence; Strategist turns it into positioning strategy |
 | **Growth Engine** | Strategist defines the GTM plan; Growth Engine executes distribution |
 | **Revenue Architect** | Strategist designs the pricing model; Revenue Architect implements the billing infrastructure |
-| **/forge:spec** | Strategy decisions become feature specifications |
+| **/nxtg-forge:spec** | Strategy decisions become feature specifications |
 
 ## Level Progression
 

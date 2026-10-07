@@ -21,7 +21,7 @@
 
 **What you get:**
 - 33 specialized agents (security, testing, API design, database, UI, performance, etc.)
-- 23 slash commands (`/forge:feature`, `/forge:status`, `/forge:test`, etc.)
+- 23 slash commands (`/nxtg-forge:feature`, `/nxtg-forge:status`, `/nxtg-forge:test`, etc.)
 - 33 knowledge skills that auto-load based on context
 - 13 hook scripts (4 blocking security guards + 9 advisory governance hooks)
 - 8 MCP governance tools (health, metrics, git status, tests, security scan)

@@ -19,7 +19,7 @@ The five innovations ORBIT adds: a real loop mechanism (Stop hook plus state fil
 
 ## When It Activates
 
-- When the `/forge:ceo-loop` command starts a governance decision cycle
+- When the `/nxtg-forge:ceo-loop` command starts a governance decision cycle
 - When the CEO agent processes pending product decisions from the queue
 - When retrograde analysis is needed to verify whether past decisions were correct
 - When trust calibration alerts surface due to declining decision accuracy
@@ -48,11 +48,11 @@ Four files manage loop state. `ceo-loop-state.json`: hook control (active flag, 
 
 ## How to Leverage It
 
-Start the loop with `/forge:ceo-loop` and let it run autonomously. Submit decisions to the pending queue for review. Monitor progress in the progress file.
+Start the loop with `/nxtg-forge:ceo-loop` and let it run autonomously. Submit decisions to the pending queue for review. Monitor progress in the progress file.
 
 ### Example: Architecture Decision Review
 ```
-User: "/forge:ceo-loop"
+User: "/nxtg-forge:ceo-loop"
 What happens: The loop starts, reads the pending queue, finds a "WebSocket vs
 polling" architecture decision. It classifies it as medium depth, retrieves
 similar past decisions from the journal, spawns a detective agent for context

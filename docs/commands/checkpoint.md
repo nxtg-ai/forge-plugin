@@ -1,4 +1,4 @@
-# /forge:checkpoint
+# /nxtg-forge:checkpoint
 
 > Save, restore, list, and manage project state checkpoints for safe experimentation and rollback.
 
@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | State Management |
-| **Syntax** | `/forge:checkpoint [save|restore|list|clear] [checkpoint-name]` |
+| **Syntax** | `/nxtg-forge:checkpoint [save|restore|list|clear] [checkpoint-name]` |
 
 ---
 
 ## What It Does
 
-`/forge:checkpoint` creates lightweight project state snapshots that capture your git commit, branch, uncommitted changes, governance state, and environment metadata in a single JSON file. Unlike git stash or branches, checkpoints are Forge-aware -- they save governance state alongside git state so you can restore not just your code position but your project tracking context.
+`/nxtg-forge:checkpoint` creates lightweight project state snapshots that capture your git commit, branch, uncommitted changes, governance state, and environment metadata in a single JSON file. Unlike git stash or branches, checkpoints are Forge-aware -- they save governance state alongside git state so you can restore not just your code position but your project tracking context.
 
 Checkpoints are stored in `.claude/checkpoints/` as individual JSON files. Each checkpoint records the git commit hash, branch name, porcelain status of uncommitted changes, the full governance.json contents, and environment details like Node version and working directory. Restoring a checkpoint shows you exactly what changed and provides the git commands to return to that state, but does not automatically run destructive git operations -- you stay in control.
 
@@ -21,7 +21,7 @@ Without checkpoints, rolling back means remembering commit hashes, manually rest
 ## Syntax & Options
 
 ```
-/forge:checkpoint [save|restore|list|clear] [checkpoint-name]
+/nxtg-forge:checkpoint [save|restore|list|clear] [checkpoint-name]
 ```
 
 | Option | Description |
@@ -35,17 +35,17 @@ Without checkpoints, rolling back means remembering commit hashes, manually rest
 
 - **Before a major refactor**: Save state so you can roll back if the refactoring breaks something.
 - **Before experimental changes**: Trying a new approach? Checkpoint first.
-- **Before deployment**: `/forge:deploy` creates automatic checkpoints, but you can also create named ones.
+- **Before deployment**: `/nxtg-forge:deploy` creates automatic checkpoints, but you can also create named ones.
 - **End of work session**: Capture your exact state so the next session starts from a known point.
 
-For restoring specifically (without the save/list/clear operations), `/forge:restore` is a shortcut that goes directly to the restore flow.
+For restoring specifically (without the save/list/clear operations), `/nxtg-forge:restore` is a shortcut that goes directly to the restore flow.
 
 ## Examples
 
 ### Example 1: Save a Named Checkpoint
 
 ```
-/forge:checkpoint save before-auth-refactor
+/nxtg-forge:checkpoint save before-auth-refactor
 ```
 
 ```
@@ -55,13 +55,13 @@ Checkpoint saved: before-auth-refactor
   Uncommitted changes: yes (3 files)
   Location: .claude/checkpoints/before-auth-refactor.json
 
-Restore with: /forge:checkpoint restore before-auth-refactor
+Restore with: /nxtg-forge:checkpoint restore before-auth-refactor
 ```
 
 ### Example 2: List All Checkpoints
 
 ```
-/forge:checkpoint list
+/nxtg-forge:checkpoint list
 ```
 
 ```
@@ -84,14 +84,14 @@ Total: 2 checkpoint(s)
 ### Example 3: Restore a Checkpoint
 
 ```
-/forge:checkpoint restore before-auth-refactor
+/nxtg-forge:checkpoint restore before-auth-refactor
 ```
 
 Shows the saved state, current state, differences, and offers to restore governance. Provides git commands for code restoration but does not run them automatically.
 
 ## Power Use Cases
 
-Create a "session start" checkpoint at the beginning of every work session. Combined with `/forge:report`, you get a complete before-and-after picture of what changed during the session.
+Create a "session start" checkpoint at the beginning of every work session. Combined with `/nxtg-forge:report`, you get a complete before-and-after picture of what changed during the session.
 
 Use named checkpoints as decision points: `checkpoint save approach-a`, try it, then `checkpoint save approach-b`, try that. Compare both approaches against the original by restoring each in turn.
 
@@ -99,10 +99,10 @@ Use named checkpoints as decision points: `checkpoint save approach-a`, try it, 
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:restore** | Shortcut for the restore operation |
-| **/forge:deploy** | Deploy creates automatic pre-deploy checkpoints |
-| **/forge:feature** | Save a checkpoint before starting a feature |
-| **/forge:report** | Session report shows checkpoint history |
+| **/nxtg-forge:restore** | Shortcut for the restore operation |
+| **/nxtg-forge:deploy** | Deploy creates automatic pre-deploy checkpoints |
+| **/nxtg-forge:feature** | Save a checkpoint before starting a feature |
+| **/nxtg-forge:report** | Session report shows checkpoint history |
 
 ## Level Progression
 

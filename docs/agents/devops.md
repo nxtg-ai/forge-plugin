@@ -111,7 +111,7 @@ DevOps:
 | **Planner** | Planner routes infrastructure features to DevOps. CI/CD setup happens alongside feature development. |
 | **Security** | Security defines what to scan; DevOps adds scans to the CI pipeline for automated enforcement. |
 | **Guardian** | Guardian's quality gates can be mirrored in CI -- the same checks run locally and in the pipeline. |
-| **/forge:deploy** | The `/forge:deploy` command triggers the deployment workflow. DevOps creates and maintains those workflows. |
+| **/nxtg-forge:deploy** | The `/nxtg-forge:deploy` command triggers the deployment workflow. DevOps creates and maintains those workflows. |
 
 ## Level Progression
 
@@ -131,4 +131,4 @@ DevOps:
 
 ---
 
-*See also: [Security](security.md) | [Guardian](guardian.md) | [/forge:deploy](../commands/deploy.md)*
+*See also: [Security](security.md) | [Guardian](guardian.md) | [/nxtg-forge:deploy](../commands/deploy.md)*

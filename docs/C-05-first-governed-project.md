@@ -194,7 +194,7 @@ forge_capture_knowledge({
 })
 ```
 
-Or use the `/forge:feature` command in Claude Code, which automatically captures knowledge as agents work.
+Or use the `/nxtg-forge:feature` command in Claude Code, which automatically captures knowledge as agents work.
 
 Knowledge is stored in `.forge/knowledge/` under four categories:
 - **decisions/** — architectural and design choices

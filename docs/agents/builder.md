@@ -21,7 +21,7 @@ Builder enforces engineering standards automatically: SOLID principles, Result t
 
 ## When to Use It
 
-- **After a plan is approved.** You ran `/forge:feature`, the planner designed the architecture, you said "looks good" — now Builder implements it.
+- **After a plan is approved.** You ran `/nxtg-forge:feature`, the planner designed the architecture, you said "looks good" — now Builder implements it.
 - **For focused implementation requests.** "Implement a rate limiter middleware" or "Add WebSocket reconnection with exponential backoff."
 - **For refactoring.** "The UserService is 500 lines — break it into focused modules following SOLID."
 - **When code review found quality issues.** "The repository layer needs proper error handling and type annotations."
@@ -134,8 +134,8 @@ Builder enforces 6 non-negotiable quality rules:
 | **Planner** agent | Planner designs the architecture; Builder implements it. The natural 1-2 punch. |
 | **Guardian** agent | After Builder finishes, Guardian runs quality gates (tests, security, lint) before commit. |
 | **Testing** agent | Builder auto-spawns Testing for parallel test generation. Different file scopes, no conflicts. |
-| `/forge:feature` command | The feature command orchestrates Planner → Builder → Guardian automatically. |
-| `/forge:spec` command | Generates the technical spec that Builder reads as its implementation blueprint. |
+| `/nxtg-forge:feature` command | The feature command orchestrates Planner → Builder → Guardian automatically. |
+| `/nxtg-forge:spec` command | Generates the technical spec that Builder reads as its implementation blueprint. |
 
 ## Level Progression
 
@@ -155,4 +155,4 @@ Builder enforces 6 non-negotiable quality rules:
 
 ---
 
-*See also: [Planner](planner.md) | [Guardian](guardian.md) | [Testing](testing.md) | [/forge:feature](../commands/feature.md)*
+*See also: [Planner](planner.md) | [Guardian](guardian.md) | [Testing](testing.md) | [/nxtg-forge:feature](../commands/feature.md)*

@@ -101,12 +101,12 @@ User: "Which features are used most?"
 
 Analytics:
   - Collects invocation counts over last 30 days:
-    /forge:status         342 invocations   (most used)
-    /forge:feature        187 invocations
+    /nxtg-forge:status         342 invocations   (most used)
+    /nxtg-forge:feature        187 invocations
     Health Check (Opt 4)  156 invocations
     Continue (Opt 1)      134 invocations
     Soundboard (Opt 3)    89 invocations
-    /forge:test           67 invocations
+    /nxtg-forge:test           67 invocations
   - Insights:
     - Status is the dominant workflow (2x feature development)
     - Soundboard underused -- consider promoting it in command center
@@ -129,7 +129,7 @@ Analytics:
 | **Performance** | Analytics instruments the metrics; Performance diagnoses and fixes the bottlenecks when metrics miss targets. |
 | **Detective** | Detective's health check uses Analytics metrics as inputs for the overall health score calculation. |
 | **Guardian** | Guardian can check Analytics metrics as part of the quality gate -- flag releases where key metrics regressed. |
-| **/forge:report** | The `/forge:report` command generates a snapshot using Analytics data for stakeholder communication. |
+| **/nxtg-forge:report** | The `/nxtg-forge:report` command generates a snapshot using Analytics data for stakeholder communication. |
 
 ## Level Progression
 
@@ -149,4 +149,4 @@ Analytics:
 
 ---
 
-*See also: [Performance](performance.md) | [Detective](detective.md) | [/forge:report](../commands/report.md)*
+*See also: [Performance](performance.md) | [Detective](detective.md) | [/nxtg-forge:report](../commands/report.md)*

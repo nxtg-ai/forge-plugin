@@ -1,4 +1,4 @@
-# /forge:status-enhanced
+# /nxtg-forge:status-enhanced
 
 > Deep project dashboard with code metrics, commit heatmaps, dependency audits, and weighted health scoring across four dimensions.
 
@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Governance |
-| **Syntax** | `/forge:status-enhanced` |
+| **Syntax** | `/nxtg-forge:status-enhanced` |
 
 ---
 
 ## What It Does
 
-`/forge:status-enhanced` is the heavyweight sibling of `/forge:status`. While the standard status command gives you a quick overview, the enhanced version runs a full seven-source analysis: complete git history with a 7-day commit activity heatmap, full test suite execution with verbose output, TypeScript compilation check, security audit via `npm audit`, source code metrics (lines of code, file counts, `as any` casts), dependency health (outdated packages, prod vs dev counts), and orchestrator data (task board, knowledge base, drift detection).
+`/nxtg-forge:status-enhanced` is the heavyweight sibling of `/nxtg-forge:status`. While the standard status command gives you a quick overview, the enhanced version runs a full seven-source analysis: complete git history with a 7-day commit activity heatmap, full test suite execution with verbose output, TypeScript compilation check, security audit via `npm audit`, source code metrics (lines of code, file counts, `as any` casts), dependency health (outdated packages, prod vs dev counts), and orchestrator data (task board, knowledge base, drift detection).
 
 The health score uses a 100-point weighted system across four equally weighted dimensions: Tests (25 points based on pass rate), Types (25 points minus deductions per error and `as any` cast), Security (25 points minus deductions per vulnerability by severity), and Quality (25 points minus deductions for console statements and TODOs). This gives you a single number that tracks project trajectory over time.
 
@@ -21,7 +21,7 @@ Without this command, building the same picture would require running your test 
 ## Syntax & Options
 
 ```
-/forge:status-enhanced
+/nxtg-forge:status-enhanced
 ```
 
 This command takes no arguments. It always runs the full analysis.
@@ -32,14 +32,14 @@ This command takes no arguments. It always runs the full analysis.
 - **Sprint retrospective**: Generate a comprehensive snapshot of where the project stands at sprint boundaries.
 - **Before a major refactor**: Establish a baseline so you can measure the impact of architectural changes.
 
-For quick daily checks, use `/forge:status` instead. For targeted deep dives into a specific dimension, use `/forge:gap-analysis --scope testing` or `/forge:optimize --scope deps`.
+For quick daily checks, use `/nxtg-forge:status` instead. For targeted deep dives into a specific dimension, use `/nxtg-forge:gap-analysis --scope testing` or `/nxtg-forge:optimize --scope deps`.
 
 ## Examples
 
 ### Example 1: Full Enhanced Dashboard
 
 ```
-/forge:status-enhanced
+/nxtg-forge:status-enhanced
 ```
 
 Produces output covering Project info, Health Score (with dimension breakdown), Git Activity (with 7-day heatmap), Tests (full suite results), TypeScript status, Security vulnerabilities, Governance state, and Orchestrator connection. Ends with three prioritized recommendations.
@@ -47,7 +47,7 @@ Produces output covering Project info, Health Score (with dimension breakdown), 
 ### Example 2: Identifying Quality Trends
 
 ```
-/forge:status-enhanced
+/nxtg-forge:status-enhanced
 ```
 
 The Git Activity section shows a 7-day commit heatmap:
@@ -66,18 +66,18 @@ GIT ACTIVITY (last 7 days)
 
 ## Power Use Cases
 
-Run `/forge:status-enhanced` before and after a dependency upgrade cycle to compare outdated package counts, vulnerability counts, and quality scores. The before/after comparison gives clear evidence of whether the upgrade improved or regressed project health.
+Run `/nxtg-forge:status-enhanced` before and after a dependency upgrade cycle to compare outdated package counts, vulnerability counts, and quality scores. The before/after comparison gives clear evidence of whether the upgrade improved or regressed project health.
 
-Combine with `/forge:report` to capture the enhanced dashboard as part of a session activity report for team visibility.
+Combine with `/nxtg-forge:report` to capture the enhanced dashboard as part of a session activity report for team visibility.
 
 ## Combines With
 
 | Feature | Synergy |
 |---------|---------|
-| **/forge:status** | Use standard status for quick checks, enhanced for deep reviews |
-| **/forge:optimize** | Enhanced status identifies the problems; optimize provides fix plans |
-| **/forge:gap-analysis** | Similar depth but gap-analysis is fix-oriented; enhanced status is metric-oriented |
-| **/forge:report** | Capture the enhanced snapshot in a session report |
+| **/nxtg-forge:status** | Use standard status for quick checks, enhanced for deep reviews |
+| **/nxtg-forge:optimize** | Enhanced status identifies the problems; optimize provides fix plans |
+| **/nxtg-forge:gap-analysis** | Similar depth but gap-analysis is fix-oriented; enhanced status is metric-oriented |
+| **/nxtg-forge:report** | Capture the enhanced snapshot in a session report |
 
 ## Level Progression
 
