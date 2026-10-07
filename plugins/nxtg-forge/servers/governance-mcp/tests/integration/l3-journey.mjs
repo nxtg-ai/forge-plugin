@@ -7,7 +7,7 @@
 // WebSocket round-trip. forge-ui is a TEST-FIXTURE DEP: booted from its repo, never modified.
 //
 // Standalone entrypoint: `node tests/integration/l3-journey.mjs` (exit 0/1); also the L3 leg of
-// `npm test`. No new runtime deps (HTTP via global fetch, WS via global WebSocket — Node ≥21), no
+// `npm test`. No new runtime deps (HTTP via global fetch; WS via forge-ui's own `ws`, see below), no
 // tool-impl changes, only the temp fixture is ever mutated.
 //
 // Grounded on live forge-ui probes + the forge-ui convergence spec (al:4caf3e520f6fb9d3) + identity
@@ -19,7 +19,10 @@
 //    pkill-by-name (that would kill another session's server).
 //  * Rust forge_get_health.health_score is a FLOAT; forge-ui serves a ROUNDED int → assert Math.round.
 //  * forge-ui WS allows a MISSING Origin (api-server.ts:146 only blocks a present-unauthorized origin)
-//    → global WebSocket + a valid ?token= works dep-free.
+//    → a valid ?token= ws-token plus, since v3.4.1, the access token in the upgrade header.
+//  * v3.4.1 auth (GHSA-rc7c-r55p-923j, contract dx-journeys L3 Step 1b): every /api route needs the
+//    per-install token. The harness authenticates as a local client per forge-ui
+//    docs/api/LOCAL-CLIENT-AUTH.md §3 "You spawn the server", and Leg A0 proves a client without it is refused.
 //
 // Regate-11 lessons carried forward: execute the .mcp.json ENV contract verbatim (bindOrchestrator),
 // outer-scope fixture registration (cleanup even on setup throw), task-scoped event assertions.
@@ -35,6 +38,8 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync, spawn } from "node:child_process";
 import { createServer } from "node:net";
+import { randomBytes } from "node:crypto";
+import { createRequire } from "node:module";
 import {
   FORGE_PIN, checkBinaryVersion, checkShapedResponse, checkHealthContract, checkUiIdentity, checkWsRoundtrip,
   checkGovernanceContract,
@@ -61,10 +66,11 @@ let passed = 0;
 const failures = [];
 const findings = []; // named product findings (recorded, not harness bugs) surfaced in the summary
 function check(label, ok, detail = "") {
+  label = redact(label); detail = redact(detail);
   if (ok) { passed++; console.log(`  ✓ ${label}`); }
   else { failures.push(`${label}${detail ? ` — ${detail}` : ""}`); console.log(`  ✗ ${label}${detail ? ` — ${detail}` : ""}`); }
 }
-function recordFinding(name, detail) { findings.push(`${name}: ${detail}`); }
+function recordFinding(name, detail) { findings.push(`${name}: ${redact(detail)}`); }
 
 const expandPlaceholders = (s, fixture) =>
   s.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, join(SERVER_DIR, "..", "..")).replace(/\$\{CLAUDE_PROJECT_DIR\}/g, fixture);
@@ -133,38 +139,41 @@ const textOf = (result) => (result.content || []).filter((c) => c?.type === "tex
 // HOME is redirected to a throwaway dir so forge-ui's global runspace bookkeeping (`~/.forge/projects.json`
 // lastSync — os.homedir()-based) lands there, NOT the operator's real ~/.forge. Its inherited forge
 // subprocess (orchestrator-health) inherits this HOME too, so ALL of forge-ui's global writes are isolated.
-function bootForgeUi(fixture, port, home) {
+function bootForgeUi(fixture, port, home, token) {
   const tsxLoader = join(FORGE_UI_DIR, "node_modules", "tsx", "dist", "loader.mjs");
   const entry = join(FORGE_UI_DIR, "src", "server", "api-server.ts");
   const child = spawn("node", ["--import", tsxLoader, entry], {
     cwd: fixture,
-    // FORGE_UI_SECRET_FILE pins forge-ui's per-install secret (v3.4.1+) inside the throwaway home, even
-    // when the operator's env sets XDG_CONFIG_HOME, so the harness never reads or writes a real secret.
-    env: { ...process.env, HOME: home, FORGE_UI_SECRET_FILE: uiSecretFile(home), PORT: String(port), ALLOWED_ORIGINS: "http://localhost:5050", FORGE_BIN: process.env.FORGE_BIN || "forge" },
+    // forge-ui v3.4.1+ local-client path (forge-ui docs/api/LOCAL-CLIENT-AUTH.md, "You spawn the server"):
+    // the token is generated in memory and passed only through the child's env, never argv, a file or a log.
+    // Passing it explicitly also keeps an inherited XDG_CONFIG_HOME from pointing at a real token file.
+    env: { ...process.env, HOME: home, FORGE_UI_SECRET: token, PORT: String(port), ALLOWED_ORIGINS: "http://localhost:5050", FORGE_BIN: process.env.FORGE_BIN || "forge" },
     stdio: "ignore",
     detached: true,
   });
   return { child, base: `http://127.0.0.1:${port}` };
 }
 
-const uiSecretFile = (home) => join(home, "nxtg-forge-ui-secret");
+// The local-client token for the forge-ui child this run spawns. In memory only: redact() scrubs it from
+// every line the harness prints, so it cannot reach a log or CI output even inside an error detail.
+let uiToken = null;
+const redact = (text) => (uiToken && typeof text === "string" ? text.split(uiToken).join("[REDACTED]") : text);
 
-// "Listening" = the server answers HTTP at all. Since forge-ui v3.4.1 every /api route (health included)
-// requires the per-install secret, so an unauthenticated probe answers 401; that answer is enough to
-// know the server is up, without holding a credential.
-async function waitForListening(base, child, ms = 30000) {
+// Ready = an AUTHENTICATED 200 on /api/health. Since v3.4.1 an unauthenticated probe answers 401, so
+// "something answered" would report a server ready that this client cannot actually use.
+async function waitForReady(base, child, ms = 30000) {
   for (let i = 0; i < ms / 200; i++) {
     if (child.exitCode !== null) return false; // child died during startup
-    try { await fetch(`${base}/api/health`); return true; } catch { /* not up yet */ }
+    try { const r = await uiFetch(base, "/api/health"); if (r.status === 200) return true; } catch { /* not up yet */ }
     await new Promise((res) => setTimeout(res, 200));
   }
   return false;
 }
 
 // Every harness call to forge-ui's API goes through here, so the local-client credential
-// (DIRECTIVE-NXTG-20261007-12 item 2) is added in exactly one place.
+// (DIRECTIVE-NXTG-20261007-12 item 2) is attached in exactly one place.
 function uiFetch(base, path, init = {}) {
-  return fetch(`${base}${path}`, init);
+  return fetch(`${base}${path}`, { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${uiToken}` } });
 }
 
 // Routes that return project data, so they must refuse a caller without the secret
@@ -203,7 +212,14 @@ async function reap(child) {
 
 // A live WS round-trip: connect (token+missing-origin), collect message types, verify the connect
 // state.update binds to the fixture, and complete a ping→pong. Returns { events[], fixtureBound }.
+// The WS client comes from forge-ui's own node_modules (the fixture dep, like its tsx loader): since
+// v3.4.1 the /ws upgrade needs the access token in a header, which Node's global WebSocket cannot send
+// (forge-ui docs/api/LOCAL-CLIENT-AUTH.md §2). No new plugin dependency.
+const uiWsPath = () => join(FORGE_UI_DIR, "node_modules", "ws", "package.json");
+const loadUiWs = () => createRequire(uiWsPath())("ws");
+
 function wsRoundtrip(base, token, canonical) {
+  const UiWebSocket = loadUiWs();
   return new Promise((resolve) => {
     const events = [];
     let fixtureBound = false;
@@ -211,7 +227,8 @@ function wsRoundtrip(base, token, canonical) {
     let ws;
     const finish = () => { try { ws.close(); } catch { /* */ } resolve({ events, fixtureBound }); };
     const timer = setTimeout(finish, 6000);
-    try { ws = new WebSocket(url); } catch { clearTimeout(timer); return resolve({ events, fixtureBound }); }
+    try { ws = new UiWebSocket(url, { headers: { Authorization: `Bearer ${uiToken}` } }); }
+    catch { clearTimeout(timer); return resolve({ events, fixtureBound }); }
     ws.onopen = () => ws.send(JSON.stringify({ type: "ping" }));
     ws.onerror = () => { clearTimeout(timer); finish(); };
     ws.onmessage = (ev) => {
@@ -239,7 +256,7 @@ async function main() {
   const bin = checkBinaryVersion(forgeVersion(), FORGE_PIN);
   check(`forge binary on PATH == v${FORGE_PIN}`, bin.ok, bin.reason);
   const uiPresent = existsSync(join(FORGE_UI_DIR, "src", "server", "api-server.ts")) &&
-    existsSync(join(FORGE_UI_DIR, "node_modules", "tsx", "dist", "loader.mjs"));
+    existsSync(join(FORGE_UI_DIR, "node_modules", "tsx", "dist", "loader.mjs")) && existsSync(uiWsPath());
   check(`forge-ui checkout present (${FORGE_UI_DIR})`, uiPresent, uiPresent ? "" : "UI_ABSENT: set FORGE_UI_DIR or provide the sibling checkout with deps installed");
   if (!bin.ok || !uiPresent) { summarize(); return; }
 
@@ -266,10 +283,11 @@ async function main() {
     const govSv = govClient.getServerVersion();
     check(`governance-mcp handshake version == package.json (${PKG.version})`, govSv?.version === PKG.version, `got ${govSv?.version}`);
 
-    const ui = bootForgeUi(fixture, port, uiHome);
+    uiToken = randomBytes(32).toString("hex");
+    const ui = bootForgeUi(fixture, port, uiHome, uiToken);
     uiChild = ui.child;
-    const up = await waitForListening(ui.base, uiChild);
-    check(`forge-ui API listening on ephemeral :${port}`, up, up ? "" : "server never answered HTTP");
+    const up = await waitForReady(ui.base, uiChild);
+    check(`forge-ui API up on ephemeral :${port} (authenticated /api/health → 200)`, up, up ? "" : "no authenticated 200 within 30s");
     if (!up) throw new Error("forge-ui failed to boot");
 
     console.log("\n[Leg A0] auth contract, client side: no secret → refused, nothing leaked (dx-journeys L3 Step 1b)");
@@ -379,7 +397,7 @@ function summarize() {
 
 const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (invokedDirectly) {
-  main().catch((e) => { console.error("L3 harness crashed:", e?.stack || e); process.exitCode = 1; });
+  main().catch((e) => { console.error("L3 harness crashed:", redact(String(e?.stack || e))); process.exitCode = 1; });
 }
 
 export { makeFixtureWith };
