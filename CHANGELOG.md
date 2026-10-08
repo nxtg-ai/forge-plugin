@@ -8,6 +8,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.6] — 2026-10-08
+
+Documentation and metadata fixes. Every command the docs teach now resolves in an installed plugin, and the plugin description states true counts. No new MCP tools, commands, agents or skills; no breaking changes.
+
+### Fixed
+
+- **Command names: use `/nxtg-forge:<command>`, not `/forge:<command>`.** Claude Code namespaces plugin commands by the plugin `name`, which is `nxtg-forge`, so `/forge:*` has not resolved since 3.6 (`a1a0cb0`). A sandbox install of 3.10.5 proved it: `/nxtg-forge:status` runs, while `/forge:status` reports "isn't installed in this session". README, `docs/**`, `UAT-GUIDE.md`, `CLAUDE.md`, and the plugin's commands, skills and agents now teach the working form, and so do the hint text in hooks and the governance-mcp dashboard and messages. The dead `/enable-forge` now points to `/nxtg-forge:command-center` (#49, #51).
+- **Plugin description:** it now says "23 hooks (4 blocking security guards + Semgrep scanning)" instead of "13 security hooks". `hooks.json` registers 23 hooks; the 4 PreToolUse `security-*` guards block, and the Semgrep scan is advisory (#52).
+- **`CLAUDE.md`:** it no longer says the plugin spawns or opens forge-ui. `/nxtg-forge:dashboard` writes a static HTML snapshot (#51).
+
+### CI
+
+- `check-command-namespace.py` (required job `Validate Plugin`) fails when a shipped surface names a Forge command under another namespace or a former name, names a command or skill that does not exist, or when the manifests disagree on the plugin name. Its command set matches the installed registry (#49, #51).
+- `check-description-counts.py` (required job `Validate Plugin`) fails when a count in the plugin description drifts from the tree (#52).
+
+### Repository
+
+- `.claude/settings.json`: `ALIGNMENT_AGENT=forge-plugin`, matching the development pane's lane. Development tooling only; it does not affect installed users (#53).
+
 ## [3.10.5] — 2026-10-07
 
 Compatibility with **forge-ui v3.4.1**, which now requires authentication on every `/api` route (GHSA-rc7c-r55p-923j), plus the hardening and governance work since v3.10.4. No new MCP tools, commands, agents or skills; no breaking changes.
