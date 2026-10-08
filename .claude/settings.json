@@ -2,7 +2,7 @@
   "model": "claude-sonnet-4-6",
   "env": {
     "ASIF_ROOT": "/home/axw/ASIF",
-    "ALIGNMENT_AGENT": "forge"
+    "ALIGNMENT_AGENT": "forge-plugin"
   },
   "hooks": {
     "SessionStart": [
