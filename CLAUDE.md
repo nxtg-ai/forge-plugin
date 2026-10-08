@@ -274,7 +274,7 @@ This is how the portfolio compounds intelligence. Your work benefits from every 
 
 @/home/axw/ASIF/standards/claude-team-alignment-wiring.md
 
-- Team alignment id: `forge`.
+- Team alignment id: `forge-plugin` (this pane's lane; it must match `.claude/settings.json` `ALIGNMENT_AGENT`, or the dx3 key helper refuses).
 - Cross-team room: `/alignment`, written through `~/ASIF/scripts/alignment-say`.
 - If an `[ALIGNMENT ...]` message appears, respond through `alignment-say`; do not answer only in this private TUI.
 - Deterministic state first: typed Dx3/asifctl, `.asif/NEXUS.md`, git/tests/runtime probes. Prose is backup and local steering only.
