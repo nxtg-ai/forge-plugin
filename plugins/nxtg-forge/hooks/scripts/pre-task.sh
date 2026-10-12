@@ -62,6 +62,35 @@ if [ ! -f "$PROJECT_ROOT/.claude/governance.json" ]; then
     log_info "No governance.json found. Run /nxtg-forge:init to set up Forge."
 fi
 
+# 5b. Say once per session which plugin MCP servers are off on this machine, and why.
+# Each one runs a stand-in when its runtime is missing (servers/lib/unavailable-mcp.sh), so it
+# never shows as a failed server; this is the user-facing line that names the fix.
+HOOK_INPUT=""
+[ -t 0 ] || HOOK_INPUT="$(cat 2>/dev/null || true)"
+SESSION_ID="unknown"
+if [[ "$HOOK_INPUT" =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([A-Za-z0-9_-]+)\" ]]; then
+    SESSION_ID="${BASH_REMATCH[1]}"
+fi
+NOTICE_DIR="${TMPDIR:-/tmp}/nxtg-forge-$(id -u)"
+NOTICE_MARK="$NOTICE_DIR/deps-$SESSION_ID"
+if [ "$SESSION_ID" = "unknown" ] || [ ! -e "$NOTICE_MARK" ]; then
+    mkdir -p "$NOTICE_DIR" 2>/dev/null && : > "$NOTICE_MARK" 2>/dev/null || true
+    NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
+    if [[ ! "$NODE_MAJOR" =~ ^[0-9]+$ ]] || [ "$NODE_MAJOR" -lt 20 ]; then
+        log_warning "Health scoring is off: the governance MCP server needs Node.js 20 or newer (https://nodejs.org). Install it, then start a new Claude Code session."
+    fi
+    if ! has_command jq; then
+        log_warning "The 4 blocking security guards are off: they read tool input with jq, which is not installed. Install jq (apt install jq / brew install jq)."
+    fi
+    FIND_FORGE="$SCRIPT_DIR/../../servers/lib/find-forge.sh"
+    if [ -f "$FIND_FORGE" ] && ! bash "$FIND_FORGE" >/dev/null 2>&1; then
+        log_info "Optional orchestrator (L2) not installed: curl -fsSL https://forge.nxtg.ai/install.sh | sh, then start a new Claude Code session."
+    fi
+    if ! has_command semgrep-mcp && ! has_command uvx; then
+        log_info "Optional Semgrep MCP tools are off: install uv (https://docs.astral.sh/uv/) or pip install semgrep-mcp."
+    fi
+fi
+
 # 6. Check Python tools (only for Python projects)
 if [ -f "$PROJECT_ROOT/pyproject.toml" ] || [ -f "$PROJECT_ROOT/setup.py" ] || [ -f "$PROJECT_ROOT/requirements.txt" ]; then
     check_python_tools || log_info "Install tools with: pip install $(get_formatter) $(get_linter) $(get_type_checker)"

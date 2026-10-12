@@ -1,6 +1,6 @@
 # Quick Start — L1 Vibe Coder
 
-Get AI-powered governance inside Claude Code in 30 seconds. No dependencies. No config. No runtime.
+Get AI-powered governance inside Claude Code in 30 seconds. No config. The health score needs Node.js 20 or newer, and the security guards need `jq`; see [what each part needs](../README.md#what-each-part-needs).
 
 ## Install
 
