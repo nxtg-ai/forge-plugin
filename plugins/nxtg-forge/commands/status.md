@@ -53,6 +53,8 @@ Read `.claude/governance.json` if it exists. Extract:
 
 Call the plugin's Node MCP tool `forge_get_governance_health` to get the 0-100 health score, letter grade, and the `checks[]` breakdown. This tool ships with the plugin and is available whether or not the `forge` binary is installed — it does **not** require the orchestrator. Its `checks[]` array (each with a `name` and `points`) drives the **Health** section below, so this call MUST run regardless of orchestrator availability.
 
+If `forge_get_governance_health` is not available (the tool is not found, which is the case when the governance MCP server has no Node.js 20+), or it returns an error, there is **no health score**. Never estimate, infer, or compute one from other data. The Health section then says so (see §5).
+
 ### 4b. Orchestrator State (if forge-orchestrator is available)
 
 Call orchestrator MCP tools in parallel to get live orchestration data:
@@ -61,9 +63,13 @@ Call orchestrator MCP tools in parallel to get live orchestration data:
 - `forge_get_health` — Orchestrator's 5-dimension health + **drift** analysis (L2 only, requires the `forge` binary). Feeds the Drift row in the Orchestrator section below.
 - `forge_check_drift` — Vision alignment check
 
-If the orchestrator MCP server is not available (tools not found), or if it returns initialization errors (e.g., "Forge is not initialized"), skip this section gracefully. Do NOT show raw error messages to the user. Instead, display a friendly upgrade prompt:
+The result is one of three states. Do NOT show raw error messages to the user; use the line for the state:
 
-`○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh && forge init\``
+1. **Not installed:** the orchestrator tools are not found. Show
+   `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\`, then start a new Claude Code session`
+2. **Connected, not initialized here:** the tools exist, but `forge_get_state` (or another orchestrator tool) says this project is not initialized (for example "Forge is not initialized"). The orchestrator IS connected; never call it "Not connected". Show
+   `◐ **Connected; not initialized here** — run \`forge init\` in this project`
+3. **Connected:** the tools exist and return state. Show the metrics table (§9).
 
 ### 5. Agent Inventory
 
@@ -126,7 +132,7 @@ Here is the EXACT structure to output (substitute real values for placeholders):
 
 `| Metric | Value |` with rows for Branch, Staged, Modified, Untracked. Then output `**Recent commits:**` followed by a `| Hash | Message |` table with the last 5 commits.
 
-**5. Health section (IMPORTANT — use progress bars):** Output `## Health` then a table with these columns:
+**5. Health section (IMPORTANT — use progress bars):** Output `## Health`. If §4c produced no health result, output only `**Not scored.** Health scoring needs the governance MCP server, which needs Node.js 20 or newer. Install it (https://nodejs.org), then start a new Claude Code session.` and no table, no bars, no grade, and no estimated or partial scores. Otherwise output a table with these columns:
 
 `| Dimension | Bar | Score |`
 
@@ -160,7 +166,7 @@ Read the individual checks from the MCP health result and group them into these 
 
 **8. Governance section:** Output `## Governance` then `| Metric | Value |` table with Status, Vision (first 60 chars), Workstreams, Sentinel entries rows.
 
-**9. Orchestrator section:** Output `## Orchestrator`. If connected: `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. If NOT connected: output `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\``
+**9. Orchestrator section:** Output `## Orchestrator`, then the line for the §4b state. **Connected:** a `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. **Connected, not initialized here:** `◐ **Connected; not initialized here** — run \`forge init\` in this project`. **Not installed:** `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\`, then start a new Claude Code session`
 
 **10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (23, Forge plugin), Commands (23, Forge plugin), Hooks (7, Forge plugin).
 
@@ -200,7 +206,7 @@ CRITICAL REMINDERS:
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "internal"` at the top level.
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "internal"` at the top level. Include `"orchestrator": "connected" | "not_initialized" | "not_installed"`, and `"health": null` when §4c produced no health result.
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
