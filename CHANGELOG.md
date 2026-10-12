@@ -8,6 +8,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.10.7] — 2026-10-11
+
+Clean-machine fixes from alpha run 1, on a fresh `ubuntu:24.04` with Claude Code 2.1.296. There, all three plugin MCP servers showed `failed`. After `install.sh`, the orchestrator stayed unavailable. The blocking security guards allowed every call. No new MCP tools, commands, agents or skills; no breaking changes.
+
+### Fixed
+
+- **Plugin MCP servers no longer fail when their runtime is missing.**
+  - Claude Code caches a failed MCP start for 15 minutes, across sessions. So a user who installed `forge` after the plugin still saw no orchestrator.
+  - Each server now starts through a launcher in `servers/*/start.sh`. When the launcher's runtime is missing, it starts a stand-in (`servers/lib/unavailable-mcp.sh`, pure bash).
+  - The stand-in connects with no tools and tells Claude what to install. Nothing is cached, and the next session starts the real server (#55).
+- **`governance-mcp` needs Node.js 20 or newer, and says so.** The launcher checks for Node ≥ 20 and npm before the first-run install (the `open` dependency requires Node 20). A failed install also starts the stand-in rather than exiting. The first-run install skips dev dependencies (#55).
+- **`orchestrator-mcp` finds `forge` off the PATH.** It looks in this order: `FORGE_BIN`, PATH, `FORGE_INSTALL_DIR`, `~/.local/bin`, `~/.cargo/bin`. So a `forge` installed by the documented one-liner connects in the next session without a PATH change (#55).
+- **`semgrep-mcp`** tries `semgrep-mcp`, then `uvx`, then says what to install (#55).
+- **`/nxtg-forge:status`** now separates "connected; not initialized here, run `forge init`" from "not installed". When the governance tools are absent, it prints "Not scored" with the reason, and never an estimated score (#55).
+- **The 4 blocking security guards no longer allow every call when `jq` is missing.**
+  - They read their input with `jq`, otherwise with a POSIX `awk` decoder. When they can't read it, they block and say why.
+  - Before this fix, a machine without `jq` allowed `rm -rf /`, reads of `~/.ssh/id_rsa`, `eval(input())` and concatenated SQL (#56).
+- **The pre-task hook says once per session what is off and how to turn it on:** Node, the orchestrator, Semgrep, and a missing JSON reader for the guards (#55, #56).
+
+### Docs
+
+- The README's "No dependencies. No runtime." claim is replaced by a table of what each part needs. Matching changes in `docs/C-02-quick-start-l1.md`, `docs/LEVELS.md` and `docs/README.md` (#55, #56).
+
+### Tests
+
+- `tests/launchers.test.mjs` (9) and `tests/security-guards.test.mjs` (39; three arms: `jq`, `awk` only, neither).
+- The L1 and L2 harnesses assert the stand-in handshake and that `forge` is found off the PATH. vitest 79 → 127, L1 15 → 16 (#55, #56).
+
+---
+
 ## [3.10.6] — 2026-10-08
 
 Documentation and metadata fixes. Every command the docs teach now resolves in an installed plugin, and the plugin description states true counts. No new MCP tools, commands, agents or skills; no breaking changes.
