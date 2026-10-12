@@ -8,15 +8,16 @@
 #
 
 INPUT=$(cat 2>/dev/null || echo "{}")
+source "$(dirname "${BASH_SOURCE[0]}")/security-lib-json.sh"
 
 # Extract the code content being written/edited
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || echo "")
+TOOL_NAME=$(security_json_field "$INPUT" tool_name) || security_fail_closed
+FILE_PATH=$(security_json_field "$INPUT" tool_input.file_path) || security_fail_closed
 
 if [ "$TOOL_NAME" = "Write" ]; then
-    CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // empty' 2>/dev/null || echo "")
+    CONTENT=$(security_json_field "$INPUT" tool_input.content) || security_fail_closed
 elif [ "$TOOL_NAME" = "Edit" ]; then
-    CONTENT=$(echo "$INPUT" | jq -r '.tool_input.new_string // empty' 2>/dev/null || echo "")
+    CONTENT=$(security_json_field "$INPUT" tool_input.new_string) || security_fail_closed
 else
     exit 0
 fi

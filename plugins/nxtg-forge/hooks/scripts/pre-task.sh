@@ -79,8 +79,8 @@ if [ "$SESSION_ID" = "unknown" ] || [ ! -e "$NOTICE_MARK" ]; then
     if [[ ! "$NODE_MAJOR" =~ ^[0-9]+$ ]] || [ "$NODE_MAJOR" -lt 20 ]; then
         log_warning "Health scoring is off: the governance MCP server needs Node.js 20 or newer (https://nodejs.org). Install it, then start a new Claude Code session."
     fi
-    if ! has_command jq; then
-        log_warning "The 4 blocking security guards are off: they read tool input with jq, which is not installed. Install jq (apt install jq / brew install jq)."
+    if ! has_command jq && ! has_command awk; then
+        log_warning "The 4 blocking security guards cannot read tool input (they need jq or awk), so they block every call they cover. Install jq (apt install jq / brew install jq)."
     fi
     FIND_FORGE="$SCRIPT_DIR/../../servers/lib/find-forge.sh"
     if [ -f "$FIND_FORGE" ] && ! bash "$FIND_FORGE" >/dev/null 2>&1; then

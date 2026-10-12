@@ -8,9 +8,10 @@
 #
 
 INPUT=$(cat 2>/dev/null || echo "{}")
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || echo "")
+source "$(dirname "${BASH_SOURCE[0]}")/security-lib-json.sh"
+FILE_PATH=$(security_json_field "$INPUT" tool_input.file_path) || security_fail_closed
 
-# No file path or no jq = allow
+# No file path = allow (a missing jq no longer reads as "no file path")
 [ -z "$FILE_PATH" ] && exit 0
 
 # Get just the filename for pattern matching
