@@ -10,14 +10,14 @@
     "orchestrator-mcp": {
       "type": "stdio",
       "command": "bash",
-      "args": ["-c", "command -v forge >/dev/null 2>&1 && exec forge mcp || exit 1"],
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/orchestrator-mcp/start.sh"],
       "env": { "FORGE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}" },
       "timeout": 10000
     },
     "semgrep-mcp": {
       "type": "stdio",
       "command": "bash",
-      "args": ["-c", "command -v semgrep-mcp >/dev/null 2>&1 && exec semgrep-mcp || (command -v uvx >/dev/null 2>&1 && exec uvx semgrep-mcp || exit 1)"],
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/semgrep-mcp/start.sh"],
       "env": { "FORGE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}" },
       "timeout": 120000
     }

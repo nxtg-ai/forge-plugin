@@ -84,9 +84,9 @@ graph TD
 - **forge-ui** (L3): React dashboard. Visual governance, Infinity Terminal, real-time feeds.
 
 **Three MCP servers:**
-- **governance-mcp** (Node.js, 8 tools) — always available, ships with plugin
+- **governance-mcp** (Node.js, 8 tools) — ships with the plugin; needs Node.js 20 or newer
 - **orchestrator-mcp** (Rust, 10 tools) — available when `forge` binary installed (L2)
-- **semgrep-mcp** (Python, SAST tools) — available when `semgrep-mcp` installed
+- **semgrep-mcp** (Python, SAST tools) — available when `uv` or `semgrep-mcp` is installed
 
 No code dependencies between products. MCP is the only integration layer. Each works independently. Together, they're a force multiplier.
 

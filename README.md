@@ -14,7 +14,7 @@ This is L1: Vibe Coder.
 
 Inside Claude Code, agents already coordinate well. They share orchestration and context. What's missing is judgment: automated checks that catch problems before they reach production, skills that encode your conventions, and hooks that validate before and after every task.
 
-The plugin adds health scoring, gap analysis, quality gates, and specialized agents. Install in 30 seconds. No config. No dependencies. No runtime.
+The plugin adds health scoring, gap analysis, quality gates, and specialized agents. Install in 30 seconds. No config. Health scoring needs Node.js 20 or newer; [what each part needs](#what-each-part-needs) is below.
 
 Every governance feature traces to a real failure mode. Hooks that validate before and after every task exist because I've watched audit findings pile up from shortcuts nobody caught in real time. Knowledge skills that encode project conventions exist because I've watched the same context re-explained across dozens of sessions. Gap analysis exists because the most expensive bugs are the ones you discover at deployment.
 
@@ -28,7 +28,19 @@ claude plugin marketplace add nxtg-ai/forge-plugin
 claude plugin install nxtg-forge
 ```
 
-That's it. No build step. No config files. No runtime dependencies.
+That's it. No build step. No config files.
+
+### What each part needs
+
+| Part | Needs | Without it |
+|------|-------|------------|
+| Commands, agents, skills, advisory hooks | Claude Code and bash | — |
+| 4 blocking security guards | `jq` | The guards allow everything, and Forge warns once per session |
+| Health score and governance tools (`governance-mcp`) | Node.js 20 or newer, with npm on first start | `/nxtg-forge:status` shows "Not scored", and Forge says Node is missing |
+| Orchestrator, L2 (`orchestrator-mcp`) | The `forge` binary: `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | Optional. Status shows "Not connected" with the install line |
+| Semgrep tools (`semgrep-mcp`) | `uv` (for `uvx`) or `pip install semgrep-mcp` | Optional |
+
+A server whose runtime is missing still connects, with no tools and a message that names the fix, so it never shows as a failed install. Whatever you install later is picked up by your next new Claude Code session. The plugin finds `forge` in `~/.local/bin` even when that directory is not on your PATH.
 
 ## What You Get
 

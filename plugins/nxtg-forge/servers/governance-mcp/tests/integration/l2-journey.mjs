@@ -176,7 +176,7 @@ async function main() {
 
   const mcp = JSON.parse(readFileSync(MCP_JSON, "utf8"));
   const govSpec = mcp.mcpServers["governance-mcp"];       // {command:"bash", args:[".../start.sh"]}
-  const orchSpec = mcp.mcpServers["orchestrator-mcp"];    // {command:"bash", args:["-c", "...forge mcp..."]}
+  const orchSpec = mcp.mcpServers["orchestrator-mcp"];    // {command:"bash", args:["${CLAUDE_PLUGIN_ROOT}/servers/orchestrator-mcp/start.sh"]}
 
   const shadowBin = makeShadowBin();
   const childPath = `${shadowBin}:${process.env.PATH}`; // shadow browser-openers; keep forge resolvable
@@ -254,16 +254,23 @@ async function main() {
     check("lifecycle mutated durable state (state.json task_summary + tasks/T-001.json + NEW T-001-scoped events)", life.ok, life.problems.join("; "));
 
     // ── Leg D: Lego-Snap negative controls (deterministic PAIR, verbatim .mcp.json command) ──
-    console.log("\n[Leg D] Lego-Snap: orchestrator degrades w/o binary, resolves w/ stub");
-    const noBin = runOrchSpec(orchSpec, `${shadowBin}:/usr/bin:/bin`); // no `forge` anywhere
-    check("no forge on PATH → orchestrator command exits 1 (silent degrade)", noBin === 1, `exit ${noBin}`);
+    console.log("\n[Leg D] Lego-Snap: orchestrator stands in w/o binary, resolves w/ stub");
+    // An empty HOME so a real ~/.local/bin/forge on the test machine cannot satisfy the launcher.
+    const emptyHome = mkdtempSync(join(tmpdir(), "forge-l2-home-"));
+    const noBin = runOrchSpec(orchSpec, `${shadowBin}:/usr/bin:/bin`, emptyHome); // no `forge` anywhere
+    let standIn = null;
+    try { standIn = JSON.parse(noBin.stdout.split("\n")[0]).result; } catch { /* checked below */ }
+    check("no forge anywhere → orchestrator handshake completes via the stand-in (no failed start)",
+      noBin.code === 0 && standIn?.serverInfo?.version === "unavailable", `exit ${noBin.code}`);
     const stubDir = mkdtempSync(join(tmpdir(), "forge-l2-stub-"));
     const stubForge = join(stubDir, "forge");
-    writeFileSync(stubForge, "#!/bin/sh\nexit 0\n");
+    writeFileSync(stubForge, "#!/bin/sh\necho \"stub-forge $*\"\n");
     chmodSync(stubForge, 0o755);
-    const stub = runOrchSpec(orchSpec, `${stubDir}:/usr/bin:/bin`);
-    check("stub forge on PATH → orchestrator command resolves it (exit 0)", stub === 0, `exit ${stub}`);
+    const stub = runOrchSpec(orchSpec, `${stubDir}:/usr/bin:/bin`, emptyHome);
+    check("stub forge on PATH → orchestrator command execs `forge mcp`",
+      stub.code === 0 && stub.stdout.trim() === "stub-forge mcp", `exit ${stub.code} stdout=${stub.stdout.trim()}`);
     rmSync(stubDir, { recursive: true, force: true });
+    rmSync(emptyHome, { recursive: true, force: true });
   } finally {
     // Teardown: close BOTH clients (SIGTERM/SIGKILL each child) + transports, remove temp dirs.
     for (const c of [govClient, orchClient]) { try { if (c) await c.close(); } catch { /* gone */ } }
@@ -279,13 +286,20 @@ async function main() {
   }
 }
 
-// Run the .mcp.json orchestrator command spec VERBATIM with a given PATH; return exit code.
-function runOrchSpec(spec, pathEnv) {
+// Run the .mcp.json orchestrator command spec VERBATIM (${CLAUDE_PLUGIN_ROOT} expanded) with a given
+// PATH and HOME, feeding one MCP initialize line on stdin. Returns { code, stdout }.
+const INIT_LINE = JSON.stringify({ jsonrpc: "2.0", id: 0, method: "initialize",
+  params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "l2", version: "1" } } }) + "\n";
+function runOrchSpec(spec, pathEnv, homeEnv) {
+  const args = (spec.args || []).map((a) => a.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, PLUGIN_ROOT));
   try {
-    execFileSync(spec.command, spec.args, { env: { PATH: pathEnv }, stdio: "ignore", timeout: 10000 });
-    return 0;
+    const stdout = execFileSync(spec.command, args, {
+      env: { PATH: pathEnv, HOME: homeEnv }, input: INIT_LINE, encoding: "utf8", timeout: 10000,
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    return { code: 0, stdout };
   } catch (e) {
-    return typeof e.status === "number" ? e.status : 1;
+    return { code: typeof e.status === "number" ? e.status : 1, stdout: String(e.stdout ?? "") };
   }
 }
 

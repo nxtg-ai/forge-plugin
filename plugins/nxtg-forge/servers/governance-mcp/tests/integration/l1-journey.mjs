@@ -69,15 +69,24 @@ function makeFixture() {
   return dir;
 }
 
-// Run the .mcp.json orchestrator-mcp command VERBATIM (drift-proof) with a given PATH; return exit code.
-function runOrchestratorCommand(pathEnv) {
+// Run the .mcp.json orchestrator-mcp command VERBATIM (drift-proof; ${CLAUDE_PLUGIN_ROOT} expanded the
+// way Claude Code expands it) with a given PATH and HOME, feeding one MCP initialize line on stdin.
+// Returns { code, stdout }.
+const PLUGIN_ROOT = join(SERVER_DIR, "..", "..");
+const INIT_LINE = JSON.stringify({ jsonrpc: "2.0", id: 0, method: "initialize",
+  params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "l1", version: "1" } } }) + "\n";
+function runOrchestratorCommand(pathEnv, homeEnv) {
   const mcp = JSON.parse(readFileSync(MCP_JSON, "utf8"));
   const spec = mcp.mcpServers["orchestrator-mcp"];
+  const args = spec.args.map((a) => a.replaceAll("${CLAUDE_PLUGIN_ROOT}", PLUGIN_ROOT));
   try {
-    execFileSync(spec.command, spec.args, { env: { PATH: pathEnv }, stdio: "ignore", timeout: 10000 });
-    return 0;
+    const stdout = execFileSync(spec.command, args, {
+      env: { PATH: pathEnv, HOME: homeEnv }, input: INIT_LINE, encoding: "utf8", timeout: 10000,
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    return { code: 0, stdout };
   } catch (e) {
-    return typeof e.status === "number" ? e.status : 1;
+    return { code: typeof e.status === "number" ? e.status : 1, stdout: String(e.stdout ?? "") };
   }
 }
 
@@ -132,20 +141,38 @@ async function main() {
       boundName === "l1-fixture", `got ${boundName}`);
 
     // ── Leg B: Lego-Snap invariant (deterministic PAIR) ──
-    console.log("\n[Leg B] Lego-Snap: orchestrator degrades w/o binary, resolves w/ stub; no L1 orch refs");
+    console.log("\n[Leg B] Lego-Snap: orchestrator stands in w/o binary, resolves w/ stub on or off PATH; no L1 orch refs");
     const noRef = checkNoOrchestratorRef(responses);
     check("zero L1 tool responses reference the orchestrator", noRef.ok, `offenders=[${noRef.offenders}]`);
 
-    const noBinCode = runOrchestratorCommand(`${shadowBin}:/usr/bin:/bin`); // no `forge` anywhere
-    check("no forge on PATH → orchestrator command exits 1 (silent degrade)", noBinCode === 1, `exit ${noBinCode}`);
+    // No forge anywhere: the launcher must still complete the handshake (stand-in, no tools),
+    // because Claude Code caches a failed start for 15 min and L2 would stay dark after install.sh.
+    const emptyHome = mkdtempSync(join(tmpdir(), "forge-l1-home-"));
+    const noBin = runOrchestratorCommand(`${shadowBin}:/usr/bin:/bin`, emptyHome);
+    let standIn = null;
+    try { standIn = JSON.parse(noBin.stdout.split("\n")[0]).result; } catch { /* checked below */ }
+    check("no forge anywhere → orchestrator handshake completes via the stand-in (no failed start)",
+      noBin.code === 0 && standIn?.serverInfo?.version === "unavailable"
+        && /forge\.nxtg\.ai\/install\.sh/.test(standIn?.instructions ?? ""),
+      `exit ${noBin.code} stdout=${noBin.stdout.slice(0, 120)}`);
 
     const stubDir = mkdtempSync(join(tmpdir(), "forge-l1-stub-"));
     const stubForge = join(stubDir, "forge");
-    writeFileSync(stubForge, "#!/bin/sh\nexit 0\n"); // resolves; `exec forge mcp` runs it, exits 0
+    writeFileSync(stubForge, "#!/bin/sh\necho \"stub-forge $*\"\n"); // `exec forge mcp` runs it
     chmodSync(stubForge, 0o755);
-    const stubCode = runOrchestratorCommand(`${stubDir}:/usr/bin:/bin`);
-    check("stub forge on PATH → orchestrator command resolves it (exit 0)", stubCode === 0, `exit ${stubCode}`);
+    const onPath = runOrchestratorCommand(`${stubDir}:/usr/bin:/bin`, emptyHome);
+    check("stub forge on PATH → orchestrator command execs `forge mcp`",
+      onPath.code === 0 && onPath.stdout.trim() === "stub-forge mcp", `exit ${onPath.code} stdout=${onPath.stdout.trim()}`);
+
+    // F-C: install.sh puts forge in ~/.local/bin, which may not be on the PATH Claude Code was started with.
+    mkdirSync(join(emptyHome, ".local", "bin"), { recursive: true });
+    writeFileSync(join(emptyHome, ".local", "bin", "forge"), "#!/bin/sh\necho \"stub-forge $*\"\n");
+    chmodSync(join(emptyHome, ".local", "bin", "forge"), 0o755);
+    const offPath = runOrchestratorCommand(`${shadowBin}:/usr/bin:/bin`, emptyHome);
+    check("forge only in ~/.local/bin (not on PATH) → orchestrator command still execs `forge mcp`",
+      offPath.code === 0 && offPath.stdout.trim() === "stub-forge mcp", `exit ${offPath.code} stdout=${offPath.stdout.trim()}`);
     rmSync(stubDir, { recursive: true, force: true });
+    rmSync(emptyHome, { recursive: true, force: true });
   } finally {
     // ── Teardown: close client (SIGTERM/SIGKILL the child), remove temp dirs ──
     try { if (client) await client.close(); } catch { /* already gone */ }

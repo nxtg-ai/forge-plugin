@@ -1,0 +1,134 @@
+// Launcher contract for the plugin's three MCP servers on a clean machine (alpha run 1, F-A to F-D).
+// A launcher whose runtime is missing must complete the MCP handshake through the stand-in,
+// never exit: Claude Code caches a failed start for 15 minutes.
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync, chmodSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const SERVERS = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const STANDIN = join(SERVERS, 'lib', 'unavailable-mcp.sh');
+const FIND_FORGE = join(SERVERS, 'lib', 'find-forge.sh');
+const ORCH = join(SERVERS, 'orchestrator-mcp', 'start.sh');
+const SEMGREP = join(SERVERS, 'semgrep-mcp', 'start.sh');
+const GOV = join(SERVERS, 'governance-mcp', 'start.sh');
+
+const which = (cmd) => spawnSync('bash', ['-c', `command -v ${cmd}`], { encoding: 'utf8' }).stdout.trim();
+
+const INIT = '{"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}},"jsonrpc":"2.0","id":0}';
+const INITIALIZED = '{"method":"notifications/initialized","jsonrpc":"2.0"}';
+const LIST = '{"method":"tools/list","jsonrpc":"2.0","id":"a1"}';
+const CALL = '{"method":"tools/call","params":{"name":"forge_get_tasks"},"jsonrpc":"2.0","id":7}';
+
+let root, home, bin;
+
+// A PATH with bash and the few tools the launchers use, and nothing else: no node, npm, forge, uvx.
+beforeAll(() => {
+  root = mkdtempSync(join(tmpdir(), 'forge-launchers-'));
+  home = join(root, 'home');
+  bin = join(root, 'bin');
+  mkdirSync(home);
+  mkdirSync(bin);
+  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm']) symlinkSync(which(tool), join(bin, tool));
+});
+afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+function run(script, args = [], input = [INIT, INITIALIZED, LIST, CALL].join('\n') + '\n', env = {}) {
+  const r = spawnSync(which('bash'), [script, ...args], {
+    input,
+    encoding: 'utf8',
+    timeout: 10000,
+    env: { HOME: home, PATH: bin, ...env },
+  });
+  const lines = r.stdout.split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  return { ...r, lines };
+}
+
+function expectStandIn(r, name, needle) {
+  expect(r.status).toBe(0); // exits only at stdin EOF, never during startup
+  expect(r.lines).toHaveLength(3); // the notification gets no reply
+  const [init, list, call] = r.lines;
+  expect(init.id).toBe(0);
+  expect(init.result.protocolVersion).toBe('2025-06-18');
+  expect(init.result.serverInfo).toEqual({ name, version: 'unavailable' });
+  expect(init.result.instructions).toContain(needle);
+  expect(list).toEqual({ jsonrpc: '2.0', id: 'a1', result: { tools: [] } });
+  expect(call.id).toBe(7);
+  expect(call.error.code).toBe(-32601);
+  expect(r.stderr).toContain(`[${name}] not started:`);
+}
+
+describe('unavailable-mcp.sh stand-in', () => {
+  it('answers the handshake with no tools and the reason, and escapes it as JSON', () => {
+    const r = run(STANDIN, ['demo-mcp', 'needs "X" \\ here']);
+    expectStandIn(r, 'demo-mcp', 'needs "X" \\ here');
+  });
+
+  it('answers ping, and ignores blank lines', () => {
+    const r = run(STANDIN, ['demo-mcp', 'r'], '\n{"jsonrpc":"2.0","id":3,"method":"ping"}\n');
+    expect(r.lines).toEqual([{ jsonrpc: '2.0', id: 3, result: {} }]);
+  });
+});
+
+describe('orchestrator-mcp launcher', () => {
+  it('without forge: stand-in that names the installer, not a failed start', () => {
+    const r = run(ORCH);
+    expectStandIn(r, 'orchestrator-mcp', 'curl -fsSL https://forge.nxtg.ai/install.sh | sh');
+  });
+
+  it('finds forge in ~/.local/bin when it is not on the PATH (F-C)', () => {
+    const local = join(home, '.local', 'bin');
+    mkdirSync(local, { recursive: true });
+    const fake = join(local, 'forge');
+    writeFileSync(fake, '#!/usr/bin/env bash\necho "fake-forge args=$*"\n');
+    chmodSync(fake, 0o755);
+    try {
+      const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: bin } });
+      expect(found.status).toBe(0);
+      expect(found.stdout.trim()).toBe(fake);
+      const r = spawnSync(which('bash'), [ORCH], { encoding: 'utf8', input: '', env: { HOME: home, PATH: bin } });
+      expect(r.stdout.trim()).toBe('fake-forge args=mcp');
+    } finally {
+      rmSync(fake);
+    }
+  });
+
+  it('FORGE_BIN wins over everything else', () => {
+    const custom = join(root, 'custom-forge');
+    writeFileSync(custom, '#!/usr/bin/env bash\necho custom\n');
+    chmodSync(custom, 0o755);
+    const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: bin, FORGE_BIN: custom } });
+    expect(found.stdout.trim()).toBe(custom);
+  });
+
+  it('find-forge exits 1 and prints nothing when forge is absent', () => {
+    const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: bin } });
+    expect(found.status).toBe(1);
+    expect(found.stdout).toBe('');
+  });
+});
+
+describe('semgrep-mcp launcher', () => {
+  it('without semgrep-mcp or uvx: stand-in that names uv', () => {
+    const r = run(SEMGREP);
+    expectStandIn(r, 'semgrep-mcp', 'https://docs.astral.sh/uv/');
+  });
+});
+
+describe('governance-mcp launcher', () => {
+  it('without node: stand-in that names Node.js 20 (F-A)', () => {
+    const r = run(GOV);
+    expectStandIn(r, 'governance-mcp', 'Node.js 20 or newer');
+  });
+
+  it('with node older than 20: stand-in that names the version found', () => {
+    const old = join(root, 'oldnode');
+    mkdirSync(old);
+    writeFileSync(join(old, 'node'), '#!/usr/bin/env bash\necho 18.19.1\n');
+    chmodSync(join(old, 'node'), 0o755);
+    const r = run(GOV, [], undefined, { PATH: `${old}:${bin}` });
+    expectStandIn(r, 'governance-mcp', 'this machine has 18.19.1');
+  });
+});

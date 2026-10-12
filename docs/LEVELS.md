@@ -25,7 +25,7 @@
 - 33 knowledge skills that auto-load based on context
 - 13 hook scripts (4 blocking security guards + 9 advisory governance hooks)
 - 8 MCP governance tools (health, metrics, git status, tests, security scan)
-- 3 MCP servers: governance-mcp (always), orchestrator-mcp (if L2 installed), semgrep-mcp (if installed)
+- 3 MCP servers: governance-mcp (needs Node.js 20+), orchestrator-mcp (if L2 installed), semgrep-mcp (if uv or semgrep-mcp is installed). A server whose runtime is missing connects with no tools and says what to install.
 
 **What L1 can't do:**
 - No persistent task tracking across sessions (agents forget between conversations)
