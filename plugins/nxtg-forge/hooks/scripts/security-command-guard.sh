@@ -8,9 +8,10 @@
 #
 
 INPUT=$(cat 2>/dev/null || echo "{}")
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
+source "$(dirname "${BASH_SOURCE[0]}")/security-lib-json.sh"
+COMMAND=$(security_json_field "$INPUT" tool_input.command) || security_fail_closed
 
-# No command or no jq = allow
+# No command = allow (a missing jq no longer reads as "no command")
 [ -z "$COMMAND" ] && exit 0
 
 # Normalize for matching (lowercase, collapse whitespace)

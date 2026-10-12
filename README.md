@@ -35,7 +35,7 @@ That's it. No build step. No config files.
 | Part | Needs | Without it |
 |------|-------|------------|
 | Commands, agents, skills, advisory hooks | Claude Code and bash | — |
-| 4 blocking security guards | `jq` | The guards allow everything, and Forge warns once per session |
+| 4 blocking security guards | `jq`, or `awk` (present on Linux and macOS) | With neither, the guards block every call they cover, and Forge says why |
 | Health score and governance tools (`governance-mcp`) | Node.js 20 or newer, with npm on first start | `/nxtg-forge:status` shows "Not scored", and Forge says Node is missing |
 | Orchestrator, L2 (`orchestrator-mcp`) | The `forge` binary: `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | Optional. Status shows "Not connected" with the install line; once installed, "Connected; not initialized here" until you run `forge init` |
 | Semgrep tools (`semgrep-mcp`) | `uv` (for `uvx`) or `pip install semgrep-mcp` | Optional |
