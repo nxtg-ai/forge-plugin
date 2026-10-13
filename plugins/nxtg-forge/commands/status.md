@@ -75,15 +75,22 @@ The result is one of three states. Do NOT show raw error messages to the user; u
 
 ### 5. Agent Inventory
 
-Agents are loaded from the Forge plugin (23 built-in). No need to check `.claude/agents/` — the plugin provides them automatically.
+Agents, commands and hooks are loaded from the Forge plugin. Count them in the installed plugin with this command, and use its numbers everywhere this report shows a count. Never use a number written in this file or remembered from elsewhere:
 
-Report: **Agents: 23 available (from Forge plugin)**
+```bash
+R="${CLAUDE_PLUGIN_ROOT}"; n() { wc -l | tr -d ' '; }
+echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n) registrations=$(grep -o '"command"[[:space:]]*:' "$R/hooks/hooks.json" 2>/dev/null | n)"
+```
+
+No need to check `.claude/agents/`; the plugin provides its agents automatically.
+
+Report: **Agents: {agents} available (from Forge plugin)**
 
 ### 6. Command Inventory
 
-Commands are loaded from the Forge plugin (23 built-in). No need to check `.claude/commands/` — the plugin provides them automatically.
+Commands are loaded from the Forge plugin; use `commands=` from §5. No need to check `.claude/commands/`.
 
-Report: **Commands: 23 available (from Forge plugin)**
+Report: **Commands: {commands} available (from Forge plugin)**
 
 ### 7. Build Status
 
@@ -97,9 +104,14 @@ IMPORTANT: Do NOT run `npx tsc` if there is no `tsconfig.json`. It will produce 
 
 ### 8. Hook Status
 
-Hooks are loaded from the Forge plugin (7 built-in). They are defined in the plugin's `hooks/hooks.json` and run automatically — they do NOT require `.claude/settings.json`.
+Hooks are loaded from the Forge plugin; use `hooks=` (the distinct hook scripts wired in the plugin's `hooks/hooks.json`) and `registrations=` (their event and tool-matcher entries; one script can be registered several times) from §5. The plugin description's hooks count is `registrations=`. They run automatically and do NOT require `.claude/settings.json`.
 
-The 7 hooks are:
+The hooks are:
+- **PreToolUse (Bash)**: `security-command-guard.sh` — blocks dangerous commands
+- **PreToolUse (Read/Write/Edit/NotebookEdit)**: `security-secret-shield.sh` — blocks access to secrets and credentials
+- **PreToolUse (Write/Edit/NotebookEdit)**: `security-injection-guard.sh` — blocks eval/exec code injection
+- **PreToolUse (Write/Edit/NotebookEdit)**: `security-sql-guard.sh` — blocks SQL string concatenation
+- **PostToolUse (Write/Edit/NotebookEdit)**: `security-semgrep-scan.sh` — Semgrep scan after each write
 - **UserPromptSubmit**: `pre-task.sh` — sync governance state, initialize context
 - **Stop**: `ceo-loop-stop.sh` — CEO-LOOP ORBIT continuation between iterations
 - **Stop**: `post-task.sh` — quality checks on completed work
@@ -108,7 +120,7 @@ The 7 hooks are:
 - **PostToolUse (Write)**: `enforce-file-placement.sh` — enforce file organization
 - **PostToolUse (Edit/Write)**: `governance-check.sh` — advisory code quality check
 
-Report: **Hooks: 7 active (from Forge plugin)**
+Report: **Hooks: {hooks} scripts in {registrations} registrations (from Forge plugin)**
 
 ## Display Format — MANDATORY
 
@@ -170,7 +182,7 @@ Read the individual checks from the MCP health result and group them into these 
 
 **9. Orchestrator section:** Output `## Orchestrator`, then the line for the §4b state. **Connected:** a `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. **Connected, not initialized here:** `◐ **Connected; not initialized here** — run \`forge init\` in this project`. **Not installed:** `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\`, then start a new Claude Code session`
 
-**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents (23, Forge plugin), Commands (23, Forge plugin), Hooks (7, Forge plugin).
+**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents, Commands and Hooks, with the `agents=` and `commands=` counts from §5, Hooks as "{hooks} scripts ({registrations} registrations)", and the source "Forge plugin".
 
 **11. Recovery section (conditional):** If git has uncommitted changes (modified or untracked files from Step 2), output `## Recovery Needed` with a table of uncommitted files and their status.
 
