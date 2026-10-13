@@ -23,7 +23,7 @@
 //     each server's own state tool. forge init/config/plan against the fixture leave global
 //     ~/.forge/projects.json byte-identical (constraint: never mutate outside the fixture).
 //
-// Requires `forge` v1.5.2 on PATH BY DESIGN (L2 = both-servers-live). Absence/mismatch is a
+// Requires `forge` at FORGE_PIN (tests/lib/checks.mjs) on PATH BY DESIGN (L2 = both-servers-live). Absence/mismatch is a
 // deterministic NAMED failure (FORGE_ABSENT / WRONG_BINARY_VERSION), never a silent skip.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -71,7 +71,7 @@ function makeShadowBin() {
   return dir;
 }
 
-// Parse the pinned version out of `forge --version` ("forge 1.5.2" -> "1.5.2"). null if binary absent.
+// Parse the pinned version out of `forge --version` ("forge 1.6.2 (stage: internal)" -> "1.6.2"). null if binary absent.
 function forgeVersion() {
   try {
     const out = execFileSync("forge", ["--version"], { encoding: "utf8", timeout: 10000 }).trim();
