@@ -138,7 +138,7 @@ Here is the EXACT structure to output (substitute real values for placeholders):
 
 **2b. Stage line:** Output this line verbatim (Forge's release stage, from the repo's `STAGE` file; CI checks they match):
 
-**Stage: internal.** Built for and used inside NXTG. The source is public, but it is not yet offered or supported for outside use: no SLA, and interfaces may change without notice.
+**Stage: Public preview.** Forge is public: anyone may install and use it. Its maturity is below alpha (pre-alpha): no SLA, and interfaces may change without notice.
 
 **3. Horizontal rule:** Output `---`
 
@@ -220,7 +220,7 @@ CRITICAL REMINDERS:
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "internal"` at the top level. Include `"orchestrator": "connected" | "not_initialized" | "not_installed"`, and `"health": null` when §4c produced no health result.
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "Public preview"` at the top level. Include `"orchestrator": "connected" | "not_initialized" | "not_installed"`, and `"health": null` when §4c produced no health result.
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
