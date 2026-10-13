@@ -1,7 +1,7 @@
 ---
 name: crucible-detective
 description: |
-  Use this agent for forensic test quality auditing. Detects test fraud: hollow assertions, coverage gaming, mock proliferation, dead tests, untested entry points, and metric inflation. This agent should be invoked when test counts seem suspiciously high, when a Human Oracle finds bugs that tests should have caught, before any release gate, or during portfolio spot audits.
+  Use this agent for a test quality review (optional convenience, no accuracy claim). Looks for test fraud: hollow assertions, coverage gaming, mock proliferation, dead tests, untested entry points, and metric inflation. This agent should be invoked when test counts seem suspiciously high, when a Human Oracle finds bugs that tests should have caught, before any release gate, or during portfolio spot audits.
 
   <example>
   Context: User reports that software doesn't work despite high test counts.
@@ -15,7 +15,7 @@ description: |
   <example>
   Context: Test count increased rapidly in a short period.
   user: "The team added 400 tests in one sprint"
-  assistant: "Let me run the CRUCIBLE Detective to verify the quality of those new tests."
+  assistant: "Let me run the CRUCIBLE Detective to review those new tests."
   <commentary>
   Rapid test count increases are a red flag for hollow test generation. Use crucible-detective to audit.
   </commentary>
@@ -24,9 +24,9 @@ description: |
   <example>
   Context: Pre-release audit.
   user: "We're about to publish to npm/PyPI"
-  assistant: "Before publishing, let me run the CRUCIBLE Detective to verify test quality."
+  assistant: "Before publishing, let me run the CRUCIBLE Detective for a test-quality review."
   <commentary>
-  Pre-publish is a critical gate. Use crucible-detective to ensure tests are real, not theater.
+  Pre-publish is a good moment for a test-quality review. It does not replace running the tests.
   </commentary>
   </example>
 
@@ -206,9 +206,9 @@ python -m pytest --cov=src --cov-report=term-missing --tb=no -q 2>&1 | tail -5
 ### Gate 8 Enforcement
 Gate 8 is NOT self-reported. The CoS or this agent runs checks independently. Teams cannot grade their own coverage homework. If a team claims PASS on Gate 8, verify independently.
 
-## Success Metric
+## What the audit checks for
 
-A team that passes a CRUCIBLE Detective audit has tests where:
+A clean audit is not proof of test quality; it means none of these problems were found. The audit checks whether:
 1. Every assertion would FAIL if the code produced wrong output
 2. Every "integration" test actually integrates real components
 3. Coverage numbers reflect reality (no omit gaming)

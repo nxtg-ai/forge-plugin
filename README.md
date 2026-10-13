@@ -59,12 +59,16 @@ Either init sets a project up. `/nxtg-forge:init` writes `.claude/governance.jso
 
 ```
 /nxtg-forge:status              → Project health score at a glance
-/nxtg-forge:gap-analysis        → Find missing tests, docs, security gaps
+/nxtg-forge:gap-analysis        → Optional review prompt (no accuracy claim, see below)
 /nxtg-forge:feature "desc"      → Multi-agent feature development
 /nxtg-forge:checkpoint           → Save restorable project state
 /nxtg-forge:test                 → Run tests with detailed analysis
 /nxtg-forge:deploy               → Deploy with pre-flight validation
 ```
+
+### Review commands are optional conveniences
+
+`/nxtg-forge:gap-analysis` and `/nxtg-forge:crucible-audit` are structured review prompts. They make **no accuracy claim**: a prompt finds what the model finds, and a clean report is not evidence that nothing is wrong. On two deliberately seeded public cases, [forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture) and [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2), a plain review prompt found the same defects as both commands, at roughly a third to a quarter of their cost. Use them if you like the structure; they are not a substitute for running the tests.
 
 ## How It Works
 

@@ -1,9 +1,9 @@
 ---
 name: crucible-audit
 description: >
-  Forensic test-quality audit that detects test fraud — hollow assertions, coverage-omit
-  gaming, mock proliferation, dead/gated tests, untested entry points, and README badge
-  inflation that produce false green signals. Use when asked to "run a CRUCIBLE audit",
+  Optional convenience, no accuracy claim: a structured test-quality review prompt that
+  looks for hollow assertions, coverage-omit gaming, mock proliferation, dead/gated tests,
+  untested entry points, and README badge inflation. Use when asked to "run a CRUCIBLE audit",
   "check/audit test quality", "find silent failures", "find hollow tests", "audit
   assertions/mocks/coverage config", "why do tests pass but nothing works", or before any
   release gate (pre-publish/pre-deploy) when a high test count or coverage % needs
@@ -16,7 +16,9 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ## Overview
 
-The CRUCIBLE Audit skill provides the methodology for forensic analysis of test suites. It detects **test fraud** — the pattern where test count and coverage numbers look healthy but the tests prove nothing about whether the software actually works.
+> **Optional convenience. No accuracy claim.** This is a structured review prompt. It finds what the model finds when it reads the project, and nothing more. On two deliberately seeded public cases ([forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture), [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2)), a plain review prompt found the same defects at roughly a third to a quarter of this command's cost. A clean report is not evidence that nothing is wrong.
+
+The CRUCIBLE Audit skill provides a checklist for reviewing test suites. It looks for **test fraud** — the pattern where test count and coverage numbers look healthy but the tests prove nothing about whether the software actually works.
 
 **Origin**: Wolf's forensic audit of Podcast-Pipeline (2026-03-07). 1,601 tests, 77% claimed coverage — actual coverage ~15%, nothing worked when a human used it.
 
