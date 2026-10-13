@@ -33,6 +33,7 @@ ls pom.xml build.gradle 2>/dev/null # Java
 
 **Check existing setup with Glob:**
 - Check if `.claude/governance.json` exists
+- Check if `.forge/governance.json` exists (written by `forge init`)
 - Check if `CLAUDE.md` exists
 - Check git status
 
@@ -48,6 +49,8 @@ Existing Governance: {exists/not found}
 ```
 
 ### Step 2: Handle Existing Setup
+
+**If only `.forge/governance.json` exists:** `forge init` has already set this project up, and the plugin recognises it. Say so, and say that this command adds the project vision and goals in `.claude/governance.json`. Continue to Step 3. Never modify, reset or delete anything under `.forge/`.
 
 **If `.claude/governance.json` already exists:**
 

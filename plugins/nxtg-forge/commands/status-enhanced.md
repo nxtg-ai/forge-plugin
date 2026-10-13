@@ -64,7 +64,7 @@ grep -rn "as any" src/ --include="*.ts" | grep -v test | grep -v __tests__ | wc 
 
 ### 6. Governance & Agents
 
-Read `.claude/governance.json` for governance state.
+Read `.claude/governance.json` for governance state, or `.forge/governance.json` when only `forge init` has run. Either file means governance is initialized.
 
 Agents and commands are loaded from the NXTG-Forge plugin (23 agents, 23 commands built-in). No need to check `.claude/agents/` or `.claude/commands/` directories.
 

@@ -10,12 +10,12 @@ You are activating the **NXTG-Forge Command Center** - the canonical 4-option me
 ## Pre-flight Check
 
 Before showing the menu, quickly verify forge is set up:
-1. Check `.claude/governance.json` exists (Read tool)
+1. Check that `.claude/governance.json` or `.forge/governance.json` exists (Read tool). Either one means Forge is set up: `/nxtg-forge:init` writes the first, `forge init` the second.
 2. Check NXTG-Forge plugin is loaded (commands are available -- if this command is running, the plugin is active)
 3. Check git is initialized (`git rev-parse --is-inside-work-tree`)
 4. Check orchestrator connection: call `forge_get_state` — if it returns data, the Rust orchestrator is connected. Show "Orchestrator: CONNECTED (v{version})" or "Orchestrator: NOT CONNECTED (run `forge mcp` to enable)"
 
-If governance.json is missing, suggest: "Run `/nxtg-forge:init` first to set up NXTG-Forge."
+If neither governance.json exists, suggest: "Run `/nxtg-forge:init` first to set up NXTG-Forge."
 
 ## Display Command Center
 

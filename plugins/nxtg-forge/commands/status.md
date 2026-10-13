@@ -43,11 +43,13 @@ find src -name "*.test.ts" -o -name "*.spec.ts" | wc -l
 
 ### 4. Governance State
 
-Read `.claude/governance.json` if it exists. Extract:
+Forge is set up in this project when either init has run: `/nxtg-forge:init` writes `.claude/governance.json`, and `forge init` writes `.forge/governance.json`. Read `.claude/governance.json` if it exists, otherwise `.forge/governance.json`. If neither exists, governance is not initialized. Extract:
 - Constitution directive
 - Constitution status
 - Workstream count and statuses
 - Sentinel log entries (last 5)
+
+A `.forge/governance.json` from `forge init` holds no project vision, goals or sentinel log. Then say "Initialized by `forge init`; no vision or goals recorded here (`/nxtg-forge:init` adds them)." Never report this project as not initialized, and never invent a directive or vision.
 
 ### 4c. Health Score (always available — L1 + L2)
 

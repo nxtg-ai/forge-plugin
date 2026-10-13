@@ -37,6 +37,7 @@ import {
   NODE_TOOLS, ORCH_TOOLS, FORGE_PIN,
   checkToolSet, checkShapedResponse, checkBinaryVersion, checkIdentityMatch, checkLifecycle,
 } from "../lib/checks.mjs";
+import { getGovernanceState } from "../../tools.mjs";
 
 const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", ".."); // -> governance-mcp/
 const PLUGIN_ROOT = join(SERVER_DIR, "..", ".."); // -> plugins/nxtg-forge/
@@ -271,6 +272,30 @@ async function main() {
       stub.code === 0 && stub.stdout.trim() === "stub-forge mcp", `exit ${stub.code} stdout=${stub.stdout.trim()}`);
     rmSync(stubDir, { recursive: true, force: true });
     rmSync(emptyHome, { recursive: true, force: true });
+
+    // ── Leg E: a project set up by `forge init` alone is set up for the plugin too (alpha run 2, F-I) ──
+    console.log("\n[Leg E] real `forge init` only (no /nxtg-forge:init): plugin reads .forge/governance.json, no advisory");
+    const forgeOnly = mkdtempSync(join(tmpdir(), "forge-l2-forge-only-"));
+    try {
+      execFileSync("git", ["init", "-q"], { cwd: forgeOnly, stdio: "ignore" });
+      execFileSync("forge", ["init", "-n", "l2-forge-only", "--project", forgeOnly],
+        { cwd: forgeOnly, env: { ...process.env, FORGE_PROJECT_ROOT: forgeOnly }, stdio: "ignore", timeout: 30000 });
+      const st = getGovernanceState(forgeOnly);
+      check("after real `forge init`: governance state initialized, source orchestrator, read from .forge/",
+        st.initialized === true && st.source === "orchestrator" && st.path === join(forgeOnly, ".forge", "governance.json"),
+        JSON.stringify(st).slice(0, 160));
+      let hookOut = "";
+      try {
+        hookOut = execFileSync("bash", [join(PLUGIN_ROOT, "hooks", "scripts", "pre-task.sh")], {
+          cwd: forgeOnly, input: JSON.stringify({ session_id: `l2-forge-only-${process.pid}` }), encoding: "utf8",
+          env: { PATH: process.env.PATH, HOME: forgeOnly, TMPDIR: forgeOnly }, stdio: ["pipe", "pipe", "pipe"], timeout: 20000,
+        });
+      } catch (e) { hookOut = `exit ${e.status} ${e.stdout ?? ""}${e.stderr ?? ""}`; }
+      check("after real `forge init`: pre-task hook prints no \"No governance.json found\" advisory",
+        !hookOut.includes("No governance.json found") && !hookOut.startsWith("exit "), hookOut.slice(0, 160));
+    } finally {
+      rmSync(forgeOnly, { recursive: true, force: true });
+    }
   } finally {
     // Teardown: close BOTH clients (SIGTERM/SIGKILL each child) + transports, remove temp dirs.
     for (const c of [govClient, orchClient]) { try { if (c) await c.close(); } catch { /* gone */ } }

@@ -42,6 +42,8 @@ That's it. No build step. No config files.
 
 A server whose runtime is missing still connects, with no tools and a message that names the fix, so it never shows as a failed install. Whatever you install later is picked up by your next new Claude Code session. The plugin finds `forge` in `~/.local/bin` even when that directory is not on your PATH.
 
+Either init sets a project up. `/nxtg-forge:init` writes `.claude/governance.json` (project vision, goals and quality gates), and `forge init` writes `.forge/governance.json`. The plugin accepts either one and reads `.claude/` first, so after `forge init` you are never asked to run a second init.
+
 ## What You Get
 
 | Component | Count | What It Does |
