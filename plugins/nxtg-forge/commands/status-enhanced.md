@@ -66,7 +66,12 @@ grep -rn "as any" src/ --include="*.ts" | grep -v test | grep -v __tests__ | wc 
 
 Read `.claude/governance.json` for governance state, or `.forge/governance.json` when only `forge init` has run. Either file means governance is initialized.
 
-Agents and commands are loaded from the NXTG-Forge plugin (23 agents, 23 commands built-in). No need to check `.claude/agents/` or `.claude/commands/` directories.
+Agents and commands are loaded from the NXTG-Forge plugin. Count them in the installed plugin with this command, and use its numbers for `{agent_count}` and `{command_count}`; never a number written here. No need to check `.claude/agents/` or `.claude/commands/` directories.
+
+```bash
+R="${CLAUDE_PLUGIN_ROOT}"; n() { wc -l | tr -d ' '; }
+echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n)"
+```
 
 ### 6b. Orchestrator Data (if forge-orchestrator is available)
 
