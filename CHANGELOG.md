@@ -8,6 +8,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.11.0] — 2026-10-13
+
+Fixes from alpha run 2 (fresh `ubuntu:24.04`, forge 1.6.2, plugin 3.10.7). After `forge init`, the plugin still said Forge was not set up, and `/nxtg-forge:feature` created no orchestrator task. No new MCP tools, agents or skills; no breaking changes.
+
+### Added
+
+- **`/nxtg-forge:feature` tracks each feature as an orchestrator task.**
+  - When the orchestrator tools are available, the command runs `scripts/feature-task.sh`. It writes `.forge/feature-requests/F-NNN.md` with exactly one `## <title>` heading, then runs `forge plan --generate --spec` on that file, with stdin closed, which creates one task.
+  - The command finds the task with `forge_get_tasks` by title, claims it as `claude`, and completes it with a `result_summary`.
+  - It never runs a bare `plan --generate`, which plans from the README's headings.
+  - Without `.forge/`, it says once that `forge init` enables task tracking and does the work anyway.
+  - Each run rewrites `.forge/plan.md` with only that feature's task; earlier task files are kept (#59).
+
+### Fixed
+
+- **A project set up by `forge init` is set up for the plugin too.**
+  - `forge init` writes `.forge/governance.json`; the plugin read only `.claude/governance.json`. So after `forge init`, every prompt said "No governance.json found", and status said not initialized.
+  - Either file now counts, and `.claude/` is read first. The pre-task hook, `forge_get_governance_state` and the health score's Governance check accept both, and so do status, status-enhanced, command-center, dashboard, init and feature.
+  - Nothing in the plugin writes under `.forge/`. The frozen committed-tree score (rubric v1.0) still keys on `.claude/governance.json` (#58).
+- **`/nxtg-forge:feature` no longer skips the orchestrator because governance.json is missing.** Orchestrator use depends only on whether its tools are available (#58, #59).
+
+### Tests
+
+- vitest 127 → 144: `governance-location.test.mjs` (8) and `feature-task.test.mjs` (9).
+- The L2 journey goes from 15 to 22 checks, using the real `forge`. Leg E runs `forge init` alone, then reads the state tool and the hook. Leg F runs the feature loop: init, helper, task by title, claim, complete, then checks the task shows completed by `claude`.
+
 ## [3.10.7] — 2026-10-11
 
 Clean-machine fixes from alpha run 1, on a fresh `ubuntu:24.04` with Claude Code 2.1.296. There, all three plugin MCP servers showed `failed`. After `install.sh`, the orchestrator stayed unavailable. The blocking security guards allowed every call. No new MCP tools, commands, agents or skills; no breaking changes.
