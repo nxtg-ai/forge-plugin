@@ -119,6 +119,7 @@ The hooks are:
 - **Stop**: `smoke-test-reminder.sh` — remind to test after server/test changes
 - **PostToolUse (Write)**: `enforce-file-placement.sh` — enforce file organization
 - **PostToolUse (Edit/Write)**: `governance-check.sh` — advisory code quality check
+- **PreToolUse / Stop / UserPromptSubmit**: `task-enforce.sh` — enforced task (`/nxtg-forge:task`): refuses edits to existing tests, blocks stopping until the test command passes; a no-op when no task is active
 
 Report: **Hooks: {hooks} scripts in {registrations} registrations (from Forge plugin)**
 
