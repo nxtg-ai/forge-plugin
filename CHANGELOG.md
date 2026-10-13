@@ -1,6 +1,6 @@
 # Changelog
 
-Stage: internal (see STAGE)
+Stage: Public preview (see STAGE)
 
 All notable changes to the NXTG-Forge plugin are documented in this file.
 

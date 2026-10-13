@@ -4,11 +4,11 @@
 
 # forge-plugin
 
-[![stage: internal](https://img.shields.io/badge/stage-internal-grey)](STAGE) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-00b4ab)](https://registry.modelcontextprotocol.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
+[![stage: public preview](https://img.shields.io/badge/stage-public_preview-blue)](STAGE) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-active-00b4ab)](https://registry.modelcontextprotocol.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/nxtg-ai/forge-plugin/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/nxtg-ai/forge-plugin/actions) [![GitHub stars](https://img.shields.io/github/stars/nxtg-ai/forge-plugin)](https://github.com/nxtg-ai/forge-plugin)
 
-**Stage: internal.** Built for and used inside NXTG. The source is public, but it is not yet offered or supported for outside use: no SLA, and interfaces may change without notice.
+**Stage: Public preview.** Forge is public: anyone may install and use it. Its maturity is below alpha (pre-alpha): no SLA, and interfaces may change without notice.
 
-**Zero-dependency governance for Claude Code.**
+**Zero-dependency governance for Claude Code.** *(Today, health scoring needs Node.js 20+; build B3, target 2026-10-20.)*
 
 This is L1: Vibe Coder.
 
@@ -90,7 +90,7 @@ Once `forge init` has run, `/nxtg-forge:feature` tracks each feature as an orche
 For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add NXTG-Forge UI:
 
 ```bash
-git clone https://github.com/nxtg-ai/forge-ui && npm install && npm run dev
+git clone https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev
 ```
 
 58 components. 4,165 tests. 87% coverage.
