@@ -170,7 +170,9 @@ Next steps:
 
 ## Step 7: Update Governance & Orchestrator
 
-1. Add the feature to `.claude/governance.json` workstreams if it exists.
+The orchestrator tools (`forge_*` from the orchestrator MCP server) are used whenever they are available. Whether a governance.json exists never decides that.
+
+1. Add the feature to `.claude/governance.json` workstreams if that file exists. Do not write to `.forge/governance.json`; `forge init` owns it.
 2. Call `forge_capture_knowledge` to record the feature implementation as a learning:
    - title: "Implemented: {feature_name}"
    - content: Summary of what was built, files changed, patterns used

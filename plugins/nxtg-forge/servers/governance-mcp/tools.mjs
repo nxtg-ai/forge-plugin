@@ -101,24 +101,45 @@ export function findApplicationRoot(startDir) {
 // ---------------------------------------------------------------------------
 
 /**
- * Read the Forge governance state from `.claude/governance.json`.
+ * Locate the project's governance.json. Either init sets a project up:
+ * `/nxtg-forge:init` writes `.claude/governance.json` (source "plugin"), and `forge init`
+ * writes `.forge/governance.json` (source "orchestrator"). `.claude/` wins when both exist.
+ * The bash twin is governance_file() in hooks/scripts/lib.sh.
+ * @param {string} root - Project root directory
+ * @returns {{ path: string, source: "plugin"|"orchestrator" } | null}
+ */
+export function resolveGovernancePath(root) {
+  for (const [dir, source] of [[".claude", "plugin"], [".forge", "orchestrator"]]) {
+    const path = join(root, dir, "governance.json");
+    if (existsSync(path)) return { path, source };
+  }
+  return null;
+}
+
+/**
+ * Read the Forge governance state from `.claude/governance.json`, or from
+ * `.forge/governance.json` when only `forge init` has run (see resolveGovernancePath).
  * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
- * @returns {{ initialized: boolean, version?: string, project?: object, workstreams?: number, qualityGates?: object, metrics?: object, message?: string, path?: string }}
+ * @returns {{ initialized: boolean, source?: string, path?: string, version?: string, project?: object, workstreams?: number, qualityGates?: object, metrics?: object, message?: string }}
  */
 export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
-  const govPath = join(root, ".claude", "governance.json");
-  const gov = readJson(govPath);
+  const found = resolveGovernancePath(root);
+  const gov = found && readJson(found.path);
 
   if (!gov) {
     return {
       initialized: false,
-      message: "No governance.json found. Run /nxtg-forge:init to set up Forge.",
-      path: govPath,
+      message: found
+        ? `${found.path} is not valid JSON.`
+        : "No governance.json found in .claude/ or .forge/. Run /nxtg-forge:init or forge init to set up Forge.",
+      path: found ? found.path : join(root, ".claude", "governance.json"),
     };
   }
 
   return {
     initialized: true,
+    source: found.source,
+    path: found.path,
     version: gov.version,
     project: gov.project,
     workstreams: gov.workstreams?.length ?? 0,

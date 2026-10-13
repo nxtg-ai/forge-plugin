@@ -57,9 +57,9 @@ if has_meaningful_uncommitted_changes; then
     log_info "You have uncommitted changes. Consider committing before major tasks."
 fi
 
-# 5. Check for governance.json (created by /nxtg-forge:init)
-if [ ! -f "$PROJECT_ROOT/.claude/governance.json" ]; then
-    log_info "No governance.json found. Run /nxtg-forge:init to set up Forge."
+# 5. Check that either init has run (/nxtg-forge:init or `forge init`; see governance_file)
+if ! governance_file >/dev/null; then
+    log_info "No governance.json found in .claude/ or .forge/. Run /nxtg-forge:init or forge init to set up Forge."
 fi
 
 # 5b. Say once per session which plugin MCP servers are off on this machine, and why.

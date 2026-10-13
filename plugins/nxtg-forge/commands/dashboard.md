@@ -31,7 +31,7 @@ The `{url}` field is a clickable `file://` URL that opens in the browser. Always
 If the MCP server is not available (tools not found), fall back to the text-based approach:
 
 1. Use `forge_get_governance_health` MCP tool if available
-2. Otherwise, use Bash to read `.claude/governance.json` and `git status`
+2. Otherwise, use Bash to read `.claude/governance.json` (or `.forge/governance.json` when only `forge init` has run) and `git status`
 3. Display a text-based health summary
 
 ## Notes

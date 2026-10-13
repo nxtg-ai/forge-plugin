@@ -18,6 +18,21 @@ export CONFIG_FILE="$CLAUDE_DIR/config.json"
 export PROJECT_STATE_FILE="$CLAUDE_DIR/project.json"
 export GOVERNANCE_STATE_FILE="$CLAUDE_DIR/governance.json"
 
+# A project is set up for Forge when either init has run: /nxtg-forge:init writes
+# .claude/governance.json, `forge init` writes .forge/governance.json. Reads accept both,
+# .claude/ first; hook writes (sentinel log, progress sync) go only to GOVERNANCE_STATE_FILE.
+# The Node twin is resolveGovernancePath() in servers/governance-mcp/tools.mjs.
+governance_file() {
+    local f
+    for f in "$PROJECT_ROOT/.claude/governance.json" "$PROJECT_ROOT/.forge/governance.json"; do
+        if [ -f "$f" ]; then
+            echo "$f"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Backward compatibility alias (deprecated - use PROJECT_STATE_FILE)
 export STATE_FILE="$PROJECT_STATE_FILE"
 
