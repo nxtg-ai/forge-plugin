@@ -13,7 +13,7 @@
 // test command passes, unchanged, against unchanged tests.
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, relative, resolve, sep } from 'node:path';
 
@@ -126,7 +126,8 @@ function commandSources(root, testCommand) {
     const clean = tok.replace(/^['"]|['"]$/g, '');
     if (!clean || clean.startsWith('-')) continue;
     const p = resolve(root, clean);
-    if (p.startsWith(root + sep) && existsSync(p) && statSync(p).isFile()) s[relative(root, p).split(sep).join('/')] = hashFile(p);
+    const f = p.startsWith(root + sep) ? readRegular(p) : null;
+    if (f) s[relative(root, p).split(sep).join('/')] = sha256(f.text);
   }
   return s;
 }
@@ -272,10 +273,20 @@ function userTexts(transcriptPath) {
   }
   return out;
 }
+// Opens once and stats/reads through the same descriptor, so what is checked is what is read.
+function readRegular(abs) {
+  let fd;
+  try {
+    fd = openSync(abs, 'r');
+    const st = fstatSync(fd);
+    return st.isFile() ? { mtimeMs: st.mtimeMs, text: readFileSync(fd, 'utf8') } : null;
+  } catch { return null; } finally { if (fd !== undefined) closeSync(fd); }
+}
 function lineAt(root, rel, n) {
   const abs = resolve(root, String(rel || ''));
-  if (!abs.startsWith(root + sep) || !existsSync(abs) || !statSync(abs).isFile()) return { err: `file ${rel} does not exist in the project` };
-  const lines = readFileSync(abs, 'utf8').split(/\r?\n/);
+  const f = abs.startsWith(root + sep) ? readRegular(abs) : null;
+  if (!f) return { err: `file ${rel} does not exist in the project` };
+  const lines = f.text.split(/\r?\n/);
   if (!Number.isInteger(n) || n < 1 || n > lines.length) return { err: `${rel} has no line ${n} (it has ${lines.length})` };
   return { text: lines[n - 1], rel: relative(root, abs).split(sep).join('/') };
 }
@@ -283,9 +294,10 @@ function lineAt(root, rel, n) {
 export function validateReport(st, transcriptPath) {
   const root = st.root;
   const p = join(root, REPORT_REL);
-  if (!existsSync(p)) return { valid: false, errors: ['no conflict report'], count: 0 };
-  if (statSync(p).mtimeMs < Date.parse(st.startedAt)) return { valid: false, errors: [`${REPORT_REL} predates this task`], count: 0 };
-  let r; try { r = JSON.parse(readFileSync(p, 'utf8')); } catch (e) { return { valid: false, errors: [`${REPORT_REL} is not valid JSON: ${e.message}`], count: 0 }; }
+  const f = readRegular(p);
+  if (!f) return { valid: false, errors: ['no conflict report'], count: 0 };
+  if (f.mtimeMs < Date.parse(st.startedAt)) return { valid: false, errors: [`${REPORT_REL} predates this task`], count: 0 };
+  let r; try { r = JSON.parse(f.text); } catch (e) { return { valid: false, errors: [`${REPORT_REL} is not valid JSON: ${e.message}`], count: 0 }; }
   const list = Array.isArray(r?.conflicts) ? r.conflicts : [];
   if (!list.length) return { valid: false, errors: ['"conflicts" must be a non-empty array'], count: 0 };
   const errors = [];
