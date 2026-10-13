@@ -12,11 +12,13 @@
 # The task id is not printed by forge as data; the caller reads it with forge_get_tasks,
 # matching on the title, then claims and completes it.
 #
-# Side effect: every `plan --generate` rewrites .forge/plan.md with only this run's tasks.
-# The task files under .forge/tasks/ are kept.
+# `plan --generate` rewrites .forge/plan.md with only this run's tasks. This script keeps the
+# user's plan: it saves a copy next to the spec (F-NNN.plan-before.md), and after forge runs it
+# writes the earlier plan back with this run's output appended below it. The task files under
+# .forge/tasks/ are never touched.
 #
 # Output: key=value lines on stdout.
-#   status=created   title=…  spec=…   (exit 0)
+#   status=created   title=…  spec=…  [plan_backup=…]   (exit 0)
 #   status=no-forge                     (exit 10)  forge is not installed
 #   status=no-forge-dir                 (exit 11)  `forge init` has not run here
 # Any other exit is an error; forge's output is on stderr.
@@ -60,12 +62,33 @@ done
 SPEC="$(printf '.forge/feature-requests/F-%03d.md' $((last + 1)))"
 printf '## %s\n\n%s\n' "$TITLE" "$DESCRIPTION" > "$SPEC"
 
+PLAN=.forge/plan.md
+BACKUP=""
+if [[ -s "$PLAN" ]]; then
+  BACKUP="${SPEC%.md}.plan-before.md"
+  cp -p "$PLAN" "$BACKUP"
+fi
+
 if ! out="$("$FORGE" plan --generate --spec "$SPEC" --project "$PWD" </dev/null 2>&1)"; then
+  [[ -n "$BACKUP" ]] && cp -p "$BACKUP" "$PLAN"
   printf '%s\n' "$out" >&2
   echo "forge plan --generate --spec $SPEC failed" >&2
   exit 1
 fi
 
+# Put the user's plan back, with this run's plan below it.
+if [[ -n "$BACKUP" ]]; then
+  generated="$(cat "$PLAN" 2>/dev/null || true)"
+  if ! { cat "$BACKUP"
+         printf '\n\n---\n\n<!-- Added by /nxtg-forge:feature (%s): forge plan --generate --spec output. The plan above is kept as it was. -->\n\n' "$SPEC"
+         printf '%s\n' "$generated"; } > "$PLAN.tmp" || ! mv "$PLAN.tmp" "$PLAN"; then
+    echo "could not restore $PLAN; the plan as it was is saved at $BACKUP" >&2
+    exit 1
+  fi
+fi
+
 echo "status=created"
 echo "title=$TITLE"
 echo "spec=$SPEC"
+[[ -n "$BACKUP" ]] && echo "plan_backup=$BACKUP"
+exit 0

@@ -337,6 +337,43 @@ async function main() {
       try { if (featTransport) await featTransport.close(); } catch { /* idempotent */ }
       rmSync(featProj, { recursive: true, force: true });
     }
+
+    // ── Leg G: the feature path keeps a user's existing .forge/plan.md (DIRECTIVE-NXTG-20261013-06) ──
+    // `forge plan --generate` rewrites plan.md with only its own tasks; feature-task.sh puts the
+    // user's plan back with the new plan appended, and keeps a backup beside the spec.
+    console.log("\n[Leg G] existing plan.md + feature-task.sh on real forge: plan kept, new task appended, backup saved");
+    const planProj = mkdtempSync(join(tmpdir(), "forge-l2-plan-"));
+    let planClient, planTransport;
+    try {
+      execFileSync("git", ["init", "-q"], { cwd: planProj, stdio: "ignore" });
+      execFileSync("forge", ["init", "-n", "l2-plan", "--project", planProj],
+        { cwd: planProj, env: { ...process.env, FORGE_PROJECT_ROOT: planProj }, stdio: "ignore", timeout: 30000 });
+      const mine = "# My plan\n\n## Milestone 1\n- Ship the importer (my own task, keep me)\n";
+      writeFileSync(join(planProj, ".forge", "plan.md"), mine);
+      const gTitle = "Add an export command";
+      const gkv = Object.fromEntries(execFileSync("bash",
+        [join(PLUGIN_ROOT, "scripts", "feature-task.sh"), gTitle, "Export the data as CSV."],
+        { cwd: planProj, env: { ...process.env, FORGE_PROJECT_ROOT: planProj }, encoding: "utf8", timeout: 60000 })
+        .split("\n").filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
+      const planAfter = readFileSync(join(planProj, ".forge", "plan.md"), "utf8");
+      check("plan.md after the feature path starts with the user's plan, unchanged", planAfter.startsWith(mine), planAfter.slice(0, 120));
+      check("plan.md also holds the new feature's task, appended", planAfter.indexOf(gTitle) > mine.length, `title at ${planAfter.indexOf(gTitle)}`);
+      check("backup of the earlier plan beside the spec, byte for byte",
+        gkv.plan_backup === ".forge/feature-requests/F-001.plan-before.md" &&
+        readFileSync(join(planProj, gkv.plan_backup), "utf8") === mine, JSON.stringify(gkv));
+      planTransport = bindTransport(orchSpec, planProj, childPath);
+      planClient = new Client({ name: "l2-plan", version: "1.0.0" }, { capabilities: {} });
+      await planClient.connect(planTransport);
+      const gp = textOf(await planClient.callTool({ name: "forge_get_plan", arguments: {} }));
+      check("forge_get_plan returns the kept plan and the new task", gp.includes("keep me") && gp.includes(gTitle), gp.slice(0, 120));
+      const gTasks = JSON.parse(textOf(await planClient.callTool({ name: "forge_get_tasks", arguments: {} })))?.tasks ?? [];
+      check("forge_get_tasks still lists the new feature task", gTasks.some((t) => t.title?.includes(gTitle)),
+        gTasks.map((t) => `${t.id}:${t.title}`).join(" | "));
+    } finally {
+      try { if (planClient) await planClient.close(); } catch { /* gone */ }
+      try { if (planTransport) await planTransport.close(); } catch { /* idempotent */ }
+      rmSync(planProj, { recursive: true, force: true });
+    }
   } finally {
     // Teardown: close BOTH clients (SIGTERM/SIGKILL each child) + transports, remove temp dirs.
     for (const c of [govClient, orchClient]) { try { if (c) await c.close(); } catch { /* gone */ } }
