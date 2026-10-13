@@ -296,6 +296,47 @@ async function main() {
     } finally {
       rmSync(forgeOnly, { recursive: true, force: true });
     }
+
+    // ── Leg F: /nxtg-forge:feature's task loop on the real binary (alpha run 2, F-H; path (b), shape B1) ──
+    // README headings are there on purpose: a bare `plan --generate` would turn them into tasks.
+    console.log("\n[Leg F] feature-task.sh → plan --generate --spec → forge_get_tasks by title → claim → complete");
+    const featProj = mkdtempSync(join(tmpdir(), "forge-l2-feature-"));
+    let featClient, featTransport;
+    try {
+      execFileSync("git", ["init", "-q"], { cwd: featProj, stdio: "ignore" });
+      writeFileSync(join(featProj, "README.md"), "# Proj\n\n## Installation\nx\n\n## Usage\ny\n");
+      execFileSync("forge", ["init", "-n", "l2-feature", "--project", featProj],
+        { cwd: featProj, env: { ...process.env, FORGE_PROJECT_ROOT: featProj }, stdio: "ignore", timeout: 30000 });
+      const title = "Add a usage example to the hello docstring";
+      const kv = Object.fromEntries(execFileSync("bash",
+        [join(PLUGIN_ROOT, "scripts", "feature-task.sh"), title, "Show one call and its output."],
+        { cwd: featProj, env: { ...process.env, FORGE_PROJECT_ROOT: featProj }, encoding: "utf8", timeout: 60000 })
+        .split("\n").filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
+      check("feature-task.sh → status=created, spec F-001", kv.status === "created" && kv.spec === ".forge/feature-requests/F-001.md",
+        JSON.stringify(kv));
+
+      featTransport = bindTransport(orchSpec, featProj, childPath);
+      featClient = new Client({ name: "l2-feature", version: "1.0.0" }, { capabilities: {} });
+      await featClient.connect(featTransport);
+      const tasksOf = async () => JSON.parse(textOf(await featClient.callTool({ name: "forge_get_tasks", arguments: {} })))?.tasks ?? [];
+      const before = await tasksOf();
+      const mine = before.filter((t) => typeof t.title === "string" && t.title.includes(title));
+      check("forge_get_tasks: exactly one task, titled with the feature (no README-heading tasks)",
+        before.length === 1 && mine.length === 1, before.map((t) => `${t.id}:${t.title}`).join(" | "));
+      const id = mine[0]?.id;
+      const claimF = await featClient.callTool({ name: "forge_claim_task", arguments: { task_id: id, agent: "claude" } });
+      check(`forge_claim_task(${id}, claude) → non-error`, !claimF.isError, textOf(claimF).slice(0, 120));
+      const doneF = await featClient.callTool({ name: "forge_complete_task",
+        arguments: { task_id: id, result_summary: "Added the docstring example; tests pass" } });
+      check(`forge_complete_task(${id}, result_summary) → non-error`, !doneF.isError, textOf(doneF).slice(0, 120));
+      const after = (await tasksOf()).find((t) => t.id === id);
+      check("forge_get_tasks shows the feature task completed by claude",
+        after?.status === "completed" && after?.assigned_to === "claude", JSON.stringify(after).slice(0, 200));
+    } finally {
+      try { if (featClient) await featClient.close(); } catch { /* gone */ }
+      try { if (featTransport) await featTransport.close(); } catch { /* idempotent */ }
+      rmSync(featProj, { recursive: true, force: true });
+    }
   } finally {
     // Teardown: close BOTH clients (SIGTERM/SIGKILL each child) + transports, remove temp dirs.
     for (const c of [govClient, orchClient]) { try { if (c) await c.close(); } catch { /* gone */ } }

@@ -75,6 +75,24 @@ Present the spec to the user and ask for confirmation:
 - "Modify the plan" -> Go back to Step 3
 - "Cancel" -> Exit
 
+## Step 4.2: Orchestrator Task (create and claim)
+
+Skip this step if the orchestrator tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`) are not available in this session. Whether a governance.json exists never decides this.
+
+1. Run the helper from the project root, with the feature title (one line) and a one-paragraph description:
+
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "{feature title}" "{one-paragraph description}"
+   ```
+
+   It writes `.forge/feature-requests/F-NNN.md` with exactly one `## {feature title}` heading and runs `forge plan --generate --spec` on that file, which creates exactly one task. **Never run `forge plan --generate` without `--spec`**: it plans from the README's headings, and those tasks are not this feature.
+2. Read its `status=` line:
+   - `status=created`: call `forge_get_tasks`. Take the task whose title is the printed `title=`, or contains it (the planner may title it "Review existing implementation of: {title}"). If several match, take the highest id that is still pending. Then call `forge_claim_task` with that `task_id` and agent `claude`. Remember the id for Step 7.
+   - `status=no-forge-dir` (exit 11): say once, "Run `forge init` in this project to track features as orchestrator tasks," and continue without a task.
+   - `status=no-forge` (exit 10): continue without a task.
+   - Any other exit: show its stderr, and continue without a task.
+3. Tell the user, once: `forge plan --generate` rewrites `.forge/plan.md` with only this feature's task (earlier task files are kept), and the task may be typed `review` when a title word matches a source filename.
+
 ## Step 4.5: Agent Team Execution
 
 After user approval (Step 4), execute via a 3-phase pipeline:
@@ -178,7 +196,7 @@ The orchestrator tools (`forge_*` from the orchestrator MCP server) are used whe
    - content: Summary of what was built, files changed, patterns used
    - category: "learnings"
    - source: "feature implementation"
-3. If orchestrator tasks were involved, call `forge_complete_task` for each completed task.
+3. If Step 4.2 claimed a task, call `forge_complete_task` with its `task_id` and a `result_summary`: one or two sentences on what was built and whether tests pass. If the work did not finish, leave the task claimed and say so.
 
 ## Error Handling
 
