@@ -69,3 +69,21 @@ describe('/nxtg-forge:feature routing', () => {
     expect(routingProblems(optional)).toContain('Step 4.2 is not required when the orchestrator tools are present');
   });
 });
+
+// DIRECTIVE-NXTG-20261013-10: the completing agent is recorded from an explicit argument, never
+// inferred from the claimer. Every completion the feature command or a harness makes passes `agent`.
+describe('forge_complete_task always passes agent', () => {
+  const HARNESS = join(dirname(fileURLToPath(import.meta.url)), 'integration');
+  it('feature.md Step 7 tells the model to pass agent "claude"', () => {
+    const step7 = sections(readFileSync(FEATURE_MD, 'utf8'))['7'] ?? '';
+    const line = step7.split('\n').find((l) => l.includes('`forge_complete_task`')) ?? '';
+    expect(line).toContain('`agent: "claude"`');
+  });
+  it.each(['l2-journey.mjs', 'l3-journey.mjs'])('%s: every forge_complete_task call has agent', (f) => {
+    const src = readFileSync(join(HARNESS, f), 'utf8');
+    const calls = [...src.matchAll(/name: "forge_complete_task",\s*arguments: \{([^}]*)\}/g)].map((m) => m[1]);
+    expect(calls.length).toBeGreaterThan(0);
+    for (const args of calls) expect(args).toMatch(/\bagent: "claude"/);
+  });
+});
+

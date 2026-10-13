@@ -202,7 +202,7 @@ The orchestrator tools (`forge_*` from the orchestrator MCP server) are used whe
    - content: Summary of what was built, files changed, patterns used
    - category: "learnings"
    - source: "feature implementation"
-3. If Step 4.2 claimed a task, call `forge_complete_task` with its `task_id` and a `result_summary`: one or two sentences on what was built and whether tests pass. If the work did not finish, leave the task claimed and say so.
+3. If Step 4.2 claimed a task, call `forge_complete_task` with its `task_id`, `agent: "claude"` and a `result_summary`: one or two sentences on what was built and whether tests pass. Always pass `agent`: the orchestrator then records who completed the task, rather than inferring it from who claimed it. If the work did not finish, leave the task claimed and say so.
 
 ## Anti-Patterns
 

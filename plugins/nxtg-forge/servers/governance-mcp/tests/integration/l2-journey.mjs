@@ -244,7 +244,7 @@ async function main() {
 
     const claim = await orchClient.callTool({ name: "forge_claim_task", arguments: { task_id: "T-001", agent: "claude" } });
     check("forge_claim_task(T-001, claude) → non-error", !claim.isError, textOf(claim).slice(0, 120));
-    const complete = await orchClient.callTool({ name: "forge_complete_task", arguments: { task_id: "T-001", result_summary: "done by L2 harness" } });
+    const complete = await orchClient.callTool({ name: "forge_complete_task", arguments: { task_id: "T-001", agent: "claude", result_summary: "done by L2 harness" } });
     check("forge_complete_task(T-001) → non-error", !complete.isError, textOf(complete).slice(0, 120));
 
     const summaryAfter = readState(fixture).task_summary;
@@ -326,12 +326,29 @@ async function main() {
       const id = mine[0]?.id;
       const claimF = await featClient.callTool({ name: "forge_claim_task", arguments: { task_id: id, agent: "claude" } });
       check(`forge_claim_task(${id}, claude) → non-error`, !claimF.isError, textOf(claimF).slice(0, 120));
+      // feature.md Step 7: complete with agent "claude" and a result_summary (DIRECTIVE-NXTG-20261013-10).
+      const summaryF = "Added the docstring example; tests pass";
       const doneF = await featClient.callTool({ name: "forge_complete_task",
-        arguments: { task_id: id, result_summary: "Added the docstring example; tests pass" } });
-      check(`forge_complete_task(${id}, result_summary) → non-error`, !doneF.isError, textOf(doneF).slice(0, 120));
+        arguments: { task_id: id, agent: "claude", result_summary: summaryF } });
+      check(`forge_complete_task(${id}, agent claude, result_summary) → non-error`, !doneF.isError, textOf(doneF).slice(0, 120));
       const after = (await tasksOf()).find((t) => t.id === id);
-      check("forge_get_tasks shows the feature task completed by claude",
-        after?.status === "completed" && after?.assigned_to === "claude", JSON.stringify(after).slice(0, 200));
+      check("forge_get_tasks: the feature task is completed, completed_by claude, result_summary byte-equal",
+        after?.status === "completed" && after?.completed_by === "claude" && after?.result_summary === summaryF,
+        JSON.stringify(after).slice(0, 240));
+
+      // completed_by comes from the explicit argument, not from the claim: a task claimed by codex
+      // and completed with agent "claude" must record claude.
+      const title2 = "Add a second docstring example";
+      execFileSync("bash", [join(PLUGIN_ROOT, "scripts", "feature-task.sh"), title2, "One more call."],
+        { cwd: featProj, env: { ...process.env, FORGE_PROJECT_ROOT: featProj }, encoding: "utf8", timeout: 60000 });
+      const id2 = (await tasksOf()).find((t) => t.title?.includes(title2))?.id;
+      const claim2 = await featClient.callTool({ name: "forge_claim_task", arguments: { task_id: id2, agent: "codex" } });
+      const done2 = await featClient.callTool({ name: "forge_complete_task",
+        arguments: { task_id: id2, agent: "claude", result_summary: "second example added" } });
+      const after2 = (await tasksOf()).find((t) => t.id === id2);
+      check("claimed by codex, completed with agent claude → completed_by claude (from the argument, not the claim)",
+        !claim2.isError && !done2.isError && after2?.assigned_to === "codex" && after2?.completed_by === "claude",
+        JSON.stringify(after2).slice(0, 240));
     } finally {
       try { if (featClient) await featClient.close(); } catch { /* gone */ }
       try { if (featTransport) await featTransport.close(); } catch { /* idempotent */ }
