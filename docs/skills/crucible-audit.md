@@ -11,7 +11,9 @@
 
 ## What It Provides
 
-The CRUCIBLE Audit skill encodes a forensic test quality protocol born from a real incident: a project with 1,601 tests and 77% claimed coverage that had approximately 15% actual coverage and nothing worked when a human used it. It teaches agents to detect eight specific fraud patterns that inflate test metrics without proving software correctness.
+> **Optional convenience, no accuracy claim.** On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost. A clean report is not evidence that nothing is wrong.
+
+The CRUCIBLE Audit skill encodes a forensic test quality protocol born from a real incident: a project with 1,601 tests and 77% claimed coverage that had approximately 15% actual coverage and nothing worked when a human used it. It gives agents a checklist of eight fraud patterns to look for that inflate test metrics without proving software correctness.
 
 Without this skill, agents trust test count and coverage percentage at face value. A project reporting 500 tests and 90% coverage is assumed healthy. With the CRUCIBLE skill, agents know to check whether coverage configuration excludes hard-to-test code, whether assertions are falsifiable, whether mocks replace the components they claim to test, whether "integration" tests actually integrate anything, and whether entry points that users interact with have any coverage at all.
 

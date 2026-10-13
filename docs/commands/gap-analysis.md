@@ -1,6 +1,8 @@
 # /nxtg-forge:gap-analysis
 
-> Comprehensive five-dimension project analysis covering testing, documentation, security, architecture, and performance -- with severity-ranked findings and phased remediation plans.
+> **Optional convenience, no accuracy claim.** On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost.
+>
+> A structured five-dimension review prompt covering testing, documentation, security, architecture, and performance -- with severity-ranked findings and phased remediation plans.
 
 | | |
 |---|---|
@@ -103,7 +105,7 @@ Phase 3: Medium Priority (Backlog)
 
 ## Power Use Cases
 
-Run `/nxtg-forge:gap-analysis` with all five agents in parallel for a sub-minute comprehensive audit, then feed the `--fix` output directly into sprint planning. Each item includes an effort estimate to help with capacity planning.
+Run `/nxtg-forge:gap-analysis` with all five agents in parallel for a quick structured review, then feed the `--fix` output directly into sprint planning. Each item includes an effort estimate to help with capacity planning.
 
 Combine with orchestrator knowledge: gap analysis findings are recorded via `forge_capture_knowledge` (category: "research"), building a history of project assessments over time. Compare findings across sessions to measure improvement.
 

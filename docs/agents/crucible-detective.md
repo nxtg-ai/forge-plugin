@@ -118,7 +118,7 @@ CRUCIBLE Detective:
 
 ## Tips & Gotchas
 
-- **Do**: Run a CRUCIBLE audit before every release. It takes minutes and catches fraud that manual review misses.
+- **Know**: this is an optional review with no accuracy claim. On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost. It does not replace running the tests.
 - **Do**: Trust the fraud margin number -- it is the single most honest metric about your test suite quality.
 - **Don't**: Shoot the messenger. The Detective reports findings without softening. If the numbers are bad, the tests need fixing, not the audit.
 - **Don't**: Confuse this agent with the QA Sentinel or Testing agent. The Detective audits. It does not design strategy or write tests.
