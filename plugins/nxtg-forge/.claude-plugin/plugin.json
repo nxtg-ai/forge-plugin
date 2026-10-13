@@ -2,7 +2,7 @@
   "$schema": "https://claude.ai/schemas/plugin.json",
   "name": "nxtg-forge",
   "displayName": "NXTG Forge",
-  "version": "3.11.0",
+  "version": "3.11.1",
   "description": "Governance-native AI development \u2014 33 agents, 23 commands, 27 skills, 23 hooks (4 blocking security guards + Semgrep scanning), drift detection, CRUCIBLE test auditing, and shared memory for Claude Code (stage: internal)",
   "defaultEnabled": true,
   "author": {
