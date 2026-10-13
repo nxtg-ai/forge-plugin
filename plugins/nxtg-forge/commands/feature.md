@@ -21,6 +21,8 @@ Ask the user using AskUserQuestion:
 - What feature are you building? (if not in arguments)
 - What's the scope? (small/medium/large)
 
+If no one can be asked (a non-interactive run such as `claude -p`, or AskUserQuestion is unavailable), do not stop. Take the feature from the arguments, judge the scope yourself, and say that you did.
+
 ## Step 2: Codebase Analysis (Read-Only — Plan Mode Posture)
 
 Before planning, understand the current codebase. **No writes during this step.**
@@ -71,13 +73,17 @@ Save the spec to `.claude/plans/{feature-slug}-spec.md`
 ## Step 4: Confirm Plan
 
 Present the spec to the user and ask for confirmation:
-- "Looks good, start implementing" -> Proceed to Step 5
+- "Looks good, start implementing" -> Proceed to Step 4.2
 - "Modify the plan" -> Go back to Step 3
 - "Cancel" -> Exit
 
+If no one can be asked (a non-interactive run such as `claude -p`, or AskUserQuestion is unavailable), do not stop and do not exit. Say "No one to confirm with; proceeding with the plan as written," then Proceed to Step 4.2.
+
+Every path that implements the feature goes through Step 4.2 first. Never go from Step 4 straight to Step 4.5 or Step 5.
+
 ## Step 4.2: Orchestrator Task (create and claim)
 
-Skip this step if the orchestrator tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`) are not available in this session. Whether a governance.json exists never decides this.
+This step is required whenever the orchestrator tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`) are available in this session. Skip it only when they are not. Whether a governance.json exists never decides this. When this step is done, Proceed to Step 4.5.
 
 1. Run the helper from the project root, with the feature title (one line) and a one-paragraph description:
 
@@ -95,7 +101,7 @@ Skip this step if the orchestrator tools (`forge_get_tasks`, `forge_claim_task`,
 
 ## Step 4.5: Agent Team Execution
 
-After user approval (Step 4), execute via a 3-phase pipeline:
+After Step 4.2 (the task is created and claimed, or the orchestrator tools are absent), execute via a 3-phase pipeline:
 
 **Phase A — Finalize contracts (sequential):**
 
