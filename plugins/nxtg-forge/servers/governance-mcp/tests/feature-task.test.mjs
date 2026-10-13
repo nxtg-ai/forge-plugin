@@ -22,7 +22,9 @@ beforeEach(() => {
   writeFileSync(join(stubDir, 'forge'),
     `#!/bin/bash\nprintf '%s\\n' "$*" >> "${log}"\n` +
     `if read -r -t 1 line; then echo "stdin-open:$line" >> "${log}"; fi\n` +
-    `[ -n "$STUB_FAIL" ] && { echo "boom from forge"; exit 7; }\necho "Generated 1 tasks"\n`,
+    `[ -n "$STUB_FAIL" ] && { echo "half-written" > .forge/plan.md; echo "boom from forge"; exit 7; }\n` +
+    // Like the real binary: plan --generate rewrites .forge/plan.md with only this run's tasks.
+    `printf '# Plan\\n\\n- T-NEW generated\\n' > .forge/plan.md\necho "Generated 1 tasks"\n`,
     { mode: 0o755 });
 });
 afterEach(() => {
@@ -63,7 +65,7 @@ describe('feature-task.sh', () => {
     expect(run(['First', 'a']).kv.spec).toBe('.forge/feature-requests/F-001.md');
     writeFileSync(join(root, '.forge', 'feature-requests', 'F-007.md'), '## Old\n\nx\n');
     expect(run(['Second', 'b']).kv.spec).toBe('.forge/feature-requests/F-008.md');
-    expect(readdirSync(join(root, '.forge', 'feature-requests')).sort()).toEqual(['F-001.md', 'F-007.md', 'F-008.md']);
+    expect(readdirSync(join(root, '.forge', 'feature-requests')).filter((f) => /^F-\d+\.md$/.test(f)).sort()).toEqual(['F-001.md', 'F-007.md', 'F-008.md']);
   });
 
   it('no .forge/ (forge init not run): exit 11, forge not called, nothing written', () => {
@@ -87,6 +89,37 @@ describe('feature-task.sh', () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toContain('boom from forge');
     expect(r.kv.status).toBeUndefined();
+  });
+
+  it('an existing plan.md is kept, with the new plan appended and a backup beside the spec', () => {
+    initForge();
+    const before = '# My plan\n\n## Milestone 1\n- T-001 my own task\n';
+    writeFileSync(join(root, '.forge', 'plan.md'), before);
+    const r = run(['Feature', 'd']);
+    expect(r.status).toBe(0);
+    expect(r.kv.plan_backup).toBe('.forge/feature-requests/F-001.plan-before.md');
+    expect(readFileSync(join(root, r.kv.plan_backup), 'utf8')).toBe(before);
+    const after = readFileSync(join(root, '.forge', 'plan.md'), 'utf8');
+    expect(after.startsWith(before)).toBe(true);
+    expect(after).toContain('- T-NEW generated');
+    expect(after).toContain('Added by /nxtg-forge:feature (.forge/feature-requests/F-001.md)');
+    // The backup is not mistaken for a spec when numbering the next one.
+    expect(run(['Second', 'd']).kv.spec).toBe('.forge/feature-requests/F-002.md');
+  });
+
+  it('no plan.md before: forge\'s plan stands, and there is no backup', () => {
+    initForge();
+    const r = run(['Feature', 'd']);
+    expect(r.kv.plan_backup).toBeUndefined();
+    expect(readFileSync(join(root, '.forge', 'plan.md'), 'utf8')).toBe('# Plan\n\n- T-NEW generated\n');
+  });
+
+  it('forge failing leaves the earlier plan.md exactly as it was', () => {
+    initForge();
+    writeFileSync(join(root, '.forge', 'plan.md'), '# Mine\n');
+    const r = run(['Feature', 'd'], { env: { STUB_FAIL: '1' } });
+    expect(r.status).toBe(1);
+    expect(readFileSync(join(root, '.forge', 'plan.md'), 'utf8')).toBe('# Mine\n');
   });
 
   it('an empty title is a usage error', () => {

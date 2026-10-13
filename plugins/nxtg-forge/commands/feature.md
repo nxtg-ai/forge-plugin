@@ -97,7 +97,7 @@ This step is required whenever the orchestrator tools (`forge_get_tasks`, `forge
    - `status=no-forge-dir` (exit 11): say once, "Run `forge init` in this project to track features as orchestrator tasks," and continue without a task.
    - `status=no-forge` (exit 10): continue without a task.
    - Any other exit: show its stderr, and continue without a task.
-3. Tell the user, once: `forge plan --generate` rewrites `.forge/plan.md` with only this feature's task (earlier task files are kept), and the task may be typed `review` when a title word matches a source filename.
+3. Tell the user, once: the task may be typed `review` when a title word matches a source filename. If the helper printed `plan_backup=`, also say: "Your `.forge/plan.md` is kept; this feature's plan is appended below it, and a copy of the plan as it was is at {plan_backup}."
 
 ## Step 4.5: Agent Team Execution
 
@@ -203,6 +203,14 @@ The orchestrator tools (`forge_*` from the orchestrator MCP server) are used whe
    - category: "learnings"
    - source: "feature implementation"
 3. If Step 4.2 claimed a task, call `forge_complete_task` with its `task_id` and a `result_summary`: one or two sentences on what was built and whether tests pass. If the work did not finish, leave the task claimed and say so.
+
+## Anti-Patterns
+
+Check these before reporting the feature done:
+- Running `forge plan --generate` without `--spec`. It plans from the README's headings, and those tasks are not this feature.
+- Running `forge plan --generate` yourself instead of the helper. forge rewrites `.forge/plan.md`, and only the helper puts the user's existing plan back. Never leave a user's plan replaced without a backup and a warning.
+- Going from Step 4 to Step 4.5 or Step 5 without Step 4.2 when the orchestrator tools are available.
+- Writing to `.forge/governance.json`; `forge init` owns it.
 
 ## Error Handling
 

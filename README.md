@@ -85,7 +85,7 @@ forge init
 
 One Rust binary. 4MB. 356 tests. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
 
-Once `forge init` has run, `/nxtg-forge:feature` tracks each feature as an orchestrator task. It writes a one-heading spec to `.forge/feature-requests/F-NNN.md`, runs `forge plan --generate --spec` on it, claims the new task as `claude`, and completes it with a summary of the work. Each run rewrites `.forge/plan.md` with only that feature's task; earlier task files are kept.
+Once `forge init` has run, `/nxtg-forge:feature` tracks each feature as an orchestrator task. It writes a one-heading spec to `.forge/feature-requests/F-NNN.md`, runs `forge plan --generate --spec` on it, claims the new task as `claude`, and completes it with a summary of the work. An existing `.forge/plan.md` is kept: the feature's plan is appended below it, and a copy of the plan as it was is saved next to the spec.
 
 For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add NXTG-Forge UI:
 
