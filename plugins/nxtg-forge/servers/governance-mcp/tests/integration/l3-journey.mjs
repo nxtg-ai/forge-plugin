@@ -27,7 +27,7 @@
 // Regate-11 lessons carried forward: execute the .mcp.json ENV contract verbatim (bindOrchestrator),
 // outer-scope fixture registration (cleanup even on setup throw), task-scoped event assertions.
 //
-// Requires: forge v1.5.2 on PATH + a forge-ui checkout (FORGE_UI_DIR or the sibling repo). Both absent
+// Requires: forge at FORGE_PIN (tests/lib/checks.mjs) on PATH + a forge-ui checkout (FORGE_UI_DIR or the sibling repo). Both absent
 // = deterministic NAMED failures (FORGE_ABSENT / WRONG_BINARY_VERSION / UI_ABSENT), never silent skip.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";

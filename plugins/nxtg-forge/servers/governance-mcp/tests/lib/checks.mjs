@@ -37,7 +37,7 @@ const ORCH_REF =
 
 // ── L2 (Pro Builder journey) surface — DIRECTIVE-NXTG-20260718-11 ──
 // The 11 orchestrator-mcp tools shipped by the Rust `forge mcp` server. Source of truth: the LIVE
-// v1.5.2 handshake (probed 2026-07-18). The live L2 leg asserts the handshake set == this list AND
+// v1.5.2 handshake (probed 2026-07-18), unchanged on v1.6.2 (2026-10-13). The live L2 leg asserts the handshake set == this list AND
 // reports any delta as a finding (never "fixes" orchestrator surfaces from the plugin repo — the
 // directive's escalation clause). This list is also the expected input for the missing-Rust-tool
 // negative control.
@@ -56,7 +56,7 @@ export const ORCH_TOOLS = [
 ];
 
 // The pinned orchestrator binary version the L2 harness requires (fixture dep, not a package dep).
-export const FORGE_PIN = "1.5.2";
+export const FORGE_PIN = "1.6.2"; // the version users install (alpha run 2); was 1.5.2
 
 // `forge --version` string matches the pin? actual = parsed version (e.g. "1.5.2") or null if absent.
 // Returns { ok, reason } — named findings FORGE_ABSENT / WRONG_BINARY_VERSION for deterministic fail.
