@@ -8,6 +8,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.11.1] — 2026-10-13
+
+Fixes from forge-pm's pre-run check of v3.11.0 for alpha run 3, and alpha run 2's F-J. No new MCP tools, commands, agents or skills; no breaking changes.
+
+### Fixed
+
+- **`/nxtg-forge:feature` reaches its task step.**
+  - In 3.11.0, Step 4's approve branch said "Proceed to Step 5", which jumped over Step 4.2, where the orchestrator task is created and claimed. It now proceeds to Step 4.2.
+  - When no one can be asked (`claude -p`, or AskUserQuestion is unavailable), Steps 1 and 4 no longer stop. Step 4 says "No one to confirm with; proceeding with the plan as written" and proceeds to Step 4.2.
+  - Step 4.2 is required whenever the orchestrator tools are available (#62).
+- **`/nxtg-forge:status` counts from the installed plugin.**
+  - It printed a hard-coded "23" agents; the plugin ships 33.
+  - Status and status-enhanced now run one count command against the plugin directory, covering agents, commands, skills, hook scripts and hook registrations. Status prints "Hooks: 12 scripts in 23 registrations" and lists all 12 hook scripts, where before it listed 7 and left out the 4 blocking guards and the Semgrep scan.
+  - The plugin description's "23 hooks" counts registrations, as CI already checks (#63).
+
+### Tests
+
+- vitest 144 → 155: `feature-routing.test.mjs` (4) reads the command's step links and fails if any path skips Step 4.2. `count-parity.test.mjs` (7) compares every count with the tree.
+- The L2/L3 journeys are pinned to forge 1.6.2, the version users install (#61).
+
 ## [3.11.0] — 2026-10-13
 
 Fixes from alpha run 2 (fresh `ubuntu:24.04`, forge 1.6.2, plugin 3.10.7). After `forge init`, the plugin still said Forge was not set up, and `/nxtg-forge:feature` created no orchestrator task. No new MCP tools, agents or skills; no breaking changes.
