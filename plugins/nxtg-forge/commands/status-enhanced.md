@@ -70,7 +70,7 @@ Agents and commands are loaded from the NXTG-Forge plugin. Count them in the ins
 
 ```bash
 R="${CLAUDE_PLUGIN_ROOT}"; n() { wc -l | tr -d ' '; }
-echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n)"
+echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n) registrations=$(grep -o '"command"[[:space:]]*:' "$R/hooks/hooks.json" 2>/dev/null | n)"
 ```
 
 ### 6b. Orchestrator Data (if forge-orchestrator is available)

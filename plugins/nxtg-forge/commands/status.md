@@ -79,7 +79,7 @@ Agents, commands and hooks are loaded from the Forge plugin. Count them in the i
 
 ```bash
 R="${CLAUDE_PLUGIN_ROOT}"; n() { wc -l | tr -d ' '; }
-echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n)"
+echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n) registrations=$(grep -o '"command"[[:space:]]*:' "$R/hooks/hooks.json" 2>/dev/null | n)"
 ```
 
 No need to check `.claude/agents/`; the plugin provides its agents automatically.
@@ -104,7 +104,7 @@ IMPORTANT: Do NOT run `npx tsc` if there is no `tsconfig.json`. It will produce 
 
 ### 8. Hook Status
 
-Hooks are loaded from the Forge plugin; use `hooks=` from §5 (the hook scripts wired in the plugin's `hooks/hooks.json`). They run automatically and do NOT require `.claude/settings.json`.
+Hooks are loaded from the Forge plugin; use `hooks=` (the distinct hook scripts wired in the plugin's `hooks/hooks.json`) and `registrations=` (their event and tool-matcher entries; one script can be registered several times) from §5. The plugin description's hooks count is `registrations=`. They run automatically and do NOT require `.claude/settings.json`.
 
 The hooks are:
 - **PreToolUse (Bash)**: `security-command-guard.sh` — blocks dangerous commands
@@ -120,7 +120,7 @@ The hooks are:
 - **PostToolUse (Write)**: `enforce-file-placement.sh` — enforce file organization
 - **PostToolUse (Edit/Write)**: `governance-check.sh` — advisory code quality check
 
-Report: **Hooks: {hooks} active (from Forge plugin)**
+Report: **Hooks: {hooks} scripts in {registrations} registrations (from Forge plugin)**
 
 ## Display Format — MANDATORY
 
@@ -182,7 +182,7 @@ Read the individual checks from the MCP health result and group them into these 
 
 **9. Orchestrator section:** Output `## Orchestrator`, then the line for the §4b state. **Connected:** a `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. **Connected, not initialized here:** `◐ **Connected; not initialized here** — run \`forge init\` in this project`. **Not installed:** `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\`, then start a new Claude Code session`
 
-**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents, Commands and Hooks, with the `agents=`, `commands=` and `hooks=` counts from §5 and the source "Forge plugin".
+**10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents, Commands and Hooks, with the `agents=` and `commands=` counts from §5, Hooks as "{hooks} scripts ({registrations} registrations)", and the source "Forge plugin".
 
 **11. Recovery section (conditional):** If git has uncommitted changes (modified or untracked files from Step 2), output `## Recovery Needed` with a table of uncommitted files and their status.
 

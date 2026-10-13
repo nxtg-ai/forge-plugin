@@ -1,8 +1,10 @@
 // Every component count a user sees matches what ships (DIRECTIVE-NXTG-20261013-04; alpha run 2 F-J).
 // At v3.11.0, /nxtg-forge:status hard-coded "23 built-in" agents while the plugin shipped 33, and
-// plugin.json said "23 hooks" (hooks.json registrations) while status said 7.
+// plugin.json said "23 hooks" while status said 7.
 // Definitions: agents = agents/*.md; commands = commands/*.md; skills = skills/*/SKILL.md;
-// hooks = distinct hook scripts wired in hooks/hooks.json.
+// hooks = distinct hook scripts wired in hooks/hooks.json; registrations = its command entries.
+// plugin.json's hooks count is registrations, as .github/scripts/check-description-counts.py
+// defines it (#52); status shows both.
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -19,6 +21,8 @@ const TREE = {
   commands: mdIn('commands'),
   skills: readdirSync(join(PLUGIN, 'skills')).filter((d) => existsSync(join(PLUGIN, 'skills', d, 'SKILL.md'))).length,
   hooks: HOOK_SCRIPTS.length,
+  registrations: Object.values(JSON.parse(read('hooks/hooks.json')).hooks)
+    .flatMap((groups) => groups.flatMap((g) => g.hooks ?? [])).length,
 };
 
 // The count command a status file tells the model to run, with ${CLAUDE_PLUGIN_ROOT} expanded as
@@ -59,6 +63,7 @@ describe('component counts match the tree', () => {
   it('plugin.json states the tree counts', () => {
     const desc = JSON.parse(read('.claude-plugin/plugin.json')).description;
     const n = (word) => Number(desc.match(new RegExp(`(\\d+) ${word}`))?.[1]);
-    expect({ agents: n('agents'), commands: n('commands'), skills: n('skills'), hooks: n('hooks') }).toEqual(TREE);
+    expect({ agents: n('agents'), commands: n('commands'), skills: n('skills'), hooks: n('hooks') })
+      .toEqual({ agents: TREE.agents, commands: TREE.commands, skills: TREE.skills, hooks: TREE.registrations });
   });
 });
