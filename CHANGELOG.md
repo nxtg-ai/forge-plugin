@@ -8,6 +8,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.11.2] — 2026-10-13
+
+`/nxtg-forge:feature` keeps a user's existing plan, and the README's component table matches what ships. No new MCP tools, commands, agents or skills; no breaking changes.
+
+### Fixed
+
+- **`/nxtg-forge:feature` keeps an existing `.forge/plan.md`.**
+  - `forge plan --generate` rewrites `plan.md` with only that run's tasks, so in 3.11.0 and 3.11.1 the feature command replaced a user's plan.
+  - `scripts/feature-task.sh` now copies the plan to `.forge/feature-requests/F-NNN.plan-before.md`. It then writes the plan back with the feature's plan appended below it, and restores the plan if forge fails. The command tells the user where the copy is.
+  - `feature.md` gains an Anti-Patterns list (#66).
+- **README component table:** Knowledge skills 33 → 27 and Governance hooks 9 → 8, the counts that ship. A test now checks every row against the tree (#65).
+
+### Tests
+
+- vitest 155 → 158.
+- The L2 journey goes from 22 to 27 checks: leg G seeds a plan, runs the feature path on real forge 1.6.2, and checks that the plan is kept, the task is appended, the backup matches, and `forge_get_plan` returns both.
+
 ## [3.11.1] — 2026-10-13
 
 Fixes from forge-pm's pre-run check of v3.11.0 for alpha run 3, and alpha run 2's F-J. No new MCP tools, commands, agents or skills; no breaking changes.
