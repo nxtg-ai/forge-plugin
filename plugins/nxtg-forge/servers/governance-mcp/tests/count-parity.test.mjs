@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { NODE_TOOLS } from './lib/checks.mjs';
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(PLUGIN, p), 'utf8').replace(/\r\n/g, '\n');
@@ -39,10 +40,27 @@ function runCount(file) {
 }
 
 describe('component counts match the tree', () => {
-  it('README agents and commands rows equal the tree', () => {
+  it('every README "What You Get" row equals the tree', () => {
     const readme = readFileSync(join(PLUGIN, '..', '..', 'README.md'), 'utf8');
     const row = (label) => Number(readme.match(new RegExp(`\\| ${label} \\| (\\d+) \\|`))?.[1]);
-    expect({ agents: row('Specialized agents'), commands: row('Slash commands') }).toEqual({ agents: TREE.agents, commands: TREE.commands });
+    // Security hooks = the blocking PreToolUse scripts; governance hooks = every other wired script.
+    const pre = new Set(JSON.parse(read('hooks/hooks.json')).hooks.PreToolUse
+      .flatMap((g) => g.hooks.map((h) => h.command.match(/scripts\/([A-Za-z0-9_.-]+\.sh)/)[1])));
+    expect({
+      commands: row('Slash commands'),
+      agents: row('Specialized agents'),
+      skills: row('Knowledge skills'),
+      securityHooks: row('Security hooks'),
+      governanceHooks: row('Governance hooks'),
+      mcpTools: row('MCP governance tools'),
+    }).toEqual({
+      commands: TREE.commands,
+      agents: TREE.agents,
+      skills: TREE.skills,
+      securityHooks: pre.size,
+      governanceHooks: TREE.hooks - pre.size,
+      mcpTools: NODE_TOOLS.length,
+    });
   });
 
   it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s: its count command prints the tree counts', (f) => {
