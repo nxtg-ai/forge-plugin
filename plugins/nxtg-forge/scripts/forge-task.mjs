@@ -185,6 +185,12 @@ export function begin(cwd, opts = {}) {
     verdict: null,
     history: [],
   };
+  // An automatic re-begin after an "unearned" task on the same commit keeps that task's baseline, so tests
+  // weakened during the unearned task do not become the next task's truth.
+  if (opts.carryUnearned && prev?.verdict === 'unearned' && prev.baseCommit && prev.baseCommit === st.baseCommit) {
+    Object.assign(st, { manifest: prev.manifest, commandSources: prev.commandSources, globs: prev.globs, configGlobs: prev.configGlobs, testCommand: prev.testCommand });
+    st.history.push({ at: st.startedAt, event: `baseline carried from the unearned task of ${prev.startedAt}` });
+  }
   saveState(st);
   return { ok: true, code: 0, state: st, msg: `Forge task begun in ${root}: mode ${mode}, test command \`${testCommand}\`, ${Object.keys(st.manifest).length} test files recorded.` };
 }
@@ -423,7 +429,7 @@ function main(argv) {
     const root = projectRoot(cwd);
     const want = process.env.FORGE_ENFORCE || readConfig(root).autoBegin;
     if (!want || want === '0' || want === 'off' || isActive(loadState(root))) return 0;
-    const r = begin(cwd, { mode: MODES.has(want) ? want : 'implement' });
+    const r = begin(cwd, { mode: MODES.has(want) ? want : 'implement', carryUnearned: true });
     process.stdout.write(`${r.ok ? r.msg : `[Forge] Enforcement was requested but no task began: ${r.msg}`}\n`);
     return 0;
   }

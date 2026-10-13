@@ -1,6 +1,6 @@
 // Enforced task (DIRECTIVE-NXTG-20261013-16 A): a test-file write guard, a conflict report, and a Stop gate on
 // the project's own test command. Every case here is synthetic and written for this file (pre-registered in
-// the PR, cases C1-C13). None comes from, or was shaped by, any benchmark.
+// the PR, cases C1-C14). None comes from, or was shaped by, any benchmark.
 //
 // The hooks run as Claude Code runs them: `bash task-enforce.sh <guard|gate|auto>`, hook input JSON on stdin,
 // in a real git project. Each mechanism's checks are a function of the plugin directory, so the same checks
@@ -130,7 +130,7 @@ function gateChecks(plugin) {
 }
 
 // ── shipped behaviour ────────────────────────────────────────────────────────
-describe('enforced task: shipped behaviour (cases C1-C13)', () => {
+describe('enforced task: shipped behaviour (cases C1-C14)', () => {
   it('C1 guard: an existing test file and new test-runner config are refused; source and new tests are not', () => guardChecks(PLUGIN));
 
   it('C1 conflict report: a report whose every line checks out ends the task as "conflict"', () => {
@@ -240,6 +240,22 @@ describe('enforced task: shipped behaviour (cases C1-C13)', () => {
     const r = hooks(PLUGIN, root, { FORGE_ENFORCE: 'implement' }).auto();
     expect(r.out).toContain('Forge task begun');
     expect(hooks(PLUGIN, root).guard('Edit', { file_path: join(root, 'tests/test_calc.py') }).status).toBe(2);
+  });
+
+  it('C14 auto: after an "unearned" task, the next automatic task on the same commit keeps the old baseline', () => {
+    const root = project(calc(4));
+    const env = { FORGE_ENFORCE: 'implement' };
+    const h = hooks(PLUGIN, root, env);
+    h.auto();
+    h.cli('begin'); // already active: refused, the auto task stands
+    write(root, 'tests/test_calc.py', readFileSync(join(root, 'tests/test_calc.py'), 'utf8').replace('add(2, 2), 4', 'add(2, 2), add(2, 2)'));
+    for (let i = 0; i < 5; i++) expect(h.gate().blocked).toBe(true);
+    expect(h.gate().reason).toContain('NOT DONE');
+    expect(h.auto().out).toContain('Forge task begun');
+    write(root, 'calc.py', SUM);
+    const g = h.gate();
+    expect(g.blocked).toBe(true); // the weakened test is still a violation against the carried baseline
+    expect(g.reason).toContain('tests/test_calc.py: modified');
   });
 
   it('C13 guard: the agent cannot end, relax or rewrite the task through Bash or the edit tools', () => {
