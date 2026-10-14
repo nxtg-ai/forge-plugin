@@ -385,7 +385,7 @@ async function main() {
     // MCP→UI reflection, SCOPED TO T-001 (regate-11 C3 discipline): complete T-001, then the UI's
     // orchestrator-sourced health must still AGREE with a fresh forge_get_health (live read, not stale).
     await orchClient.callTool({ name: "forge_claim_task", arguments: { task_id: "T-001", agent: "claude" } });
-    await orchClient.callTool({ name: "forge_complete_task", arguments: { task_id: "T-001", result_summary: "done by L3 harness" } });
+    await orchClient.callTool({ name: "forge_complete_task", arguments: { task_id: "T-001", agent: "claude", result_summary: "done by L3 harness" } });
     const t001Status = JSON.parse(readFileSync(join(fixture, ".forge", "tasks", "T-001.json"), "utf8")).status;
     check("T-001 completed via MCP (tasks/T-001.json status == completed)", t001Status === "completed", `got ${t001Status}`);
     const freshRust = JSON.parse(textOf(await orchClient.callTool({ name: "forge_get_health", arguments: {} })))?.health_score;

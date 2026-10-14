@@ -56,7 +56,7 @@ export const ORCH_TOOLS = [
 ];
 
 // The pinned orchestrator binary version the L2 harness requires (fixture dep, not a package dep).
-export const FORGE_PIN = "1.6.2"; // the version users install (alpha run 2); was 1.5.2
+export const FORGE_PIN = "1.6.3"; // first with completed_by + result_summary in forge_get_tasks (F-L); was 1.6.2
 
 // `forge --version` string matches the pin? actual = parsed version (e.g. "1.5.2") or null if absent.
 // Returns { ok, reason } — named findings FORGE_ABSENT / WRONG_BINARY_VERSION for deterministic fail.
