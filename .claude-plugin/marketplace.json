@@ -13,11 +13,11 @@
         "source": "git-subdir",
         "url": "https://github.com/nxtg-ai/forge-plugin.git",
         "path": "plugins/nxtg-forge",
-        "ref": "v3.13.1",
-        "sha": "eb5499d92936cb99e02201ffcad3ba9a73afe5b2"
+        "ref": "v3.14.0",
+        "sha": "6436b7754964d0c20bfea63e43b79c09729350e6"
       },
       "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code (public preview)",
-      "version": "3.13.1",
+      "version": "3.14.0",
       "author": {
         "name": "NXTG AI"
       },
@@ -30,6 +30,30 @@
         "orchestration",
         "dashboard",
         "mcp"
+      ],
+      "license": "MIT",
+      "repository": "https://github.com/nxtg-ai/forge-plugin"
+    },
+    {
+      "name": "nxtg-forge-orchestrator",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/nxtg-ai/forge-plugin.git",
+        "path": "plugins/nxtg-forge-orchestrator",
+        "ref": "v3.14.0",
+        "sha": "6436b7754964d0c20bfea63e43b79c09729350e6"
+      },
+      "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (public preview)",
+      "version": "3.14.0",
+      "author": {
+        "name": "NXTG AI"
+      },
+      "category": "development",
+      "tags": [
+        "orchestration",
+        "mcp",
+        "tasks",
+        "governance"
       ],
       "license": "MIT",
       "repository": "https://github.com/nxtg-ai/forge-plugin"

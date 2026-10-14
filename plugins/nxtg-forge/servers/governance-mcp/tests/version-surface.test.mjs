@@ -17,6 +17,9 @@ describe("version-surface agreement", () => {
       "root .claude-plugin/plugin.json": rd(join(REPO, ".claude-plugin/plugin.json")).version,
       "plugin manifest": rd(join(REPO, "plugins/nxtg-forge/.claude-plugin/plugin.json")).version,
       "companion manifest": rd(join(REPO, "plugins/nxtg-forge-orchestrator/.claude-plugin/plugin.json")).version,
+      // Required since the pin PR: both marketplace entries serve this release.
+      "marketplace.json nxtg-forge": rd(join(REPO, ".claude-plugin/marketplace.json")).plugins.find((p) => p.name === "nxtg-forge")?.version,
+      "marketplace.json nxtg-forge-orchestrator": rd(join(REPO, ".claude-plugin/marketplace.json")).plugins.find((p) => p.name === "nxtg-forge-orchestrator")?.version,
       "governance-mcp/package.json": rd(join(import.meta.dirname, "../package.json")).version,
       "package-lock.json": rd(join(import.meta.dirname, "../package-lock.json")).version,
       "mcp handshake (serverVersion)": serverVersion,
@@ -34,6 +37,16 @@ describe("version-surface agreement", () => {
       expect(p.source.ref, p.name).toMatch(/^v\d+\.\d+\.\d+$/);
       expect(`v${p.version}`, p.name).toBe(p.source.ref);
     }
+  });
+
+  // The two plugins never pin different releases: one tag, one commit, the same repo.
+  it("marketplace.json lists nxtg-forge-orchestrator, pinned to the same ref and sha as nxtg-forge", () => {
+    const plugins = rd(join(REPO, ".claude-plugin/marketplace.json")).plugins;
+    const forge = plugins.find((p) => p.name === "nxtg-forge");
+    const comp = plugins.find((p) => p.name === "nxtg-forge-orchestrator");
+    expect(comp, "companion entry").toBeDefined();
+    expect(comp.source).toEqual({ ...forge.source, path: "plugins/nxtg-forge-orchestrator" });
+    expect(forge.source.sha).toMatch(/^[0-9a-f]{40}$/);
   });
 
   it("negative control: checkVersionsAgree fails on a seeded mismatch", () => {
