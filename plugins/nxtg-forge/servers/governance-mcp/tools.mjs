@@ -10,7 +10,8 @@
 
 import { execSync, spawn } from "child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 // `open` is imported where it is used (generateDashboard), so the scoring functions load
 // without node_modules: /nxtg-forge:status imports getHealthScore from its `!` step.
@@ -55,7 +56,9 @@ export function readJson(filePath) {
  * Falls back to "unknown" if package.json is missing or unreadable.
  * @type {string}
  */
-export const serverVersion = readJson(join(import.meta.dirname, "package.json"))?.version ?? "unknown";
+// fileURLToPath, not the dirname property of import.meta: start.sh accepts any Node 20, and that property
+// needs Node 20.11 (Opus seat 2 reproduced a crash at load on 20.10).
+export const serverVersion = readJson(join(dirname(fileURLToPath(import.meta.url)), "package.json"))?.version ?? "unknown";
 
 // BUG-05: Build artifact directories to exclude from all find AND grep commands.
 const EXCLUDED_DIRS = [
@@ -1118,7 +1121,9 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
   // Attempt auto-open with the platform's own opener (no npm package: the server has no runtime
   // dependencies). In WSL2 tmux sessions xdg-open is often missing or has no DISPLAY, so try two
   // fallbacks before giving up.
-  let opened = await openWithSystem(isWSL ? browserUrl : tmpPath);
+  // On WSL go straight to the Windows fallbacks below: xdg-open there can start and exit 0 without
+  // opening anything, which would skip them and the paste-this-URL hint.
+  let opened = isWSL ? false : await openWithSystem(tmpPath);
 
   if (!opened && isWSL) {
     // Fallback 1: powershell.exe Start (works in tmux, no DISPLAY needed)

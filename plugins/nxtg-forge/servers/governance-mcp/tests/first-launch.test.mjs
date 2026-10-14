@@ -25,7 +25,9 @@ const REPO = resolve(HERE, '..', '..', '..', '..', '..');
 const FIXTURE = join(HERE, 'fixtures', 'launcher-v3.13.0');
 // Under the 1500 ms measured to still connect, with headroom for a slow CI runner.
 const WINDOW_MS = 1000;
-const GOVERNANCE_TOOLS = TOOLS.map((t) => t.name);
+// Written out, not read from TOOLS, so a server that drops a tool cannot pass by shrinking its own list.
+const GOVERNANCE_TOOLS = ['forge_get_governance_health', 'forge_get_governance_state', 'forge_get_git_status', 'forge_get_code_metrics',
+  'forge_run_tests', 'forge_list_checkpoints', 'forge_security_scan', 'forge_open_dashboard'];
 
 let root, registry, registryUrl;
 const held = [];
@@ -110,6 +112,7 @@ describe('governance-mcp first launch after a fresh install (cold npm cache, slo
     const r = await firstLaunch(plugin, 5000);
     expect(connectedInWindow(r), describeRun(r)).toBe(true);
     expect(r.tools).toEqual(GOVERNANCE_TOOLS);
+    expect(TOOLS.map((t) => t.name)).toEqual(GOVERNANCE_TOOLS);
     expect(r.nodeModules, 'the launcher must not install packages').toBe(false);
     expect(r.stderr).not.toMatch(/Installing dependencies/);
   }, 15000);
@@ -120,8 +123,14 @@ describe('governance-mcp first launch after a fresh install (cold npm cache, slo
     const r = await firstLaunch(plugin, WINDOW_MS + 1500);
     expect(connectedInWindow(r), describeRun(r)).toBe(false);
     expect(r.tools, describeRun(r)).toEqual([]);
+    // Red for the reason under test: it was still in its first-run npm install, not failing some other way.
+    expect(r.stderr, describeRun(r)).toMatch(/Installing dependencies/);
   }, 15000);
 
+  it('the server needs no Node API newer than 20.0 at load (start.sh accepts any Node 20; Opus seat 2)', async () => {
+    const fs = await import('node:fs');
+    for (const f of ['index.mjs', 'tools.mjs']) expect(fs.readFileSync(join(HERE, '..', f), 'utf8'), f).not.toMatch(/import\.meta\.(dirname|filename)/);
+  });
   it('the server has no runtime dependencies and start.sh never runs npm', async () => {
     const pkg = JSON.parse((await import('node:fs')).readFileSync(join(HERE, '..', 'package.json'), 'utf8'));
     expect(pkg.dependencies ?? {}).toEqual({});

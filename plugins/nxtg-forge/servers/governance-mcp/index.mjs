@@ -133,7 +133,8 @@ export async function dispatchToolCall(name) {
 // MCP over stdio: newline-delimited JSON-RPC 2.0, the subset a tools-only server needs
 // ---------------------------------------------------------------------------
 
-/** Protocol versions this server speaks: the MCP SDK 1.29 list (tools-only, identical across them). */
+/** Protocol versions this server speaks: the MCP SDK's SUPPORTED_PROTOCOL_VERSIONS (tools-only, identical across
+ * them). tests/mcp-conformance.test.mjs fails when the SDK devDependency adds one, so this list is updated with it. */
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
 const SERVER_INFO = { name: "forge-governance", version: serverVersion };
 
@@ -213,5 +214,7 @@ export function serve(input = process.stdin, output = process.stdout) {
 
 // Start (FORGE_TEST_MODE guard enables vitest to import without blocking on stdio)
 if (!process.env.FORGE_TEST_MODE) {
-  serve().then(() => process.exit(0));
+  // Exit only after every reply has been flushed: a write callback runs after the writes queued before it,
+  // so a large reply is not cut off when the client closes stdin right after its last request.
+  serve().then(() => process.stdout.write("", () => process.exit(0)));
 }

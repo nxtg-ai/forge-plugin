@@ -111,11 +111,21 @@ describe('governance-mcp raw protocol', () => {
     for (const f of r.frames) expect(JSON.parse(f), f.slice(0, 80)).toMatchObject({ jsonrpc: '2.0' });
     expect(r.replies.map((m) => m.id).sort((a, b) => a - b)).toEqual([1, 10, 11, 12, 13, 14, 15]);
   }, 30000);
+  it('every reply is flushed before exit when stdin closes right after the last request (Opus seat 1, MEDIUM)', async () => {
+    // 3000 tools/list replies are about 7 MB, far past one pipe buffer; process.exit() on stdin end used to cut them.
+    const n = 3000;
+    const r = await raw(Array.from({ length: n }, (_, i) => ({ jsonrpc: '2.0', id: i + 1, method: 'tools/list' })));
+    expect(r.code).toBe(0);
+    expect(r.replies).toHaveLength(n);
+    expect(r.replies.every((m) => m.result?.tools?.length === 8)).toBe(true);
+  }, 60000);
   it('no code path writes to stdout except the protocol loop (console.log / process.stdout)', () => {
     for (const f of ['index.mjs', 'tools.mjs']) {
       const src = readFileSync(join(SERVER_DIR, f), 'utf8');
       expect(src.match(/console\.log\(/g), f).toBeNull();
-      expect((src.match(/process\.stdout/g) ?? []).length, f).toBe(f === 'index.mjs' ? 1 : 0);
+      // index.mjs: serve()'s default output, and the empty write that flushes replies before exit.
+      expect((src.match(/process\.stdout/g) ?? []).length, f).toBe(f === 'index.mjs' ? 2 : 0);
+      if (f === 'index.mjs') expect(src).toMatch(/process\.stdout\.write\("", \(\) => process\.exit\(0\)\)/);
     }
   });
 });
