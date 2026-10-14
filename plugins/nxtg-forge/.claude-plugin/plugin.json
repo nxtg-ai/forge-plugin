@@ -3,7 +3,7 @@
   "name": "nxtg-forge",
   "displayName": "NXTG Forge",
   "version": "3.12.1",
-  "description": "Governance-native AI development \u2014 33 agents, 24 commands, 27 skills, 26 hooks (4 blocking security guards, an opt-in enforced-task test guard and Stop gate, and Semgrep scanning), drift detection (needs a configured model), an optional CRUCIBLE test-review prompt, and shared memory for Claude Code (public preview)",
+  "description": "Governance-native AI development \u2014 33 agents, 24 commands, 27 skills, 27 hooks (4 blocking security guards, an opt-in enforced-task test guard and Stop gate, a Stop check on required command output, and Semgrep scanning), drift detection (needs a configured model), an optional CRUCIBLE test-review prompt, and shared memory for Claude Code (public preview)",
   "defaultEnabled": true,
   "author": {
     "name": "NXTG AI",

@@ -53,6 +53,7 @@ Either init sets a project up. `/nxtg-forge:init` writes `.claude/governance.jso
 | Knowledge skills | 27 | Architecture, coding standards, OWASP security, testing strategy, git workflow |
 | Security hooks | 4 | PreToolUse guards: block dangerous commands, secrets access, code injection, SQL injection |
 | Task enforcement hook | 1 | Opt-in: refuses edits to existing tests and blocks "done" until the project's own tests pass, unchanged ([details](#enforced-tasks)) |
+| Required-output gate | 1 | A Stop check: `/nxtg-forge:status` and `/nxtg-forge:gap-analysis` cannot end until their reply holds every line the command computed, and `/nxtg-forge:feature` until its orchestrator task is claimed and completed (or it says why not). Enforced by a check, not by the prompt |
 | Governance hooks | 8 | Pre/post-task validation, quality checks, file placement, Semgrep auto-scan |
 | MCP governance tools | 8 | Health scoring, git status, code metrics, security scanning |
 
