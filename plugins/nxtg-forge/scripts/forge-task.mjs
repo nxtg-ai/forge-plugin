@@ -7,10 +7,13 @@
 //                        tests unchanged, or a conflict report that checks out against the files exists.
 //   auto   (UserPromptSubmit) begins a task when FORGE_ENFORCE or .claude/forge-enforce.json asks for one.
 // Task state lives outside the project (FORGE_TASK_STATE_DIR, default ~/.local/state/nxtg-forge/tasks), so a
-// project-level edit cannot change it. The guard also refuses Bash commands that name the state or the
-// mode/abort/begin subcommands; only the user ends or relaxes a task (/nxtg-forge:task).
-// What the gate does NOT verify: that the tests cover the new behaviour. It checks that the project's own
-// test command passes, unchanged, against unchanged tests.
+// project-level edit cannot change it. The guard refuses edit-tool writes to the state, and Bash commands that
+// name the state directory or the mode/abort/begin subcommands IN PLAIN TEXT; a glob, a variable or a script
+// is not caught (the user's filesystem has no integrity boundary; see the PR's gap list).
+// What the gate does NOT verify: that the tests cover the new behaviour, or the installed runtime (node_modules,
+// site-packages, PATH). It checks that the project's own test command passes, unchanged, against unchanged
+// tests, that no new file shadows a stdlib or test-runner module, and that a conflict report's spec predates
+// the task (read from the base commit).
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
@@ -182,6 +185,7 @@ export function begin(cwd, opts = {}) {
     globs: allGlobs,
     configGlobs,
     manifest: testManifest(root, allGlobs),
+    files: listFiles(root),
     commandSources: commandSources(root, testCommand),
     verdict: null,
     history: [],
@@ -189,7 +193,7 @@ export function begin(cwd, opts = {}) {
   // An automatic re-begin after an "unearned" task on the same commit keeps that task's baseline, so tests
   // weakened during the unearned task do not become the next task's truth.
   if (opts.carryUnearned && prev?.verdict === 'unearned' && prev.baseCommit && prev.baseCommit === st.baseCommit) {
-    Object.assign(st, { manifest: prev.manifest, commandSources: prev.commandSources, globs: prev.globs, configGlobs: prev.configGlobs, testCommand: prev.testCommand });
+    Object.assign(st, { manifest: prev.manifest, files: prev.files ?? st.files, commandSources: prev.commandSources, globs: prev.globs, configGlobs: prev.configGlobs, testCommand: prev.testCommand });
     st.history.push({ at: st.startedAt, event: `baseline carried from the unearned task of ${prev.startedAt}` });
   }
   saveState(st);
@@ -290,6 +294,19 @@ function lineAt(root, rel, n) {
   if (!Number.isInteger(n) || n < 1 || n > lines.length) return { err: `${rel} has no line ${n} (it has ${lines.length})` };
   return { text: lines[n - 1], rel: relative(root, abs).split(sep).join('/') };
 }
+// The spec side is read from the task's base commit, never from the working tree: a spec the agent wrote
+// during the task (untracked, or edited) cannot back a conflict report.
+function specLineAtBase(st, rel, n) {
+  const abs = resolve(st.root, String(rel || ''));
+  if (!abs.startsWith(st.root + sep)) return { err: `file ${rel} is outside the project` };
+  const r = relative(st.root, abs).split(sep).join('/');
+  if (!st.baseCommit) return { err: `this project had no git commit when the task began, so a spec file cannot be checked; cite the spec from the task instead ("spec":{"source":"task","text":"..."})` };
+  const g = spawnSync('git', ['-C', st.root, 'show', `${st.baseCommit}:${r}`], { encoding: 'utf8', maxBuffer: 1 << 26 });
+  if (g.status !== 0) return { err: `${r} did not exist at the task's base commit ${st.baseCommit.slice(0, 12)}; a spec must predate the task` };
+  const lines = g.stdout.split(/\r?\n/);
+  if (!Number.isInteger(n) || n < 1 || n > lines.length) return { err: `${r} has no line ${n} at the base commit (it has ${lines.length})` };
+  return { text: lines[n - 1], rel: r };
+}
 // Returns { valid, errors, count }.
 export function validateReport(st, transcriptPath) {
   const root = st.root;
@@ -318,11 +335,11 @@ export function validateReport(st, transcriptPath) {
       if (norm(s.text).length < 12) errors.push(`${at}.spec.text must quote at least 12 characters of the task`);
       else if (!users.some((u) => u.includes(norm(s.text)))) errors.push(`${at}.spec.text is not in any user message of this session`);
     } else {
-      const sl = lineAt(root, s.file, s.line);
+      const sl = specLineAtBase(st, s.file, s.line);
       if (sl.err) errors.push(`${at}.spec: ${sl.err}`);
       else {
         if (matchGlob(sl.rel, st.globs)) errors.push(`${at}.spec: ${sl.rel} is a test file; cite the spec, not a test`);
-        if (norm(s.text).length < 3 || !norm(sl.text).includes(norm(s.text))) errors.push(`${at}.spec.text is not on ${sl.rel}:${s.line}`);
+        if (norm(s.text).length < 3 || !norm(sl.text).includes(norm(s.text))) errors.push(`${at}.spec.text is not on ${sl.rel}:${s.line} (as of the base commit)`);
       }
     }
     if (norm(c?.why).length < 20) errors.push(`${at}.why must explain the conflict (20+ characters)`);
@@ -331,9 +348,41 @@ export function validateReport(st, transcriptPath) {
 }
 
 // ── gate (Stop) ──────────────────────────────────────────────────────────────
+// Module names a new file must not take: the Python standard library (which includes unittest) and common
+// test runners. A new `unittest/__init__.py` at the root would otherwise make `python3 -m unittest` run it.
+const RUNNER_MODULES = ['pytest', '_pytest', 'pluggy', 'nose', 'nose2', 'sitecustomize', 'usercustomize'];
+const STDLIB_FALLBACK = ['unittest', 'doctest', 'test', 'site', 'os', 'sys', 'io', 'json', 're', 'importlib', 'runpy', 'pkgutil', 'inspect', 'traceback', 'functools', 'typing', 'collections', 'contextlib', 'argparse', 'logging', 'pathlib', 'subprocess', 'math', 'random', 'time', 'datetime'];
+let shadowNames = null;
+function moduleNames() {
+  if (shadowNames) return shadowNames;
+  const r = spawnSync('python3', ['-I', '-c', "import sys;print('\\n'.join(sorted(sys.stdlib_module_names)))"], { encoding: 'utf8' });
+  const std = r.status === 0 ? r.stdout.split('\n').filter(Boolean) : STDLIB_FALLBACK;
+  shadowNames = new Set([...std, ...RUNNER_MODULES]);
+  return shadowNames;
+}
+// A file new since begin that would import as a top-level module named like the stdlib or a test runner:
+// `<dir>/<name>.py` or `<dir>/<name>/__init__.py` where <dir> is not itself a package.
+export function shadowingFiles(st) {
+  if (!Array.isArray(st.files)) return [];
+  const before = new Set(st.files);
+  const names = moduleNames();
+  const out = [];
+  for (const f of listFiles(st.root)) {
+    if (before.has(f) || !f.endsWith('.py')) continue;
+    const parts = f.split('/');
+    const pkgInit = parts.at(-1) === '__init__.py';
+    const name = pkgInit ? parts.at(-2) : parts.at(-1).slice(0, -3);
+    const parent = parts.slice(0, pkgInit ? -2 : -1).join('/');
+    if (!name || !names.has(name)) continue;
+    if (parent && existsSync(join(st.root, parent, '__init__.py'))) continue; // inside a package: no shadowing
+    out.push(`${f}: new file shadows the "${name}" module the tests or the runner import`);
+  }
+  return out;
+}
 export function violations(st) {
-  if (st.mode === 'tests') return [];
-  const v = [];
+  const shadows = shadowingFiles(st);
+  if (st.mode === 'tests') return shadows;
+  const v = [...shadows];
   const now = testManifest(st.root, st.globs);
   for (const [rel, h] of Object.entries(st.manifest)) {
     if (!(rel in now)) v.push(`${rel}: deleted`);
@@ -387,7 +436,7 @@ export function gate(input) {
   saveState(st);
   const parts = [`FORGE TASK GATE (block ${st.blocks} of ${st.maxBlocks}): this task is not done.`];
   if (v.length) {
-    parts.push('Test files or the test command changed since the task began. Restore them; the gate does not run the tests until you do:');
+    parts.push('Test files, the test command, or the modules it runs changed since the task began. Restore or remove them; the gate does not run the tests until you do:');
     parts.push(...v.map((x) => `  - ${x}`));
     if (st.baseCommit) parts.push(`  Restore tracked files with: git checkout ${st.baseCommit} -- <file>`);
   } else {

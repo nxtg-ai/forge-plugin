@@ -1,6 +1,6 @@
 // Enforced task (DIRECTIVE-NXTG-20261013-16 A): a test-file write guard, a conflict report, and a Stop gate on
 // the project's own test command. Every case here is synthetic and written for this file (pre-registered in
-// the PR, cases C1-C14). None comes from, or was shaped by, any benchmark.
+// the PR, cases C1-C15). None comes from, or was shaped by, any benchmark.
 //
 // The hooks run as Claude Code runs them: `bash task-enforce.sh <guard|gate|auto>`, hook input JSON on stdin,
 // in a real git project. Each mechanism's checks are a function of the plugin directory, so the same checks
@@ -88,7 +88,7 @@ function guardChecks(plugin) {
 function reportChecks(plugin) {
   const root = project(calc(5));
   const h = hooks(plugin, root);
-  expect(h.begin().status).toBe(0);
+  expect(h.begin('--max-blocks', '20').status).toBe(0);
   write(root, 'calc.py', SUM);
   const bogus = [
     { ...C1_REPORT, test: { ...C1_REPORT.test, line: 99 } }, // no such line
@@ -96,8 +96,12 @@ function reportChecks(plugin) {
     { ...C1_REPORT, spec: { file: 'SPEC.md', line: 2, text: 'returns the product' } }, // not in the spec
     { ...C1_REPORT, spec: { file: 'tests/test_calc.py', line: 7, text: 'assertEqual' } }, // a test cited as spec
     { ...C1_REPORT, why: 'conflict' }, // no explanation
+    { ...C1_REPORT, spec: { file: 'SPEC2.md', line: 1, text: 'add returns its first argument plus three' } }, // written during the task
+    { ...C1_REPORT, spec: { file: 'SPEC.md', line: 2, text: 'returns the sum plus one' } }, // SPEC.md edited during the task
   ];
+  write(root, 'SPEC2.md', 'add returns its first argument plus three\n');
   for (const c of bogus) {
+    if (c.spec.text === 'returns the sum plus one') write(root, 'SPEC.md', '# Calc\nadd(a, b) returns the sum plus one of a and b.\n');
     report(root, [c]);
     const g = h.gate();
     expect(g.blocked, JSON.stringify(c)).toBe(true);
@@ -121,8 +125,17 @@ function gateChecks(plugin) {
   const g2 = ha.gate();
   expect(g2.blocked).toBe(true);
   expect(g2.reason).toContain('tests/test_calc.py: modified');
-  // Restored: passes, and the task ends.
+  // C15: no test edited, but a new local `unittest` package replaces the runner and exits 0: blocked.
   git(a, 'checkout', '--', 'tests/test_calc.py');
+  write(a, 'calc.py', 'def add(a, b):\n    raise NotImplementedError\n');
+  write(a, 'unittest/__init__.py', 'import sys\nsys.exit(0)\n');
+  write(a, 'unittest/__main__.py', 'import sys\nsys.exit(0)\n');
+  const g25 = ha.gate();
+  expect(g25.blocked).toBe(true);
+  expect(g25.reason).toContain('unittest/__init__.py: new file shadows the "unittest" module');
+  rmSync(join(a, 'unittest'), { recursive: true, force: true });
+  write(a, 'calc.py', SUM);
+  // Restored: passes, and the task ends.
   const g3 = ha.gate();
   expect(g3.blocked).toBe(false);
   expect(g3.reason).toContain('Task ended: passed');
@@ -130,7 +143,7 @@ function gateChecks(plugin) {
 }
 
 // ── shipped behaviour ────────────────────────────────────────────────────────
-describe('enforced task: shipped behaviour (cases C1-C14)', () => {
+describe('enforced task: shipped behaviour (cases C1-C15)', () => {
   it('C1 guard: an existing test file and new test-runner config are refused; source and new tests are not', () => guardChecks(PLUGIN));
 
   it('C1 conflict report: a report whose every line checks out ends the task as "conflict"', () => {
@@ -298,6 +311,16 @@ function mutant(name, file, from, to) {
 const ENGINE = 'scripts/forge-task.mjs';
 
 describe('enforced task: mutants turn the checks red', () => {
+  it('report mutant (spec read from the working tree, not the base commit) fails the report checks', () => {
+    const m = mutant('spec-at-base', ENGINE, 'const sl = specLineAtBase(st, s.file, s.line);', 'const sl = lineAt(root, s.file, s.line);');
+    expect(() => reportChecks(m)).toThrow(/SPEC2\.md|returns the sum plus one/);
+  });
+
+  it('gate mutant (module-shadow check removed) fails the gate checks', () => {
+    const m = mutant('shadow', ENGINE, 'const shadows = shadowingFiles(st);', 'const shadows = [];');
+    expect(() => gateChecks(m)).toThrow();
+  });
+
   it('guard mutant (refusal removed) fails the guard checks', () => {
     const m = mutant('guard', ENGINE, 'if (!existed && !isConfig) return null;', 'return null;');
     expect(() => guardChecks(m)).toThrow();
@@ -314,7 +337,7 @@ describe('enforced task: mutants turn the checks red', () => {
   });
 
   it('gate mutant (baseline comparison removed) fails the gate checks', () => {
-    const m = mutant('gate-baseline', ENGINE, "if (st.mode === 'tests') return [];\n  const v = [];", 'return [];\n  const v = [];');
+    const m = mutant('gate-baseline', ENGINE, 'for (const [rel, h] of Object.entries(st.manifest)) {', 'for (const [rel, h] of Object.entries({})) {');
     expect(() => gateChecks(m)).toThrow();
   });
 

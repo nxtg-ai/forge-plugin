@@ -97,7 +97,7 @@ While a task is active:
 - **Conflict report.** A test can contradict the spec. The agent then writes `.claude/forge-conflict-report.json`, citing the spec line, the test line and why they conflict. The gate checks every cited line against the files before it accepts the report. Then a person decides.
 - **Bounded.** After 5 blocked stops (configurable), the task ends as **unearned**. It is not recorded as done.
 
-Set `FORGE_ENFORCE=implement`, or create `.claude/forge-enforce.json`, to begin a task automatically on every prompt. The task state is stored outside the project, and only the user can end or relax a task. The gate does **not** check that the tests cover the new behaviour; it checks that they pass without being weakened. Details: [`commands/task.md`](plugins/nxtg-forge/commands/task.md).
+Set `FORGE_ENFORCE=implement`, or create `.claude/forge-enforce.json`, to begin a task automatically on every prompt. The task state is stored outside the project. The guard refuses edit-tool writes to it, and Bash commands that name its directory or the engine's begin, mode or abort subcommands in plain text. A glob, a variable or a script that reaches the state is **not** caught: your own filesystem has no integrity boundary against code you let the agent run. Likewise, the gate runs your test command in the working tree, so a change to the installed runtime (`node_modules`, site-packages, PATH) is not caught. A new file that shadows a Python standard-library or test-runner module is caught. The gate does **not** check that the tests cover the new behaviour; it checks that they pass without being weakened. Details: [`commands/task.md`](plugins/nxtg-forge/commands/task.md).
 
 ## Upgrade Path
 

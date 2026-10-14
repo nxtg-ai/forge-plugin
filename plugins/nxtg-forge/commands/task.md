@@ -11,7 +11,7 @@ The user ran this command, and the step below has already run. Its output is the
 
 !`node "${CLAUDE_PLUGIN_ROOT}/scripts/forge-task.mjs" cli $ARGUMENTS`
 
-Report that output to the user in one or two lines. Do not run `forge-task.mjs` yourself: while a task is active only the user begins, relaxes or ends it, and the guard refuses the attempt.
+Report that output to the user in one or two lines. Do not run `forge-task.mjs` yourself: while a task is active only the user begins, relaxes or ends it. The guard refuses a Bash command that names the engine's begin, mode or abort subcommands, or the task-state directory, in plain text. It is a text check, so it does not stop a glob, a variable or a script that reaches the state.
 
 ## What an enforced task does
 
