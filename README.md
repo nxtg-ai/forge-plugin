@@ -48,10 +48,11 @@ Either init sets a project up. `/nxtg-forge:init` writes `.claude/governance.jso
 
 | Component | Count | What It Does |
 |-----------|-------|-------------|
-| Slash commands | 23 | Project health, gap analysis, feature planning, checkpoints, deployment, testing |
+| Slash commands | 24 | Project health, gap analysis, feature planning, checkpoints, deployment, testing |
 | Specialized agents | 33 | Builder, guardian, planner, detective, security, testing, refactor, docs, and more |
 | Knowledge skills | 27 | Architecture, coding standards, OWASP security, testing strategy, git workflow |
 | Security hooks | 4 | PreToolUse guards: block dangerous commands, secrets access, code injection, SQL injection |
+| Task enforcement hook | 1 | Opt-in: refuses edits to existing tests and blocks "done" until the project's own tests pass, unchanged ([details](#enforced-tasks)) |
 | Governance hooks | 8 | Pre/post-task validation, quality checks, file placement, Semgrep auto-scan |
 | MCP governance tools | 8 | Health scoring, git status, code metrics, security scanning |
 
@@ -77,6 +78,26 @@ The plugin installs as agent definitions, command templates, skill documents, an
 Governance hooks run automatically. Before every task, pre-task hooks validate that the work aligns with project constraints. After every task, post-task hooks check output quality. Governance becomes a background process, not a checklist item.
 
 8 MCP governance tools expose health scoring, code metrics, and security scanning through the Model Context Protocol. Any tool in your workflow that speaks MCP can query NXTG-Forge's governance state.
+
+## Enforced Tasks
+
+A review prompt cannot stop an agent from finishing early or from weakening a test to get green. An enforced task stops both, with hooks rather than instructions. The model cannot talk its way past it.
+
+```
+/nxtg-forge:task begin          → record the test files and the test command, then enforce
+/nxtg-forge:task status         → mode, test command, blocked stops, verdict
+/nxtg-forge:task tests          → the task is to write tests: let the agent change them
+/nxtg-forge:task abort          → end without a check
+```
+
+While a task is active:
+
+- **Write guard.** An edit to a test file that existed when the task began is refused, and so is an edit to test-runner config such as `conftest.py`, `pytest.ini` or `jest.config.*`. The refusal names the file and the reason. New test files are allowed.
+- **Stop gate.** "Done" is blocked until the project's own test command passes, with the tests and the command unchanged. The gate catches changes made through Bash too, because it compares against the recorded baseline.
+- **Conflict report.** A test can contradict the spec. The agent then writes `.claude/forge-conflict-report.json`, citing the spec line, the test line and why they conflict. The gate checks every cited line against the files before it accepts the report. Then a person decides.
+- **Bounded.** After 5 blocked stops (configurable), the task ends as **unearned**. It is not recorded as done.
+
+Set `FORGE_ENFORCE=implement`, or create `.claude/forge-enforce.json`, to begin a task automatically on every prompt. The task state is stored outside the project. The guard refuses edit-tool writes to it, and Bash commands that name its directory or the engine's begin, mode or abort subcommands in plain text. A glob, a variable or a script that reaches the state is **not** caught: your own filesystem has no integrity boundary against code you let the agent run. Likewise, the gate runs your test command in the working tree, so a change to the installed runtime (`node_modules`, site-packages, PATH) is not caught. A new file that shadows a Python standard-library or test-runner module is caught. The gate does **not** check that the tests cover the new behaviour; it checks that they pass without being weakened. Details: [`commands/task.md`](plugins/nxtg-forge/commands/task.md).
 
 ## Upgrade Path
 

@@ -111,6 +111,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/task-enforce.sh guard",
+            "timeout": 15
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -120,6 +130,15 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/pre-task.sh",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/task-enforce.sh auto",
+            "timeout": 60
           }
         ]
       }
@@ -158,6 +177,15 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/smoke-test-reminder.sh",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/task-enforce.sh gate",
+            "timeout": 600
           }
         ]
       }
