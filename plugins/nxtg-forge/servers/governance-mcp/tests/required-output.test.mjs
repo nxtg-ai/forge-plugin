@@ -69,7 +69,7 @@ function transcript({ command, args = '', body = '', texts = [], tools = [], fee
 }
 const evalWith = (g, t, extra = {}) => g.evaluate({ rows: t, promptId: PID, ...extra });
 const unwrap = (block) => block.split('\n').filter((l) => !l.startsWith('<!--')).join('\n');
-const statusBody = (block) => `# Forge Status\n\norchestrator=not_initialized\n${block}\n\nStart your reply with that block`;
+const statusBody = (block) => `# Forge Status\n\n${block}\norchestrator=not_initialized\n\nStart your reply with that block`;
 const gapBody = (block) => `# NXTG-Forge Gap Analysis\n\n${block}\n\nStart your reply with that block`;
 
 // Sections of the status report and of the gap block: [name, the lines that make it, a wrong version].
@@ -101,7 +101,7 @@ describe('status: the report is computed by code', () => {
     expect(status.stageLine()).toBe(STAGE);
   });
 
-  it('end to end on a git project: the script prints orchestrator= and a complete block, no stack trace', () => {
+  it('end to end on a git project: the script prints a complete block, then orchestrator= and json=, no stack trace', () => {
     execFileSync('git', ['init', '-q', tmp]);
     writeFileSync(join(tmp, 'pyproject.toml'), '[project]\nname = "demo"\nversion = "1.2.3"\n');
     writeFileSync(join(tmp, 'demo.py'), 'def f():\n    return 1\n');
@@ -111,16 +111,34 @@ describe('status: the report is computed by code', () => {
     writeFileSync(stand, `exec bash ${JSON.stringify(join(PLUGIN, 'servers', 'lib', 'unavailable-mcp.sh'))} orchestrator-mcp "not installed"\n`);
     const r = spawnSync('node', [join(SCRIPTS, 'status-report.mjs'), '--project', tmp], { encoding: 'utf8', env: { ...process.env, FORGE_ORCHESTRATOR_LAUNCHER: stand, FORGE_ORCHESTRATOR_TIMEOUT_MS: '3000', FORGE_STATUS_STATE_DIR: join(tmp, 'state') }, timeout: 30000 });
     expect(r.status).toBe(0);
-    expect(r.stdout.split('\n')[0]).toBe('orchestrator=not_installed');
+    expect(r.stdout.split('\n')[0]).toBe(status.BEGIN);
     expect(r.stdout).toContain('**demo** v1.2.3 on `');
     expect(r.stdout).toMatch(/\| `[0-9a-f]{7,}` \| first \\\| commit +\|/);
     expect(r.stdout).toMatch(/\| \*\*Overall\*\* +\| \*\*[A-F] \(\d+\/100\)\*\* +\| \[[#.]{20}\] \|/);
     expect(r.stdout).toMatch(/\| Runner +\| unittest +\|/);
     expect(r.stdout).toContain(status.FIRST_RUN);
     const lines = r.stdout.trim().split('\n');
-    expect(lines[lines.length - 2]).toBe(status.END);
+    expect(lines[lines.length - 3]).toBe(status.END);
+    expect(lines[lines.length - 2]).toBe('orchestrator=not_installed');
     expect(JSON.parse(lines[lines.length - 1].slice(5)).orchestrator).toBe('not_installed');
     expect(r.stdout + r.stderr).not.toMatch(/^\s+at .+:\d+:\d+\)?$/m);
+  });
+
+  it('the step output starts with the block; orchestrator= and json= come only after its end marker (DIRECTIVE-NXTG-20261014-04)', () => {
+    // Alpha outside re-run 2, C2 r1: the model began its reply with the step's first line, `orchestrator=not_installed`,
+    // because that line sat above the block it is told to print. The block now comes first, and the two machine
+    // lines follow its end marker, outside what the model reproduces.
+    execFileSync('git', ['init', '-q', tmp]);
+    const stand = join(tmp, 'standin.sh');
+    writeFileSync(stand, `exec bash ${JSON.stringify(join(PLUGIN, 'servers', 'lib', 'unavailable-mcp.sh'))} orchestrator-mcp "not installed"\n`);
+    const r = spawnSync('node', [join(SCRIPTS, 'status-report.mjs'), '--project', tmp], { encoding: 'utf8', env: { ...process.env, FORGE_ORCHESTRATOR_LAUNCHER: stand, FORGE_ORCHESTRATOR_TIMEOUT_MS: '3000', FORGE_STATUS_STATE_DIR: join(tmp, 'state') }, timeout: 30000 });
+    const lines = r.stdout.trimEnd().split('\n');
+    expect(lines[0]).toBe(status.BEGIN);
+    const end = lines.indexOf(status.END);
+    expect(lines.slice(0, end).some((l) => /^(orchestrator|json)=/.test(l))).toBe(false);
+    expect(lines.slice(end + 1)).toEqual(['orchestrator=not_installed', expect.stringMatching(/^json=\{/)]);
+    expect(status.FAILURE_OUTPUT.split('\n')[0]).toBe(status.BEGIN);
+    expect(status.FAILURE_OUTPUT.trimEnd().split('\n').slice(-2)).toEqual([status.END, 'orchestrator=unavailable']);
   });
 
   it('a directory that is not a git repo still gives a complete block', () => {
@@ -440,6 +458,7 @@ describe('Stop gate: /nxtg-forge:gap-analysis', () => {
 // orchestrator-mcp comes from the companion plugin since DIRECTIVE-NXTG-20261014-12; the gate matches the tool suffix.
 const TOOL = (n) => `mcp__plugin_nxtg-forge-orchestrator_orchestrator-mcp__${n}`;
 const HELPER = { name: 'Bash', input: { command: 'bash "/c/nxtg-forge/3.13.0/scripts/feature-task.sh" "Add usage example" "Adds one"' }, result: 'status=created\ntitle=Add usage example\nspec=.forge/feature-requests/F-001.md\ntask_id=T-001' };
+const CREATE = { name: TOOL('forge_create_task'), input: { title: 'Add usage example', description: 'Adds one' }, result: '{\n  "task_id": "T-001",\n  "title": "Add usage example",\n  "status": "pending",\n  "next": "forge_claim_task, then forge_complete_task"\n}' };
 const CLAIM = { name: TOOL('forge_claim_task'), input: { task_id: 'T-001', agent: 'claude' }, result: '{"status":"claimed"}' };
 const COMPLETE = { name: TOOL('forge_complete_task'), input: { task_id: 'T-001', agent: 'claude', result_summary: 'Added an example; tests pass.' }, result: '{"status":"completed"}' };
 const GET = { name: TOOL('forge_get_tasks'), input: {}, result: '[{"id":"T-001","status":"completed","completed_by":"claude"}]' };
@@ -487,6 +506,32 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
   it('a completed record with no forge_get_tasks after the complete: blocked', () => {
     expect(feat(gate, [HELPER, CLAIM, COMPLETE])).toMatch(/forge_get_tasks/);
     expect(feat(gate, [HELPER, CLAIM, GET, COMPLETE])).toMatch(/forge_get_tasks/);
+  });
+  // -11 part 3 (C7 as registered): the task is created through MCP, by forge_create_task (forge >= 1.7.0).
+  it('MCP create, then claimed and completed by claude, then get_tasks: allowed, with no helper call', () => {
+    expect(feat(gate, [CREATE, CLAIM, COMPLETE, GET])).toBeNull();
+  });
+  it('MCP create with no claim: blocked on the created id, not as "no task"', () => {
+    const r = feat(gate, [CREATE], [], ROW.pending);
+    expect(r).toMatch(/created T-001, and the orchestrator does not record it as claimed by claude/);
+    expect(r).not.toMatch(/neither an orchestrator task/);
+  });
+  it('the id comes from the create result, not from a claim of some other task', () => {
+    const other = { ...CLAIM, input: { task_id: 'T-009', agent: 'claude' } };
+    expect(feat(gate, [CREATE, other], [], ROW.pending)).toMatch(/created T-001/);
+  });
+  it('a forge_create_task that returned an error, or no task_id, created nothing: blocked as "no task" (forge-pm)', () => {
+    // The errored result still carries a task_id, so only the isError guard keeps it from counting (seat Low, pr90).
+    for (const bad of [{ ...CREATE, isError: true }, { ...CREATE, result: '{"status":"pending"}' }]) {
+      expect(feat(gate, [bad], [], null)).toMatch(/neither an orchestrator task nor a stated reason/);
+      expect(feat(gate, [bad, CLAIM, COMPLETE, GET], [], ROW.completed)).toMatch(/neither an orchestrator task/);
+    }
+    expect(feat(gate, [{ ...CREATE, isError: true }], ['No task created: forge is not initialized here'], null)).toBeNull();
+  });
+  it('the "no task" block names forge_create_task first and the helper only as the fallback', () => {
+    const r = feat(gate, [], [], null);
+    expect(r).toContain('`forge_create_task`');
+    expect(r.indexOf('forge_create_task')).toBeLessThan(r.indexOf('feature-task.sh'));
   });
   it('helper said no-forge-dir or no-forge, or there is no .forge/: not gated further', () => {
     expect(feat(gate, [{ ...HELPER, result: 'status=no-forge-dir' }], [], null)).toBeNull();
@@ -667,5 +712,12 @@ describe('commands run the computed steps', () => {
     expect(md).toContain('`No task created: <reason>`');
     expect(md).toContain('`Task <id> left claimed: <reason>`');
     expect(md).toContain('it also prints `task_id=`');
+  });
+  it('feature.md Step 4.2 creates the task with forge_create_task, and uses the helper only when that tool is not listed', () => {
+    const md = read('commands/feature.md');
+    const step = md.slice(md.indexOf('## Step 4.2'), md.indexOf('## Step 4.5'));
+    expect(step).toMatch(/1\. If `forge_create_task` is available, call it/);
+    expect(step.indexOf('forge_create_task')).toBeLessThan(step.indexOf('feature-task.sh'));
+    expect(step).toMatch(/only when `forge_create_task` is not available/);
   });
 });

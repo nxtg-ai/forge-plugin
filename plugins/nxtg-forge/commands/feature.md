@@ -9,7 +9,7 @@ argument-hint: "[feature name or description]"
 You are the **Feature Planner** - guide the user through designing and implementing a new feature with structured planning.
 
 **Checked at the end of the turn.** When this project has a `.forge/` directory, a Stop check reads this turn's tool calls and does not let the turn end until one of these holds:
-- the Step 4.2 helper created the task, you claimed it as `claude`, and you completed it as `claude` with a `result_summary` and then showed it with `forge_get_tasks` (Steps 4.2 and 7), or printed `Task <id> left claimed: <reason>` because the work did not finish;
+- Step 4.2 created the task (with `forge_create_task`, or the helper when that tool is not available), you claimed it as `claude`, and you completed it as `claude` with a `result_summary` and then showed it with `forge_get_tasks` (Steps 4.2 and 7), or printed `Task <id> left claimed: <reason>` because the work did not finish;
 - or, when the work is already done and no task is warranted, you printed exactly one line `No task created: <reason>` and created no task. Never create, claim or complete a task for work that is not needed.
 
 ## Parse Arguments
@@ -89,19 +89,20 @@ Every path that implements the feature goes through Step 4.2 first. Never go fro
 
 This step is required whenever the orchestrator tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`) are available in this session. Skip it only when they are not. Whether a governance.json exists never decides this. When this step is done, Proceed to Step 4.5.
 
-1. Run the helper from the project root, with the feature title (one line) and a one-paragraph description:
+1. If `forge_create_task` is available, call it with `title` set to the feature title (one line, at most 200 characters) and `description` set to a one-paragraph description. It creates exactly one pending task and returns its `task_id`. Call `forge_claim_task` with that `task_id` and agent `claude`, and remember the id for Step 7, and skip items 2 to 4. If it returns an error, or no `task_id`, it created nothing: show the error and use the helper (item 2) instead.
+2. Use the helper only when `forge_create_task` is not available (an orchestrator older than forge 1.7.0), or when it returned an error or no `task_id`. Run it from the project root, with the feature title (one line) and a one-paragraph description:
 
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "{feature title}" "{one-paragraph description}"
    ```
 
    It writes `.forge/feature-requests/F-NNN.md` with exactly one `## {feature title}` heading and runs `forge plan --generate --spec` on that file, which creates exactly one task. **Never run `forge plan --generate` without `--spec`**: it plans from the README's headings, and those tasks are not this feature.
-2. Read its `status=` line:
+3. Read the helper's `status=` line:
    - `status=created`: it also prints `task_id=` with the id of the task it created. Call `forge_claim_task` with that `task_id` and agent `claude`. If no `task_id=` was printed, call `forge_get_tasks` and take the task whose title is the printed `title=`, or contains it (the planner may title it "Review existing implementation of: {title}"); if several match, take the highest id that is still pending. Remember the id for Step 7.
    - `status=no-forge-dir` (exit 11): say once, "Run `forge init` in this project to track features as orchestrator tasks," and continue without a task.
    - `status=no-forge` (exit 10): continue without a task.
    - Any other exit: show its stderr, and continue without a task.
-3. Tell the user, once: the task may be typed `review` when a title word matches a source filename. If the helper printed `plan_backup=`, also say: "Your `.forge/plan.md` is kept; this feature's plan is appended below it, and a copy of the plan as it was is at {plan_backup}."
+4. If the helper created the task, tell the user, once: the task may be typed `review` when a title word matches a source filename. If the helper printed `plan_backup=`, also say: "Your `.forge/plan.md` is kept; this feature's plan is appended below it, and a copy of the plan as it was is at {plan_backup}."
 
 ## Step 4.5: Agent Team Execution
 

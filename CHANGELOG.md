@@ -19,9 +19,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 - The orchestrator tools' full names change from `mcp__plugin_nxtg-forge_orchestrator-mcp__*` to `mcp__plugin_nxtg-forge-orchestrator_orchestrator-mcp__*`. Nothing in the plugin names them in full: the commands use the short names, and the `/nxtg-forge:feature` Stop gate matches the suffix.
 - The session hook still tells Claude, once per session, that the orchestrator is optional and the one command that adds it. With `forge` absent: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`. With `forge` installed but the companion not: `claude plugin install nxtg-forge-orchestrator@nxtg-forge`. With both: nothing. The hook reads Claude Code's `installed_plugins.json`. It is printed even with `FORGE_QUIET_HOOKS=1`: it is one line of context Claude needs in every session, not progress output.
 
+### Hardening from the codex review of v3.13.1 (eb5499d), DIRECTIVE-NXTG-20261014-09
+
+### Fixed
+
+- **`tools/call` validates its params before any tool runs** (M1). v3.13.0 got this from the MCP SDK; v3.13.1's own loop checked only the tool name, so `"arguments": "invalid"` ran the project's tests and `forge_open_dashboard` wrote a dashboard file. `params` must be an object, `name` a string, and `arguments` an object or absent; anything else (a string, an array, `null`, a number) gets JSON-RPC error -32602 and no tool runs.
+- **A frame that is not JSON-RPC 2.0 is rejected** (L2). A message without `"jsonrpc": "2.0"` (missing, or `"1.0"`) gets -32600 Invalid Request and is never dispatched; v3.13.1 ran it.
+- **`forge_open_dashboard` honours `BROWSER` again** (M2). v3.13.1 replaced the `open` package, whose bundled `xdg-open` read `BROWSER`, with the system opener, so a Linux machine with `BROWSER` set and no `xdg-open` stopped opening the dashboard. The order is now: `BROWSER` (entries separated by `:`, `%s` replaced by the file path or the path appended, run without a shell), then the system opener (`xdg-open`, `open`, `start`; skipped on WSL), then on WSL PowerShell and `wslview`, then the path hint.
+
+### Changed
+
+- **`/nxtg-forge:feature` creates its orchestrator task through MCP** (DIRECTIVE-NXTG-20261014-11 part 3, C7 as registered). Step 4.2 calls `forge_create_task` (forge 1.7.0 and later) with the feature title and description, then claims the returned `task_id`. The `feature-task.sh` helper (`forge plan --generate --spec`) is used only when that tool is not available. If the tool returns an error or no `task_id`, Step 4.2 falls back to the helper. The feature Stop gate takes the task id from the `forge_create_task` result, counts an errored or id-less create as no task, and its "no task" message names the MCP tool first.
+- **`start.sh` starts Node once** (L1). It no longer runs a separate `node -p process.versions.node` before the server; `index.mjs` checks the version itself and, on a Node older than 20, hands stdin/stdout to the same no-tools stand-in, so the handshake still completes and nothing is cached as a failed start. Measured on this host, fresh `bash start.sh` to the initialize reply, n=15 each: unloaded p50 41.9 → 27.0 ms; with `taskset -c 0,1` and 8 busy processes on those cores, p50 235.8 → 120.8 ms. Real Node 18.20.8 gets the stand-in (exit 0, 0 tools); Node 20.10.0 gets all 8 tools.
+
+### Tests
+
+- New: malformed `arguments` (string, array, `null`, number) are rejected with no trace of `forge_run_tests` or `forge_open_dashboard` having run, with a valid call as the positive control; non-2.0 frames, in process and through `start.sh`; `BROWSER` parsing, order and fall-through, plus a real `BROWSER` program receiving the path; one Node start per launch on Node 20+ and the old-Node stand-in decided inside that one process.
+- vitest 326 → 344.
+
+---
+
 ## [3.13.1] — 2026-10-14
 
-Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools; no breaking changes.
+Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools. One compatibility change: `forge_open_dashboard` stopped using the `open` package and opens the file with the system opener (`xdg-open`, `open` or `start`), so on Linux without `xdg-open` it no longer opens a browser, and `BROWSER` is not honoured. (This line said "no breaking changes" until the codex review of eb5499d showed the opener change; `BROWSER` is honoured again in [Unreleased].)
 
 ### Fixed
 
