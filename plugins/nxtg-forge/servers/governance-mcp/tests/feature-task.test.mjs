@@ -31,10 +31,10 @@ afterEach(() => {
   for (const d of [root, home, stubDir]) rmSync(d, { recursive: true, force: true });
 });
 
-function run(args, { withStub = true, env = {}, input = 'y\n' } = {}) {
+function run(args, { withStub = true, env = {}, input = 'y\n', cwd = root, script = SCRIPT } = {}) {
   const PATH = withStub ? `${stubDir}:/usr/bin:/bin` : '/usr/bin:/bin';
-  const r = spawnSync('bash', [SCRIPT, ...args], {
-    cwd: root, input, encoding: 'utf8', timeout: 15000, env: { PATH, HOME: home, ...env },
+  const r = spawnSync('bash', [script, ...args], {
+    cwd, input, encoding: 'utf8', timeout: 15000, env: { PATH, HOME: home, ...env },
   });
   return { status: r.status, stdout: r.stdout, stderr: r.stderr, kv: Object.fromEntries(
     r.stdout.split('\n').filter((l) => l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)])) };
@@ -74,6 +74,39 @@ describe('feature-task.sh', () => {
     expect(r.kv.status).toBe('no-forge-dir');
     expect(calls()).toEqual([]);
     expect(existsSync(join(root, '.forge'))).toBe(false);
+  });
+
+  it('run from a subdirectory (the model ran `cd src`): it finds the .forge/ of the project and creates the task there', () => {
+    initForge();
+    mkdirSync(join(root, 'src', 'pkg'), { recursive: true });
+    const r = run(['From src', 'd'], { cwd: join(root, 'src', 'pkg') });
+    expect(r.status).toBe(0);
+    expect(r.kv).toMatchObject({ status: 'created', project: root, spec: '.forge/feature-requests/F-001.md' });
+    expect(calls()).toEqual([`plan --generate --spec .forge/feature-requests/F-001.md --project ${root}`]);
+    expect(existsSync(join(root, '.forge', 'feature-requests', 'F-001.md'))).toBe(true);
+    expect(existsSync(join(root, 'src', 'pkg', '.forge'))).toBe(false);
+  });
+
+  it('CLAUDE_PROJECT_DIR with a .forge/ wins over the shell cwd', () => {
+    initForge();
+    const elsewhere = mkdtempSync(join(tmpdir(), 'forge-feat-cwd-'));
+    try {
+      const r = run(['Via env', 'd'], { cwd: elsewhere, env: { CLAUDE_PROJECT_DIR: root } });
+      expect(r.kv).toMatchObject({ status: 'created', project: root });
+    } finally { rmSync(elsewhere, { recursive: true, force: true }); }
+  });
+
+  it('mutant: no walk up from the cwd turns the subdirectory check red', () => {
+    initForge();
+    mkdirSync(join(root, 'src'), { recursive: true });
+    const src = readFileSync(SCRIPT, 'utf8');
+    const from = '    d="$(dirname "$d")"\n';
+    expect(src.split(from).length - 1).toBe(1);
+    const m = join(PLUGIN, 'scripts', `.mutant-${process.pid}-feature-task.sh`);
+    writeFileSync(m, src.replace(from, '    return 1\n'));
+    try {
+      expect(run(['From src', 'd'], { cwd: join(root, 'src'), script: m }).kv.status).toBe('no-forge-dir');
+    } finally { rmSync(m, { force: true }); }
   });
 
   it('no forge installed: exit 10', () => {
