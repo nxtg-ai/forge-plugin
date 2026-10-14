@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # NXTG-Forge Governance MCP Server Launcher
-# Installs dependencies on first run, then starts the server.
 #
-# This server needs Node.js 20 or newer (and npm on first run). When either is missing, or the
-# first-run install fails, it starts a stand-in (../lib/unavailable-mcp.sh) that says what is
-# needed, instead of exiting: Claude Code caches a failed start for 15 minutes, which would
-# keep health scoring dark after the user installs Node.
+# This server needs Node.js 20 or newer and nothing else: it has no npm dependencies, so there is no
+# install step on first launch (DIRECTIVE-NXTG-20261014-01). Claude Code lists a plugin MCP server as
+# "pending", without its tools, if it has not answered within about 1.5-2 s of launch, and a first-run
+# `npm install` missed that window on a cold npm cache. When Node is missing or too old, this starts a
+# stand-in (../lib/unavailable-mcp.sh) that says what is needed, instead of exiting: Claude Code caches
+# a failed start for 15 minutes, which would keep health scoring dark after the user installs Node.
 
 set -euo pipefail
 
@@ -29,17 +30,6 @@ fi
 NODE_VERSION="$(node -p 'process.versions.node' 2>/dev/null || echo unknown)"
 if [[ ! "${NODE_VERSION%%.*}" =~ ^[0-9]+$ ]] || (( ${NODE_VERSION%%.*} < NODE_MIN )); then
   unavailable "Health scoring needs Node.js ${NODE_MIN} or newer; this machine has ${NODE_VERSION}. Upgrade from https://nodejs.org."
-fi
-
-if [[ ! -d node_modules ]]; then
-  if ! command -v npm >/dev/null 2>&1; then
-    unavailable "The first start installs this server's packages with npm, and npm was not found on the PATH. Install npm (it ships with Node.js from https://nodejs.org)."
-  fi
-  echo "[governance-mcp] Installing dependencies..." >&2
-  if ! npm install --silent --omit=dev >&2; then
-    rm -rf node_modules
-    unavailable "The first-run 'npm install' in $(pwd) failed (offline, or a registry or permission error). Run it there yourself to see the error."
-  fi
 fi
 
 if [[ ! -f index.mjs ]]; then

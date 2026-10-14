@@ -7,9 +7,8 @@ Claude Code plugin for AI-powered development governance. Pure markdown — no b
 ```bash
 # No build step. All content is markdown loaded by Claude Code.
 
-# MCP server (auto-installs deps on first run)
+# MCP server (no runtime dependencies; npm install is only for the tests)
 cd plugins/nxtg-forge/servers/governance-mcp
-npm install   # only if node_modules missing
 node index.mjs
 
 # Plugin lives at: plugins/nxtg-forge/
@@ -33,7 +32,7 @@ plugins/nxtg-forge/
     └── governance-mcp/       # Node.js MCP server (index.mjs, 8 tools)
         ├── package.json      # @nxtg-forge/governance-mcp v3.5.1
         ├── index.mjs         # 835 lines, ES module
-        └── start.sh          # Auto-install launcher
+        └── start.sh          # Launcher (Node check, no install)
 ```
 
 ## Components
