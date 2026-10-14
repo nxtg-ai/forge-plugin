@@ -1,0 +1,49 @@
+{
+  "_source": "Alpha run 4 C6, ASIF branch forge-pm/alpha-run4-receipt at a8f0d7af88, programs/forge/evidence/alpha-run4/out/C6-status.jsonl: the init row's orchestrator-mcp tools and the forge_get_state tool_result (is_error true). Replies under forge_1_6_3 were recorded from the published forge 1.6.3 over MCP stdio on 2026-10-13. The connected reply's tool paths were rewritten to /usr/local/bin; nothing else was changed.",
+  "run4": {
+    "orchestrator_tools": [
+      "forge_capture_knowledge",
+      "forge_check_drift",
+      "forge_claim_task",
+      "forge_complete_task",
+      "forge_get_events",
+      "forge_get_health",
+      "forge_get_knowledge",
+      "forge_get_plan",
+      "forge_get_state",
+      "forge_get_tasks",
+      "forge_set_project"
+    ],
+    "forge_get_state": {
+      "isError": true,
+      "text": "Forge is not initialized. Run `forge init` in this project first."
+    }
+  },
+  "forge_1_6_3": {
+    "not_initialized_reply": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "content": [
+          {
+            "text": "Forge is not initialized. Run `forge init` in this project first.",
+            "type": "text"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "connected_reply": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "content": [
+          {
+            "text": "{\n  \"version\": \"1.1.0\",\n  \"project_name\": \"b\",\n  \"created_at\": \"2026-10-14T01:04:29.471795109Z\",\n  \"updated_at\": \"2026-10-14T01:04:29.471795109Z\",\n  \"tools\": [\n    {\n      \"name\": \"claude\",\n      \"agent_type\": \"claude\",\n      \"version\": \"2.1.296 (Claude Code)\",\n      \"path\": \"/usr/local/bin/claude\",\n      \"available\": true\n    },\n    {\n      \"name\": \"codex\",\n      \"agent_type\": \"codex\",\n      \"version\": \"codex-cli 0.162.1\",\n      \"path\": \"/usr/local/bin/codex\",\n      \"available\": true\n    },\n    {\n      \"name\": \"agy\",\n      \"agent_type\": \"gemini\",\n      \"version\": \"1.1.11\",\n      \"path\": \"/usr/local/bin/agy\",\n      \"available\": true\n    }\n  ],\n  \"brain\": {\n    \"provider\": \"rule-based\",\n    \"model\": null\n  },\n  \"task_summary\": {\n    \"total\": 0,\n    \"pending\": 0,\n    \"in_progress\": 0,\n    \"completed\": 0,\n    \"failed\": 0,\n    \"blocked\": 0\n  },\n  \"active_locks\": {},\n  \"agent_auth\": {},\n  \"agent_permissions\": {},\n  \"git\": {\n    \"auto_commit\": true,\n    \"strategy\": \"single\"\n  },\n  \"scheduler\": {\n    \"rotation\": false,\n    \"pacing_min_secs\": 64,\n    \"pacing_max_secs\": 179\n  },\n  \"dashboard_mode\": \"piped\"\n}",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  }
+}

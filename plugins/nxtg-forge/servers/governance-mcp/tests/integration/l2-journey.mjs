@@ -391,6 +391,28 @@ async function main() {
       try { if (planTransport) await planTransport.close(); } catch { /* idempotent */ }
       rmSync(planProj, { recursive: true, force: true });
     }
+
+    // ── Leg H: the status orchestrator line is computed by code on real forge (DIRECTIVE-NXTG-20261013-20, F-N) ──
+    console.log("\n[Leg H] orchestrator-status.mjs through the real launcher: not initialized, then initialized");
+    const stProj = mkdtempSync(join(tmpdir(), "forge-l2-status-"));
+    try {
+      execFileSync("git", ["init", "-q"], { cwd: stProj, stdio: "ignore" });
+      const statusOf = () => Object.fromEntries(execFileSync("node",
+        [join(PLUGIN_ROOT, "scripts", "orchestrator-status.mjs"), "--project", stProj],
+        { cwd: stProj, env: { ...process.env, PATH: childPath }, encoding: "utf8", timeout: 30000 })
+        .trim().split("\n").map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
+      const before = statusOf();
+      check("not initialized: orchestrator=not_initialized and the exact 'Connected; not initialized here' line",
+        before.orchestrator === "not_initialized" && before.line === "◐ **Connected; not initialized here** — run `forge init` in this project",
+        JSON.stringify(before));
+      execFileSync("forge", ["init", "-n", "l2-status", "--project", stProj],
+        { cwd: stProj, env: { ...process.env, FORGE_PROJECT_ROOT: stProj }, stdio: "ignore", timeout: 30000 });
+      const after = statusOf();
+      check("after forge init: orchestrator=connected and the exact 'Connected' line",
+        after.orchestrator === "connected" && after.line === "● **Connected**", JSON.stringify(after));
+    } finally {
+      rmSync(stProj, { recursive: true, force: true });
+    }
   } finally {
     // Teardown: close BOTH clients (SIGTERM/SIGKILL each child) + transports, remove temp dirs.
     for (const c of [govClient, orchClient]) { try { if (c) await c.close(); } catch { /* gone */ } }

@@ -2,11 +2,20 @@
 description: "Display complete project state (zero-context-friendly)"
 disable-model-invocation: true
 argument-hint: "[--json] [--verbose]"
+allowed-tools: Bash(node:*)
 ---
 
 # Forge Status
 
 You are the **Status Reporter** - show complete project state in a zero-context-friendly format.
+
+## Orchestrator line (computed by code, already run)
+
+!`node "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator-status.mjs"`
+
+The output above has two lines, `orchestrator=<state>` and `line=<text>`. The script asked the orchestrator itself: it started the plugin's orchestrator server, listed its tools and called `forge_get_state`. **Print the `line=` text exactly as given as the first line of the Orchestrator section. Do not reword it, and do not decide the orchestrator's state yourself from any tool result.** The `orchestrator=` value is the `--json` `"orchestrator"` value.
+
+**If the output above is empty or has no `line=` (the step did not run), print exactly `◌ **Orchestrator status unavailable** — the status step did not run` instead, and use `"orchestrator": "unavailable"` in `--json`. Never decide the state from tool results instead.**
 
 ## Data Gathering
 
@@ -57,21 +66,15 @@ Call the plugin's Node MCP tool `forge_get_governance_health` to get the 0-100 h
 
 If `forge_get_governance_health` is not available (the tool is not found, which is the case when the governance MCP server has no Node.js 20+), or it returns an error, there is **no health score**. Never estimate, infer, or compute one from other data. The Health section then says so (see §5).
 
-### 4b. Orchestrator State (if forge-orchestrator is available)
+### 4b. Orchestrator Data (only when the computed state is `connected`)
 
-Call orchestrator MCP tools in parallel to get live orchestration data:
+When the computed `orchestrator=` value above is `connected`, call these orchestrator MCP tools in parallel for the metrics table (§9):
 - `forge_get_state` — Full orchestration state (project info, tools, active locks)
 - `forge_get_tasks` — All tasks with status and assignments
-- `forge_get_health` — Orchestrator's 5-dimension health + **drift** analysis (L2 only, requires the `forge` binary). Feeds the Drift row in the Orchestrator section below.
+- `forge_get_health` — Orchestrator's 5-dimension health + **drift** analysis (L2 only, requires the `forge` binary). Feeds the Drift row.
 - `forge_check_drift` — Vision alignment check
 
-The result is one of three states. Do NOT show raw error messages to the user; use the line for the state:
-
-1. **Not installed:** the orchestrator tools are not found. Show
-   `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\`, then start a new Claude Code session`
-2. **Connected, not initialized here:** the tools exist, but `forge_get_state` (or another orchestrator tool) says this project is not initialized (for example "Forge is not initialized"). The orchestrator IS connected; never call it "Not connected". Show
-   `◐ **Connected; not initialized here** — run \`forge init\` in this project`
-3. **Connected:** the tools exist and return state. Show the metrics table (§9).
+For any other value, do not call them for this section: the computed line stands, whatever a tool says. Do not show raw error messages to the user.
 
 ### 5. Agent Inventory
 
@@ -181,7 +184,7 @@ Read the individual checks from the MCP health result and group them into these 
 
 **8. Governance section:** Output `## Governance` then `| Metric | Value |` table with Status, Vision (first 60 chars), Workstreams, Sentinel entries rows.
 
-**9. Orchestrator section:** Output `## Orchestrator`, then the line for the §4b state. **Connected:** a `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift. **Connected, not initialized here:** `◐ **Connected; not initialized here** — run \`forge init\` in this project`. **Not installed:** `○ **Not connected** — add multi-agent orchestration: \`curl -fsSL https://forge.nxtg.ai/install.sh | sh\`, then start a new Claude Code session`
+**9. Orchestrator section:** Output `## Orchestrator`, then the computed `line=` text exactly as given. When `orchestrator=connected`, follow it with a `| Metric | Value |` table with Tasks, Locks, Knowledge, Drift from §4b. For any other state the line is the whole section.
 
 **10. Tooling section:** Output `## Tooling` then `| Category | Count | Source |` table for Agents, Commands and Hooks, with the `agents=` and `commands=` counts from §5, Hooks as "{hooks} scripts ({registrations} registrations)", and the source "Forge plugin".
 
@@ -221,7 +224,7 @@ CRITICAL REMINDERS:
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "Public preview"` at the top level. Include `"orchestrator": "connected" | "not_initialized" | "not_installed"`, and `"health": null` when §4c produced no health result.
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "Public preview"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`, or `unavailable` when the step did not run), and `"health": null` when §4c produced no health result.
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
