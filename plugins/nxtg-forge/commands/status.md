@@ -67,3 +67,4 @@ If `$ARGUMENTS` contains:
 ## Error Handling
 
 The script maps every failure to a fixed line in the block (for example the "Not scored" Health line), so the block is always complete. Print it as it is.
+
