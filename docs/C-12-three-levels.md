@@ -24,7 +24,7 @@ L1 gives you governance inside Claude Code. Health scoring, gap analysis, qualit
 **Install**: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`
 **What it adds**: File locking, task planning, knowledge capture, drift detection, TUI dashboard, headless mode, 10 additional MCP tools
 
-L2 adds multi-tool orchestration. When you run Claude Code, Codex CLI, and Gemini CLI on the same codebase, the orchestrator prevents them from conflicting. It plans work, assigns tasks, locks files, captures decisions, and detects when work drifts from your spec.
+L2 adds multi-tool orchestration. When you run several AI tools on the same codebase (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)), the orchestrator prevents them from conflicting. It plans work, assigns tasks, locks files, captures decisions, and detects when work drifts from your spec.
 
 **You need L2 when**: You're running multiple AI tools on the same codebase and hitting file conflicts, lost context, or coordination chaos.
 

@@ -1,6 +1,6 @@
 # Upgrade to Pro Builder — L2
 
-L1 gives you governance inside Claude Code. L2 adds **multi-tool orchestration** — file locking, task planning, knowledge capture, and a TUI dashboard that coordinates Claude, Codex, and Gemini as a team.
+L1 gives you governance inside Claude Code. L2 adds **multi-tool orchestration** — file locking, task planning, knowledge capture, and a TUI dashboard that coordinates your AI tools as a team (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)).
 
 ## When You Need This
 
@@ -61,7 +61,7 @@ forge dashboard --pty
 This launches a TUI dashboard with:
 
 - **Task board** — all tasks with status, assignment, dependencies
-- **Agent panes** — live interactive terminals for each AI tool (Claude, Codex, Gemini)
+- **Agent panes** — live interactive terminals for each AI tool (Claude; Codex; Antigravity `agy` for the Gemini adapter. Gemini CLI support in development, build B1, target 2026-10-27)
 - **Event log** — real-time audit trail of every action
 - **Health status** — project health score in the header
 

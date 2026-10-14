@@ -8,7 +8,7 @@ All commands provided by the `forge` binary (forge-orchestrator). Run `forge --h
 
 ## forge init
 
-Initialize Forge in a project. Creates the `.forge/` directory with state, event log, and knowledge base. Auto-detects installed AI tools (Claude Code, Codex CLI, Gemini CLI) via PATH scanning.
+Initialize Forge in a project. Creates the `.forge/` directory with state, event log, and knowledge base. Auto-detects installed AI tools via PATH scanning: `claude`, `codex`, and `agy` (Antigravity, driven by the Gemini adapter). Gemini CLI support is in development (build B1, target 2026-10-27).
 
 ```bash
 forge init
@@ -154,7 +154,7 @@ forge dashboard --parallel 5       # Run up to 5 agents simultaneously
 | `--i-accept-subscription-risk` | Bypass subscription risk warning |
 
 **Stargate PTY mode** (`--pty`):
-Each agent pane shows the agent's actual TUI (Claude's interactive mode, Codex's REPL, Gemini's interface). Full terminal emulation via vt100. Navigate with:
+Each agent pane shows the agent's actual TUI (Claude's interactive mode, Codex's REPL, Antigravity `agy` for the Gemini adapter). Full terminal emulation via vt100. Navigate with:
 - `Tab` / `Shift+Tab` — cycle between panes
 - `i` — attach to focused pane (type directly into agent)
 - `Esc` — detach from pane

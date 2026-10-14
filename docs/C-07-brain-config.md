@@ -2,7 +2,7 @@
 
 Forge uses a pluggable AI brain for task planning. The brain reads your project spec and decomposes it into dependency-aware tasks with assignments, file locks, and acceptance criteria. Two backends are available: **OpenAI** (API-powered) and **rule-based** (free, offline).
 
-The brain is only used for planning and drift detection. It does not power the agents themselves — Claude, Codex, and Gemini do the actual work.
+The brain is only used for planning and drift detection. It does not power the agents themselves: the agents do the actual work (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)).
 
 ## Quick Setup
 
