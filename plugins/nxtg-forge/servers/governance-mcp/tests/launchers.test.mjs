@@ -32,7 +32,8 @@ beforeAll(() => {
   bin = join(root, 'bin');
   mkdirSync(home);
   mkdirSync(bin);
-  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm']) symlinkSync(which(tool), join(bin, tool));
+  // mktemp and sleep: find-forge's bounded --version probe (coreutils, like dirname).
+  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm', 'mktemp', 'sleep']) symlinkSync(which(tool), join(bin, tool));
 });
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 

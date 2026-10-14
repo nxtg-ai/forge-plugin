@@ -174,6 +174,24 @@ describe('a foreign forge on PATH is not launched', () => {
     expect(reply.result.instructions).toContain(`${join(bin, 'forge')} is not the NXTG Forge orchestrator`);
     expect(reply.result.instructions).toContain(INSTALLER);
   });
+  // forge-pm, #89 last item: the identity probe runs an unknown binary, so it is time-bounded (2 s); a forge whose
+  // --version hangs (a CLI checking for updates over the network, say) counts as not NXTG forge.
+  it('a forge whose --version hangs: the launcher still answers as the stand-in, within the bound', () => {
+    const slow = join(root, 'slow-bin');
+    mkdirSync(slow, { recursive: true });
+    writeFileSync(join(slow, 'forge'), '#!/usr/bin/env bash\nsleep 30\necho "forge 1.7.0"\n');
+    chmodSync(join(slow, 'forge'), 0o755);
+    const t0 = Date.now();
+    const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
+      input: `${INIT_LINE}\n`, encoding: 'utf8', timeout: 15000, env: { HOME: home, PATH: `${slow}:/usr/bin:/bin` },
+    });
+    const ms = Date.now() - t0;
+    expect(r.status).toBe(0);
+    expect(ms).toBeLessThan(4500);
+    const reply = JSON.parse(r.stdout.split('\n')[0]);
+    expect(reply.result.serverInfo).toEqual({ name: 'orchestrator-mcp', version: 'unavailable' });
+    expect(reply.result.instructions).toContain(`${join(slow, 'forge')} is not the NXTG Forge orchestrator`);
+  }, 20000);
   it('find-forge skips it and still finds NXTG forge in ~/.local/bin', () => {
     const local = join(home, '.local', 'bin');
     mkdirSync(local, { recursive: true });

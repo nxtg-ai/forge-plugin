@@ -28,7 +28,8 @@ bind_project_root() {
   printf '%s\n' "$start"
 }
 
-if FORGE="$(find_forge)"; then
+if locate_forge; then
+  FORGE="$FORGE_FOUND"
   FORGE_PROJECT_ROOT="$(bind_project_root)"
   export FORGE_PROJECT_ROOT
   cd "$FORGE_PROJECT_ROOT" 2>/dev/null || true
@@ -36,7 +37,8 @@ if FORGE="$(find_forge)"; then
 fi
 
 INSTALL="To add it, run: curl -fsSL https://forge.nxtg.ai/install.sh | sh, then start a new Claude Code session."
-if OTHER="$(foreign_forge)"; then
+if [[ -n "$FORGE_OTHER" ]]; then
+  OTHER="$FORGE_OTHER"
   # A different program named forge (Atlassian's or Laravel's CLI, say) would fail on `forge mcp`.
   exec bash "$HERE/../lib/unavailable-mcp.sh" orchestrator-mcp \
     "The Forge orchestrator (L2: tasks, knowledge, drift) is not installed: $OTHER is not the NXTG Forge orchestrator, but a different program named forge. This is optional. $INSTALL If forge still finds the other program first, set FORGE_BIN to the NXTG forge path (the installer puts it in ~/.local/bin)."
