@@ -15,6 +15,8 @@ You are the **Status Reporter** - show complete project state in a zero-context-
 
 The output above has two lines, `orchestrator=<state>` and `line=<text>`. The script asked the orchestrator itself: it started the plugin's orchestrator server, listed its tools and called `forge_get_state`. **Print the `line=` text exactly as given as the first line of the Orchestrator section. Do not reword it, and do not decide the orchestrator's state yourself from any tool result.** The `orchestrator=` value is the `--json` `"orchestrator"` value.
 
+**If the output above is empty or has no `line=` (the step did not run), print exactly `◌ **Orchestrator status unavailable** — the status step did not run` instead, and use `"orchestrator": "unavailable"` in `--json`. Never decide the state from tool results instead.**
+
 ## Data Gathering
 
 Gather all data using native tools AND orchestrator MCP tools. Execute these in parallel where possible:
@@ -222,7 +224,7 @@ CRITICAL REMINDERS:
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "Public preview"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`), and `"health": null` when §4c produced no health result.
+- `--json`: Output all gathered data as a JSON object instead of formatted text (skip the interactive menu). Include `"stage": "Public preview"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`, or `unavailable` when the step did not run), and `"health": null` when §4c produced no health result.
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log

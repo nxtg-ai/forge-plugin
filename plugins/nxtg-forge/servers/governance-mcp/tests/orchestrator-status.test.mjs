@@ -21,6 +21,7 @@ const EXPECT = {
   not_installed: '○ **Not connected** — add multi-agent orchestration: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`, then start a new Claude Code session',
   not_initialized: '◐ **Connected; not initialized here** — run `forge init` in this project',
   connected: '● **Connected**',
+  no_response: '◌ **Orchestrator did not respond** — its MCP server started but never answered; run `forge mcp` in a terminal to see why, then start a new Claude Code session',
 };
 
 let tmp;
@@ -58,8 +59,8 @@ createInterface({ input: process.stdin }).on('line', (l) => {
   writeFileSync(launcher, `exec node ${JSON.stringify(server)}\n`);
   return launcher;
 }
-function runScript(launcher) {
-  const r = spawnSync('node', [SCRIPT, '--project', tmp], { encoding: 'utf8', env: { ...process.env, FORGE_ORCHESTRATOR_LAUNCHER: launcher }, timeout: 20000 });
+function runScript(launcher, script = SCRIPT) {
+  const r = spawnSync('node', [script, '--project', tmp], { encoding: 'utf8', env: { ...process.env, FORGE_ORCHESTRATOR_LAUNCHER: launcher, FORGE_ORCHESTRATOR_TIMEOUT_MS: '1500' }, timeout: 20000 });
   expect(r.status).toBe(0);
   return Object.fromEntries(r.stdout.trim().split('\n').map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
 }
@@ -85,11 +86,47 @@ describe('orchestrator line: computed by code from tool results', () => {
     expect(runScript(fakeLauncher('conn', FX.forge_1_6_3.connected_reply))).toEqual({ orchestrator: 'connected', line: EXPECT.connected });
   });
 
-  it("end to end: the plugin's real stand-in (forge not installed) and a missing launcher print the not-installed line", () => {
+  it("end to end: the plugin's real stand-in (it answers tools/list with no forge tools) prints the not-installed line", () => {
     const standin = join(tmp, 'standin.sh');
     writeFileSync(standin, `exec bash ${JSON.stringify(join(PLUGIN, 'servers', 'lib', 'unavailable-mcp.sh'))} orchestrator-mcp "not installed"\n`);
     expect(runScript(standin)).toEqual({ orchestrator: 'not_installed', line: EXPECT.not_installed });
-    expect(runScript(join(tmp, 'missing.sh'))).toEqual({ orchestrator: 'not_installed', line: EXPECT.not_installed });
+  });
+
+  // A server that never answers tools/list is not "not installed": forge may be installed and failing.
+  const silent = (name, body) => { const l = join(tmp, `${name}.sh`); writeFileSync(l, body); return l; };
+  const SILENT = {
+    hang: 'exec sleep 30\n',
+    crash: 'echo "forge: error while loading shared libraries" >&2\nexit 1\n',
+    garbage: 'echo "Segmentation fault (core dumped)"\necho "{not json"\nexec sleep 30\n',
+    missing: null,
+  };
+  it.each(Object.keys(SILENT))('end to end: a launcher that never answers (%s) prints the fixed did-not-respond line', (k) => {
+    const launcher = SILENT[k] === null ? join(tmp, 'missing.sh') : silent(k, SILENT[k]);
+    expect(runScript(launcher)).toEqual({ orchestrator: 'error', line: EXPECT.no_response });
+  });
+
+  it('classify: no tools/list answer (null) is error/no_response; an answered empty list is not_installed', () => {
+    expect(classify({ tools: null, getState: null })).toEqual({ state: 'error', line: EXPECT.no_response });
+    expect(classify({ tools: [], getState: null })).toEqual({ state: 'not_installed', line: EXPECT.not_installed });
+  });
+
+  it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s: when the step did not run, a fixed line, never a model-decided state', (f) => {
+    expect(read(f)).toContain('**If the output above is empty or has no `line=` (the step did not run), print exactly `◌ **Orchestrator status unavailable** — the status step did not run` instead');
+    expect(read(f)).toContain('Never decide the state from tool results instead.');
+  });
+
+  it('status --json names the did-not-run value', () => {
+    expect(read('commands/status.md')).toContain('use `"orchestrator": "unavailable"` in `--json`');
+    expect(read('commands/status.md')).toContain('or `unavailable` when the step did not run');
+  });
+
+  it('mutant: treating "no tools/list answer" as an empty tool list turns the hang check red', () => {
+    const src = readFileSync(SCRIPT, 'utf8');
+    const from = 'list.map((t) => t?.name) : null,';
+    expect(src.split(from).length - 1).toBe(1);
+    const m = join(tmp, 'mutant-silent.mjs');
+    writeFileSync(m, src.replace(from, 'list.map((t) => t?.name) : [],'));
+    expect(runScript(silent('hang2', 'exec sleep 30\n'), m)).toEqual({ orchestrator: 'not_installed', line: EXPECT.not_installed });
   });
 
   it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s runs the script and prints its line; it holds no state mapping of its own', (f) => {

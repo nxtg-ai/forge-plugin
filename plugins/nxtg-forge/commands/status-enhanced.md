@@ -80,7 +80,7 @@ The orchestrator's state is computed by code, not judged from tool results. This
 
 !`node "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator-status.mjs"`
 
-Print its `line=` text exactly as given as the first line of the ORCHESTRATOR block, and do not decide the state yourself. Only when it says `orchestrator=connected`, call these orchestrator MCP tools in parallel for the rest of the block:
+Print its `line=` text exactly as given as the first line of the ORCHESTRATOR block, and do not decide the state yourself. **If the output above is empty or has no `line=` (the step did not run), print exactly `◌ **Orchestrator status unavailable** — the status step did not run` instead. Never decide the state from tool results instead.** Only when it says `orchestrator=connected`, call these orchestrator MCP tools in parallel for the rest of the block:
 - `forge_get_state` — Full orchestration state
 - `forge_get_tasks` — Task board with statuses
 - `forge_get_health` — Orchestrator health check (docs, architecture, task health, knowledge coverage, drift). L2 only.

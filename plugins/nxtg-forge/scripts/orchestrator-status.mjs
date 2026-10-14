@@ -7,9 +7,11 @@
 //
 //   node orchestrator-status.mjs [--project <dir>]   ->   orchestrator=<state>\nline=<line>
 //
-// States: not_installed (no forge_get_state tool: the launcher's stand-in, or no server), not_initialized
-// (the tool says the project is not initialized), connected (the tool returned state), and error (the tool
-// exists but failed for another reason, or did not answer). The --json "orchestrator" value is the state.
+// States: not_installed (the server answered tools/list without forge_get_state: the launcher's stand-in),
+// not_initialized (the tool says the project is not initialized), connected (the tool returned state), and
+// error (the server never answered tools/list — it hung, crashed or printed garbage — or the tool failed for
+// another reason). A forge that is installed but silent is never reported as not installed.
+// The --json "orchestrator" value is the state.
 import { spawn } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,14 +22,16 @@ export const LINES = {
   not_initialized: '◐ **Connected; not initialized here** — run `forge init` in this project',
   connected: '● **Connected**',
   error: '◐ **Connected; state unavailable** — `forge_get_state` failed: ',
+  no_response: '◌ **Orchestrator did not respond** — its MCP server started but never answered; run `forge mcp` in a terminal to see why, then start a new Claude Code session',
 };
 // The orchestrator's not-initialized message, e.g. "Forge is not initialized. Run `forge init` in this project first."
 const NOT_INITIALIZED = /\bnot initiali[sz]ed\b/i;
 
-// Pure: tool names from tools/list, and the forge_get_state result ({ isError, text }) or null if the call
-// never returned. Returns { state, line }.
+// Pure: tool names from tools/list (null when the server never answered it), and the forge_get_state result
+// ({ isError, text }) or null if that call never returned. Returns { state, line }.
 export function classify({ tools, getState }) {
-  if (!Array.isArray(tools) || !tools.includes('forge_get_state')) return { state: 'not_installed', line: LINES.not_installed };
+  if (!Array.isArray(tools)) return { state: 'error', line: LINES.no_response };
+  if (!tools.includes('forge_get_state')) return { state: 'not_installed', line: LINES.not_installed };
   if (!getState) return { state: 'error', line: `${LINES.error}no answer` };
   const text = String(getState.text ?? '').trim();
   if (getState.isError) {
@@ -47,7 +51,7 @@ export function toolResult(reply) {
 }
 
 // Starts the launcher and asks it, over MCP stdio, for tools/list and forge_get_state.
-export function probe({ root, launcher, timeoutMs = 8000 }) {
+export function probe({ root, launcher, timeoutMs = Number(process.env.FORGE_ORCHESTRATOR_TIMEOUT_MS) || 8000 }) {
   return new Promise((done) => {
     const child = spawn('bash', [launcher], { cwd: root, env: { ...process.env, FORGE_PROJECT_ROOT: root }, stdio: ['pipe', 'pipe', 'ignore'] });
     const replies = new Map();
@@ -59,7 +63,7 @@ export function probe({ root, launcher, timeoutMs = 8000 }) {
       clearTimeout(timer);
       child.kill('SIGKILL');
       const list = replies.get(2)?.result?.tools;
-      done({ tools: Array.isArray(list) ? list.map((t) => t.name) : [], getState: toolResult(replies.get(3)) });
+      done({ tools: Array.isArray(list) ? list.map((t) => t?.name) : null, getState: toolResult(replies.get(3)) });
     };
     const timer = setTimeout(finish, timeoutMs);
     const send = (m) => { try { child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', ...m })}\n`); } catch { /* exited */ } };
