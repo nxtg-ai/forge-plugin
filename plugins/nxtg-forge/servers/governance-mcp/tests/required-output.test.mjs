@@ -517,6 +517,38 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
       expect(gate.taskRecordWrites([{ name: 'Bash', input: { command: c } }]), c).toEqual([]);
     expect(feat(gate, [HELPER, CLAIM, { name: 'Bash', input: { command: 'cat .forge/tasks/T-001.json' } }, COMPLETE, GET])).toBeNull();
   });
+  // forge-pm 279b3be delta review: read-only interpreter one-liners must pass; only a real write call counts.
+  const READ_ONE_LINERS = [
+    `python3 -c "import json; print(json.dumps(json.load(open('.forge/tasks/T-001.json')), indent=2))"`,
+    `node -e "const t=JSON.parse(require('fs').readFileSync('.forge/tasks/T-001.json','utf8')); Object.keys(t).forEach(k => console.log(k, t[k]))"`,
+    `python3 -c "print(open('.forge/tasks/T-001.json').read().replace(',', ', '))"`,
+    `python3 -c "import sys,json; sys.stdout.write(json.dumps(json.load(open('.forge/tasks/T-001.json','r'))))"`,
+  ];
+  it('read-only interpreter one-liners (json.dumps, an arrow function, str.replace, mode r) are not writes', () => {
+    for (const c of READ_ONE_LINERS) {
+      expect(gate.taskRecordWrites([{ name: 'Bash', input: { command: c } }]), c).toEqual([]);
+      expect(feat(gate, [HELPER, CLAIM, { name: 'Bash', input: { command: c } }, COMPLETE, GET]), c).toBeNull();
+    }
+  });
+  it('interpreter and shell writes are refused: open w, json.dump, write_text, shutil, fs.writeFileSync/renameSync, perl, ruby, a redirect after the quotes', () => {
+    for (const c of [
+      `python3 -c "import json;json.dump({}, open('.forge/tasks/T-001.json','w'))"`,
+      `python3 -c "from pathlib import Path; Path('.forge/tasks/T-001.json').write_text('{}')"`,
+      `python3 -c "import shutil; shutil.copy('/tmp/x', '.forge/tasks/T-001.json')"`,
+      `node -e "require('fs').writeFileSync('.forge/tasks/T-001.json', '{}')"`,
+      `node -e "require('fs').renameSync('/tmp/x', '.forge/tasks/T-001.json')"`,
+      `perl -i -pe s/assigned/completed/ .forge/tasks/T-001.json`,
+      `perl -e "open(my \$f, '>', '.forge/tasks/T-001.json'); print \$f 1"`,
+      `ruby -e "File.write('.forge/tasks/T-001.json', '{}')"`,
+      `python3 -c "print(1)" > .forge/tasks/T-001.json`,
+      `jq '.status="completed"' .forge/tasks/T-001.json > /tmp/x && cp /tmp/x .forge/tasks/T-001.json`,
+    ]) expect(gate.taskRecordWrites([{ name: 'Bash', input: { command: c } }]), c).toEqual([expect.stringMatching(/\.forge\/tasks/)]);
+  });
+  it('mutant: the old broad interpreter clause (any write|dump|open-mode|>) refuses the read-only one-liners, so the must-allow check turns red', async () => {
+    const m = await mutant('required-output.mjs', 'INTERPRETER_WRITE.test(c))', `/write|dump|open\\([^)]*['"][wa+]|>/.test(c))`);
+    expect(m.taskRecordWrites([{ name: 'Bash', input: { command: READ_ONE_LINERS[0] } }])).not.toEqual([]);
+    expect(m.taskRecordWrites([{ name: 'Bash', input: { command: READ_ONE_LINERS[1] } }])).not.toEqual([]);
+  });
   it('mutant: ignoring the turn\'s own writes lets a forged record pass, so the forged-record check turns red', async () => {
     const m = await mutant('required-output.mjs', '  if (forged.length) {', '  if (false) {');
     expect(feat(m, [HELPER, CLAIM, { name: 'Write', input: { file_path: '/p/.forge/tasks/T-001.json' } }, COMPLETE, GET])).toBeNull();

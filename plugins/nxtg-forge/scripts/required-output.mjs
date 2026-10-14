@@ -163,14 +163,48 @@ export function taskReader(cwd) {
 const claimedByClaude = (row) => row?.assigned_to === 'claude' && ['assigned', 'in_progress', 'completed'].includes(row.status);
 // Writes to .forge/tasks/ made by the turn itself: a record the model wrote is not the orchestrator's record.
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
-// A Bash command writes there when a redirect, tee/cp/mv/ln/install/rm/touch/truncate or sed -i targets
-// .forge/tasks, or an interpreter (python, node, perl, ruby, jq) writes in a command that names it.
-// Reading it (cat, grep, ls, jq without a write) is not a write.
-const bashWritesTasks = (c) => /\.forge\/tasks/.test(c) && !/feature-task\.sh/.test(c) && (
-  />>?\s*['"]?[^\s'";|&]*\.forge\/tasks/.test(c)
-  || /\b(tee|cp|mv|ln|install|rm|touch|truncate)\b[^;|&]*\.forge\/tasks/.test(c)
-  || /\bsed\s+(-[a-zA-Z]*i\b|--in-place)[^;|&]*\.forge\/tasks/.test(c)
-  || (/\b(python3?|node|perl|ruby)\b/.test(c) && /write|dump|open\([^)]*['"][wa+]|>/.test(c)));
+// Shell quoting: which characters of a command are inside '...' or "..." (code passed to an interpreter, a
+// quoted path). A `>` or a command word only counts outside quotes, so `node -e "... k => t[k] ..."` is not a
+// redirect.
+function quoted(c) {
+  const inq = new Array(c.length).fill(false);
+  for (let i = 0, q = null; i < c.length; i++) {
+    const ch = c[i];
+    if (q) {
+      inq[i] = true;
+      if (q === '"' && ch === '\\') { if (i + 1 < c.length) inq[++i] = true; } else if (ch === q) q = null;
+    } else if (ch === '\\') i++;
+    else if (ch === "'" || ch === '"') { q = ch; inq[i] = true; }
+  }
+  return inq;
+}
+const unquotedHit = (c, re, inq) => [...c.matchAll(re)].some((m) => !inq[m.index]);
+// Write calls an interpreter one-liner can make. Reads (open() with no mode or 'r', json.load/dumps,
+// readFileSync, print, console.log) are not on the list (forge-pm 279b3be delta review).
+const INTERPRETER_WRITE = new RegExp([
+  String.raw`\bopen(?:Sync)?\s*\([^)]*,\s*(?:mode\s*=\s*)?['"][rbt]*[wax+]`, // python/node/ruby open in w, a, x or + mode
+  String.raw`\bopen\s*\(?[^,;)]*,\s*['"]\+?>`, // perl open(F, '>', p) / open(F, ">>p")
+  String.raw`\bO_(?:WRONLY|RDWR|CREAT|TRUNC|APPEND)\b`,
+  String.raw`\bwrite_(?:text|bytes)\s*\(`, String.raw`\.dump\s*\(`,
+  String.raw`\b(?:writeFile|appendFile|copyFile|rename|unlink|rm|cp|symlink|truncate|ftruncate)(?:Sync)?\s*\(`,
+  String.raw`\bcreateWriteStream\s*\(`, String.raw`\bfs\.write`,
+  String.raw`\bshutil\.(?:copy\w*|move)\s*\(`, String.raw`\bos\.(?:replace|rename|renames|remove|unlink|link|symlink)\s*\(`,
+  String.raw`\.(?:unlink|rename|touch|symlink_to|hardlink_to)\s*\(`, String.raw`\bPath\s*\([^)]*\)\.replace\s*\(`, // pathlib; str.replace is a read
+  String.raw`\bFile(?:Utils)?\.(?:write|delete|rename|unlink|cp|mv|rm|symlink)\b`, // ruby
+  String.raw`\b(?:unlink|rename)\s*\(?\s*['"]`, // perl
+].join('|'));
+// A Bash command writes .forge/tasks/ when, outside quotes, a `>`/`>>` redirect or tee/cp/mv/ln/install/rm/
+// touch/truncate or sed -i (or perl -i) targets it, or an interpreter (python, node, perl, ruby) makes a write
+// call from INTERPRETER_WRITE in a command that names it. Reading it (cat, grep, ls, jq, a read-only
+// one-liner) is not a write.
+const bashWritesTasks = (c) => {
+  if (!/\.forge\/tasks/.test(c) || /feature-task\.sh/.test(c)) return false;
+  const inq = quoted(c);
+  return unquotedHit(c, />>?\s*['"]?[^\s'";|&]*\.forge\/tasks/g, inq)
+    || unquotedHit(c, /\b(?:tee|cp|mv|ln|install|rm|touch|truncate)\b[^;|&]*\.forge\/tasks/g, inq)
+    || unquotedHit(c, /\b(?:sed\s+(?:-[a-zA-Z]*i\b|--in-place)|perl\s+(?:-\w*\s+)*-\w*i)[^;|&]*\.forge\/tasks/g, inq)
+    || (unquotedHit(c, /\b(?:python3?|node|perl|ruby)\b/g, inq) && INTERPRETER_WRITE.test(c));
+};
 export function taskRecordWrites(tools) {
   const out = [];
   for (const t of tools) {
