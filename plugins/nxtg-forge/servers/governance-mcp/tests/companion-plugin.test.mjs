@@ -4,7 +4,7 @@
 // the session hook still tells Claude the orchestrator is optional and the one command that adds it.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync, statSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync, statSync, symlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve, delimiter } from 'node:path';
@@ -86,7 +86,7 @@ describe('companion launcher binds the Forge project root, not the session subdi
     home = join(root, 'home');
     log = join(root, 'forge.log');
     fake = join(root, 'forge');
-    writeFileSync(fake, `#!/usr/bin/env bash\necho "root=$FORGE_PROJECT_ROOT cwd=$(pwd)" > ${JSON.stringify(log)}\n`);
+    writeFileSync(fake, `#!/usr/bin/env bash\nif [ "$1" = --version ]; then echo 'forge 1.7.0'; exit 0; fi\necho "root=$FORGE_PROJECT_ROOT cwd=$(pwd)" > ${JSON.stringify(log)}\n`);
     chmodSync(fake, 0o755);
     mkdirSync(join(home, '.forge'), { recursive: true }); // forge-ui's global ~/.forge: projects.json, no state.json
     writeFileSync(join(home, '.forge', 'projects.json'), '{}');
@@ -97,11 +97,11 @@ describe('companion launcher binds the Forge project root, not the session subdi
   });
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
-  const bind = (start, envRoot = start) => {
+  const bind = (start, envRoot = start, homeVar = home) => {
     rmSync(log, { force: true });
     const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
-      cwd: start, input: '', encoding: 'utf8', timeout: 10000,
-      env: { HOME: home, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }) },
+      cwd: start, input: '', encoding: 'utf8', timeout: 5000,
+      env: { HOME: homeVar, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }) },
     });
     expect(r.status).toBe(0);
     return readFileSync(log, 'utf8').trim();
@@ -119,9 +119,74 @@ describe('companion launcher binds the Forge project root, not the session subdi
     const d = join(home, 'loose', 'sub');
     expect(bind(d)).toBe(`root=${d} cwd=${d}`);
   });
+  // Seat 1 L-1 (#89 fix pass): `dirname` of a relative path reaches "." and stays there; the loop never ended.
+  it('a relative FORGE_PROJECT_ROOT terminates, resolved against the working directory', () => {
+    const p = join(home, 'proj');
+    expect(bind(join(p, 'src'), 'deep')).toBe(`root=${p} cwd=${p}`);
+    expect(bind(join(home, 'loose'), 'sub')).toBe(`root=${join(home, 'loose', 'sub')} cwd=${join(home, 'loose', 'sub')}`);
+  });
+  // Seat 1 M-2 / seat 2 L3: the stop-below-$HOME guard compared strings, so "$HOME/" or a symlink to $HOME walked
+  // into $HOME and bound a .forge/state.json there.
+  it('a trailing-slash or symlinked $HOME still stops the walk below $HOME', () => {
+    mkdirSync(join(home, 'loose2', 'sub'), { recursive: true });
+    writeFileSync(join(home, '.forge', 'state.json'), '{}'); // a project-looking ~/.forge for this case only
+    try {
+      const d = join(home, 'loose2', 'sub');
+      expect(bind(d, d, `${home}/`)).toBe(`root=${d} cwd=${d}`);
+      const link = join(root, 'home-link');
+      try { symlinkSync(home, link); } catch {}
+      expect(bind(d, d, link)).toBe(`root=${d} cwd=${d}`);
+    } finally {
+      rmSync(join(home, '.forge', 'state.json'), { force: true });
+    }
+  });
   it('FORGE_PROJECT_ROOT unset: starts from the working directory', () => {
     const p = join(home, 'proj');
     expect(bind(join(p, 'src'), null)).toBe(`root=${p} cwd=${p}`);
+  });
+});
+
+// Seat 2 M1 (#89 fix pass): any binary named `forge` was exec'd. Atlassian's and Laravel's CLIs are also named forge;
+// `forge mcp` then exits 1 and Claude Code shows a FAILED server, cached 15 minutes. Only a binary whose --version
+// reads `forge X.Y.Z` (every NXTG forge release) is launched; otherwise the stand-in names the clash.
+describe('a foreign forge on PATH is not launched', () => {
+  let root, bin, home;
+  const INIT_LINE = '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}';
+  beforeAll(() => {
+    root = mkdtempSync(join(tmpdir(), 'forge-foreign-'));
+    bin = join(root, 'bin');
+    home = join(root, 'home');
+    mkdirSync(bin);
+    mkdirSync(home);
+    // Atlassian's Forge CLI prints a bare version; `forge mcp` is not a command it knows.
+    writeFileSync(join(bin, 'forge'), '#!/usr/bin/env bash\nif [ "$1" = --version ]; then echo 12.3.0; exit 0; fi\necho "Error: unknown command \'$1\'" >&2; exit 1\n');
+    chmodSync(join(bin, 'forge'), 0o755);
+  });
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it('the launcher answers as the stand-in and names the clash, instead of exec-ing it', () => {
+    const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
+      input: `${INIT_LINE}\n`, encoding: 'utf8', timeout: 10000, env: { HOME: home, PATH: `${bin}:/usr/bin:/bin` },
+    });
+    expect(r.status).toBe(0);
+    const reply = JSON.parse(r.stdout.split('\n')[0]);
+    expect(reply.result.serverInfo).toEqual({ name: 'orchestrator-mcp', version: 'unavailable' });
+    expect(reply.result.instructions).toContain(`${join(bin, 'forge')} is not the NXTG Forge orchestrator`);
+    expect(reply.result.instructions).toContain(INSTALLER);
+  });
+  it('find-forge skips it and still finds NXTG forge in ~/.local/bin', () => {
+    const local = join(home, '.local', 'bin');
+    mkdirSync(local, { recursive: true });
+    writeFileSync(join(local, 'forge'), '#!/usr/bin/env bash\necho "forge 1.7.0"\n');
+    chmodSync(join(local, 'forge'), 0o755);
+    try {
+      for (const lib of [join(COMPANION, 'servers/lib/find-forge.sh'), join(PLUGIN, 'servers/lib/find-forge.sh')]) {
+        const r = spawnSync('bash', [lib], { encoding: 'utf8', env: { HOME: home, PATH: `${bin}:/usr/bin:/bin` } });
+        expect(r.stdout.trim(), lib).toBe(join(local, 'forge'));
+      }
+    } finally {
+      rmSync(join(local, 'forge'));
+    }
   });
 });
 
@@ -137,7 +202,7 @@ describe('session hint for the optional orchestrator', () => {
     bin = join(root, 'bin');
     mkdirSync(bin);
     const fake = join(bin, 'forge');
-    writeFileSync(fake, '#!/usr/bin/env bash\necho fake\n');
+    writeFileSync(fake, '#!/usr/bin/env bash\necho "forge 1.7.0"\n'); // identifies as NXTG forge
     chmodSync(fake, 0o755);
     // The real PATH minus any directory holding a forge binary, so "forge absent" is true on a dev box too.
     pathNoForge = process.env.PATH.split(delimiter).filter((d) => {
@@ -199,6 +264,12 @@ describe('session hint for the optional orchestrator', () => {
     expect(hook({ forge: true, env: { CLAUDE_PLUGIN_ROOT: PLUGIN, CLAUDE_CONFIG_DIR: present } })).not.toMatch(/orchestrator/i);
   });
 
+  // Seat 2 L1 + EMMA-SOUL "every session": the hint is one line of context for Claude, exempt from FORGE_QUIET_HOOKS.
+  it('FORGE_QUIET_HOOKS=1 does not silence the orchestrator hint, in either state', () => {
+    const cfg = config(['nxtg-forge@nxtg-forge']);
+    expect(hook({ forge: false, env: { CLAUDE_PLUGIN_ROOT: cacheRoot(cfg), FORGE_QUIET_HOOKS: '1' } })).toContain(INSTALLER);
+    expect(hook({ forge: true, env: { CLAUDE_PLUGIN_ROOT: cacheRoot(cfg), FORGE_QUIET_HOOKS: '1' } })).toContain(COMPANION_CMD);
+  });
   it('the hint is said once per session, like the other 5b lines', () => {
     const cfg = config(['nxtg-forge@nxtg-forge']);
     const home = mkdtempSync(join(root, 'home-'));

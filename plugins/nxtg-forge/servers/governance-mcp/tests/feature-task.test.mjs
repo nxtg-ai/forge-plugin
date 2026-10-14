@@ -20,7 +20,8 @@ beforeEach(() => {
   log = join(stubDir, 'calls.log');
   // Records argv, and whether stdin was left open (the script must close it).
   writeFileSync(join(stubDir, 'forge'),
-    `#!/bin/bash\nprintf '%s\\n' "$*" >> "${log}"\n` +
+    // It identifies as NXTG forge, the only forge find-forge launches; --version is not logged as a call.
+    `#!/bin/bash\n[ "$1" = --version ] && { echo "forge 1.7.0"; exit 0; }\nprintf '%s\\n' "$*" >> "${log}"\n` +
     `if read -r -t 1 line; then echo "stdin-open:$line" >> "${log}"; fi\n` +
     `[ -n "$STUB_FAIL" ] && { echo "half-written" > .forge/plan.md; echo "boom from forge"; exit 7; }\n` +
     // Like the real binary: plan --generate rewrites .forge/plan.md with only this run's tasks.

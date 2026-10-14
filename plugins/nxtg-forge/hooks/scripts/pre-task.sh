@@ -84,11 +84,13 @@ if [ "$SESSION_ID" = "unknown" ] || [ ! -e "$NOTICE_MARK" ]; then
     fi
     # orchestrator-mcp is registered by the companion plugin nxtg-forge-orchestrator, not by this one
     # (C1: absent without error), so this line is how Claude learns it is optional and how to add it.
+    # Printed even under FORGE_QUIET_HOOKS: EMMA-SOUL's ruling is every session, and it is one line of
+    # context for Claude, not progress noise.
     FIND_FORGE="$SCRIPT_DIR/../../servers/lib/find-forge.sh"
     if [ -f "$FIND_FORGE" ] && ! bash "$FIND_FORGE" >/dev/null 2>&1; then
-        log_info "Optional orchestrator (L2) not installed: curl -fsSL https://forge.nxtg.ai/install.sh | sh, then start a new Claude Code session."
+        echo -e "${BLUE}[Info]${NC} Optional orchestrator (L2) not installed: curl -fsSL https://forge.nxtg.ai/install.sh | sh, then start a new Claude Code session."
     elif [ -f "$FIND_FORGE" ] && ! forge_companion_installed; then
-        log_info "Optional orchestrator (L2) tools are off: forge is installed, but its Claude Code plugin is not. Run: claude plugin install nxtg-forge-orchestrator@nxtg-forge, then start a new Claude Code session."
+        echo -e "${BLUE}[Info]${NC} Optional orchestrator (L2) tools are off: forge is installed, but its Claude Code plugin is not. Run: claude plugin install nxtg-forge-orchestrator@nxtg-forge, then start a new Claude Code session."
     fi
     if ! has_command semgrep-mcp && ! has_command uvx; then
         log_info "Optional Semgrep MCP tools are off: install uv (https://docs.astral.sh/uv/) or pip install semgrep-mcp."
