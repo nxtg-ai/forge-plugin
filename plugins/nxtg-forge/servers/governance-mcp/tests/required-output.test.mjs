@@ -439,6 +439,7 @@ describe('Stop gate: /nxtg-forge:gap-analysis', () => {
 // ---------------------------------------------------------------------------------------------------
 const TOOL = (n) => `mcp__plugin_nxtg-forge_orchestrator-mcp__${n}`;
 const HELPER = { name: 'Bash', input: { command: 'bash "/c/nxtg-forge/3.13.0/scripts/feature-task.sh" "Add usage example" "Adds one"' }, result: 'status=created\ntitle=Add usage example\nspec=.forge/feature-requests/F-001.md\ntask_id=T-001' };
+const CREATE = { name: TOOL('forge_create_task'), input: { title: 'Add usage example', description: 'Adds one' }, result: '{\n  "task_id": "T-001",\n  "title": "Add usage example",\n  "status": "pending",\n  "next": "forge_claim_task, then forge_complete_task"\n}' };
 const CLAIM = { name: TOOL('forge_claim_task'), input: { task_id: 'T-001', agent: 'claude' }, result: '{"status":"claimed"}' };
 const COMPLETE = { name: TOOL('forge_complete_task'), input: { task_id: 'T-001', agent: 'claude', result_summary: 'Added an example; tests pass.' }, result: '{"status":"completed"}' };
 const GET = { name: TOOL('forge_get_tasks'), input: {}, result: '[{"id":"T-001","status":"completed","completed_by":"claude"}]' };
@@ -486,6 +487,27 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
   it('a completed record with no forge_get_tasks after the complete: blocked', () => {
     expect(feat(gate, [HELPER, CLAIM, COMPLETE])).toMatch(/forge_get_tasks/);
     expect(feat(gate, [HELPER, CLAIM, GET, COMPLETE])).toMatch(/forge_get_tasks/);
+  });
+  // -11 part 3 (C7 as registered): the task is created through MCP, by forge_create_task (forge >= 1.7.0).
+  it('MCP create, then claimed and completed by claude, then get_tasks: allowed, with no helper call', () => {
+    expect(feat(gate, [CREATE, CLAIM, COMPLETE, GET])).toBeNull();
+  });
+  it('MCP create with no claim: blocked on the created id, not as "no task"', () => {
+    const r = feat(gate, [CREATE], [], ROW.pending);
+    expect(r).toMatch(/created T-001, and the orchestrator does not record it as claimed by claude/);
+    expect(r).not.toMatch(/neither an orchestrator task/);
+  });
+  it('the id comes from the create result, not from a claim of some other task', () => {
+    const other = { ...CLAIM, input: { task_id: 'T-009', agent: 'claude' } };
+    expect(feat(gate, [CREATE, other], [], ROW.pending)).toMatch(/created T-001/);
+  });
+  it('a failed forge_create_task (an error result) is visible as is, like a helper failure: not gated further', () => {
+    expect(feat(gate, [{ ...CREATE, result: 'Failed to create task: x', isError: true }], [], null)).toBeNull();
+  });
+  it('the "no task" block names forge_create_task first and the helper only as the fallback', () => {
+    const r = feat(gate, [], [], null);
+    expect(r).toContain('`forge_create_task`');
+    expect(r.indexOf('forge_create_task')).toBeLessThan(r.indexOf('feature-task.sh'));
   });
   it('helper said no-forge-dir or no-forge, or there is no .forge/: not gated further', () => {
     expect(feat(gate, [{ ...HELPER, result: 'status=no-forge-dir' }], [], null)).toBeNull();
@@ -666,5 +688,12 @@ describe('commands run the computed steps', () => {
     expect(md).toContain('`No task created: <reason>`');
     expect(md).toContain('`Task <id> left claimed: <reason>`');
     expect(md).toContain('it also prints `task_id=`');
+  });
+  it('feature.md Step 4.2 creates the task with forge_create_task, and uses the helper only when that tool is not listed', () => {
+    const md = read('commands/feature.md');
+    const step = md.slice(md.indexOf('## Step 4.2'), md.indexOf('## Step 4.5'));
+    expect(step).toMatch(/1\. If `forge_create_task` is available, call it/);
+    expect(step.indexOf('forge_create_task')).toBeLessThan(step.indexOf('feature-task.sh'));
+    expect(step).toMatch(/only when `forge_create_task` is not available/);
   });
 });

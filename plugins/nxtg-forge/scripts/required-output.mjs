@@ -224,16 +224,22 @@ function featureGate(turn, n, { forgeDir, readTask }) {
   const said = lines(turn.texts);
   const helpers = turn.tools.filter((t) => t.name === 'Bash' && /feature-task\.sh/.test(String(t.input.command ?? '')) && t.text !== null);
   const helper = helpers[helpers.length - 1];
-  const created = helper && /^status=created$/m.test(helper.text);
+  // C7 as registered: Step 4.2 creates the task through MCP with forge_create_task (forge 1.7.0 and later).
+  // The helper is the fallback for an orchestrator without that tool.
+  const creates = turn.tools.filter((t) => named(t, 'forge_create_task') && t.text !== null);
+  const create = creates[creates.length - 1];
+  const mcpCreated = Boolean(create) && !create.isError;
+  const created = mcpCreated || (helper && /^status=created$/m.test(helper.text));
   if (!created) {
-    if (helper) return null; // no-forge, no-forge-dir, or a failure the helper printed: visible as is
+    if (helper || create) return null; // no-forge, no-forge-dir, or a failure the helper or the tool returned: visible as is
     if (said.some((l) => /^No task created: \S/.test(l))) return null;
     if (!forgeDir) return null; // no `.forge/`: the helper would say no-forge-dir
     return blockFor('feature', n, 1,
-      'This /nxtg-forge:feature turn has neither an orchestrator task nor a stated reason for having none. If no work is needed for this feature, do NOT create a task: print one line, then end your turn:\n\nNo task created: <reason>\n\nOnly if you did or will do work for this feature, create its task first with Step 4.2 (`bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "<title>" "<description>"`) and claim it.');
+      'This /nxtg-forge:feature turn has neither an orchestrator task nor a stated reason for having none. If no work is needed for this feature, do NOT create a task: print one line, then end your turn:\n\nNo task created: <reason>\n\nOnly if you did or will do work for this feature, create its task first with Step 4.2 (`forge_create_task` with the feature title and a one-paragraph description; only when that tool is not available, `bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "<title>" "<description>"`) and claim it.');
   }
-  // The task id comes from the helper; the transcript's claim is used only when an older helper printed none.
-  const id = helper.text.match(/^task_id=(T-\d+)$/m)?.[1]
+  // The task id comes from forge_create_task's result or the helper's task_id= line; the transcript's claim
+  // is used only when an older helper printed none.
+  const id = (mcpCreated ? create.text.match(/"task_id"\s*:\s*"(T-\d+)"/)?.[1] : helper.text.match(/^task_id=(T-\d+)$/m)?.[1])
     ?? turn.tools.find((t) => named(t, 'forge_claim_task') && t.input.agent === 'claude')?.input.task_id ?? null;
   const forged = taskRecordWrites(turn.tools);
   if (forged.length) {
@@ -242,10 +248,10 @@ function featureGate(turn, n, { forgeDir, readTask }) {
   }
   const row = id ? readTask(id) : null;
   if (!row && !forgeDir) {
-    return blockFor('feature', n, 1, `The helper created ${id ?? 'a task'}, but no \`.forge/\` was found from the project directory, so its record cannot be read. Run the command from the project where \`forge init\` ran.`);
+    return blockFor('feature', n, 1, `Step 4.2 created ${id ?? 'a task'}, but no \`.forge/\` was found from the project directory, so its record cannot be read. Run the command from the project where \`forge init\` ran.`);
   }
   if (!claimedByClaude(row)) {
-    return blockFor('feature', n, 1, `The helper created ${id ?? 'a task'}, and the orchestrator does not record it as claimed by claude. Claim it with \`forge_claim_task\` (task_id \`${id ?? '<the new task>'}\`, agent \`claude\`) before the work, then continue.`);
+    return blockFor('feature', n, 1, `Step 4.2 created ${id ?? 'a task'}, and the orchestrator does not record it as claimed by claude. Claim it with \`forge_claim_task\` (task_id \`${id ?? '<the new task>'}\`, agent \`claude\`) before the work, then continue.`);
   }
   if (!completedByClaude(row)) {
     if (said.some((l) => l.startsWith(`Task ${id} left claimed: `) && l.length > `Task ${id} left claimed: `.length)) return null;

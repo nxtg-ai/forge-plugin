@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **`/nxtg-forge:feature` creates its orchestrator task through MCP** (DIRECTIVE-NXTG-20261014-11 part 3, C7 as registered). Step 4.2 calls `forge_create_task` (forge 1.7.0 and later) with the feature title and description, then claims the returned `task_id`. The `feature-task.sh` helper (`forge plan --generate --spec`) is used only when that tool is not available. The feature Stop gate takes the task id from the `forge_create_task` result, treats a failed create like a failed helper, and its "no task" message names the MCP tool first.
+
 ## [3.13.1] — 2026-10-14
 
 Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools; no breaking changes.
