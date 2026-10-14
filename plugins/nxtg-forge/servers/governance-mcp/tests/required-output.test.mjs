@@ -502,7 +502,8 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
     expect(feat(gate, [CREATE, other], [], ROW.pending)).toMatch(/created T-001/);
   });
   it('a forge_create_task that returned an error, or no task_id, created nothing: blocked as "no task" (forge-pm)', () => {
-    for (const bad of [{ ...CREATE, result: 'Failed to create task: x', isError: true }, { ...CREATE, result: '{"status":"pending"}' }]) {
+    // The errored result still carries a task_id, so only the isError guard keeps it from counting (seat Low, pr90).
+    for (const bad of [{ ...CREATE, isError: true }, { ...CREATE, result: '{"status":"pending"}' }]) {
       expect(feat(gate, [bad], [], null)).toMatch(/neither an orchestrator task nor a stated reason/);
       expect(feat(gate, [bad, CLAIM, COMPLETE, GET], [], ROW.completed)).toMatch(/neither an orchestrator task/);
     }
