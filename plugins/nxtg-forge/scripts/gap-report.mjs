@@ -184,7 +184,7 @@ export function analyze(s) {
   return { rows, recs };
 }
 
-const cell = (s) => String(s).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+const cell = (s) => String(s).replace(/\r?\n/g, ' ').replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 
 // Pure: rows and recommendations in, the required block out.
 export function render({ rows, recs }) {

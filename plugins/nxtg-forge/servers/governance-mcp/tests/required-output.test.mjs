@@ -213,6 +213,12 @@ describe('status: the enterprise report (founder directive via EMMA-SOUL 02:29Z)
       expect(l.filter((x) => x.startsWith('|') && [...x].length > status.WIDTH)).toEqual([]);
     }
   });
+  it('table cells escape backslashes before pipes, so a cell cannot end a row early (CodeQL js/incomplete-sanitization)', () => {
+    const d = { ...humanize(), git: { ...humanize().git, commits: [{ hash: 'abcdef1', message: 'fix C:\\dir\\| sep | x' }] } };
+    expect(block(d)).toContain('| `abcdef1` | fix C:\\\\dir\\\\\\| sep \\| x |');
+    const g = gap.render({ rows: [{ dim: 'Testing', finding: 'a\\|b' }], recs: ['r'] });
+    expect(g).toContain('| Testing | a\\\\\\|b |');
+  });
   it('(a) the orchestrator lines are byte-identical to v3.12.1, with the ASCII form only after them', async () => {
     const { LINES } = await import('../../../scripts/orchestrator-status.mjs');
     expect(LINES.not_initialized).toBe('◐ **Connected; not initialized here** — run `forge init` in this project');

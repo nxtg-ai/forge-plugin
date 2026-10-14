@@ -56,7 +56,7 @@ export const bar = (points, max) => {
   return `[${'#'.repeat(filled)}${'.'.repeat(20 - filled)}]`;
 };
 const ascii = (s) => String(s ?? '').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/[^\x20-\x7e]/g, '?');
-const cell = (s) => ascii(String(s ?? '').replace(/\r?\n/g, ' ')).replace(/\|/g, '\\|').trim();
+const cell = (s) => ascii(String(s ?? '').replace(/\r?\n/g, ' ')).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').trim();
 const clip = (s, n) => (s.length <= n ? s : `${s.slice(0, n - 3)}...`);
 const clipLeft = (s, n) => (s.length <= n ? s : `...${s.slice(s.length - n + 3)}`);
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
