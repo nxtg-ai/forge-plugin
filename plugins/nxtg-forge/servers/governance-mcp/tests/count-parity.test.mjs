@@ -49,12 +49,14 @@ describe('component counts match the tree', () => {
       .flatMap((g) => g.hooks.map((h) => h.command.match(/scripts\/([A-Za-z0-9_.-]+\.sh)/)[1]))
       .filter((s) => s.startsWith('security-')));
     const enforce = HOOK_SCRIPTS.filter((s) => s === 'task-enforce.sh').length;
+    const required = HOOK_SCRIPTS.filter((s) => s === 'required-output.sh').length;
     expect({
       commands: row('Slash commands'),
       agents: row('Specialized agents'),
       skills: row('Knowledge skills'),
       securityHooks: row('Security hooks'),
       enforcementHooks: row('Task enforcement hook'),
+      requiredOutputGate: row('Required-output gate'),
       governanceHooks: row('Governance hooks'),
       mcpTools: row('MCP governance tools'),
     }).toEqual({
@@ -63,13 +65,21 @@ describe('component counts match the tree', () => {
       skills: TREE.skills,
       securityHooks: pre.size,
       enforcementHooks: enforce,
-      governanceHooks: TREE.hooks - pre.size - enforce,
+      requiredOutputGate: required,
+      governanceHooks: TREE.hooks - pre.size - enforce - required,
       mcpTools: NODE_TOOLS.length,
     });
   });
 
-  it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s: its count command prints the tree counts', (f) => {
-    expect(runCount(f)).toEqual(TREE);
+  it('commands/status-enhanced.md: its count command prints the tree counts', () => {
+    expect(runCount('commands/status-enhanced.md')).toEqual(TREE);
+  });
+
+  it('commands/status.md: the computed report counts the tree (scripts/status-report.mjs)', async () => {
+    const { tooling } = await import('../../../scripts/status-report.mjs');
+    const { skills, ...rest } = TREE;
+    expect(skills).toBeGreaterThan(0);
+    expect(tooling()).toEqual(rest);
   });
 
   it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s hard-codes no component count', (f) => {

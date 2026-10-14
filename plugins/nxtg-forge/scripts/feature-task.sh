@@ -18,7 +18,10 @@
 # .forge/tasks/ are never touched.
 #
 # Output: key=value lines on stdout.
-#   status=created   title=…  spec=…  [plan_backup=…]   (exit 0)
+#   status=created   title=…  spec=…  [task_id=T-NNN]  [plan_backup=…]   (exit 0)
+#   task_id is printed when exactly one new task file appeared under .forge/tasks/.
+# Run from anywhere in the project: the .forge/ it uses is found as in project_root below. Paths it
+# prints (spec, plan_backup) are relative to that project root, which it prints as project=.
 #   status=no-forge                     (exit 10)  forge is not installed
 #   status=no-forge-dir                 (exit 11)  `forge init` has not run here
 # Any other exit is an error; forge's output is on stderr.
@@ -46,10 +49,23 @@ if ! FORGE="$(find_forge)"; then
   echo "status=no-forge"
   exit 10
 fi
-if [[ ! -d .forge ]]; then
+# The project is the session's (CLAUDE_PROJECT_DIR) when it has a .forge/, else the nearest directory at or
+# above the shell's cwd that has one: the model may have run `cd src` earlier in the session. The same rule
+# as the Stop gate (scripts/required-output.mjs projectRoot).
+project_root() {
+  if [[ -n "${CLAUDE_PROJECT_DIR:-}" && -d "$CLAUDE_PROJECT_DIR/.forge" ]]; then printf '%s\n' "$CLAUDE_PROJECT_DIR"; return 0; fi
+  local d="$PWD"
+  while :; do
+    [[ -d "$d/.forge" ]] && { printf '%s\n' "$d"; return 0; }
+    [[ "$d" == "/" || -z "$d" ]] && return 1
+    d="$(dirname "$d")"
+  done
+}
+if ! ROOT="$(project_root)"; then
   echo "status=no-forge-dir"
   exit 11
 fi
+cd "$ROOT"
 
 mkdir -p .forge/feature-requests
 last=0
@@ -68,6 +84,8 @@ if [[ -s "$PLAN" ]]; then
   BACKUP="${SPEC%.md}.plan-before.md"
   cp -p "$PLAN" "$BACKUP"
 fi
+
+tasks_before="$(ls .forge/tasks/ 2>/dev/null | grep -E '^T-[0-9]+\.json$' | sort || true)"
 
 if ! out="$("$FORGE" plan --generate --spec "$SPEC" --project "$PWD" </dev/null 2>&1)"; then
   [[ -n "$BACKUP" ]] && cp -p "$BACKUP" "$PLAN"
@@ -88,7 +106,10 @@ if [[ -n "$BACKUP" ]]; then
 fi
 
 echo "status=created"
+echo "project=$ROOT"
 echo "title=$TITLE"
 echo "spec=$SPEC"
+new_tasks="$(comm -13 <(printf '%s\n' "$tasks_before") <(ls .forge/tasks/ 2>/dev/null | grep -E '^T-[0-9]+\.json$' | sort || true) | grep -v '^$' || true)"
+if [[ -n "$new_tasks" && "$(printf '%s\n' "$new_tasks" | wc -l)" -eq 1 ]]; then echo "task_id=${new_tasks%.json}"; fi
 [[ -n "$BACKUP" ]] && echo "plan_backup=$BACKUP"
 exit 0

@@ -12,7 +12,8 @@ import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import open from "open";
+// `open` is imported where it is used (generateDashboard), so the scoring functions load
+// without node_modules: /nxtg-forge:status imports getHealthScore from its `!` step.
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -26,7 +27,9 @@ import open from "open";
  */
 export function run(cmd, opts = {}) {
   try {
-    return execSync(cmd, { encoding: "utf-8", timeout: 15000, ...opts }).trim();
+    // stderr is captured, not inherited: /nxtg-forge:status runs these from a `!` step, whose output
+    // includes stderr, so a git "not a repository" message would land in the command body.
+    return execSync(cmd, { encoding: "utf-8", timeout: 15000, stdio: ["pipe", "pipe", "pipe"], ...opts }).trim();
   } catch (err) {
     console.error('[governance-mcp] run() failed:', cmd, err.message || err);
     return null;
@@ -1085,6 +1088,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
   // DISPLAY and WSL_INTEROP env vars are not forwarded. Try two fallbacks before giving up.
   let opened = false;
   try {
+    const { default: open } = await import("open");
     await open(isWSL ? browserUrl : tmpPath);
     opened = true;
   } catch (err) {

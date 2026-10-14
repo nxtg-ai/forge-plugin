@@ -1,0 +1,107 @@
+{
+  "_source": "gather() on python-humanize/humanize at 785e5dc (the alpha-run fixture project), clean checkout, forge 1.6.3 on PATH, not initialized; recorded 2026-10-13 by forge-plugin. stage and tooling are filled in by the test from the plugin tree.",
+  "humanize_785e5dc": {
+    "project": {
+      "name": "humanize",
+      "version": null
+    },
+    "git": {
+      "isRepo": true,
+      "branch": null,
+      "hash": "785e5dc",
+      "staged": 0,
+      "modified": 0,
+      "untracked": 0,
+      "commits": [
+        {
+          "hash": "785e5dc",
+          "message": "[pre-commit.ci] pre-commit autoupdate (#444)"
+        },
+        {
+          "hash": "6ed367f",
+          "message": "Drop support for EOL Python 3.10 (#440)"
+        },
+        {
+          "hash": "8bf85bb",
+          "message": "Update config"
+        },
+        {
+          "hash": "4d13dd5",
+          "message": "Test PyPy3.12"
+        },
+        {
+          "hash": "71c730d",
+          "message": "Drop support for EOL Python 3.10"
+        }
+      ]
+    },
+    "health": {
+      "score": 60,
+      "grade": "D",
+      "maxScore": 100,
+      "checks": [
+        {
+          "name": "Governance",
+          "status": "fail",
+          "points": 0,
+          "note": "Not initialized"
+        },
+        {
+          "name": "Git Clean",
+          "status": "pass",
+          "points": 10
+        },
+        {
+          "name": "Test Coverage",
+          "status": "pass",
+          "points": 20,
+          "note": "68 tests across 13 files (5.2/file)"
+        },
+        {
+          "name": "README",
+          "status": "pass",
+          "points": 10
+        },
+        {
+          "name": "CLAUDE.md",
+          "status": "warn",
+          "points": 0,
+          "note": "Recommended for AI-assisted development"
+        },
+        {
+          "name": "Type Safety",
+          "status": "info",
+          "points": 0,
+          "note": "no type config"
+        },
+        {
+          "name": "File Size",
+          "status": "warn",
+          "points": 5,
+          "note": "3 files over 500 lines"
+        },
+        {
+          "name": "Security",
+          "status": "pass",
+          "points": 15,
+          "note": "clean"
+        }
+      ]
+    },
+    "tests": {
+      "testFiles": 6,
+      "testCases": 68,
+      "runner": "pytest",
+      "coverage": "20/20 (68 tests across 13 files (5.2/file))"
+    },
+    "governance": {
+      "initialized": false,
+      "vision": null,
+      "status": null
+    },
+    "orchestrator": {
+      "state": "not_initialized",
+      "line": "◐ **Connected; not initialized here** — run `forge init` in this project"
+    }
+  }
+}

@@ -63,7 +63,8 @@ export function probe({ root, launcher, timeoutMs = Number(process.env.FORGE_ORC
       clearTimeout(timer);
       child.kill('SIGKILL');
       const list = replies.get(2)?.result?.tools;
-      done({ tools: Array.isArray(list) ? list.map((t) => t?.name) : null, getState: toolResult(replies.get(3)) });
+      const info = replies.get(1)?.result?.serverInfo;
+      done({ tools: Array.isArray(list) ? list.map((t) => t?.name) : null, getState: toolResult(replies.get(3)), server: info ? { name: String(info.name ?? ''), version: String(info.version ?? '') } : null });
     };
     const timer = setTimeout(finish, timeoutMs);
     const send = (m) => { try { child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', ...m })}\n`); } catch { /* exited */ } };
