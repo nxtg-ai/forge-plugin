@@ -80,7 +80,7 @@ Governance hooks run automatically. Before every task, pre-task hooks validate t
 
 ## Upgrade Path
 
-For multi-tool orchestration across Claude Code, Codex CLI, and Gemini CLI (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator:
+For multi-tool orchestration (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator. Today it is for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27):
 
 ```bash
 curl -fsSL https://forge.nxtg.ai/install.sh | sh
