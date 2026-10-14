@@ -57,7 +57,8 @@ const GOV_SENTINEL = {
 };
 
 const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", ".."); // -> governance-mcp/
-const MCP_JSON = join(SERVER_DIR, "..", "..", ".mcp.json");                    // plugins/nxtg-forge/.mcp.json
+// orchestrator-mcp is registered by the companion plugin since DIRECTIVE-NXTG-20261014-12.
+const COMPANION_ROOT = join(SERVER_DIR, "..", "..", "..", "nxtg-forge-orchestrator");
 const PKG = JSON.parse(readFileSync(join(SERVER_DIR, "package.json"), "utf8")); // governance-mcp version
 // forge-ui repo: env override, else the sibling checkout (…/NXTG-Forge/forge-ui). CI must provide one.
 const FORGE_UI_DIR = process.env.FORGE_UI_DIR || join(SERVER_DIR, "..", "..", "..", "..", "..", "forge-ui");
@@ -123,11 +124,12 @@ const canonicalProjectName = (fixture) => JSON.parse(readFileSync(join(fixture, 
 // orchestrator-mcp (Rust `forge mcp`), so the L3 topology has all THREE products concurrently live
 // (regate-13 C1: the earlier build never started governance-mcp).
 function bindMcpServer(key, fixture) {
-  const spec = JSON.parse(readFileSync(MCP_JSON, "utf8")).mcpServers[key];
+  const root = key === "orchestrator-mcp" ? COMPANION_ROOT : join(SERVER_DIR, "..", "..");
+  const spec = JSON.parse(readFileSync(join(root, ".mcp.json"), "utf8")).mcpServers[key];
   const env = {};
   for (const [k, v] of Object.entries(spec.env || {})) env[k] = expandPlaceholders(v, fixture);
   env.PATH = process.env.PATH;
-  const args = (spec.args || []).map((a) => expandPlaceholders(a, fixture));
+  const args = (spec.args || []).map((a) => expandPlaceholders(a.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, root), fixture));
   const cwd = env.FORGE_PROJECT_ROOT || fixture;
   return new StdioClientTransport({ command: spec.command, args, env, cwd, stderr: "ignore" });
 }

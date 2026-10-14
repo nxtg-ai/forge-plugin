@@ -12,15 +12,19 @@ const REPO = join(import.meta.dirname, "../../../../../"); // -> forge-plugin/
 const rd = (p) => JSON.parse(readFileSync(p, "utf8"));
 
 describe("version-surface agreement", () => {
-  it("all 4 version surfaces + lockfile + MCP handshake agree", () => {
+  it("all version surfaces (both plugin manifests) + lockfile + MCP handshake agree", () => {
     const surfaces = {
       "root .claude-plugin/plugin.json": rd(join(REPO, ".claude-plugin/plugin.json")).version,
       "plugin manifest": rd(join(REPO, "plugins/nxtg-forge/.claude-plugin/plugin.json")).version,
-      "marketplace.json": rd(join(REPO, ".claude-plugin/marketplace.json")).plugins[0].version,
+      "marketplace.json": rd(join(REPO, ".claude-plugin/marketplace.json")).plugins.find((p) => p.name === "nxtg-forge").version,
+      "companion manifest": rd(join(REPO, "plugins/nxtg-forge-orchestrator/.claude-plugin/plugin.json")).version,
       "governance-mcp/package.json": rd(join(import.meta.dirname, "../package.json")).version,
       "package-lock.json": rd(join(import.meta.dirname, "../package-lock.json")).version,
       "mcp handshake (serverVersion)": serverVersion,
     };
+    // The companion's marketplace entry is added by the release's pin PR; from then on it must agree too.
+    const companion = rd(join(REPO, ".claude-plugin/marketplace.json")).plugins.find((p) => p.name === "nxtg-forge-orchestrator");
+    if (companion) surfaces["marketplace.json companion"] = companion.version;
     const r = checkVersionsAgree(surfaces);
     expect(r.ok, r.problems.join("; ")).toBe(true);
   });

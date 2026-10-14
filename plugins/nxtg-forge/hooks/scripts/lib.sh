@@ -49,6 +49,20 @@ export NC='\033[0m' # No Color
 # ===================================================================
 
 # Check if hooks are enabled in config
+# Is the companion plugin nxtg-forge-orchestrator installed? It registers orchestrator-mcp
+# (DIRECTIVE-NXTG-20261014-12). Claude Code lists installed plugins in <config>/plugins/installed_plugins.json,
+# and an installed plugin's root is <config>/plugins/cache/<marketplace>/<plugin>/<version>, so the file is
+# found from this plugin's own root. A --plugin-dir checkout has no cache dir: read $CLAUDE_CONFIG_DIR, or
+# ~/.claude, instead. Returns 0 when it is listed.
+forge_companion_installed() {
+    local root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)}"
+    local list="${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/installed_plugins.json"
+    if [[ "$root" == */plugins/cache/*/*/* ]]; then
+        list="${root%/cache/*}/installed_plugins.json"
+    fi
+    [ -f "$list" ] && grep -q '"nxtg-forge-orchestrator@' "$list" 2>/dev/null
+}
+
 hooks_enabled() {
     if [ ! -f "$CONFIG_FILE" ]; then
         echo "true"  # Default to enabled if no config

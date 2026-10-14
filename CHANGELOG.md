@@ -8,6 +8,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [Unreleased]
+
+### Changed (breaking for anyone who calls orchestrator tools by full name)
+
+- **`orchestrator-mcp` moves to a companion plugin, `nxtg-forge-orchestrator`, in the same marketplace** (DIRECTIVE-NXTG-20261014-12, EMMA-SOUL design C). `nxtg-forge` no longer registers it, so a user without the Forge orchestrator sees no `orchestrator-mcp` entry at all, rather than a connected stand-in. The companion carries today's launcher unchanged: `forge mcp` when the `forge` binary is found, the stand-in that names the installer when it is not (never a failed server), and `FORGE_PROJECT_ROOT=${CLAUDE_PROJECT_DIR}`. Its launcher, `find-forge.sh` and the stand-in are byte copies of `nxtg-forge`'s, and a test keeps them equal. `install.sh` (forge-orchestrator) installs the companion when it finds the `claude` CLI.
+- The orchestrator tools' full names change from `mcp__plugin_nxtg-forge_orchestrator-mcp__*` to `mcp__plugin_nxtg-forge-orchestrator_orchestrator-mcp__*`. Nothing in the plugin names them in full: the commands use the short names, and the `/nxtg-forge:feature` Stop gate matches the suffix.
+- The session hook still tells Claude, once per session, that the orchestrator is optional and the one command that adds it. With `forge` absent: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`. With `forge` installed but the companion not: `claude plugin install nxtg-forge-orchestrator@nxtg-forge`. With both: nothing. The hook reads Claude Code's `installed_plugins.json`. Like the other session lines, it is silenced by `FORGE_QUIET_HOOKS=1` and by hooks disabled in `.claude/config.json`.
+
 ## [3.13.1] — 2026-10-14
 
 Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools; no breaking changes.
