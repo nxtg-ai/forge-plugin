@@ -3,7 +3,7 @@
 // never exit: Claude Code caches a failed start for 15 minutes.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync, chmodSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync, chmodSync, openSync, writeSync, closeSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,7 +31,7 @@ beforeAll(() => {
   bin = join(root, 'bin');
   mkdirSync(home);
   mkdirSync(bin);
-  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm']) symlinkSync(which(tool), join(bin, tool));
+  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm', 'sleep']) symlinkSync(which(tool), join(bin, tool));
 });
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
@@ -208,7 +208,8 @@ describe('semgrep-mcp launcher with an upstream that exits early', () => {
     const r = await drive(env, [{ send: [DISCOVER, INIT] }, { lines: 2 }, { send: [LIST] }, { lines: 3 }, { end: true }]);
     expect(r.status).toBe(0);
     expect(r.lines.map((l) => l.id)).toEqual(['server-discover-probe-1', 0, 'a1']);
-    expect(r.lines[1].result.instructions).toContain('exit code 1');
+    expect(r.lines[1].result.instructions).toContain('semgrep-mcp exited at startup');
+    expect(r.stderr).toContain('[semgrep-mcp] upstream exited with code 1');
     expect(r.lines[2].result.tools).toEqual([]);
   });
 
@@ -251,6 +252,122 @@ describe('semgrep-mcp launcher with an upstream that exits early', () => {
     expect(r.lines).toHaveLength(2);
     expect(r.lines[1].result.serverInfo.name).toBe('short-lived');
     expect(r.stderr).not.toContain('[semgrep-mcp] not started');
+  });
+
+  // PR #92 review M-1: SIGTERM to the launcher must end it and every process under it, whether
+  // the upstream answered (relay phase) or the stand-in is serving. Claude Code may stop a
+  // server this way without closing its stdin first.
+  const liveProcs = () => {
+    const rows = spawnSync('ps', ['-e', '-o', 'pid=,ppid=,stat='], { encoding: 'utf8' }).stdout;
+    return rows
+      .split('\n')
+      .map((l) => l.trim().split(/\s+/))
+      .filter((f) => f.length === 3 && !f[2].startsWith('Z'))
+      .map(([pid, ppid]) => ({ pid: Number(pid), ppid: Number(ppid) }));
+  };
+  const treeOf = (root) => {
+    const procs = liveProcs();
+    const tree = new Set([root]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const p of procs) if (tree.has(p.ppid) && !tree.has(p.pid)) (tree.add(p.pid), (grew = true));
+    }
+    return [...tree];
+  };
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function sigtermLeavesNothing(env) {
+    // stdin is a FIFO this test holds open (O_RDWR), so it stays open after the launcher dies,
+    // as Claude Code's pipe would; node would close a 'pipe' stdin on exit and hide orphans.
+    const fifo = join(mkdtempSync(join(root, 'fifo-')), 'stdin');
+    expect(spawnSync('mkfifo', [fifo]).status).toBe(0);
+    const fd = openSync(fifo, 'r+');
+    const child = spawn(which('bash'), [SEMGREP], { env: { HOME: home, ...env }, stdio: [fd, 'pipe', 'pipe'] });
+    let out = '';
+    child.stdout.on('data', (d) => (out += d));
+    writeSync(fd, [DISCOVER, INIT].join('\n') + '\n');
+    for (let i = 0; i < 50 && out.split('\n').filter(Boolean).length < 2; i++) await pause(100);
+    expect(out.split('\n').filter(Boolean)).toHaveLength(2); // the phase under test is reached
+    await pause(300);
+    const tree = treeOf(child.pid);
+    expect(tree.length).toBeGreaterThan(1);
+    const closed = new Promise((r) => child.on('close', r));
+    child.kill('SIGTERM');
+    await Promise.race([closed, pause(2000)]);
+    await pause(200);
+    const alive = new Set(liveProcs().map((p) => p.pid));
+    const survivors = tree.filter((pid) => alive.has(pid));
+    for (const pid of survivors) {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch {
+        /* already gone */
+      }
+    }
+    closeSync(fd);
+    return { tree, survivors, exited: child.exitCode !== null || child.signalCode !== null };
+  }
+
+  it('SIGTERM in the relay phase (upstream answered and keeps running) ends the launcher and all its children', async () => {
+    const env = fake(
+      'uvx',
+      [
+        'IFS= read -r l',
+        `echo '{"jsonrpc":"2.0","id":"server-discover-probe-1","error":{"code":-32601,"message":"nope"}}'`,
+        'IFS= read -r l',
+        `echo '{"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{},"serverInfo":{"name":"hang-upstream","version":"1"}}}'`,
+        `${SLEEP} 600`,
+      ].join('\n'),
+    );
+    const r = await sigtermLeavesNothing(env);
+    expect(r.exited).toBe(true);
+    expect(r.survivors).toEqual([]);
+  });
+
+  it('SIGTERM in the stand-in phase (upstream crashed) ends the launcher and all its children', async () => {
+    const r = await sigtermLeavesNothing(crashingUvx());
+    expect(r.exited).toBe(true);
+    expect(r.survivors).toEqual([]);
+  });
+});
+
+// PR #92 review L-1 (made blocking): .mcp.json runs plain `bash`, which on macOS is /bin/bash
+// 3.2: no coproc, no {fd} allocation, no fractional `read -t`. The same portable checks run
+// with this machine's bash and, when the official `bash:3.2` image is present, under real bash
+// 3.2 in docker (pull it with `docker pull bash:3.2`; CI skips it when the image is absent).
+describe('semgrep-mcp launcher, portable checks (tests/fixtures/semgrep-guard-check.sh)', () => {
+  const CHECK = join(SERVERS, 'governance-mcp', 'tests', 'fixtures', 'semgrep-guard-check.sh');
+  const hasBash32 =
+    spawnSync('docker', ['image', 'inspect', 'bash:3.2'], { stdio: 'ignore', timeout: 10000 }).status === 0;
+  const expectAllPass = (r) => {
+    expect(r.stdout).toMatch(/^bash \d/m);
+    for (const name of [
+      'crash-stdin-open',
+      'crash-stdin-closed',
+      'slow-crash-replay',
+      'green-path-relay',
+      'sigterm-green-phase',
+      'sigterm-standin-phase',
+    ]) {
+      expect(r.stdout).toMatch(new RegExp(`^PASS ${name}`, 'm'));
+    }
+    expect(r.stdout).not.toMatch(/^FAIL/m);
+    expect(r.status).toBe(0);
+  };
+
+  it("pass under this machine's bash", () => {
+    const r = spawnSync(which('bash'), [CHECK, SEMGREP, STANDIN], { encoding: 'utf8', timeout: 60000 });
+    expectAllPass(r);
+  });
+
+  it.skipIf(!hasBash32)('pass under real bash 3.2 (docker image bash:3.2, stock macOS /bin/bash)', () => {
+    const r = spawnSync(
+      'docker',
+      ['run', '--rm', '-v', `${SERVERS}:${SERVERS}:ro`, 'bash:3.2', 'bash', CHECK, SEMGREP, STANDIN],
+      { encoding: 'utf8', timeout: 90000 },
+    );
+    expect(r.stdout).toMatch(/^bash 3\.2\./m);
+    expectAllPass(r);
   });
 });
 

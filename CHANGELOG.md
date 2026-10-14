@@ -15,7 +15,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 - **semgrep-mcp no longer shows as a failed server when uv is installed** (DIRECTIVE-NXTG-20261014-11 part 4).
   - The published `semgrep-mcp` (0.9.0) exits 1 at import (`ImportError: cannot import name 'eval_type_backport'` from pydantic) before it answers, so `exec uvx semgrep-mcp` left Claude Code with "MCP server failed", cached for 15 minutes.
   - `servers/semgrep-mcp/start.sh` now runs the upstream behind a pure-bash guard. It buffers what the client sends and forwards it. If the upstream exits before its first stdout line, the buffer is replayed to the stand-in, which answers with no tools and says how to see the error (`uvx --refresh semgrep-mcp`). Once the upstream has answered, both directions are relayed unchanged. The same guard covers a `semgrep-mcp` on the PATH.
-  - On bash older than 4.1 (macOS `/bin/bash` 3.2) the guard needs `coproc`, so the launcher runs the upstream unguarded as before.
+  - The guard is written for bash 3.2, the stock macOS `/bin/bash` that `.mcp.json`'s plain `bash` runs: no `coproc`, no `{fd}` allocation, no fractional `read -t`. Its parts signal each other, and the session runs as its own process group. Checked under the official `bash:3.2` image and bash 5.1.
+  - SIGTERM to the launcher ends it and every process under it, both while relaying a running upstream and while the stand-in serves (PR #92 review M-1).
   - No version pin ships: `--with 'pydantic<2.12'` gets past the import, but the server then exits in its startup unless a `semgrep` CLI is on the PATH.
 
 ## [3.13.1] — 2026-10-14

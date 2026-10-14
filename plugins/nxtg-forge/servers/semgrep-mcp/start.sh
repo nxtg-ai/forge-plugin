@@ -10,109 +10,111 @@
 # to the stand-in and the rest of stdin follows it. Once the upstream has answered, both
 # directions are relayed unchanged until either side closes.
 #
-# Pure bash on purpose: a machine with uv need not have node or a system python. `read` on a
-# pipe takes one byte at a time, so nothing is read past what is handed on.
+# Written for bash 3.2, because .mcp.json runs plain `bash` and that is /bin/bash 3.2 on macOS:
+# no coproc, no {fd} allocation, no fractional `read -t`. The parts talk through signals:
+#
+#   launcher (this shell, $$): waits; relays USR1/USR2 to the session; on TERM/INT/HUP it kills
+#       the session's whole process group, so nothing outlives it.
+#   session (a background job, its own process group under `set -m`): reads stdin line by line,
+#       keeps a copy until the upstream answers, writes each line to the upstream on fd 3.
+#   watcher (reads the upstream's stdout): first full line -> prints it, USR2 ("answered"), then
+#       copies the rest; stdout closed with no line -> USR1 ("fall back"); upstream done -> HUP.
+#
+# `read` on a pipe takes one byte at a time, so nothing is read past what is handed on, and a
+# trapped signal runs its trap while `read` waits (checked on bash 3.2.57 and 5.1).
 
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 STANDIN="$HERE/../lib/unavailable-mcp.sh"
 
-# guard <retry-hint> <command...>
-guard() {
+# watch: stdin = the upstream's stdout. Runs in a subshell, where $$ is still the launcher.
+watch() {
+  local line
+  if IFS= read -r line; then
+    printf '%s\n' "$line"
+    kill -USR2 $$ 2>/dev/null
+    cat
+    kill -HUP $$ 2>/dev/null
+  else
+    kill -USR1 $$ 2>/dev/null
+  fi
+}
+
+# session <retry-hint> <command...>: the background job; stdin = the client's stdin.
+session() {
   local hint="$1"
   shift
-  # coproc and {fd} redirections need bash 4.1 (macOS /bin/bash is 3.2): run unguarded there.
-  if ((BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 1))); then
-    exec "$@"
-  fi
+  local -a buf
+  buf=()
+  local line answered=0 in_open=1
+  exec 5<&-
 
-  local in_fd up_out up_in fd up_pid
-  exec {in_fd}<&0
-  coproc UPSTREAM { exec "$@"; }
-  up_pid=$UPSTREAM_PID
-  # Private copies: bash closes a coproc's own descriptors when it reaps the process.
-  exec {up_out}<&"${UPSTREAM[0]}" {up_in}>&"${UPSTREAM[1]}"
-  fd=${UPSTREAM[0]}; exec {fd}<&-
-  fd=${UPSTREAM[1]}; exec {fd}>&-
+  on_answer() {
+    answered=1
+    buf=()
+  }
+  on_fall_back() {
+    trap - PIPE USR1 USR2
+    exec 3>&-
+    echo "[semgrep-mcp] upstream exited before answering; serving the stand-in" >&2
+    {
+      if ((${#buf[@]})); then printf '%s\n' "${buf[@]}"; fi
+      if ((in_open)); then cat; fi
+    } | bash "$STANDIN" semgrep-mcp \
+      "semgrep-mcp exited at startup before it answered, so Semgrep tools are off for this session; the published package may be broken. To see the error, run: $hint. Once it starts, open a new Claude Code session."
+    exit 0
+  }
+  trap on_answer USR2
+  trap on_fall_back USR1
 
-  local fwd=""
-  trap 'kill "$up_pid" ${fwd:+"$fwd"} 2>/dev/null; exit 143' TERM INT HUP
-  trap '' PIPE # a write to an upstream that already died must fail, not kill the launcher
+  exec 3> >({ "$@"; echo "[semgrep-mcp] upstream exited with code $?" >&2; } | watch)
+  trap '' PIPE # a write to an upstream that already died must fail, not end the session
 
-  local -a buf=()
-  local in_acc="" up_acc="" part rc in_open=1 answered=0 wait_s
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    ((answered)) || buf+=("$line")
+    printf '%s\n' "$line" >&3 2>/dev/null
+  done
+  in_open=0
+  exec 3>&- # the upstream sees EOF
+  # Stay until the watcher decides: a fall back replays the buffer and exits; after an answer the
+  # launcher stops the session once the upstream is done. `wait` returns as soon as a trap fires.
   while :; do
-    if ((in_open)); then
-      if IFS= read -r -t 0.05 -u "$in_fd" part; then
-        buf+=("$in_acc$part")
-        printf '%s\n' "$in_acc$part" >&"$up_in" 2>/dev/null
-        in_acc=""
-      else
-        rc=$?
-        in_acc+="$part" # a timeout keeps the partial line
-        if ((rc <= 128)); then # stdin closed
-          in_open=0
-          if [[ -n "$in_acc" ]]; then
-            buf+=("$in_acc")
-            printf '%s\n' "$in_acc" >&"$up_in" 2>/dev/null
-            in_acc=""
-          fi
-          exec {up_in}>&-
-        fi
-      fi
-    fi
-    wait_s=0.05
-    ((in_open)) || wait_s=1
-    if IFS= read -r -t "$wait_s" -u "$up_out" part; then
-      printf '%s\n' "$up_acc$part"
-      answered=1
-      break
-    fi
-    rc=$?
-    up_acc+="$part"
-    ((rc <= 128)) && break # upstream closed its stdout without a full line
+    sleep 1 &
+    wait $! 2>/dev/null
   done
+}
 
-  if ((answered)); then
-    [[ -n "$in_acc" ]] && printf '%s' "$in_acc" >&"$up_in" 2>/dev/null # still under the PIPE ignore
-    trap - PIPE
-    if ((in_open)); then
-      cat <&"$in_fd" >&"$up_in" &
-      fwd=$!
-      exec {up_in}>&-
+# guard <retry-hint> <command...>
+guard() {
+  # Job control gives the session its own process group, so a signal reaches every process in
+  # it. Skipped on a terminal, where a background job reading the terminal would be stopped.
+  [ -t 0 ] || set -m
+  exec 5<&0
+  session_pid=""
+  pending=""
+  relay() {
+    if [ -n "$session_pid" ]; then kill -"$1" "$session_pid" 2>/dev/null; else pending="$pending $1"; fi
+  }
+  stop() {
+    trap '' TERM INT HUP USR1 USR2
+    if [ -n "$session_pid" ]; then
+      kill -TERM -- "-$session_pid" 2>/dev/null || kill -TERM "$session_pid" 2>/dev/null
     fi
-    exec {in_fd}<&-
-    cat <&"$up_out"
-    wait "$up_pid"
-    rc=$?
-    [[ -n "$fwd" ]] && kill "$fwd" 2>/dev/null
-    exit "$rc"
-  fi
+    exit "$1"
+  }
+  trap 'relay USR1' USR1
+  trap 'relay USR2' USR2
+  trap 'stop 0' HUP # the upstream finished after answering: the session is over
+  trap 'stop 143' TERM
+  trap 'stop 130' INT
 
-  # The upstream exited (or closed stdout) before answering: the stand-in takes over.
-  trap - PIPE
-  exec {up_out}<&-
-  ((in_open)) && exec {up_in}>&-
-  # Give it up to 2 s to finish exiting (uvx outlives its python by a moment), so the exit code
-  # in the reason is the real one; then stop it. `read <> <(:)` is a pure-bash sleep.
-  local i
-  for ((i = 0; i < 40; i++)); do
-    kill -0 "$up_pid" 2>/dev/null || break
-    read -r -t 0.05 part <> <(:) 2>/dev/null
+  (session "$@") <&5 &
+  session_pid=$!
+  exec 5<&-
+  for sig in $pending; do relay "$sig"; done
+  while kill -0 "$session_pid" 2>/dev/null; do
+    wait "$session_pid"
   done
-  kill "$up_pid" 2>/dev/null
-  wait "$up_pid"
-  rc=$?
-  trap - TERM INT HUP
-  echo "[semgrep-mcp] upstream exited with code $rc before answering; serving the stand-in" >&2
-  {
-    ((${#buf[@]})) && printf '%s\n' "${buf[@]}"
-    if ((in_open)); then
-      printf '%s' "$in_acc"
-      cat <&"$in_fd"
-    fi
-  } | bash "$STANDIN" semgrep-mcp \
-    "semgrep-mcp exited at startup (exit code $rc) before it answered, so Semgrep tools are off for this session; the published package may be broken. To see the error, run: $hint. Once it starts, open a new Claude Code session."
   exit 0
 }
 
