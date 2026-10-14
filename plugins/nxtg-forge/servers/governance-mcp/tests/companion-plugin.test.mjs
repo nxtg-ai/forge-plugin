@@ -48,10 +48,12 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
     expect(rd(join(COMPANION, '.mcp.json'))).toEqual({ mcpServers: { 'orchestrator-mcp': ORCH_ENTRY } });
   });
 
-  it('its launcher, find-forge and stand-in are byte copies of nxtg-forge\'s, and executable', () => {
+  it('its find-forge and stand-in are byte copies of nxtg-forge\'s, and every launcher file is executable', () => {
     // Plugins are cached separately and cannot share files, so the companion vendors them; this keeps them equal.
-    for (const f of ['servers/orchestrator-mcp/start.sh', 'servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
+    for (const f of ['servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
       expect(sha(join(COMPANION, f)), f).toBe(sha(join(PLUGIN, f)));
+    }
+    for (const f of ['servers/orchestrator-mcp/start.sh', 'servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
       expect(statSync(join(COMPANION, f)).mode & 0o111, f).not.toBe(0);
     }
   });
@@ -70,6 +72,56 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
+  });
+});
+
+// C6 / DoD (b): Claude Code sets ${CLAUDE_PROJECT_DIR} to the directory the session started in, which can be a
+// subdirectory of the project `forge init` set up (measured live, CC 2.1.299: FORGE_PROJECT_ROOT=<proj>/sub).
+// forge mcp reads FORGE_PROJECT_ROOT and does not walk up (forge 1.5.2 and 1.6.3: "Forge is not initialized"),
+// so the launcher binds the nearest ancestor holding .forge/state.json, never $HOME or above.
+describe('companion launcher binds the Forge project root, not the session subdirectory', () => {
+  let root, home, fake, log;
+  beforeAll(() => {
+    root = mkdtempSync(join(tmpdir(), 'forge-bind-'));
+    home = join(root, 'home');
+    log = join(root, 'forge.log');
+    fake = join(root, 'forge');
+    writeFileSync(fake, `#!/usr/bin/env bash\necho "root=$FORGE_PROJECT_ROOT cwd=$(pwd)" > ${JSON.stringify(log)}\n`);
+    chmodSync(fake, 0o755);
+    mkdirSync(join(home, '.forge'), { recursive: true }); // forge-ui's global ~/.forge: projects.json, no state.json
+    writeFileSync(join(home, '.forge', 'projects.json'), '{}');
+    mkdirSync(join(home, 'proj', '.forge'), { recursive: true });
+    writeFileSync(join(home, 'proj', '.forge', 'state.json'), '{}');
+    mkdirSync(join(home, 'proj', 'src', 'deep'), { recursive: true });
+    mkdirSync(join(home, 'loose', 'sub'), { recursive: true });
+  });
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  const bind = (start, envRoot = start) => {
+    rmSync(log, { force: true });
+    const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
+      cwd: start, input: '', encoding: 'utf8', timeout: 10000,
+      env: { HOME: home, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }) },
+    });
+    expect(r.status).toBe(0);
+    return readFileSync(log, 'utf8').trim();
+  };
+
+  it('a session started two levels down binds the project root', () => {
+    const p = join(home, 'proj');
+    expect(bind(join(p, 'src', 'deep'))).toBe(`root=${p} cwd=${p}`);
+  });
+  it('a session started at the root binds the root', () => {
+    const p = join(home, 'proj');
+    expect(bind(p)).toBe(`root=${p} cwd=${p}`);
+  });
+  it('no Forge project above: the session directory stands, and ~/.forge (forge-ui\'s global dir) is never taken for one', () => {
+    const d = join(home, 'loose', 'sub');
+    expect(bind(d)).toBe(`root=${d} cwd=${d}`);
+  });
+  it('FORGE_PROJECT_ROOT unset: starts from the working directory', () => {
+    const p = join(home, 'proj');
+    expect(bind(join(p, 'src'), null)).toBe(`root=${p} cwd=${p}`);
   });
 });
 
