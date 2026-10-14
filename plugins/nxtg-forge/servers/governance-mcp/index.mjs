@@ -3,14 +3,14 @@
  *
  * MCP server wiring only. All tool implementations live in tools.mjs.
  * Provides project governance tools for Claude Code via MCP protocol.
+ *
+ * No runtime dependencies (DIRECTIVE-NXTG-20261014-01): the stdio JSON-RPC loop below replaces the MCP
+ * SDK, so the first launch after a plugin install needs no `npm install`. Claude Code (2.1.299) lists a
+ * plugin MCP server as `pending`, with none of its tools, when it has not answered initialize within about
+ * 1.5-2 s of launch; a first-run install of the SDK's 106 packages missed that on a cold npm cache. The
+ * SDK stays a devDependency: tests/mcp-conformance.test.mjs drives this loop with the SDK's own client.
  */
-
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { createInterface } from "node:readline";
 
 import {
   getGovernanceState,
@@ -103,19 +103,6 @@ export const TOOLS = [
 ];
 
 // ---------------------------------------------------------------------------
-// MCP Server
-// ---------------------------------------------------------------------------
-
-const server = new Server(
-  { name: "forge-governance", version: serverVersion },
-  { capabilities: { tools: {} } }
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: TOOLS,
-}));
-
-// ---------------------------------------------------------------------------
 // Tool dispatch (exported for testing — called by the request handler)
 // ---------------------------------------------------------------------------
 
@@ -142,31 +129,92 @@ export async function dispatchToolCall(name) {
   }
 }
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name } = request.params;
+// ---------------------------------------------------------------------------
+// MCP over stdio: newline-delimited JSON-RPC 2.0, the subset a tools-only server needs
+// ---------------------------------------------------------------------------
+
+/** Protocol versions this server speaks: the MCP SDK's SUPPORTED_PROTOCOL_VERSIONS (tools-only, identical across
+ * them). tests/mcp-conformance.test.mjs fails when the SDK devDependency adds one, so this list is updated with it. */
+export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
+const SERVER_INFO = { name: "forge-governance", version: serverVersion };
+
+/** The result of one tools/call, in MCP's content shape. */
+export async function callTool(name) {
   try {
     const result = await dispatchToolCall(name);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   } catch (error) {
     const isUnknown = error.message.startsWith("Unknown tool:");
     return {
-      content: [
-        {
-          type: "text",
-          text: isUnknown
-            ? error.message
-            : `Error in ${name}: ${error.message}\n${error.stack}`,
-        },
-      ],
+      content: [{ type: "text", text: isUnknown ? error.message : `Error in ${name}: ${error.message}\n${error.stack}` }],
       isError: true,
     };
   }
-});
+}
+
+/**
+ * Handle one JSON-RPC message. Returns the reply object, or null when nothing is sent back
+ * (a notification, or a response from the client). Exported for tests.
+ */
+export async function handleMessage(msg) {
+  if (msg === null || typeof msg !== "object" || Array.isArray(msg)) {
+    return { jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request" } };
+  }
+  const isRequest = typeof msg.method === "string" && (typeof msg.id === "string" || typeof msg.id === "number");
+  if (!isRequest) {
+    if (typeof msg.method === "string" || "result" in msg || "error" in msg) return null; // notification or response
+    return { jsonrpc: "2.0", id: msg.id ?? null, error: { code: -32600, message: "Invalid Request" } };
+  }
+  const ok = (result) => ({ jsonrpc: "2.0", id: msg.id, result });
+  const fail = (code, message) => ({ jsonrpc: "2.0", id: msg.id, error: { code, message } });
+  switch (msg.method) {
+    case "initialize": {
+      const asked = msg.params?.protocolVersion;
+      const protocolVersion = PROTOCOL_VERSIONS.includes(asked) ? asked : PROTOCOL_VERSIONS[0];
+      return ok({ protocolVersion, capabilities: { tools: {} }, serverInfo: SERVER_INFO });
+    }
+    case "ping":
+      return ok({});
+    case "tools/list":
+      return ok({ tools: TOOLS });
+    case "tools/call": {
+      const name = msg.params?.name;
+      if (typeof name !== "string") return fail(-32602, "Invalid params: tools/call needs a tool name");
+      return ok(await callTool(name));
+    }
+    default:
+      return fail(-32601, "Method not found");
+  }
+}
+
+/**
+ * Serve MCP on a readable/writable pair. Only protocol frames go to `output`; logs go to stderr.
+ * Malformed JSON gets -32700 and the loop keeps reading. Resolves when the input ends.
+ */
+export function serve(input = process.stdin, output = process.stdout) {
+  const send = (reply) => { if (reply) output.write(JSON.stringify(reply) + "\n"); };
+  const lines = createInterface({ input, crlfDelay: Infinity });
+  const pending = [];
+  lines.on("line", (line) => {
+    if (!line.trim()) return;
+    let msg;
+    try { msg = JSON.parse(line); } catch {
+      send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } });
+      return;
+    }
+    pending.push(handleMessage(msg).then(send, (err) => {
+      console.error("[governance-mcp] request failed:", err?.message ?? err);
+      if (msg && (typeof msg.id === "string" || typeof msg.id === "number")) {
+        send({ jsonrpc: "2.0", id: msg.id, error: { code: -32603, message: "Internal error" } });
+      }
+    }));
+  });
+  return new Promise((done) => lines.on("close", () => Promise.allSettled(pending).then(done)));
+}
 
 // Start (FORGE_TEST_MODE guard enables vitest to import without blocking on stdio)
 if (!process.env.FORGE_TEST_MODE) {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  // Exit only after every reply has been flushed: a write callback runs after the writes queued before it,
+  // so a large reply is not cut off when the client closes stdin right after its last request.
+  serve().then(() => process.stdout.write("", () => process.exit(0)));
 }

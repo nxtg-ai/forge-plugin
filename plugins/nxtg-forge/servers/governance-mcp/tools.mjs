@@ -8,9 +8,10 @@
  * process.cwd(), allowing tests to point at a fixture directory.
  */
 
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 // `open` is imported where it is used (generateDashboard), so the scoring functions load
 // without node_modules: /nxtg-forge:status imports getHealthScore from its `!` step.
@@ -55,7 +56,9 @@ export function readJson(filePath) {
  * Falls back to "unknown" if package.json is missing or unreadable.
  * @type {string}
  */
-export const serverVersion = readJson(join(import.meta.dirname, "package.json"))?.version ?? "unknown";
+// fileURLToPath, not the dirname property of import.meta: start.sh accepts any Node 20, and that property
+// needs Node 20.11 (Opus seat 2 reproduced a crash at load on 20.10).
+export const serverVersion = readJson(join(dirname(fileURLToPath(import.meta.url)), "package.json"))?.version ?? "unknown";
 
 // BUG-05: Build artifact directories to exclude from all find AND grep commands.
 const EXCLUDED_DIRS = [
@@ -650,6 +653,37 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
   return { findings, audit, totalFindings: findings.length };
 }
 
+/** The command that opens a file or URL in the user's browser, per platform. Exported for tests. */
+export function systemOpener(target, platform = process.platform) {
+  if (platform === "darwin") return { cmd: "open", args: [target] };
+  if (platform === "win32") return { cmd: "cmd", args: ["/c", "start", '""', target] };
+  return { cmd: "xdg-open", args: [target] };
+}
+
+/**
+ * Launch the system opener detached. Resolves true once the process has started, false if it could
+ * not be started (for example, xdg-open is not installed). Its output never reaches stdout, which
+ * carries the MCP protocol.
+ */
+export function openWithSystem(target, { platform = process.platform, spawnFn = spawn } = {}) {
+  const { cmd, args } = systemOpener(target, platform);
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawnFn(cmd, args, { detached: true, stdio: "ignore" });
+    } catch (err) {
+      console.warn(`[governance-mcp] generateDashboard() ${cmd} failed:`, err.message);
+      resolve(false);
+      return;
+    }
+    child.once("error", (err) => {
+      console.warn(`[governance-mcp] generateDashboard() ${cmd} failed:`, err.message);
+      resolve(false);
+    });
+    child.once("spawn", () => { child.unref(); resolve(true); });
+  });
+}
+
 /**
  * Generate an HTML governance dashboard, write it to a temp file, and open it in the default browser.
  * In FORGE_TEST_MODE the browser launch is skipped and the file path is returned immediately.
@@ -1084,16 +1118,12 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
     return { path: tmpPath, browserUrl, projectName, healthScore: health.score, healthGrade: health.grade };
   }
 
-  // Attempt auto-open. In WSL2 tmux sessions, the `open` package may fail because
-  // DISPLAY and WSL_INTEROP env vars are not forwarded. Try two fallbacks before giving up.
-  let opened = false;
-  try {
-    const { default: open } = await import("open");
-    await open(isWSL ? browserUrl : tmpPath);
-    opened = true;
-  } catch (err) {
-    console.warn('[governance-mcp] generateDashboard() open() failed:', err.message);
-  }
+  // Attempt auto-open with the platform's own opener (no npm package: the server has no runtime
+  // dependencies). In WSL2 tmux sessions xdg-open is often missing or has no DISPLAY, so try two
+  // fallbacks before giving up.
+  // On WSL go straight to the Windows fallbacks below: xdg-open there can start and exit 0 without
+  // opening anything, which would skip them and the paste-this-URL hint.
+  let opened = isWSL ? false : await openWithSystem(tmpPath);
 
   if (!opened && isWSL) {
     // Fallback 1: powershell.exe Start (works in tmux, no DISPLAY needed)

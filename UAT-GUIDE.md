@@ -412,7 +412,7 @@ The MCP dashboard provides 8 governance tools and a visual HTML dashboard.
 ```
 
 **What happens:**
-1. MCP server starts (auto-installs `@modelcontextprotocol/sdk` on first run)
+1. MCP server starts (no install step: it has no npm dependencies)
 2. Generates an HTML dashboard with project metrics
 3. Opens the dashboard in your browser
 
@@ -511,9 +511,9 @@ These are NOT from the Forge plugin. Possible sources:
 
 ### "MCP dashboard doesn't open"
 
-1. Requires Node.js 18+: `node --version`
-2. First run installs dependencies (may take 10-30 seconds)
-3. On WSL2: Dashboard copies to Windows filesystem and opens via cmd.exe
+1. Requires Node.js 20+: `node --version`
+2. Linux needs `xdg-open` (macOS uses `open`, Windows `start`); otherwise the tool returns the file path to open yourself
+3. On WSL2: it falls back to `powershell.exe Start`, then `wslview`, then returns a URL to paste into your Windows browser
 
 ### "governance.json is huge / bloated"
 
