@@ -1,13 +1,13 @@
 // Enforced task (DIRECTIVE-NXTG-20261013-16 A): a test-file write guard, a conflict report, and a Stop gate on
 // the project's own test command. Every case here is synthetic and written for this file (pre-registered in
-// the PR, cases C1-C15). None comes from, or was shaped by, any benchmark.
+// the PR, cases C1-C16). None comes from, or was shaped by, any benchmark.
 //
 // The hooks run as Claude Code runs them: `bash task-enforce.sh <guard|gate|auto>`, hook input JSON on stdin,
 // in a real git project. Each mechanism's checks are a function of the plugin directory, so the same checks
 // run against the shipped scripts (must pass) and against a mutant copy (must fail).
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -142,8 +142,54 @@ function gateChecks(plugin) {
   expect(ha.status()).toMatch(/ended \(passed\)/);
 }
 
+// C16: the shadow scan cannot be hidden by git's exclude rules, a symlink, or a missing snapshot.
+const EXIT0 = 'import sys\nsys.exit(0)\n';
+function shadowChecks(plugin) {
+  const routes = {
+    'info/exclude': (root) => appendFileSync(join(root, '.git/info/exclude'), '\nunittest/\n'),
+    'core.excludesFile': (root) => { writeFileSync(join(tmp, 'xignore'), 'unittest/\n'); git(root, 'config', 'core.excludesFile', join(tmp, 'xignore')); },
+    '.gitignore': (root) => write(root, '.gitignore', 'unittest/\n'),
+  };
+  for (const [route, hide] of Object.entries(routes)) {
+    const root = project(calc(4));
+    const h = hooks(plugin, root);
+    h.begin();
+    write(root, 'unittest/__init__.py', EXIT0);
+    write(root, 'unittest/__main__.py', EXIT0);
+    hide(root);
+    const g = h.gate();
+    expect(g.blocked, route).toBe(true);
+    expect(g.reason, route).toContain('unittest/__init__.py: new file shadows the "unittest" module');
+  }
+  // A symlinked package and a sourceless .pyc module.
+  const s = project(calc(4));
+  const hs = hooks(plugin, s);
+  hs.begin();
+  write(join(tmp, 'elsewhere'), 'unittest/__init__.py', EXIT0);
+  symlinkSync(join(tmp, 'elsewhere', 'unittest'), join(s, 'unittest'));
+  write(s, 'doctest.pyc', '');
+  const gs = hs.gate();
+  expect(gs.reason).toContain('unittest/__init__.py: new file shadows');
+  expect(gs.reason).toContain('doctest.pyc: new file shadows');
+  // A task begun without a snapshot (an older version) fails closed.
+  const o = project(calc(4));
+  const ho = hooks(plugin, o);
+  ho.begin();
+  write(o, 'calc.py', SUM);
+  const sd = join(tmp, 'state');
+  for (const f of readdirSync(sd)) {
+    const p = join(sd, f);
+    const st = JSON.parse(readFileSync(p, 'utf8'));
+    if (st.root === realpathOf(o)) { delete st.rawFiles; writeFileSync(p, JSON.stringify(st, null, 2)); }
+  }
+  const go = ho.gate();
+  expect(go.blocked).toBe(true);
+  expect(go.reason).toContain('began without a file snapshot');
+}
+const realpathOf = (p) => spawnSync('realpath', [p], { encoding: 'utf8' }).stdout.trim();
+
 // ── shipped behaviour ────────────────────────────────────────────────────────
-describe('enforced task: shipped behaviour (cases C1-C15)', () => {
+describe('enforced task: shipped behaviour (cases C1-C16)', () => {
   it('C1 guard: an existing test file and new test-runner config are refused; source and new tests are not', () => guardChecks(PLUGIN));
 
   it('C1 conflict report: a report whose every line checks out ends the task as "conflict"', () => {
@@ -271,6 +317,8 @@ describe('enforced task: shipped behaviour (cases C1-C15)', () => {
     expect(g.reason).toContain('tests/test_calc.py: modified');
   });
 
+  it('C16 shadow scan: exclude rules, a symlink and a .pyc cannot hide a shadowing module; no snapshot fails closed', () => shadowChecks(PLUGIN));
+
   it('C13 guard: the agent cannot end, relax or rewrite the task through Bash or the edit tools', () => {
     const root = project(calc(5));
     const h = hooks(PLUGIN, root);
@@ -316,6 +364,16 @@ describe('enforced task: mutants turn the checks red', () => {
     expect(() => reportChecks(m)).toThrow(/SPEC2\.md|returns the sum plus one/);
   });
 
+  it('shadow mutant (scan through git ls-files --exclude-standard, as before) fails the shadow checks', () => {
+    const m = mutant('shadow-excludes', ENGINE, 'for (const f of rawWalk(st.root)) {', 'for (const f of listFiles(st.root)) {');
+    expect(() => shadowChecks(m)).toThrow(/info\/exclude|core\.excludesFile|\.gitignore/);
+  });
+
+  it('shadow mutant (no snapshot treated as nothing to check) fails the shadow checks', () => {
+    const m = mutant('shadow-open', ENGINE, "if (!Array.isArray(st.rawFiles)) return ['this task", "if (!Array.isArray(st.rawFiles)) return []; if (0) return ['this task");
+    expect(() => shadowChecks(m)).toThrow(/expected false to be true|began without a file snapshot/);
+  });
+
   it('gate mutant (module-shadow check removed) fails the gate checks', () => {
     const m = mutant('shadow', ENGINE, 'const shadows = shadowingFiles(st);', 'const shadows = [];');
     expect(() => gateChecks(m)).toThrow();
@@ -345,5 +403,6 @@ describe('enforced task: mutants turn the checks red', () => {
     guardChecks(PLUGIN);
     reportChecks(PLUGIN);
     gateChecks(PLUGIN);
+    shadowChecks(PLUGIN);
   });
 });

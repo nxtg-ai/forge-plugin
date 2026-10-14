@@ -16,7 +16,7 @@
 // the task (read from the base commit).
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, relative, resolve, sep } from 'node:path';
 
@@ -96,6 +96,27 @@ function listFiles(root) {
   return out;
 }
 const hashFile = (abs) => sha256(readFileSync(abs));
+// Every path under the root, with NO ignore or exclude rules (.gitignore, .git/info/exclude and
+// core.excludesFile can all be written by the agent). Skips only .git and node_modules. A symlink is listed
+// as itself; a symlink to a directory is listed as <link>/__init__.py when the target is a package.
+export function rawWalk(root) {
+  const out = [];
+  const walk = (dir) => {
+    let entries; try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      const abs = join(dir, e.name);
+      const rel = relative(root, abs).split(sep).join('/');
+      if (e.isDirectory()) { if (e.name !== '.git' && e.name !== 'node_modules') walk(abs); }
+      else if (e.isSymbolicLink()) {
+        let st = null; try { st = statSync(abs); } catch { /* dangling */ }
+        if (st?.isDirectory()) { if (existsSync(join(abs, '__init__.py'))) out.push(`${rel}/__init__.py`); }
+        else out.push(rel);
+      } else if (e.isFile()) out.push(rel);
+    }
+  };
+  walk(root);
+  return out;
+}
 function testManifest(root, globs) {
   const m = {};
   for (const f of listFiles(root)) if (matchGlob(f, globs)) m[f] = hashFile(join(root, f));
@@ -185,7 +206,7 @@ export function begin(cwd, opts = {}) {
     globs: allGlobs,
     configGlobs,
     manifest: testManifest(root, allGlobs),
-    files: listFiles(root),
+    rawFiles: rawWalk(root),
     commandSources: commandSources(root, testCommand),
     verdict: null,
     history: [],
@@ -193,7 +214,7 @@ export function begin(cwd, opts = {}) {
   // An automatic re-begin after an "unearned" task on the same commit keeps that task's baseline, so tests
   // weakened during the unearned task do not become the next task's truth.
   if (opts.carryUnearned && prev?.verdict === 'unearned' && prev.baseCommit && prev.baseCommit === st.baseCommit) {
-    Object.assign(st, { manifest: prev.manifest, files: prev.files ?? st.files, commandSources: prev.commandSources, globs: prev.globs, configGlobs: prev.configGlobs, testCommand: prev.testCommand });
+    Object.assign(st, { manifest: prev.manifest, rawFiles: prev.rawFiles ?? st.rawFiles, commandSources: prev.commandSources, globs: prev.globs, configGlobs: prev.configGlobs, testCommand: prev.testCommand });
     st.history.push({ at: st.startedAt, event: `baseline carried from the unearned task of ${prev.startedAt}` });
   }
   saveState(st);
@@ -361,17 +382,20 @@ function moduleNames() {
   return shadowNames;
 }
 // A file new since begin that would import as a top-level module named like the stdlib or a test runner:
-// `<dir>/<name>.py` or `<dir>/<name>/__init__.py` where <dir> is not itself a package.
+// `<dir>/<name>.{py,pyc,so,pyd}` or `<dir>/<name>/__init__.*` where <dir> is not itself a package.
+// Enumerated by rawWalk, never through git's exclude rules. A task begun without a snapshot fails closed.
+const IMPORTABLE = /\.(py|pyc|so|pyd)$/;
 export function shadowingFiles(st) {
-  if (!Array.isArray(st.files)) return [];
-  const before = new Set(st.files);
+  if (!Array.isArray(st.rawFiles)) return ['this task began without a file snapshot (an older Forge version), so module shadowing cannot be checked: the user must run /nxtg-forge:task abort, then begin'];
+  const before = new Set(st.rawFiles);
   const names = moduleNames();
   const out = [];
-  for (const f of listFiles(st.root)) {
-    if (before.has(f) || !f.endsWith('.py')) continue;
+  for (const f of rawWalk(st.root)) {
+    if (before.has(f) || !IMPORTABLE.test(f)) continue;
     const parts = f.split('/');
-    const pkgInit = parts.at(-1) === '__init__.py';
-    const name = pkgInit ? parts.at(-2) : parts.at(-1).slice(0, -3);
+    const stem = parts.at(-1).split('.')[0];
+    const pkgInit = stem === '__init__';
+    const name = pkgInit ? parts.at(-2) : stem;
     const parent = parts.slice(0, pkgInit ? -2 : -1).join('/');
     if (!name || !names.has(name)) continue;
     if (parent && existsSync(join(st.root, parent, '__init__.py'))) continue; // inside a package: no shadowing
