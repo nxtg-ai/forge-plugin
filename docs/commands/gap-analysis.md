@@ -1,6 +1,6 @@
 # /nxtg-forge:gap-analysis
 
-> **Optional convenience, no accuracy claim.** On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost.
+> **Optional convenience, no accuracy claim.** On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost (fixtures 1 and 2, 24 runs).
 >
 > A structured five-dimension review prompt covering testing, documentation, security, architecture, and performance -- with severity-ranked findings and phased remediation plans.
 

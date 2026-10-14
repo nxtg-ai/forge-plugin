@@ -25,7 +25,7 @@ It is intentionally fast (target: under 10 seconds) and intentionally limited in
 - **Scope validation**: When edits touch files outside the current directive's boundaries and you need a quick ruling on whether the scope expansion is justified.
 - **Manual governance check**: When you want to verify recent changes against governance rules without waiting for a hook to trigger.
 
-Do not use this agent for comprehensive governance audits -- the Oracle handles ongoing strategic alignment. Do not use it for test quality auditing -- that is the CRUCIBLE Detective's domain.
+Do not use this agent for broad governance audits -- the Oracle handles ongoing strategic alignment. Do not use it for test quality auditing -- that is the CRUCIBLE Detective's domain.
 
 ## How It Works
 

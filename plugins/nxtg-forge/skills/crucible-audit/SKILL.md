@@ -16,7 +16,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ## Overview
 
-> **Optional convenience. No accuracy claim.** This is a structured review prompt. It finds what the model finds when it reads the project, and nothing more. On two deliberately seeded public cases ([forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture), [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2)), a plain review prompt found the same defects at roughly a third to a quarter of this command's cost. A clean report is not evidence that nothing is wrong.
+> **Optional convenience. No accuracy claim.** This is a structured review prompt. It finds what the model finds when it reads the project, and nothing more. On two deliberately seeded public cases ([forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture), [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2)), a plain review prompt found the same defects at roughly a third to a quarter of this command's cost (fixtures 1 and 2, 24 runs). A clean report is not evidence that nothing is wrong.
 
 The CRUCIBLE Audit skill provides a checklist for reviewing test suites. It looks for **test fraud** — the pattern where test count and coverage numbers look healthy but the tests prove nothing about whether the software actually works.
 

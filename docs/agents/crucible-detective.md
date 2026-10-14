@@ -1,6 +1,6 @@
 # CRUCIBLE Detective
 
-> The forensic auditor that exposes test fraud -- hollow assertions, coverage gaming, mock proliferation, and the gap between what your test metrics claim and what your tests actually prove.
+> A test-quality review that looks for test fraud -- hollow assertions, coverage gaming, mock proliferation, and gaps between what your test metrics claim and what your tests check. Optional; no accuracy claim.
 
 | | |
 |---|---|
@@ -12,7 +12,7 @@
 
 ## What It Does
 
-The CRUCIBLE Detective performs forensic audits on test suites to find the gap between claimed quality and actual quality. It was born from a real incident: a project with 1,601 "passing" tests and 77% "claimed coverage" that turned out to have approximately 15% actual coverage, 439 mocks, 66+ hollow assertions, and core engines excluded from measurement. The founder tried to use the product and nothing worked. This agent exists so that never happens again.
+The CRUCIBLE Detective performs forensic audits on test suites to find the gap between claimed quality and actual quality. It was born from a real incident: a project with 1,601 "passing" tests and 77% "claimed coverage" that turned out to have approximately 15% actual coverage, 439 mocks, 66+ hollow assertions, and core engines excluded from measurement. The founder tried to use the product and nothing worked. This agent is a checklist for looking for that pattern, and it can miss cases.
 
 It hunts eight specific fraud patterns: coverage omit gaming (excluding code to inflate percentages), hollow assertions (assertions that cannot fail when the code is broken), mock proliferation (mocking internal components instead of testing real behavior), dead test infrastructure (tests gated by env vars that are never set), mock-heavy integration tests (tests labeled "integration" that mock everything they should integrate), untested entry points (user-facing code with zero coverage), no output quality verification (tests that check "it ran" but not "it produced correct output"), and README badge fraud (badges showing different numbers than reality).
 
@@ -86,7 +86,7 @@ CRUCIBLE Detective:
   - 88 are meaningful unit tests with specific value assertions
   - Mock ratio in new tests: 78%
   - Verdict: FAIL
-    - 78% of new tests prove nothing about production behavior
+    - 78% of new tests have no assertion on production behavior
     - Recommendation: Delete 312 hollow tests, keep 88 real ones
     - Real test delta this sprint: +88, not +400
 ```
@@ -113,13 +113,13 @@ CRUCIBLE Detective:
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full 8-pattern forensic audit, fraud margin calculation, evidence-backed verdicts |
-| **L2 Pro Builder** | + `forge_capture_knowledge` records audit findings; `forge_check_drift` detects quality regression between audits |
+| **L2 Pro Builder** | + `forge_capture_knowledge` records audit findings; `forge_check_drift` compares the project against its spec between audits (needs a configured model) |
 | **L3 Ship Lord** | + Dashboard panel showing audit history, fraud margin trends, and per-pattern violation counts |
 
 ## Tips & Gotchas
 
-- **Know**: this is an optional review with no accuracy claim. On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost. It does not replace running the tests.
-- **Do**: Trust the fraud margin number -- it is the single most honest metric about your test suite quality.
+- **Know**: this is an optional review with no accuracy claim. On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost (fixtures 1 and 2, 24 runs). It does not replace running the tests.
+- **Know**: the fraud margin number is one signal about your test suite. Treat it as a lead, not a verdict.
 - **Don't**: Shoot the messenger. The Detective reports findings without softening. If the numbers are bad, the tests need fixing, not the audit.
 - **Don't**: Confuse this agent with the QA Sentinel or Testing agent. The Detective audits. It does not design strategy or write tests.
 

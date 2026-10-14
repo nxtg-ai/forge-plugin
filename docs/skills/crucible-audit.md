@@ -1,6 +1,6 @@
 # Crucible Audit
 
-> Provides the forensic methodology for detecting test fraud -- hollow assertions, coverage gaming, mock proliferation, and every other pattern that creates false green signals in test suites.
+> A checklist for looking for test fraud -- hollow assertions, coverage gaming, mock proliferation, and similar patterns that create false green signals in test suites. Optional; no accuracy claim.
 
 | | |
 |---|---|
@@ -11,7 +11,7 @@
 
 ## What It Provides
 
-> **Optional convenience, no accuracy claim.** On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost. A clean report is not evidence that nothing is wrong.
+> **Optional convenience, no accuracy claim.** On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost (fixtures 1 and 2, 24 runs). A clean report is not evidence that nothing is wrong.
 
 The CRUCIBLE Audit skill encodes a forensic test quality protocol born from a real incident: a project with 1,601 tests and 77% claimed coverage that had approximately 15% actual coverage and nothing worked when a human used it. It gives agents a checklist of eight fraud patterns to look for that inflate test metrics without proving software correctness.
 
@@ -43,7 +43,7 @@ Mocking internal components so tests verify mock behavior instead of real behavi
 
 ### Pattern 4: Dead Test Infrastructure
 
-Tests gated by environment variables, skip markers, or conditions that are never activated in CI. Detection: find all `os.environ.get` references in test files, then check whether those variables are set in Makefile, CI configuration, or pytest.ini. Tests that cannot run in CI are not tests -- they are decoration.
+Tests gated by environment variables, skip markers, or conditions that are never activated in CI. Detection: list the `os.environ.get` references in test files, then check whether those variables are set in Makefile, CI configuration, or pytest.ini. Tests that cannot run in CI are not tests -- they are decoration.
 
 ### Pattern 5: Mock-Heavy Integration Tests
 
@@ -83,7 +83,7 @@ smoking gun examples, and remediation priority list.
 | Skill | Relationship |
 |-------|-------------|
 | **agent-qa-sentinel** | QA Sentinel writes quality tests; CRUCIBLE verifies they are genuine |
-| **runtime-validation** | Runtime validation catches errors that hollow tests miss |
+| **runtime-validation** | Runtime validation exercises code paths that hollow tests skip |
 | **verify-governance** | Governance verification can trigger CRUCIBLE audits for suspicious changes |
 | **ceo-loop** | Quality decisions in the CEO loop often reference CRUCIBLE audit results |
 

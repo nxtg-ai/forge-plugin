@@ -112,7 +112,7 @@ The quality conscience. These agents watch, measure, and verify.
 | [Compliance](compliance.md) | Sonnet | License auditing, GDPR, WCAG accessibility, regulatory requirements |
 | [Learning](learning.md) | Sonnet | Session analysis, pattern recognition, preference capture, recommendation tuning |
 | [Release Sentinel](release-sentinel.md) | Sonnet | Documentation auditing after code changes, changelog generation, stale doc detection |
-| [Crucible Detective](crucible-detective.md) | Sonnet | Forensic test quality auditing — exposes hollow assertions and coverage gaming |
+| [Crucible Detective](crucible-detective.md) | Sonnet | Test-quality review — looks for hollow assertions and coverage gaming (no accuracy claim) |
 | [Governance Verifier](governance-verifier.md) | Sonnet | Automated response to governance concerns flagged by hooks |
 | [Oracle](oracle.md) | Sonnet | Background sentinel — monitors development for scope drift and architectural violations |
 
