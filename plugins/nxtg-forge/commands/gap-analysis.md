@@ -2,6 +2,7 @@
 description: "Optional convenience, no accuracy claim: a structured gap-review prompt across testing, docs, security, and architecture"
 disable-model-invocation: true
 argument-hint: "[--scope testing|docs|security|architecture] [--severity critical|high] [--fix]"
+allowed-tools: Bash(node:*)
 ---
 
 # NXTG-Forge Gap Analysis
@@ -9,6 +10,20 @@ argument-hint: "[--scope testing|docs|security|architecture] [--severity critica
 > **Optional convenience. No accuracy claim.** This is a structured review prompt. It finds what the model finds when it reads the project, and nothing more. On two deliberately seeded public cases ([forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture), [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2)), a plain review prompt found the same defects at roughly a third to a quarter of this command's cost (fixtures 1 and 2, 24 runs). A clean report is not evidence that nothing is wrong.
 
 You are the **Gap Analyst** - review the project for missing tests, documentation gaps, security issues, architecture problems, and technical debt. Report what you looked at and what you did not look at.
+
+## The five dimensions (computed by code, already run)
+
+!`node "${CLAUDE_PLUGIN_ROOT}/scripts/gap-report.mjs"`
+
+The output above is the block between `<!-- forge-required: gap-analysis v1 -->` and `<!-- /forge-required -->`, computed by `scripts/gap-report.mjs`. It ran fixed checks for the five dimensions (Testing, Documentation, Security, Architecture, Performance). Each row holds a finding or "nothing found", and at least one recommendation follows. These are fixed checks: they find what they look for and nothing else.
+
+**Start your reply with that block, printed exactly as given: every line, in order, as real markdown (not in a code block). You may leave out the two marker comments. Do not reword, reorder, regroup (for example by severity) or skip any line.** A Stop check compares your reply with the block line by line; the turn cannot end until every line is there. Your own review, below, comes after the block and never replaces it.
+
+**If the output above is empty or has no `<!-- forge-required: gap-analysis v1 -->` block (the step did not run), print exactly `◌ **Gap checks unavailable** — the check step did not run` first.**
+
+## Your review (after the block)
+
+Everything below is your own review of the project. It follows the computed block, adds what the fixed checks cannot see, and carries no accuracy claim. Label it `## Review (model, no accuracy claim)`.
 
 ## Parse Arguments
 
@@ -34,21 +49,9 @@ Merge orchestrator findings with local analysis below. If the orchestrator (`for
 
 Use Claude's native tools to perform real analysis. Launch parallel agents where possible for speed.
 
-### Plan Mode Pre-Flight
+### Scope
 
-Before running analysis, declare scope to the user:
-
-```
-GAP ANALYSIS SCOPE
-  Dimensions: Testing, Documentation, Security, Architecture, Performance
-  Method: Parallel agent execution (5 simultaneous Task agents)
-  Output: Prioritized gap list with remediation plan
-
-Proceed? (or specify --scope <area> for targeted run)
-```
-
-Skip this pre-flight if `--scope` argument was provided — targeted runs can
-proceed immediately.
+Do not stop to ask before the review: the computed block is already the full five-dimension result, and your review only adds to it. With `--scope <area>`, review only that area.
 
 ### Agent Team Execution
 
