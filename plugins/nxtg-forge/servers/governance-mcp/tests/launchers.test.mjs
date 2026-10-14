@@ -260,22 +260,16 @@ describe('semgrep-mcp launcher with an upstream that exits early', () => {
   // PR #92 review M-1: SIGTERM to the launcher must end it and every process under it, whether
   // the upstream answered (relay phase) or the stand-in is serving. Claude Code may stop a
   // server this way without closing its stdin first.
-  const liveProcs = () => {
-    const rows = spawnSync('ps', ['-e', '-o', 'pid=,ppid=,stat='], { encoding: 'utf8' }).stdout;
+  // The launcher runs in a session of its own (spawn detached = setsid), so "its processes" is a fact
+  // the kernel keeps: the session id. Its own `set -m` makes a new process group, never a new session.
+  // Nothing here kills a computed pid list; cleanup is `pkill -KILL -s <sid>` (incident 2026-10-14 21:20Z).
+  const sessionProcs = (sid) => {
+    const rows = spawnSync('ps', ['-e', '-o', 'pid=,sid=,stat='], { encoding: 'utf8' }).stdout;
     return rows
       .split('\n')
       .map((l) => l.trim().split(/\s+/))
-      .filter((f) => f.length === 3 && !f[2].startsWith('Z'))
-      .map(([pid, ppid]) => ({ pid: Number(pid), ppid: Number(ppid) }));
-  };
-  const treeOf = (root) => {
-    const procs = liveProcs();
-    const tree = new Set([root]);
-    for (let grew = true; grew; ) {
-      grew = false;
-      for (const p of procs) if (tree.has(p.ppid) && !tree.has(p.pid)) (tree.add(p.pid), (grew = true));
-    }
-    return [...tree];
+      .filter((f) => f.length === 3 && !f[2].startsWith('Z') && Number(f[1]) === sid)
+      .map(([pid]) => Number(pid));
   };
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -285,28 +279,22 @@ describe('semgrep-mcp launcher with an upstream that exits early', () => {
     const fifo = join(mkdtempSync(join(root, 'fifo-')), 'stdin');
     expect(spawnSync('mkfifo', [fifo]).status).toBe(0);
     const fd = openSync(fifo, 'r+');
-    const child = spawn(which('bash'), [SEMGREP], { env: { HOME: home, ...env }, stdio: [fd, 'pipe', 'pipe'] });
+    const child = spawn(which('bash'), [SEMGREP], { env: { HOME: home, ...env }, stdio: [fd, 'pipe', 'pipe'], detached: true });
     let out = '';
     child.stdout.on('data', (d) => (out += d));
     writeSync(fd, [DISCOVER, INIT].join('\n') + '\n');
     for (let i = 0; i < 50 && out.split('\n').filter(Boolean).length < 2; i++) await pause(100);
     expect(out.split('\n').filter(Boolean)).toHaveLength(2); // the phase under test is reached
     await pause(300);
-    const tree = treeOf(child.pid);
+    const tree = sessionProcs(child.pid);
     expect(tree.length).toBeGreaterThan(1);
     const closed = new Promise((r) => child.on('close', r));
     child.kill('SIGTERM');
     await Promise.race([closed, pause(2000)]);
     await pause(200);
-    const alive = new Set(liveProcs().map((p) => p.pid));
-    const survivors = tree.filter((pid) => alive.has(pid));
-    for (const pid of survivors) {
-      try {
-        process.kill(pid, 'SIGKILL');
-      } catch {
-        /* already gone */
-      }
-    }
+    const survivors = sessionProcs(child.pid);
+    // Cleanup: this session only. Never `-s 0`, which means the CURRENT session (the test runner's).
+    if (Number.isInteger(child.pid) && child.pid > 1) spawnSync('pkill', ['-KILL', '-s', String(child.pid)]);
     closeSync(fd);
     return { tree, survivors, exited: child.exitCode !== null || child.signalCode !== null };
   }

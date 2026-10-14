@@ -81,29 +81,18 @@ else
   fail "green-path-relay" "rc=$rc out=$(head -c 300 "$T/out")"
 fi
 
-# Every live descendant of a pid (zombies excluded), from /proc.
-descendants() {
-  local want="$1" f st pid ppid rest found=1
-  local -a tree
-  tree=("$want")
-  while [ "$found" = 1 ]; do
-    found=0
-    for f in /proc/[0-9]*/stat; do
-      read -r pid rest < "$f" 2>/dev/null || continue
-      rest="${rest##*) }"; st="${rest%% *}"; rest="${rest#* }"; ppid="${rest%% *}"
-      [ "$st" = Z ] && continue
-      case " ${tree[*]} " in *" $pid "*) continue ;; esac
-      case " ${tree[*]} " in *" $ppid "*) tree=("${tree[@]}" "$pid"); found=1 ;; esac
-    done
-  done
-  echo "${tree[@]:1}"
-}
-alive() {  # print the pids among $@ that still run (not zombies)
-  local p st rest out=""
-  for p in "$@"; do
-    read -r rest < "/proc/$p/stat" 2>/dev/null || continue
-    rest="${rest##*) }"; st="${rest%% *}"
-    [ "$st" = Z ] || out="$out $p"
+# The live (non-zombie) processes of session $1, from /proc. The launcher is started with setsid, so
+# its processes are exactly its session (its own `set -m` makes a process group, never a session).
+# Nothing here kills a computed pid list (incident 2026-10-14 21:20Z): cleanup is `pkill -KILL -s`.
+in_session() {
+  local want="$1" f pid rest out=""
+  for f in /proc/[0-9]*/stat; do
+    read -r pid rest < "$f" 2>/dev/null || continue
+    rest="${rest##*) }"
+    # shellcheck disable=SC2086
+    set -- $rest # state ppid pgrp session ...
+    [ "$1" = Z ] && continue
+    [ "$4" = "$want" ] && out="$out $pid"
   done
   echo "$out"
 }
@@ -113,27 +102,26 @@ term_check() {  # <name> <fake dir>
   local n="$1" dir="$2" lp kids left
   # The feeder keeps stdin open and stops on SIGPIPE once the launcher is gone.
   { printf '%s\n%s\n' "$D" "$I"; while sleep 1; do echo; done; } 2>/dev/null |
-    PATH="$dir:$PATH" bash "$L" > "$T/out" 2> "$T/err" &
-  lp=$!
+    PATH="$dir:$PATH" setsid bash "$L" > "$T/out" 2> "$T/err" &
+  lp=$! # setsid execs in place (it is not a group leader here), so this pid leads the session
   sleep 2
-  kids="$(descendants "$lp")"
+  procs="$(in_session "$lp")"
   if [ "$(nlines)" -lt 2 ]; then
     fail "$n" "phase not reached: $(head -c 300 "$T/out")"
-  elif [ -z "$kids" ]; then
-    fail "$n" "launcher $lp had no children to check"
+  elif [ "$(echo $procs | wc -w)" -lt 2 ]; then
+    fail "$n" "session $lp had no children to check (procs:$procs)"
   else
     kill -TERM "$lp"
     sleep 2
-    # shellcheck disable=SC2086
-    left="$(alive "$lp" $kids)"
+    left="$(in_session "$lp")"
     if [ -z "${left// /}" ]; then
-      pass "$n (children were:$kids)"
+      pass "$n (session processes were:$procs)"
     else
-      fail "$n" "survivors after SIGTERM:$left (of $lp $kids)"
+      fail "$n" "survivors after SIGTERM:$left (of$procs)"
     fi
   fi
-  # shellcheck disable=SC2086
-  kill -KILL $lp $kids 2>/dev/null
+  # Never `-s 0` (the current session, this script's own): only a real pid above 1.
+  case "$lp" in ""|*[!0-9]*|0|1) ;; *) pkill -KILL -s "$lp" 2>/dev/null ;; esac
   wait 2>/dev/null
 }
 term_check "sigterm-green-phase" "$T/hang"
