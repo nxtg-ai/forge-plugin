@@ -298,7 +298,7 @@ The OpenAI brain produces tasks with:
 ```bash
 claude   # → authenticate with Anthropic
 codex    # → authenticate with OpenAI
-gemini   # → authenticate with Google
+agy      # → authenticate with Google (Antigravity, driven by the Gemini adapter)
 ```
 
 Then restart:
@@ -310,13 +310,13 @@ forge dashboard --pty
 ```bash
 which claude
 which codex
-which gemini
+which agy
 ```
 
 If any are missing, install them:
 - Claude Code: `npm install -g @anthropic-ai/claude-code`
 - Codex CLI: `npm install -g @openai/codex`
-- Gemini CLI: `npm install -g @google/gemini-cli`
+- Antigravity (`agy`), which the Gemini adapter drives: install it from Google's Antigravity distribution. Gemini CLI itself is not supported yet (build B1, target 2026-10-27).
 
 ---
 

@@ -94,7 +94,7 @@ These tools run automatically — agents and hooks call them as needed. You don'
 
 L1 works standalone. You never need to install anything else.
 
-But if you start running **multiple AI tools** on the same codebase (Claude Code + Codex + Gemini), you'll hit file conflicts and lost context. That's when [L2 Pro Builder](C-03-upgrade-to-pro-builder.md) earns its keep.
+But if you start running **multiple AI tools** on the same codebase (Claude Code + Codex + Gemini), you'll hit file conflicts and lost context. That's when [L2 Pro Builder](C-03-upgrade-to-pro-builder.md) earns its keep (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)).
 
 Signs you need L2:
 - Two AI tools edited the same file and one overwrote the other

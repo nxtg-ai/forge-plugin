@@ -2,13 +2,13 @@
 
 The problem is simple: you have Claude Code, Codex CLI, and Gemini CLI installed. You point all three at the same codebase. Claude refactors a module while Codex writes tests against the old interface. Gemini generates docs for code that no longer exists. Nobody knows what the others are doing. Decisions made in one tool are invisible to the others. Every session starts from zero.
 
-Forge solves this by turning independent AI tools into a coordinated team.
+Forge solves this by turning independent AI tools into a coordinated team. Today Forge is for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27).
 
 ## How Forge Solves It
 
 **Task decomposition.** You write a SPEC.md describing what you want built. `forge plan --generate` reads it and decomposes it into a dependency-aware task graph. Tasks have IDs, acceptance criteria, file assignments, and dependency chains. No two tasks claim the same files without explicit sequencing.
 
-**Intelligent assignment.** The orchestrator assigns tasks to the right tool based on task type. Claude handles implementation. Codex handles review and verification. Gemini handles documentation and research. You can override assignments, but the defaults are sensible.
+**Intelligent assignment.** The orchestrator assigns tasks to the right tool based on task type. Claude handles implementation. Codex handles review and verification. Gemini handles documentation and research (the Gemini adapter drives Antigravity `agy`; Gemini CLI support is in development, build B1, target 2026-10-27). You can override assignments, but the defaults are sensible.
 
 **File locking.** When an agent claims a task, Forge locks that task's target files. If another agent tries to claim a task that touches locked files, the claim is rejected. No merge conflicts. No silent overwrites. Locks release automatically when tasks complete.
 
@@ -60,7 +60,7 @@ forge start --loop
 
 **`forge dashboard`** (without `--pty`) shows piped text output from agents. Useful for logging, but you cannot interact with the agents.
 
-**`forge dashboard --pty`** is Stargate mode. Each agent runs in a real PTY session with full terminal emulation. You see Claude's actual TUI, Codex's actual REPL, Gemini's actual interface. Press `Tab` to switch panes, `i` to attach and type directly into an agent, `Esc` to detach.
+**`forge dashboard --pty`** is Stargate mode. Each agent runs in a real PTY session with full terminal emulation. You see Claude's actual TUI, Codex's actual REPL, and Antigravity `agy`'s interface for the Gemini adapter (Gemini CLI support in development, build B1, target 2026-10-27). Press `Tab` to switch panes, `i` to attach and type directly into an agent, `Esc` to detach.
 
 **`forge run`** runs tasks headlessly with no TUI. Agents execute as subprocesses. Output is captured. Good for CI/CD pipelines and unattended builds.
 

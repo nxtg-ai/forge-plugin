@@ -56,7 +56,7 @@ Open **http://localhost:5050** in your browser.
 
 **Real-Time Health HUD** — The right sidebar always shows your project's health grade (A through F across 8 quality dimensions), active agent count, blocking decisions, and memory insights. Updates automatically via WebSocket.
 
-**Agent Activity Feed** — Watch Claude Code, Codex CLI, and Gemini CLI coordinate in real time: task claims, file lock acquisitions, knowledge captures, and governance events. Filter by All, Important, or Errors.
+**Agent Activity Feed** — Watch your agents coordinate in real time (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)): task claims, file lock acquisitions, knowledge captures, and governance events. Filter by All, Important, or Errors.
 
 ## How It Connects
 

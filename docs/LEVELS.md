@@ -35,7 +35,7 @@
 - No visual dashboard
 
 **You're ready for L2 when:**
-- You run multiple AI tools (Claude Code + Codex + Gemini) and they conflict
+- You run multiple AI tools and they conflict (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27))
 - You want task progress to survive between Claude Code sessions
 - You want learnings from one implementation to inform the next
 - You need to detect when work has drifted from your spec
