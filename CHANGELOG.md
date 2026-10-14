@@ -8,6 +8,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.13.0] — 2026-10-13
+
+Fixes alpha run 5's C2 failure (F-O, the status report was not printed) and C3 failure (F-P, gap-analysis gave no dimensions). The required output of `/nxtg-forge:status`, `/nxtg-forge:gap-analysis` and `/nxtg-forge:feature` is now computed by code or enforced by a check. MINOR: one new Stop hook. No new commands, agents or skills; no breaking changes.
+
+### Added
+
+- **A Stop check on required command output** (`hooks/scripts/required-output.sh`, `scripts/required-output.mjs`, DIRECTIVE-NXTG-20261013-21).
+  - It runs only for turns of `/nxtg-forge:status`, `/nxtg-forge:gap-analysis` and `/nxtg-forge:feature`. Every other turn ends as before.
+  - For status and gap-analysis it compares the reply with the computed report line by line. If a line is missing or misquoted, it blocks the turn and quotes the missing lines, at most 3 times per turn.
+  - For feature it reads the orchestrator's own task record (`.forge/tasks/<id>.json`), never the transcript. A turn passes when that task is claimed and completed by claude and then read back, or when it says `No task created: <reason>` or `Task <id> left claimed: <reason>`. A turn that writes `.forge/tasks/` itself is refused.
+  - Each block appears in stream-json as a `user` row with `isSynthetic: true`, and with `--include-hook-events` as a Stop `hook_response` row.
+
+### Changed
+
+- **`/nxtg-forge:status` prints a report computed by code** (`scripts/status-report.mjs`): summary verdict with the top findings, changes since the last run (snapshot under `$XDG_STATE_HOME/nxtg-forge/status/`), git, health by dimension, tests, governance, orchestrator, tooling, next actions with commands, and provenance. ASCII, 80 columns, aligned tables. `--json` carries the same data. The orchestrator line is unchanged from 3.12.1.
+- **`/nxtg-forge:gap-analysis` prints its five dimensions computed by code** (`scripts/gap-report.mjs`) first; the model's own review follows, labelled with no accuracy claim. The "Proceed?" question before the analysis is gone.
+- **`scripts/feature-task.sh`** prints the new task's `task_id=` and finds the project's `.forge/` from a subdirectory.
+
+### Tests
+
+- No-model tests for each required section: present, missing, and changed content, each with a mutant that turns it red, including a heading-only mutant and a "trusts the transcript" mutant for feature.
+- vitest 214 → 304, L1 16, L2 30, L3 26, binding 5.
+- 3 headless runs each of status, gap-analysis and feature after a marketplace install: 9/9, no blocks. A control run of each gate fired once and resolved.
+
+---
+
 ## [3.12.1] — 2026-10-13
 
 Fixes alpha run 4's C6 failure (F-N): `/nxtg-forge:status` called a connected but not-initialized orchestrator "Not connected". No new commands, agents, skills or hooks; no breaking changes.
