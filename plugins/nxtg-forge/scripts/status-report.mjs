@@ -137,14 +137,16 @@ function changes(d) {
     const now = snapshotOf(d);
     out.push(`Compared with the run at ${cell(p.at)} (commit \`${cell(p.commit ?? 'none')}\`).`);
     const num = (label, a, b) => [label, a ?? 'n/a', b ?? 'n/a', a == null || b == null ? 'n/a' : a === b ? 'same' : `${b > a ? 'up' : 'down'} ${signed(b - a)}`];
+    const moved = DIMENSIONS.map(([l]) => [l, (now.health?.dims?.[l] ?? 0) - (p.health?.dims?.[l] ?? 0)]).filter(([, x]) => x);
+    const short = (o) => ({ not_initialized: 'not init', not_installed: 'not installed' }[o] ?? o ?? 'n/a');
     const rows = [
       num('Health score', p.health?.score, now.health?.score),
       ['Health grade', p.health?.grade ?? 'n/a', now.health?.grade ?? 'n/a', p.health?.grade === now.health?.grade ? 'same' : 'changed'],
-      ...DIMENSIONS.map(([l]) => num(`  ${l}`, p.health?.dims?.[l], now.health?.dims?.[l])),
+      ['Dimensions', '', '', moved.length ? clip(moved.map(([l, x]) => `${l} ${signed(x)}`).join(', '), 30) : 'same'],
       num('Test files', p.tests?.files, now.tests.files),
       num('Test cases', p.tests?.cases, now.tests.cases),
       num('Changed files', p.git?.changed, now.git?.changed),
-      ['Orchestrator', p.orchestrator ?? 'n/a', now.orchestrator, p.orchestrator === now.orchestrator ? 'same' : 'changed'],
+      ['Orchestrator', short(p.orchestrator), short(now.orchestrator), p.orchestrator === now.orchestrator ? 'same' : 'changed'],
       ['Commit', p.commit ?? 'none', now.commit ?? 'none', p.commit === now.commit ? 'same' : 'changed'],
     ];
     out.push(...table(['Metric', 'Before', 'Now', 'Trend'], rows));
@@ -247,7 +249,21 @@ export function render(d) {
     ['Commit', g.isRepo && g.hash ? `\`${g.hash}\` on \`${clip(cell(g.branch || 'detached'), 40)}\`` : 'none'],
   ]));
   out.push(END);
-  return out.join('\n');
+  return spaced(out).join('\n');
+}
+
+// Blank lines around tables and before headings, so a markdown renderer never folds the next line into a
+// table. The gate skips blank lines, so they are not required output.
+function spaced(lines) {
+  const out = [];
+  lines.forEach((l, i) => {
+    const prev = out[out.length - 1];
+    if (prev !== undefined && prev !== '' && (/^#{1,6} /.test(l) || l === '---' || (l.startsWith('|') && !prev.startsWith('|')) || (!l.startsWith('|') && prev.startsWith('|')))) {
+      if (!(l === END)) out.push('');
+    }
+    out.push(l);
+  });
+  return out;
 }
 
 // Pure: the same data for --json.

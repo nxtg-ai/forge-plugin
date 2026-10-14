@@ -91,7 +91,7 @@ describe('status: the report is computed by code', () => {
 
   it('no health result gives the fixed "Not scored" line and no table, no bars, no grade', () => {
     const out = status.render({ ...humanize(), health: null });
-    expect(out).toContain(`## Health\n${status.NOT_SCORED}\n## Tests: `);
+    expect(out).toContain(`## Health\n${status.NOT_SCORED}\n\n## Tests: `);
     expect(out).not.toMatch(/Overall|\(\d+\/100\)/);
   });
 
@@ -126,7 +126,7 @@ describe('status: the report is computed by code', () => {
   it('a directory that is not a git repo still gives a complete block', () => {
     const d = status.gitData(tmp);
     expect(d).toEqual({ isRepo: false });
-    expect(status.render({ ...humanize(), git: d })).toContain('## Git\nNot a git repository.\n## Health');
+    expect(status.render({ ...humanize(), git: d })).toContain('## Git\nNot a git repository.\n\n## Health');
   });
 
   it('mutant: dropping the grade from the Overall row turns the exact-report check red', async () => {
@@ -144,7 +144,8 @@ describe('status: the enterprise report (founder directive via EMMA-SOUL 02:29Z)
   const block = (d) => status.render(d).split('\n');
   it('1. an executive summary leads: one verdict, the health score and grade, the top 3 findings with severity', () => {
     const l = block(humanize());
-    expect(l.indexOf('## Summary')).toBe(l.indexOf('---') + 1);
+    expect(l.filter(Boolean).indexOf('## Summary')).toBe(l.filter(Boolean).indexOf('---') + 1);
+    expect(l[l.indexOf('---') - 1]).toBe('');
     expect(l).toContain('**Verdict: NEEDS ATTENTION** - health **D (60/100)**');
     expect(l).toContain('What matters now (top 3 of 5 findings):');
     expect(l.filter((x) => /^\| [123] +\| \[(HIGH|MED|LOW)\]/.test(x))).toHaveLength(3);
@@ -346,6 +347,15 @@ describe('Stop gate: /nxtg-forge:status', () => {
     const reason = evalWith(gate, transcript({ command: 'status', body: statusBody(HUMANIZE_REPORT), texts: ['## Next actions\n- Commit changes\n- Run gap analysis'] }));
     expect(reason).toMatch(/^FORGE REQUIRED OUTPUT: gate=status block=1\/3 missing=\d+/);
     expect(reason).toContain(HUMANIZE_REPORT);
+  });
+
+  it('one mistyped line (a live AFTER-capture case: commit 785e5dc printed as 865e5dc) is blocked, and the reason quotes only that line', () => {
+    const typo = unwrap(HUMANIZE_REPORT).replace('| Commit       | `785e5dc` on `detached`', '| Commit       | `865e5dc` on `detached`');
+    const reason = evalWith(gate, transcript({ command: 'status', body: statusBody(HUMANIZE_REPORT), texts: [typo] }));
+    expect(reason).toMatch(/^FORGE REQUIRED OUTPUT: gate=status block=1\/3 missing=1\n/);
+    expect(reason).toContain('| Commit       | `785e5dc` on `detached`');
+    expect(reason).not.toContain('## Summary');
+    expect(evalWith(gate, transcript({ command: 'status', body: statusBody(HUMANIZE_REPORT), texts: [typo, '| Commit | `785e5dc` on `detached` |'] }))).toBeNull();
   });
 
   it('the report spread over several messages, with extra spacing in table cells, is allowed', () => {

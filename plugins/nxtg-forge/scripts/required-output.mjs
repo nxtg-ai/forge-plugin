@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 export const MAX_BLOCKS = 3;
 export const FEEDBACK_TAG = 'FORGE REQUIRED OUTPUT';
+const FEW = 8;
 const END = '<!-- /forge-required -->';
 export const GATES = {
   status: {
@@ -121,8 +122,14 @@ function textGate(kind, turn, n) {
   }
   const missing = missingLines(block, turn.texts);
   if (!missing.length) return null;
+  // A few lines missing or mistyped: quote just those. Most of it missing: quote the whole block.
+  if (missing.length <= FEW) {
+    return blockFor(kind, n, missing.length,
+      `Your reply is missing or misquotes ${missing.length} line(s) of ${gate.what}. Print each of these lines exactly as given, then end your turn:`,
+      missing.join('\n'));
+  }
   return blockFor(kind, n, missing.length,
-    `Your reply does not yet contain ${gate.what}. ${missing.length} required line(s) are missing or differ, first: ${missing[0]}\nPrint this block exactly as given, line for line (you may leave out the two marker comments), then end your turn:`,
+    `Your reply does not yet contain ${gate.what}. ${missing.length} required line(s) are missing or differ. Print this block exactly as given, line for line (you may leave out the two marker comments), then end your turn:`,
     block);
 }
 
