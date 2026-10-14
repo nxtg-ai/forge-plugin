@@ -8,6 +8,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.12.0] — 2026-10-13
+
+Forge is labelled a Public preview everywhere, a new opt-in enforced task, the two review commands demoted to optional prompts with no accuracy claim, the feature command recording the completing agent, and today's tool support stated with its build marker. Adds one command (`/nxtg-forge:task`) and one hook script; no breaking changes.
+
+### Added
+
+- **Enforced task (`/nxtg-forge:task`, `scripts/forge-task.mjs`, hook `task-enforce.sh`).** It is opt-in: `/nxtg-forge:task begin`, `FORGE_ENFORCE=implement`, or `.claude/forge-enforce.json`. While a task is active:
+  - A PreToolUse guard refuses edits to the test files that existed at begin, and to test-runner config.
+  - A Stop gate blocks until the test command recorded at begin passes, with the tests, the command and the modules it imports unchanged. It also ends the task when a conflict report checks out against the base commit.
+  - The gate is bounded: after 5 blocked stops the task ends as `unearned`.
+  - It does not check that the tests cover new behaviour, or the installed runtime. The README lists the gaps (#70, DIRECTIVE-NXTG-20261013-16 A).
+
+### Changed
+
+- **Stage label: Public preview** (distribution public, maturity pre-alpha), replacing "internal".
+  - `STAGE` now records both axes, and `check-stage.sh` derives the label from them.
+  - README, CHANGELOG, `/nxtg-forge:status`, marketplace.json and both plugin.json files now say Public preview (#71).
+- **`/nxtg-forge:gap-analysis` and `/nxtg-forge:crucible-audit` are optional review prompts with no accuracy claim.** The fixture evidence is cited with its n. A test scans `docs/**`, the README and FORGE-DIFFERENTIATORS for effectiveness claims (#69, -16 B).
+- **`/nxtg-forge:feature` passes `agent: "claude"` when it completes its task**, so forge 1.6.3 records `completed_by` (#68).
+- **Tool support as of today:** "for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)".
+  - Updated in the README and every docs line that claimed more.
+  - Lines that said Forge detects or installs Gemini CLI now name `agy`, which is what the orchestrator detects and runs (#72, #73).
+- plugin.json says "drift detection (needs a configured model)".
+- The README gains a dated Node.js 20+ marker beside "Zero-dependency" and a `cd forge-ui` in the L3 install line (#71).
+
+### Tests
+
+- vitest 158 → 196. The L2 journey goes from 27 to 28 and pins forge **1.6.3**. L1 16, L3 26, binding 5.
+- The enforced task has 25 tests (cases C1–C16) with 8 mutants. Live wiring was checked on real Claude Code 2.1.296.
+
 ## [3.11.2] — 2026-10-13
 
 `/nxtg-forge:feature` keeps a user's existing plan, and the README's component table matches what ships. No new MCP tools, commands, agents or skills; no breaking changes.
