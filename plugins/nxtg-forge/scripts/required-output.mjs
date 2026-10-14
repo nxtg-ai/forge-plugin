@@ -226,12 +226,12 @@ function featureGate(turn, n, { forgeDir, readTask }) {
   const helper = helpers[helpers.length - 1];
   // C7 as registered: Step 4.2 creates the task through MCP with forge_create_task (forge 1.7.0 and later).
   // The helper is the fallback for an orchestrator without that tool.
-  const creates = turn.tools.filter((t) => named(t, 'forge_create_task') && t.text !== null);
-  const create = creates[creates.length - 1];
-  const mcpCreated = Boolean(create) && !create.isError;
-  const created = mcpCreated || (helper && /^status=created$/m.test(helper.text));
+  // A create that returned an error, or no task_id, created nothing: it counts as no task (forge-pm).
+  const creates = turn.tools.filter((t) => named(t, 'forge_create_task') && t.text !== null && !t.isError);
+  const mcpId = creates.map((t) => t.text.match(/"task_id"\s*:\s*"(T-\d+)"/)?.[1]).filter(Boolean).pop() ?? null;
+  const created = Boolean(mcpId) || (helper && /^status=created$/m.test(helper.text));
   if (!created) {
-    if (helper || create) return null; // no-forge, no-forge-dir, or a failure the helper or the tool returned: visible as is
+    if (helper) return null; // no-forge, no-forge-dir, or a failure the helper printed: visible as is
     if (said.some((l) => /^No task created: \S/.test(l))) return null;
     if (!forgeDir) return null; // no `.forge/`: the helper would say no-forge-dir
     return blockFor('feature', n, 1,
@@ -239,7 +239,7 @@ function featureGate(turn, n, { forgeDir, readTask }) {
   }
   // The task id comes from forge_create_task's result or the helper's task_id= line; the transcript's claim
   // is used only when an older helper printed none.
-  const id = (mcpCreated ? create.text.match(/"task_id"\s*:\s*"(T-\d+)"/)?.[1] : helper.text.match(/^task_id=(T-\d+)$/m)?.[1])
+  const id = mcpId ?? helper.text.match(/^task_id=(T-\d+)$/m)?.[1]
     ?? turn.tools.find((t) => named(t, 'forge_claim_task') && t.input.agent === 'claude')?.input.task_id ?? null;
   const forged = taskRecordWrites(turn.tools);
   if (forged.length) {

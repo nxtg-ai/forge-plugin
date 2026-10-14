@@ -12,7 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ### Changed
 
-- **`/nxtg-forge:feature` creates its orchestrator task through MCP** (DIRECTIVE-NXTG-20261014-11 part 3, C7 as registered). Step 4.2 calls `forge_create_task` (forge 1.7.0 and later) with the feature title and description, then claims the returned `task_id`. The `feature-task.sh` helper (`forge plan --generate --spec`) is used only when that tool is not available. The feature Stop gate takes the task id from the `forge_create_task` result, treats a failed create like a failed helper, and its "no task" message names the MCP tool first.
+- **`/nxtg-forge:feature` creates its orchestrator task through MCP** (DIRECTIVE-NXTG-20261014-11 part 3, C7 as registered). Step 4.2 calls `forge_create_task` (forge 1.7.0 and later) with the feature title and description, then claims the returned `task_id`. The `feature-task.sh` helper (`forge plan --generate --spec`) is used only when that tool is not available. If the tool returns an error or no `task_id`, Step 4.2 falls back to the helper. The feature Stop gate takes the task id from the `forge_create_task` result, counts an errored or id-less create as no task, and its "no task" message names the MCP tool first.
 
 ## [3.13.1] — 2026-10-14
 

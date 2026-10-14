@@ -501,8 +501,12 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
     const other = { ...CLAIM, input: { task_id: 'T-009', agent: 'claude' } };
     expect(feat(gate, [CREATE, other], [], ROW.pending)).toMatch(/created T-001/);
   });
-  it('a failed forge_create_task (an error result) is visible as is, like a helper failure: not gated further', () => {
-    expect(feat(gate, [{ ...CREATE, result: 'Failed to create task: x', isError: true }], [], null)).toBeNull();
+  it('a forge_create_task that returned an error, or no task_id, created nothing: blocked as "no task" (forge-pm)', () => {
+    for (const bad of [{ ...CREATE, result: 'Failed to create task: x', isError: true }, { ...CREATE, result: '{"status":"pending"}' }]) {
+      expect(feat(gate, [bad], [], null)).toMatch(/neither an orchestrator task nor a stated reason/);
+      expect(feat(gate, [bad, CLAIM, COMPLETE, GET], [], ROW.completed)).toMatch(/neither an orchestrator task/);
+    }
+    expect(feat(gate, [{ ...CREATE, isError: true }], ['No task created: forge is not initialized here'], null)).toBeNull();
   });
   it('the "no task" block names forge_create_task first and the helper only as the fallback', () => {
     const r = feat(gate, [], [], null);

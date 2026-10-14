@@ -89,8 +89,8 @@ Every path that implements the feature goes through Step 4.2 first. Never go fro
 
 This step is required whenever the orchestrator tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`) are available in this session. Skip it only when they are not. Whether a governance.json exists never decides this. When this step is done, Proceed to Step 4.5.
 
-1. If `forge_create_task` is available, call it with `title` set to the feature title (one line, at most 200 characters) and `description` set to a one-paragraph description. It creates exactly one pending task and returns its `task_id`. Call `forge_claim_task` with that `task_id` and agent `claude`, and remember the id for Step 7, and skip items 2 to 4. If it returns an error, show it and continue without a task; if the error says Forge is not initialized, also say once, "Run `forge init` in this project to track features as orchestrator tasks."
-2. Use the helper only when `forge_create_task` is not available (an orchestrator older than forge 1.7.0). Run it from the project root, with the feature title (one line) and a one-paragraph description:
+1. If `forge_create_task` is available, call it with `title` set to the feature title (one line, at most 200 characters) and `description` set to a one-paragraph description. It creates exactly one pending task and returns its `task_id`. Call `forge_claim_task` with that `task_id` and agent `claude`, and remember the id for Step 7, and skip items 2 to 4. If it returns an error, or no `task_id`, it created nothing: show the error and use the helper (item 2) instead.
+2. Use the helper only when `forge_create_task` is not available (an orchestrator older than forge 1.7.0), or when it returned an error or no `task_id`. Run it from the project root, with the feature title (one line) and a one-paragraph description:
 
    ```bash
    bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "{feature title}" "{one-paragraph description}"
