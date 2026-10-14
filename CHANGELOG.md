@@ -8,6 +8,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **semgrep-mcp no longer shows as a failed server when uv is installed** (DIRECTIVE-NXTG-20261014-11 part 4).
+  - The published `semgrep-mcp` (0.9.0) exits 1 at import (`ImportError: cannot import name 'eval_type_backport'` from pydantic) before it answers, so `exec uvx semgrep-mcp` left Claude Code with "MCP server failed", cached for 15 minutes.
+  - `servers/semgrep-mcp/start.sh` now runs the upstream behind a pure-bash guard. It buffers what the client sends and forwards it. If the upstream exits before its first stdout line, the buffer is replayed to the stand-in, which answers with no tools and says how to see the error (`uvx --refresh semgrep-mcp`). Once the upstream has answered, both directions are relayed unchanged. The same guard covers a `semgrep-mcp` on the PATH.
+  - On bash older than 4.1 (macOS `/bin/bash` 3.2) the guard needs `coproc`, so the launcher runs the upstream unguarded as before.
+  - No version pin ships: `--with 'pydantic<2.12'` gets past the import, but the server then exits in its startup unless a `semgrep` CLI is on the PATH.
+
 ## [3.13.1] — 2026-10-14
 
 Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools; no breaking changes.
