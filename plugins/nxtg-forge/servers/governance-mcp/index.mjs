@@ -11,6 +11,9 @@
  * SDK stays a devDependency: tests/mcp-conformance.test.mjs drives this loop with the SDK's own client.
  */
 import { createInterface } from "node:readline";
+import { spawnSync } from "node:child_process";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   getGovernanceState,
@@ -138,6 +141,26 @@ export async function dispatchToolCall(name) {
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
 const SERVER_INFO = { name: "forge-governance", version: serverVersion };
 
+/** The oldest Node.js major this server supports. */
+export const NODE_MIN = 20;
+
+/**
+ * Why this server cannot run on the given Node.js version, or null when it can. The version check lives here,
+ * inside the server's own node process (DIRECTIVE-NXTG-20261014-09, L1): start.sh used to start a separate
+ * `node -p process.versions.node` first, a second Node startup on every launch that cost the most on a busy
+ * machine, inside the ~1.5-2 s window Claude Code gives a plugin MCP server. Measured: this file and tools.mjs
+ * load on Node 18.20.8, so the check runs there and answers with the stand-in instead of crashing.
+ */
+export function nodeVersionReason(version = process.versions.node) {
+  const major = Number.parseInt(String(version).split(".")[0], 10);
+  if (Number.isInteger(major) && major >= NODE_MIN) return null;
+  return `Health scoring needs Node.js ${NODE_MIN} or newer; this machine has ${version}. Upgrade from https://nodejs.org. ` +
+    "Without it there is no health score or grade, and the forge_* governance tools are missing. After installing, start a new Claude Code session.";
+}
+
+/** A plain JSON object: not null, not an array. */
+const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
 /** The result of one tools/call, in MCP's content shape. */
 export async function callTool(name) {
   try {
@@ -160,6 +183,11 @@ export async function handleMessage(msg) {
   if (msg === null || typeof msg !== "object" || Array.isArray(msg)) {
     return { jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request" } };
   }
+  // Not JSON-RPC 2.0 (no `jsonrpc`, or another version): rejected, never dispatched (DIRECTIVE-NXTG-20261014-09, L2).
+  if (msg.jsonrpc !== "2.0") {
+    const id = typeof msg.id === "string" || typeof msg.id === "number" ? msg.id : null;
+    return { jsonrpc: "2.0", id, error: { code: -32600, message: "Invalid Request" } };
+  }
   const isRequest = typeof msg.method === "string" && (typeof msg.id === "string" || typeof msg.id === "number");
   if (!isRequest) {
     if (typeof msg.method === "string" || "result" in msg || "error" in msg) return null; // notification or response
@@ -178,9 +206,15 @@ export async function handleMessage(msg) {
     case "tools/list":
       return ok({ tools: TOOLS });
     case "tools/call": {
-      const name = msg.params?.name;
-      if (typeof name !== "string") return fail(-32602, "Invalid params: tools/call needs a tool name");
-      return ok(await callTool(name));
+      // Validate the whole request before any tool runs (DIRECTIVE-NXTG-20261014-09, M1): v3.13.1 checked only
+      // the name, so `arguments: "invalid"` ran the project's tests. `arguments` must be an object or absent.
+      const params = msg.params;
+      if (!isObject(params)) return fail(-32602, "Invalid params: tools/call params must be an object");
+      if (typeof params.name !== "string") return fail(-32602, "Invalid params: tools/call needs a tool name");
+      if (params.arguments !== undefined && !isObject(params.arguments)) {
+        return fail(-32602, "Invalid params: tools/call arguments must be an object");
+      }
+      return ok(await callTool(params.name));
     }
     default:
       return fail(-32601, "Method not found");
@@ -214,7 +248,17 @@ export function serve(input = process.stdin, output = process.stdout) {
 
 // Start (FORGE_TEST_MODE guard enables vitest to import without blocking on stdio)
 if (!process.env.FORGE_TEST_MODE) {
-  // Exit only after every reply has been flushed: a write callback runs after the writes queued before it,
-  // so a large reply is not cut off when the client closes stdin right after its last request.
-  serve().then(() => process.stdout.write("", () => process.exit(0)));
+  const tooOld = nodeVersionReason();
+  if (tooOld) {
+    // Node too old: hand stdin/stdout to the shared stand-in, which completes the MCP handshake with no tools
+    // and the reason, instead of exiting (Claude Code caches a failed start for 15 minutes).
+    const standIn = join(dirname(fileURLToPath(import.meta.url)), "..", "lib", "unavailable-mcp.sh");
+    const r = spawnSync("bash", [standIn, "governance-mcp", tooOld], { stdio: "inherit" });
+    if (r.error) console.error(`[governance-mcp] not started: ${tooOld} (stand-in failed: ${r.error.message})`);
+    process.exit(r.status ?? 0);
+  } else {
+    // Exit only after every reply has been flushed: a write callback runs after the writes queued before it,
+    // so a large reply is not cut off when the client closes stdin right after its last request.
+    serve().then(() => process.stdout.write("", () => process.exit(0)));
+  }
 }

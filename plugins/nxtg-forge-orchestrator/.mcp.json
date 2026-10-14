@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "orchestrator-mcp": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/orchestrator-mcp/start.sh"],
+      "env": { "FORGE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}" },
+      "timeout": 10000
+    }
+  }
+}

@@ -43,6 +43,13 @@ const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", ".."); //
 const PLUGIN_ROOT = join(SERVER_DIR, "..", ".."); // -> plugins/nxtg-forge/
 const PKG = JSON.parse(readFileSync(join(SERVER_DIR, "package.json"), "utf8"));
 const MCP_JSON = join(SERVER_DIR, "..", "..", ".mcp.json"); // plugins/nxtg-forge/.mcp.json
+// orchestrator-mcp is registered by the companion plugin since DIRECTIVE-NXTG-20261014-12. Its
+// ${CLAUDE_PLUGIN_ROOT} is the companion's own root, so it is expanded here, when the spec is read.
+const COMPANION_ROOT = join(PLUGIN_ROOT, "..", "nxtg-forge-orchestrator");
+function companionOrchSpec() {
+  const spec = JSON.parse(readFileSync(join(COMPANION_ROOT, ".mcp.json"), "utf8")).mcpServers["orchestrator-mcp"];
+  return { ...spec, args: (spec.args || []).map((a) => a.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, COMPANION_ROOT)) };
+}
 
 // Expand the Claude Code placeholders exactly as the host does when it loads .mcp.json, so both
 // servers boot from their VERBATIM .mcp.json command specs (drift-proof) yet resolve correctly here.
@@ -177,7 +184,7 @@ async function main() {
 
   const mcp = JSON.parse(readFileSync(MCP_JSON, "utf8"));
   const govSpec = mcp.mcpServers["governance-mcp"];       // {command:"bash", args:[".../start.sh"]}
-  const orchSpec = mcp.mcpServers["orchestrator-mcp"];    // {command:"bash", args:["${CLAUDE_PLUGIN_ROOT}/servers/orchestrator-mcp/start.sh"]}
+  const orchSpec = companionOrchSpec();                   // the companion plugin's .mcp.json, CLAUDE_PLUGIN_ROOT expanded
 
   const shadowBin = makeShadowBin();
   const childPath = `${shadowBin}:${process.env.PATH}`; // shadow browser-openers; keep forge resolvable

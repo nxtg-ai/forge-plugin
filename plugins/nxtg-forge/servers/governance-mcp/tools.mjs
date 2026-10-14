@@ -10,7 +10,7 @@
 
 import { execSync, spawn } from "child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, delimiter } from "path";
 import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 // `open` is imported where it is used (generateDashboard), so the scoring functions load
@@ -667,6 +667,49 @@ export function systemOpener(target, platform = process.platform) {
  */
 export function openWithSystem(target, { platform = process.platform, spawnFn = spawn } = {}) {
   const { cmd, args } = systemOpener(target, platform);
+  return launchDetached(cmd, args, spawnFn);
+}
+
+/**
+ * The commands a BROWSER value names, in the order to try them, the way xdg-open reads it: entries are
+ * separated by the path delimiter (":" here, ";" on Windows), each entry is split on whitespace (no shell,
+ * no quoting), and every "%s" is replaced by the target; an entry without "%s" gets the target appended.
+ * Unset or blank gives []. Exported for tests.
+ */
+export function browserCommands(value, target, sep = delimiter) {
+  if (typeof value !== "string") return [];
+  return value.split(sep).map((entry) => entry.trim().split(/\s+/).filter(Boolean)).filter((words) => words.length > 0).map((words) => {
+    const hasSlot = words.some((w) => w.includes("%s"));
+    const filled = words.map((w) => w.replaceAll("%s", () => target)); // a function: no "$&" patterns in paths
+    return { cmd: filled[0], args: hasSlot ? filled.slice(1) : [...filled.slice(1), target] };
+  });
+}
+
+/**
+ * Open the target with the user's BROWSER, trying each listed browser until one starts. Resolves false
+ * when BROWSER is unset or none of its entries could be started. Spawned without a shell.
+ */
+export async function openWithBrowserEnv(target, { env = process.env, spawnFn = spawn } = {}) {
+  for (const { cmd, args } of browserCommands(env.BROWSER, target)) {
+    if (await launchDetached(cmd, args, spawnFn)) return true;
+  }
+  return false;
+}
+
+/**
+ * The dashboard opener order (DIRECTIVE-NXTG-20261014-09, M2): BROWSER first, then the platform's own opener.
+ * v3.13.0's `open` package honoured BROWSER through its bundled xdg-open; v3.13.1 replaced it with the
+ * system opener and lost that. On WSL the system opener is skipped (xdg-open there can exit 0 without
+ * opening anything), so the caller goes on to PowerShell and wslview, then the paste-this-URL hint.
+ */
+export async function openDashboardFile(target, { env = process.env, isWSL = false, platform = process.platform, spawnFn = spawn } = {}) {
+  if (await openWithBrowserEnv(target, { env, spawnFn })) return true;
+  if (isWSL) return false;
+  return openWithSystem(target, { platform, spawnFn });
+}
+
+/** Start a command detached with no stdio (stdout carries the MCP protocol); true once it has started. */
+function launchDetached(cmd, args, spawnFn) {
   return new Promise((resolve) => {
     let child;
     try {
@@ -1118,12 +1161,12 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
     return { path: tmpPath, browserUrl, projectName, healthScore: health.score, healthGrade: health.grade };
   }
 
-  // Attempt auto-open with the platform's own opener (no npm package: the server has no runtime
-  // dependencies). In WSL2 tmux sessions xdg-open is often missing or has no DISPLAY, so try two
-  // fallbacks before giving up.
-  // On WSL go straight to the Windows fallbacks below: xdg-open there can start and exit 0 without
-  // opening anything, which would skip them and the paste-this-URL hint.
-  let opened = isWSL ? false : await openWithSystem(tmpPath);
+  // Attempt auto-open: the user's BROWSER first, then the platform's own opener (no npm package: the
+  // server has no runtime dependencies). In WSL2 tmux sessions xdg-open is often missing or has no
+  // DISPLAY, so try two fallbacks before giving up.
+  // On WSL go straight from BROWSER to the Windows fallbacks below: xdg-open there can start and exit 0
+  // without opening anything, which would skip them and the paste-this-URL hint.
+  let opened = await openDashboardFile(tmpPath, { isWSL });
 
   if (!opened && isWSL) {
     // Fallback 1: powershell.exe Start (works in tmux, no DISPLAY needed)

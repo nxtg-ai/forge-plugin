@@ -4,9 +4,10 @@
 # This server needs Node.js 20 or newer and nothing else: it has no npm dependencies, so there is no
 # install step on first launch (DIRECTIVE-NXTG-20261014-01). Claude Code lists a plugin MCP server as
 # "pending", without its tools, if it has not answered within about 1.5-2 s of launch, and a first-run
-# `npm install` missed that window on a cold npm cache. When Node is missing or too old, this starts a
-# stand-in (../lib/unavailable-mcp.sh) that says what is needed, instead of exiting: Claude Code caches
-# a failed start for 15 minutes, which would keep health scoring dark after the user installs Node.
+# `npm install` missed that window on a cold npm cache. When Node is missing (checked here) or too old
+# (checked in index.mjs), a stand-in (../lib/unavailable-mcp.sh) answers and says what is needed,
+# instead of exiting: Claude Code caches a failed start for 15 minutes, which would keep health scoring
+# dark after the user installs Node.
 
 set -euo pipefail
 
@@ -27,10 +28,9 @@ if ! command -v node >/dev/null 2>&1; then
   unavailable "Health scoring needs Node.js ${NODE_MIN} or newer, and node was not found on the PATH. Install it from https://nodejs.org (or your package manager)."
 fi
 
-NODE_VERSION="$(node -p 'process.versions.node' 2>/dev/null || echo unknown)"
-if [[ ! "${NODE_VERSION%%.*}" =~ ^[0-9]+$ ]] || (( ${NODE_VERSION%%.*} < NODE_MIN )); then
-  unavailable "Health scoring needs Node.js ${NODE_MIN} or newer; this machine has ${NODE_VERSION}. Upgrade from https://nodejs.org."
-fi
+# Node's version is checked inside index.mjs, not with a separate `node -p` here: that probe was a second
+# Node startup on every launch, the costliest step on a busy machine (DIRECTIVE-NXTG-20261014-09, L1).
+# On a Node older than ${NODE_MIN}, index.mjs hands stdin/stdout to the same stand-in.
 
 if [[ ! -f index.mjs ]]; then
   echo "[governance-mcp] ERROR: index.mjs not found" >&2

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://claude.ai/schemas/plugin.json",
+  "name": "nxtg-forge-orchestrator",
+  "displayName": "NXTG Forge Orchestrator",
+  "version": "3.13.1",
+  "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (public preview)",
+  "defaultEnabled": true,
+  "author": {
+    "name": "NXTG AI",
+    "email": "team@nxtg.ai",
+    "url": "https://github.com/nxtg-ai"
+  },
+  "repository": "https://github.com/nxtg-ai/forge-plugin",
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "mcp",
+    "tasks",
+    "governance"
+  ]
+}

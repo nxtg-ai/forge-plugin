@@ -7,13 +7,6 @@
       "env": { "FORGE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}" },
       "timeout": 15000
     },
-    "orchestrator-mcp": {
-      "type": "stdio",
-      "command": "bash",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/orchestrator-mcp/start.sh"],
-      "env": { "FORGE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}" },
-      "timeout": 10000
-    },
     "semgrep-mcp": {
       "type": "stdio",
       "command": "bash",

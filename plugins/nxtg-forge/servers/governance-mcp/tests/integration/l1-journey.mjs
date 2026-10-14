@@ -30,7 +30,9 @@ import {
 const SERVER_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", ".."); // -> governance-mcp/
 const START_SH = join(SERVER_DIR, "start.sh");
 const PKG = JSON.parse(readFileSync(join(SERVER_DIR, "package.json"), "utf8"));
-const MCP_JSON = join(SERVER_DIR, "..", "..", ".mcp.json"); // plugins/nxtg-forge/.mcp.json
+// orchestrator-mcp is registered by the companion plugin since DIRECTIVE-NXTG-20261014-12.
+const COMPANION_ROOT = join(SERVER_DIR, "..", "..", "..", "nxtg-forge-orchestrator");
+const COMPANION_MCP_JSON = join(COMPANION_ROOT, ".mcp.json");
 
 const OPENERS = ["xdg-open", "wslview", "open", "x-www-browser", "www-browser", "sensible-browser"];
 const NOOP = "#!/bin/sh\nexit 0\n";
@@ -76,9 +78,9 @@ const PLUGIN_ROOT = join(SERVER_DIR, "..", "..");
 const INIT_LINE = JSON.stringify({ jsonrpc: "2.0", id: 0, method: "initialize",
   params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "l1", version: "1" } } }) + "\n";
 function runOrchestratorCommand(pathEnv, homeEnv) {
-  const mcp = JSON.parse(readFileSync(MCP_JSON, "utf8"));
+  const mcp = JSON.parse(readFileSync(COMPANION_MCP_JSON, "utf8"));
   const spec = mcp.mcpServers["orchestrator-mcp"];
-  const args = spec.args.map((a) => a.replaceAll("${CLAUDE_PLUGIN_ROOT}", PLUGIN_ROOT));
+  const args = spec.args.map((a) => a.replaceAll("${CLAUDE_PLUGIN_ROOT}", COMPANION_ROOT));
   try {
     const stdout = execFileSync(spec.command, args, {
       env: { PATH: pathEnv, HOME: homeEnv }, input: INIT_LINE, encoding: "utf8", timeout: 10000,

@@ -10,6 +10,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+### Changed (breaking for anyone who calls orchestrator tools by full name)
+
+- **`orchestrator-mcp` moves to a companion plugin, `nxtg-forge-orchestrator`, in the same marketplace** (DIRECTIVE-NXTG-20261014-12, EMMA-SOUL design C). `nxtg-forge` no longer registers it, so a user without the Forge orchestrator sees no `orchestrator-mcp` entry at all, rather than a connected stand-in. The companion carries today's launcher unchanged: `forge mcp` when the `forge` binary is found, the stand-in that names the installer when it is not (never a failed server), and `FORGE_PROJECT_ROOT=${CLAUDE_PROJECT_DIR}`. Its `find-forge.sh` and stand-in are byte copies of `nxtg-forge`'s, and a test keeps them equal. `install.sh` (forge-orchestrator) installs the companion when it finds the `claude` CLI.
+- **The orchestrator now binds the Forge project when a session starts in a subdirectory.** Claude Code passes the directory the session started in, and `forge mcp` does not walk up, so a session started in `<project>/src` got "Forge is not initialized" (true of every release so far). The companion's launcher binds the nearest ancestor holding `.forge/state.json`. It never goes above `$HOME`, so forge-ui's global `~/.forge` never counts; both paths are resolved first, so a relative value, a trailing slash or a symlinked `$HOME` cannot make the walk loop or pass `$HOME`. With no Forge project above, the session directory is used as before. As a result, the companion's `start.sh` is no longer a byte copy of `nxtg-forge`'s; `find-forge.sh` and the stand-in still are.
+- **The companion warns when the installed `nxtg-forge` is a release that still registers `orchestrator-mcp`** (3.13.1 and earlier, kept until `claude plugin update`). Measured: with both installed, the session lists two connected `orchestrator-mcp` servers, so every orchestrator tool appears twice. Once per session, the companion's hook names `claude plugin update nxtg-forge@nxtg-forge`.
+- **Only NXTG forge is launched as the orchestrator.** `find-forge.sh` (both plugins, and so the session hint and `feature-task.sh`) now accepts a `forge` only if its `--version` reads `forge X.Y.Z`, as every NXTG forge release does. The probe is bounded to 2 s (background and poll, so it also works with macOS's bash 3.2 and no `timeout`), and a candidate that is slower counts as not NXTG forge. Other programs named `forge`, such as Atlassian's and Laravel's CLIs, used to be run as `forge mcp`, fail, and show as a failed server cached for 15 minutes. Now the search continues past them, and if no NXTG forge is found the stand-in names the other program and the fix, including `FORGE_BIN`.
+- The orchestrator tools' full names change from `mcp__plugin_nxtg-forge_orchestrator-mcp__*` to `mcp__plugin_nxtg-forge-orchestrator_orchestrator-mcp__*`. Nothing in the plugin names them in full: the commands use the short names, and the `/nxtg-forge:feature` Stop gate matches the suffix.
+- The session hook still tells Claude, once per session, that the orchestrator is optional and the one command that adds it. With `forge` absent: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`. With `forge` installed but the companion not: `claude plugin install nxtg-forge-orchestrator@nxtg-forge`. With both: nothing. The hook reads Claude Code's `installed_plugins.json`. It is printed even with `FORGE_QUIET_HOOKS=1`: it is one line of context Claude needs in every session, not progress output.
+
 ### Fixed
 
 - **semgrep-mcp no longer shows as a failed server when uv is installed** (DIRECTIVE-NXTG-20261014-11 part 4).
@@ -19,9 +28,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
   - SIGTERM to the launcher ends it and every process under it, both while relaying a running upstream and while the stand-in serves (PR #92 review M-1).
   - No version pin ships: `--with 'pydantic<2.12'` gets past the import, but the server then exits in its startup unless a `semgrep` CLI is on the PATH.
 
+### Hardening from the codex review of v3.13.1 (eb5499d), DIRECTIVE-NXTG-20261014-09
+
+### Fixed
+
+- **`tools/call` validates its params before any tool runs** (M1). v3.13.0 got this from the MCP SDK; v3.13.1's own loop checked only the tool name, so `"arguments": "invalid"` ran the project's tests and `forge_open_dashboard` wrote a dashboard file. `params` must be an object, `name` a string, and `arguments` an object or absent; anything else (a string, an array, `null`, a number) gets JSON-RPC error -32602 and no tool runs.
+- **A frame that is not JSON-RPC 2.0 is rejected** (L2). A message without `"jsonrpc": "2.0"` (missing, or `"1.0"`) gets -32600 Invalid Request and is never dispatched; v3.13.1 ran it.
+- **`forge_open_dashboard` honours `BROWSER` again** (M2). v3.13.1 replaced the `open` package, whose bundled `xdg-open` read `BROWSER`, with the system opener, so a Linux machine with `BROWSER` set and no `xdg-open` stopped opening the dashboard. The order is now: `BROWSER` (entries separated by `:`, `%s` replaced by the file path or the path appended, run without a shell), then the system opener (`xdg-open`, `open`, `start`; skipped on WSL), then on WSL PowerShell and `wslview`, then the path hint.
+
+### Changed
+
+- **`/nxtg-forge:feature` creates its orchestrator task through MCP** (DIRECTIVE-NXTG-20261014-11 part 3, C7 as registered). Step 4.2 calls `forge_create_task` (forge 1.7.0 and later) with the feature title and description, then claims the returned `task_id`. The `feature-task.sh` helper (`forge plan --generate --spec`) is used only when that tool is not available. If the tool returns an error or no `task_id`, Step 4.2 falls back to the helper. The feature Stop gate takes the task id from the `forge_create_task` result, counts an errored or id-less create as no task, and its "no task" message names the MCP tool first.
+- **`start.sh` starts Node once** (L1). It no longer runs a separate `node -p process.versions.node` before the server; `index.mjs` checks the version itself and, on a Node older than 20, hands stdin/stdout to the same no-tools stand-in, so the handshake still completes and nothing is cached as a failed start. Measured on this host, fresh `bash start.sh` to the initialize reply, n=15 each: unloaded p50 41.9 → 27.0 ms; with `taskset -c 0,1` and 8 busy processes on those cores, p50 235.8 → 120.8 ms. Real Node 18.20.8 gets the stand-in (exit 0, 0 tools); Node 20.10.0 gets all 8 tools.
+
+### Tests
+
+- New: malformed `arguments` (string, array, `null`, number) are rejected with no trace of `forge_run_tests` or `forge_open_dashboard` having run, with a valid call as the positive control; non-2.0 frames, in process and through `start.sh`; `BROWSER` parsing, order and fall-through, plus a real `BROWSER` program receiving the path; one Node start per launch on Node 20+ and the old-Node stand-in decided inside that one process.
+- vitest 326 → 344.
+
+---
+
 ## [3.13.1] — 2026-10-14
 
-Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools; no breaking changes.
+Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools. One compatibility change: `forge_open_dashboard` stopped using the `open` package and opens the file with the system opener (`xdg-open`, `open` or `start`), so on Linux without `xdg-open` it no longer opens a browser, and `BROWSER` is not honoured. (This line said "no breaking changes" until the codex review of eb5499d showed the opener change; `BROWSER` is honoured again in [Unreleased].)
 
 ### Fixed
 
