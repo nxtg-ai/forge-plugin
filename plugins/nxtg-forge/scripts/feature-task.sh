@@ -18,7 +18,8 @@
 # .forge/tasks/ are never touched.
 #
 # Output: key=value lines on stdout.
-#   status=created   title=…  spec=…  [plan_backup=…]   (exit 0)
+#   status=created   title=…  spec=…  [task_id=T-NNN]  [plan_backup=…]   (exit 0)
+#   task_id is printed when exactly one new task file appeared under .forge/tasks/.
 #   status=no-forge                     (exit 10)  forge is not installed
 #   status=no-forge-dir                 (exit 11)  `forge init` has not run here
 # Any other exit is an error; forge's output is on stderr.
@@ -69,6 +70,8 @@ if [[ -s "$PLAN" ]]; then
   cp -p "$PLAN" "$BACKUP"
 fi
 
+tasks_before="$(ls .forge/tasks/ 2>/dev/null | grep -E '^T-[0-9]+\.json$' | sort || true)"
+
 if ! out="$("$FORGE" plan --generate --spec "$SPEC" --project "$PWD" </dev/null 2>&1)"; then
   [[ -n "$BACKUP" ]] && cp -p "$BACKUP" "$PLAN"
   printf '%s\n' "$out" >&2
@@ -90,5 +93,7 @@ fi
 echo "status=created"
 echo "title=$TITLE"
 echo "spec=$SPEC"
+new_tasks="$(comm -13 <(printf '%s\n' "$tasks_before") <(ls .forge/tasks/ 2>/dev/null | grep -E '^T-[0-9]+\.json$' | sort || true) | grep -v '^$' || true)"
+if [[ -n "$new_tasks" && "$(printf '%s\n' "$new_tasks" | wc -l)" -eq 1 ]]; then echo "task_id=${new_tasks%.json}"; fi
 [[ -n "$BACKUP" ]] && echo "plan_backup=$BACKUP"
 exit 0

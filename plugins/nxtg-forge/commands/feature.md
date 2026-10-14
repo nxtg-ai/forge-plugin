@@ -8,6 +8,10 @@ argument-hint: "[feature name or description]"
 
 You are the **Feature Planner** - guide the user through designing and implementing a new feature with structured planning.
 
+**Checked at the end of the turn.** When this project has a `.forge/` directory, a Stop check reads this turn's tool calls and does not let the turn end until one of these holds:
+- the Step 4.2 helper created the task, you claimed it as `claude`, and you completed it as `claude` with a `result_summary` and then showed it with `forge_get_tasks` (Steps 4.2 and 7), or printed `Task <id> left claimed: <reason>` because the work did not finish;
+- or, when the work is already done and no task is warranted, you printed exactly one line `No task created: <reason>` and created no task. Never create, claim or complete a task for work that is not needed.
+
 ## Parse Arguments
 
 Arguments received: `$ARGUMENTS`
@@ -93,7 +97,7 @@ This step is required whenever the orchestrator tools (`forge_get_tasks`, `forge
 
    It writes `.forge/feature-requests/F-NNN.md` with exactly one `## {feature title}` heading and runs `forge plan --generate --spec` on that file, which creates exactly one task. **Never run `forge plan --generate` without `--spec`**: it plans from the README's headings, and those tasks are not this feature.
 2. Read its `status=` line:
-   - `status=created`: call `forge_get_tasks`. Take the task whose title is the printed `title=`, or contains it (the planner may title it "Review existing implementation of: {title}"). If several match, take the highest id that is still pending. Then call `forge_claim_task` with that `task_id` and agent `claude`. Remember the id for Step 7.
+   - `status=created`: it also prints `task_id=` with the id of the task it created. Call `forge_claim_task` with that `task_id` and agent `claude`. If no `task_id=` was printed, call `forge_get_tasks` and take the task whose title is the printed `title=`, or contains it (the planner may title it "Review existing implementation of: {title}"); if several match, take the highest id that is still pending. Remember the id for Step 7.
    - `status=no-forge-dir` (exit 11): say once, "Run `forge init` in this project to track features as orchestrator tasks," and continue without a task.
    - `status=no-forge` (exit 10): continue without a task.
    - Any other exit: show its stderr, and continue without a task.
@@ -202,7 +206,7 @@ The orchestrator tools (`forge_*` from the orchestrator MCP server) are used whe
    - content: Summary of what was built, files changed, patterns used
    - category: "learnings"
    - source: "feature implementation"
-3. If Step 4.2 claimed a task, call `forge_complete_task` with its `task_id`, `agent: "claude"` and a `result_summary`: one or two sentences on what was built and whether tests pass. Always pass `agent`: the orchestrator then records who completed the task, rather than inferring it from who claimed it. If the work did not finish, leave the task claimed and say so.
+3. If Step 4.2 claimed a task, call `forge_complete_task` with its `task_id`, `agent: "claude"` and a `result_summary`: one or two sentences on what was built and whether tests pass. Always pass `agent`: the orchestrator then records who completed the task, rather than inferring it from who claimed it. Then call `forge_get_tasks` so the result shows the task completed, with its outcome. If the work did not finish, do not complete the task: leave it claimed and print one line, `Task <id> left claimed: <reason>`.
 
 ## Anti-Patterns
 
