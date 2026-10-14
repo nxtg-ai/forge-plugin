@@ -4,7 +4,8 @@
 // model choosing to produce them:
 //   /nxtg-forge:status        the report block its `!` step computed (scripts/status-report.mjs)
 //   /nxtg-forge:gap-analysis  the dimension block its `!` step computed (scripts/gap-report.mjs)
-//   /nxtg-forge:feature       the task actions: helper call, claim and complete as claude, get_tasks
+//   /nxtg-forge:feature       the task actions, proven by the orchestrator's own task record (.forge/tasks/<id>.json):
+//                             claimed and completed by claude with a result_summary; then a forge_get_tasks call
 // When the turn's command is one of these, this gate reads the session transcript and refuses to end the
 // turn until the required output is there: every line of the computed block, matched line by line
 // (a heading with other content under it does not count), or the feature's tool calls. Any other turn,
@@ -128,7 +129,19 @@ function textGate(kind, turn, n) {
 const named = (t, tool) => t.name === tool || t.name.endsWith(`__${tool}`);
 const lines = (texts) => texts.join('\n').split('\n').map((l) => l.trim().replace(/^\*\*|\*\*$/g, '').trim());
 
-function featureGate(turn, n, { forgeDir }) {
+// The orchestrator's own record of a task, `.forge/tasks/<id>.json` under the project; null if absent.
+export function taskReader(cwd) {
+  return (id) => {
+    if (!/^T-\d+$/.test(String(id ?? ''))) return null;
+    try { return JSON.parse(readFileSync(join(cwd, '.forge', 'tasks', `${id}.json`), 'utf8')); } catch { return null; }
+  };
+}
+// Proof comes from that record, never from the transcript (EMMA-SOUL 02:26Z): a printed "completed" or a
+// tool call whose effect is not in the record does not count.
+const claimedByClaude = (row) => row?.assigned_to === 'claude' && ['assigned', 'in_progress', 'completed'].includes(row.status);
+const completedByClaude = (row) => row?.status === 'completed' && row.completed_by === 'claude' && String(row.result_summary ?? '').trim() !== '';
+
+function featureGate(turn, n, { forgeDir, readTask }) {
   const said = lines(turn.texts);
   const helpers = turn.tools.filter((t) => t.name === 'Bash' && /feature-task\.sh/.test(String(t.input.command ?? '')) && t.text !== null);
   const helper = helpers[helpers.length - 1];
@@ -138,38 +151,37 @@ function featureGate(turn, n, { forgeDir }) {
     if (said.some((l) => /^No task created: \S/.test(l))) return null;
     if (!forgeDir) return null; // no `.forge/`: the helper would say no-forge-dir
     return blockFor('feature', n, 1,
-      'This /nxtg-forge:feature turn has not created its orchestrator task. Run Step 4.2: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "<title>" "<description>"`, then claim the task. If the work is already done and no task is warranted, print one line instead, then end your turn:',
-      'No task created: <reason>');
+      'This /nxtg-forge:feature turn has neither an orchestrator task nor a stated reason for having none. If no work is needed for this feature, do NOT create a task: print one line, then end your turn:\n\nNo task created: <reason>\n\nOnly if you did or will do work for this feature, create its task first with Step 4.2 (`bash "${CLAUDE_PLUGIN_ROOT}/scripts/feature-task.sh" "<title>" "<description>"`) and claim it.');
   }
-  const id = helper.text.match(/^task_id=(T-\d+)$/m)?.[1] ?? null;
-  const at = turn.tools.indexOf(helper);
-  const after = turn.tools.slice(at + 1).filter((t) => !t.isError);
-  const claim = after.find((t) => named(t, 'forge_claim_task') && t.input.agent === 'claude' && (!id || t.input.task_id === id));
-  const tid = id ?? claim?.input.task_id;
-  if (!claim) {
-    return blockFor('feature', n, 1, `The helper created ${id ?? 'a task'}; claim it with \`forge_claim_task\` (task_id \`${id ?? '<the new task>'}\`, agent \`claude\`) before the work, then continue.`);
+  // The task id comes from the helper; the transcript's claim is used only when an older helper printed none.
+  const id = helper.text.match(/^task_id=(T-\d+)$/m)?.[1]
+    ?? turn.tools.find((t) => named(t, 'forge_claim_task') && t.input.agent === 'claude')?.input.task_id ?? null;
+  const row = id ? readTask(id) : null;
+  if (!claimedByClaude(row)) {
+    return blockFor('feature', n, 1, `The helper created ${id ?? 'a task'}, and the orchestrator does not record it as claimed by claude. Claim it with \`forge_claim_task\` (task_id \`${id ?? '<the new task>'}\`, agent \`claude\`) before the work, then continue.`);
   }
-  const done = after.slice(after.indexOf(claim) + 1);
-  const complete = done.find((t) => named(t, 'forge_complete_task') && t.input.task_id === tid && t.input.agent === 'claude' && String(t.input.result_summary ?? '').trim());
-  if (!complete) {
-    if (said.some((l) => l.startsWith(`Task ${tid} left claimed: `) && l.length > `Task ${tid} left claimed: `.length)) return null;
+  if (!completedByClaude(row)) {
+    if (said.some((l) => l.startsWith(`Task ${id} left claimed: `) && l.length > `Task ${id} left claimed: `.length)) return null;
     return blockFor('feature', n, 1,
-      `${tid} is claimed but not completed. When the work is done, call \`forge_complete_task\` with task_id \`${tid}\`, agent \`claude\` and a one- or two-sentence \`result_summary\`, then \`forge_get_tasks\`. If the work did not finish, do not complete it; print one line instead, then end your turn:`,
-      `Task ${tid} left claimed: <reason>`);
+      `The orchestrator records ${id} as ${row.status}, not completed by claude with a result summary. When the work is done, call \`forge_complete_task\` with task_id \`${id}\`, agent \`claude\` and a one- or two-sentence \`result_summary\`, then \`forge_get_tasks\`. If the work did not finish, do not complete it; print one line instead, then end your turn:`,
+      `Task ${id} left claimed: <reason>`);
   }
-  const shown = done.slice(done.indexOf(complete) + 1).find((t) => named(t, 'forge_get_tasks') && (t.text ?? '').includes(tid));
-  if (!shown) return blockFor('feature', n, 1, `${tid} is completed. Call \`forge_get_tasks\` so the result shows it completed by claude, with its outcome, then end your turn.`);
+  // C7 reads a forge_get_tasks result that shows the task completed; the record above is the proof of state.
+  const completes = turn.tools.map((t, i) => (named(t, 'forge_complete_task') && t.input.task_id === id ? i : -1)).filter((i) => i >= 0);
+  const after = completes.length ? completes[completes.length - 1] : -1;
+  const shown = turn.tools.slice(after + 1).find((t) => named(t, 'forge_get_tasks') && !t.isError && (t.text ?? '').includes(id));
+  if (!shown) return blockFor('feature', n, 1, `${id} is completed. Call \`forge_get_tasks\` so the result shows it completed by claude, with its outcome, then end your turn.`);
   return null;
 }
 
 // Pure: transcript rows and the hook input in, a block reason or null out.
-export function evaluate({ rows, promptId, lastAssistant, forgeDir = false }) {
+export function evaluate({ rows, promptId, lastAssistant, forgeDir = false, readTask = () => null }) {
   const turn = turnOf(rows, promptId);
   if (!turn.command || !(turn.command in GATES)) return null;
   if (lastAssistant) turn.texts.push(lastAssistant);
   if (turn.priorBlocks >= MAX_BLOCKS) return null;
   const n = turn.priorBlocks + 1;
-  return turn.command === 'feature' ? featureGate(turn, n, { forgeDir }) : textGate(turn.command, turn, n);
+  return turn.command === 'feature' ? featureGate(turn, n, { forgeDir, readTask }) : textGate(turn.command, turn, n);
 }
 
 function hook(stdin) {
@@ -183,6 +195,7 @@ function hook(stdin) {
     promptId: input.prompt_id,
     lastAssistant: input.last_assistant_message,
     forgeDir: existsSync(join(input.cwd || process.cwd(), '.forge')),
+    readTask: taskReader(input.cwd || process.cwd()),
   });
   return reason ? JSON.stringify({ decision: 'block', reason }) : '';
 }

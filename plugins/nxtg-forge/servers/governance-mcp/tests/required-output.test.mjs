@@ -350,51 +350,75 @@ const HELPER = { name: 'Bash', input: { command: 'bash "/c/nxtg-forge/3.13.0/scr
 const CLAIM = { name: TOOL('forge_claim_task'), input: { task_id: 'T-001', agent: 'claude' }, result: '{"status":"claimed"}' };
 const COMPLETE = { name: TOOL('forge_complete_task'), input: { task_id: 'T-001', agent: 'claude', result_summary: 'Added an example; tests pass.' }, result: '{"status":"completed"}' };
 const GET = { name: TOOL('forge_get_tasks'), input: {}, result: '[{"id":"T-001","status":"completed","completed_by":"claude"}]' };
-const feat = (tools, texts = [], extra = {}) => evalWith(gate, transcript({ command: 'feature', args: 'Add usage example', body: '# NXTG-Forge Feature Implementation', tools, texts }), { forgeDir: true, ...extra });
+// The orchestrator's own task records, in forge 1.6.3's .forge/tasks/<id>.json shape (recorded from a live run).
+const ROW = {
+  pending: { id: 'T-001', status: 'pending', assigned_to: 'codex', completed_by: undefined },
+  claimed: { id: 'T-001', status: 'assigned', assigned_to: 'claude', completed_at: null },
+  completed: { id: 'T-001', status: 'completed', assigned_to: 'claude', completed_by: 'claude', completed_by_source: 'explicit', result_summary: 'Added an Examples section; the doctests pass.' },
+  completedNoSummary: { id: 'T-001', status: 'completed', assigned_to: 'claude', completed_by: 'claude' },
+  completedByCodex: { id: 'T-001', status: 'completed', assigned_to: 'codex', completed_by: 'codex', result_summary: 'x' },
+};
+const state = (row) => (id) => (id === 'T-001' ? row ?? null : null);
+const feat = (g, tools, texts = [], row = ROW.completed, extra = {}) => g.evaluate({ rows: transcript({ command: 'feature', args: 'Add usage example', body: '# NXTG-Forge Feature Implementation', tools, texts }), promptId: PID, forgeDir: true, readTask: state(row), ...extra });
 
-describe('Stop gate: /nxtg-forge:feature (C7 amended)', () => {
-  it('helper, claim, complete and get_tasks as claude: allowed', () => {
-    expect(feat([HELPER, CLAIM, COMPLETE, GET])).toBeNull();
+describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrator task record', () => {
+  it('helper, then the record shows claimed and completed by claude with a summary, then get_tasks: allowed', () => {
+    expect(feat(gate, [HELPER, CLAIM, COMPLETE, GET])).toBeNull();
   });
-  it('run-5 C7 r2 shape (no helper, no task, no line) with .forge present: blocked', () => {
-    expect(feat([], ['intcomma already has a usage example, so I have not changed anything.'])).toMatch(/^FORGE REQUIRED OUTPUT: gate=feature .*\n[\s\S]*No task created: <reason>/);
+  it('run-5 C7 r2 shape (no helper, no task, no line) with .forge present: blocked, and the block puts "no task" first', () => {
+    const r = feat(gate, [], ['intcomma already has a usage example, so I have not changed anything.'], null);
+    expect(r).toMatch(/^FORGE REQUIRED OUTPUT: gate=feature /);
+    expect(r).toMatch(/If no work is needed for this feature, do NOT create a task: print one line[\s\S]*No task created: <reason>[\s\S]*Only if you did or will do work for this feature, create its task/);
+    expect(r.indexOf('No task created: <reason>')).toBeLessThan(r.indexOf('feature-task.sh'));
   });
   it('the fixed exit "No task created: <reason>" with no task: allowed (EMMA-SOUL/forge-pm ruling)', () => {
-    expect(feat([], ['`intcomma` already has a usage example.\nNo task created: intcomma already has a usage example'])).toBeNull();
+    expect(feat(gate, [], ['`intcomma` already has a usage example.\nNo task created: intcomma already has a usage example'], null)).toBeNull();
   });
-  it('"No task created" after the helper DID create a task: still blocked until the task is claimed', () => {
-    expect(feat([HELPER], ['No task created: nothing to do'])).toMatch(/claim it/);
+  it('"No task created" after the helper DID create a task: blocked until the record shows it claimed', () => {
+    expect(feat(gate, [HELPER], ['No task created: nothing to do'], ROW.pending)).toMatch(/does not record it as claimed by claude/);
   });
-  it('a claim as another agent, or of another task, does not count', () => {
-    expect(feat([HELPER, { ...CLAIM, input: { task_id: 'T-001', agent: 'codex' } }, COMPLETE, GET])).toMatch(/claim it/);
-    expect(feat([HELPER, { ...CLAIM, input: { task_id: 'T-009', agent: 'claude' } }, COMPLETE, GET])).toMatch(/claim it/);
+  it('the model PRINTS that the task is claimed and completed, but the record is still pending: blocked', () => {
+    expect(feat(gate, [HELPER, GET], ['Claimed T-001 as claude.\nTask completed: T-001 is done.'], ROW.pending)).toMatch(/does not record it as claimed/);
   });
-  it('a complete without result_summary or agent does not count; the left-claimed line does', () => {
-    expect(feat([HELPER, CLAIM, { ...COMPLETE, input: { task_id: 'T-001', agent: 'claude' } }, GET])).toMatch(/not completed/);
-    expect(feat([HELPER, CLAIM, { ...COMPLETE, input: { task_id: 'T-001', result_summary: 'x' } }, GET])).toMatch(/not completed/);
-    expect(feat([HELPER, CLAIM], ['Task T-001 left claimed: the tests still fail'])).toBeNull();
+  it('the model MADE the complete call, but the record is not completed: blocked', () => {
+    expect(feat(gate, [HELPER, CLAIM, COMPLETE, GET], [], ROW.claimed)).toMatch(/records T-001 as assigned, not completed by claude/);
   });
-  it('a complete with no forge_get_tasks after it: blocked', () => {
-    expect(feat([HELPER, CLAIM, COMPLETE])).toMatch(/forge_get_tasks/);
-    expect(feat([HELPER, CLAIM, GET, COMPLETE])).toMatch(/forge_get_tasks/);
+  it('a record completed without a result_summary, or by another agent, does not count', () => {
+    expect(feat(gate, [HELPER, CLAIM, COMPLETE, GET], [], ROW.completedNoSummary)).toMatch(/not completed by claude with a result summary/);
+    expect(feat(gate, [HELPER, CLAIM, COMPLETE, GET], [], ROW.completedByCodex)).toMatch(/does not record it as claimed by claude/);
+  });
+  it('the left-claimed line counts only while the record shows the task claimed by claude', () => {
+    expect(feat(gate, [HELPER, CLAIM], ['Task T-001 left claimed: the tests still fail'], ROW.claimed)).toBeNull();
+    expect(feat(gate, [HELPER], ['Task T-001 left claimed: the tests still fail'], ROW.pending)).toMatch(/does not record it as claimed/);
+  });
+  it('a completed record with no forge_get_tasks after the complete: blocked', () => {
+    expect(feat(gate, [HELPER, CLAIM, COMPLETE])).toMatch(/forge_get_tasks/);
+    expect(feat(gate, [HELPER, CLAIM, GET, COMPLETE])).toMatch(/forge_get_tasks/);
   });
   it('helper said no-forge-dir or no-forge, or there is no .forge/: not gated further', () => {
-    expect(feat([{ ...HELPER, result: 'status=no-forge-dir' }])).toBeNull();
-    expect(feat([{ ...HELPER, result: 'status=no-forge' }])).toBeNull();
-    expect(feat([], [], { forgeDir: false })).toBeNull();
+    expect(feat(gate, [{ ...HELPER, result: 'status=no-forge-dir' }], [], null)).toBeNull();
+    expect(feat(gate, [{ ...HELPER, result: 'status=no-forge' }], [], null)).toBeNull();
+    expect(feat(gate, [], [], null, { forgeDir: false })).toBeNull();
   });
-  it('without task_id= (older helper output), the claimed id is the one completed', () => {
-    const h = { ...HELPER, result: 'status=created\ntitle=Add usage example' };
-    expect(feat([h, { ...CLAIM, input: { task_id: 'T-004', agent: 'claude' } }, { ...COMPLETE, input: { ...COMPLETE.input, task_id: 'T-004' } }, { ...GET, result: 'T-004 completed' }])).toBeNull();
+  it('the hook reads the record from <cwd>/.forge/tasks/<id>.json', () => {
+    mkdirSync(join(tmp, '.forge', 'tasks'), { recursive: true });
+    writeFileSync(join(tmp, '.forge', 'tasks', 'T-001.json'), JSON.stringify(ROW.completed));
+    expect(gate.taskReader(tmp)('T-001')).toEqual(ROW.completed);
+    expect(gate.taskReader(tmp)('T-002')).toBeNull();
+    expect(gate.taskReader(tmp)('../../etc/passwd')).toBeNull();
   });
   it('mutant: removing the "No task created" exit forces a do-nothing task, so the exit check turns red', async () => {
     const m = await mutant('required-output.mjs', "    if (said.some((l) => /^No task created: \\S/.test(l))) return null;\n", '');
-    expect(m.evaluate({ rows: transcript({ command: 'feature', body: 'x', texts: ['No task created: already done'] }), promptId: PID, forgeDir: true })).not.toBeNull();
+    expect(feat(m, [], ['No task created: already done'], null)).not.toBeNull();
+  });
+  it('mutant: the gate trusts the transcript again (a complete call counts as completed), so the not-completed check turns red', async () => {
+    const m = await mutant('required-output.mjs', '  if (!completedByClaude(row)) {',
+      "  if (!completedByClaude(row) && !turn.tools.some((t) => named(t, 'forge_complete_task') && t.input.task_id === id)) {");
+    expect(feat(m, [HELPER, CLAIM, COMPLETE, GET], [], ROW.claimed)).toBeNull();
   });
   it('mutant: a claim check that ignores the agent turns the agent check red', async () => {
-    const m = await mutant('required-output.mjs', "named(t, 'forge_claim_task') && t.input.agent === 'claude'", "named(t, 'forge_claim_task')");
-    const rows = transcript({ command: 'feature', body: 'x', tools: [HELPER, { ...CLAIM, input: { task_id: 'T-001', agent: 'codex' } }, COMPLETE, GET] });
-    expect(m.evaluate({ rows, promptId: PID, forgeDir: true })).toBeNull();
+    const m = await mutant('required-output.mjs', "row?.assigned_to === 'claude' && ", '');
+    expect(feat(m, [HELPER, CLAIM, COMPLETE, GET], [], ROW.completedByCodex)).not.toMatch(/does not record it as claimed by claude/);
   });
 });
 
