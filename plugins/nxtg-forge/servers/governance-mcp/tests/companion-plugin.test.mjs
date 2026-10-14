@@ -208,3 +208,57 @@ describe('session hint for the optional orchestrator', () => {
     expect(once('same-session')).not.toContain(COMPANION_CMD);
   });
 });
+
+// DoD (f), forge-pm: a user who has nxtg-forge 3.13.1 cached, never runs plugin update, then installs this companion
+// gets two orchestrator-mcp servers (measured: 22 orchestrator tools, the same 11 under two names). The old plugin's
+// hook predates the companion, so the companion's own hook says to update it.
+describe('companion hook: an installed nxtg-forge that still registers orchestrator-mcp', () => {
+  const HOOK = join(COMPANION, 'hooks', 'stale-nxtg-forge.sh');
+  let root, k = 0;
+  beforeAll(() => { root = mkdtempSync(join(tmpdir(), 'forge-stale-')); });
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  // A config dir as Claude Code writes it, with nxtg-forge installed at a cache dir whose .mcp.json is given.
+  function config(forgeServers) {
+    const cfg = join(root, `cfg${k++}`);
+    const forgeDir = join(cfg, 'plugins', 'cache', 'nxtg-forge', 'nxtg-forge', '3.13.1');
+    const compDir = join(cfg, 'plugins', 'cache', 'nxtg-forge', 'nxtg-forge-orchestrator', '3.14.0');
+    mkdirSync(forgeDir, { recursive: true });
+    mkdirSync(compDir, { recursive: true });
+    if (forgeServers) writeFileSync(join(forgeDir, '.mcp.json'), JSON.stringify({ mcpServers: Object.fromEntries(forgeServers.map((s) => [s, {}])) }, null, 2));
+    const entry = (p) => [{ scope: 'user', installPath: p, version: '3.13.1' }];
+    writeFileSync(join(cfg, 'plugins', 'installed_plugins.json'), JSON.stringify({ version: 2, plugins: {
+      'nxtg-forge@nxtg-forge': entry(forgeDir), 'nxtg-forge-orchestrator@nxtg-forge': entry(compDir) } }, null, 2));
+    return compDir;
+  }
+  const run = (pluginRoot, sid = `s-${k++}`) => spawnSync('bash', [HOOK], {
+    input: JSON.stringify({ session_id: sid }), encoding: 'utf8', timeout: 10000,
+    env: { PATH: '/usr/bin:/bin', HOME: root, TMPDIR: root, CLAUDE_PLUGIN_ROOT: pluginRoot },
+  });
+
+  it('is registered as a UserPromptSubmit hook of the companion', () => {
+    const h = rd(join(COMPANION, 'hooks', 'hooks.json')).hooks.UserPromptSubmit[0].hooks[0];
+    expect(h.command).toBe('bash "${CLAUDE_PLUGIN_ROOT}/hooks/stale-nxtg-forge.sh"');
+  });
+  it('old nxtg-forge (registers orchestrator-mcp): one warning naming the update command, exit 0', () => {
+    const r = run(config(['governance-mcp', 'orchestrator-mcp', 'semgrep-mcp']));
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('claude plugin update nxtg-forge@nxtg-forge, then start a new Claude Code session');
+  });
+  it('current nxtg-forge (no orchestrator-mcp): silent', () => {
+    const r = run(config(['governance-mcp', 'semgrep-mcp']));
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe('');
+  });
+  it('once per session', () => {
+    const p = config(['orchestrator-mcp']);
+    expect(run(p, 'same').stdout).toContain('out of date');
+    expect(run(p, 'same').stdout).toBe('');
+  });
+  it('no installed_plugins.json, or an unreadable install path: silent and exit 0', () => {
+    const r = run(join(root, 'nowhere', 'plugins', 'cache', 'm', 'p', '1'));
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe('');
+    expect(run(config(null)).stdout).toBe('');
+  });
+});
