@@ -422,24 +422,19 @@ export async function gather(root, { tools, orchestrator, now = () => new Date()
   return d;
 }
 
-// What the `!` step prints: the block first, then two machine lines after its end marker, outside what the model
-// reproduces. (DIRECTIVE-NXTG-20261014-04: with `orchestrator=` above the block, a model began its reply with it.)
-export const stepOutput = (d) => `${render(d)}\norchestrator=${d.orchestrator.state}\njson=${JSON.stringify(toJson(d))}\n`;
-export const FAILURE_OUTPUT = `${BEGIN}\n◌ **Forge status unavailable** — the status step failed\n${END}\norchestrator=unavailable\n`;
-
 async function main(argv) {
   const i = argv.indexOf('--project');
   const root = resolve(i >= 0 ? argv[i + 1] : (process.env.CLAUDE_PROJECT_DIR || process.cwd()));
   // The scoring functions log diagnostics; none of that belongs in the report.
   console.warn = () => {}; console.error = () => {};
   const d = await gather(root);
-  process.stdout.write(stepOutput(d));
+  process.stdout.write(`orchestrator=${d.orchestrator.state}\n${render(d)}\njson=${JSON.stringify(toJson(d))}\n`);
   return 0;
 }
 
 const self = (() => { try { return realpathSync(process.argv[1] || ''); } catch { return ''; } })();
 if (self && self === realpathSync(fileURLToPath(import.meta.url))) {
   main(process.argv.slice(2)).then((c) => { process.exitCode = c; }, () => {
-    process.stdout.write(FAILURE_OUTPUT);
+    process.stdout.write(`orchestrator=unavailable\n${BEGIN}\n◌ **Forge status unavailable** — the status step failed\n${END}\n`);
   });
 }
