@@ -1,6 +1,7 @@
 ---
 description: "Enhanced status with detailed dashboard and metrics"
 disable-model-invocation: true
+allowed-tools: Bash(node:*)
 ---
 
 # NXTG-Forge Enhanced Status Dashboard
@@ -73,16 +74,20 @@ R="${CLAUDE_PLUGIN_ROOT}"; n() { wc -l | tr -d ' '; }
 echo "agents=$(ls "$R"/agents/*.md 2>/dev/null | n) commands=$(ls "$R"/commands/*.md 2>/dev/null | n) skills=$(ls "$R"/skills/*/SKILL.md 2>/dev/null | n) hooks=$(grep -o 'scripts/[A-Za-z0-9_.-]*\.sh' "$R/hooks/hooks.json" 2>/dev/null | sort -u | n) registrations=$(grep -o '"command"[[:space:]]*:' "$R/hooks/hooks.json" 2>/dev/null | n)"
 ```
 
-### 6b. Orchestrator Data (if forge-orchestrator is available)
+### 6b. Orchestrator Data
 
-Call orchestrator MCP tools in parallel:
+The orchestrator's state is computed by code, not judged from tool results. This step already ran:
+
+!`node "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator-status.mjs"`
+
+Print its `line=` text exactly as given as the first line of the ORCHESTRATOR block, and do not decide the state yourself. Only when it says `orchestrator=connected`, call these orchestrator MCP tools in parallel for the rest of the block:
 - `forge_get_state` — Full orchestration state
 - `forge_get_tasks` — Task board with statuses
 - `forge_get_health` — Orchestrator health check (docs, architecture, task health, knowledge coverage, drift). L2 only.
 - `forge_get_knowledge` — Knowledge base entries
 - `forge_check_drift` — Vision alignment
 
-If orchestrator MCP tools are not available (`forge` binary absent), skip this section and note "Orchestrator: not connected". The Health Score above is computed locally and does not depend on the orchestrator; the plugin's `forge_get_governance_health` remains available as an L1 health source.
+For any other `orchestrator=` value, the computed line is the whole ORCHESTRATOR block. The Health Score above is computed locally and does not depend on the orchestrator; the plugin's `forge_get_governance_health` remains available as an L1 health source.
 
 ### 7. Dependencies
 ```bash
@@ -139,7 +144,8 @@ GOVERNANCE
   Agents: {agent_count} available
   Commands: {command_count} available
 
-ORCHESTRATOR (if connected)
+ORCHESTRATOR
+  {computed line= text, exactly}
   Project: {project_name} | Version: {version}
   Tasks: {pending} pending, {in_progress} active, {completed} done
   File locks: {active_locks}
