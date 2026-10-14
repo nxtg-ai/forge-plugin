@@ -176,6 +176,16 @@ describe('status: the enterprise report (founder directive via EMMA-SOUL 02:29Z)
     expect(l.find((x) => x.startsWith('| Health score'))).toMatch(/\| 55 +\| 60 +\| up \+5 +\|$/);
     expect(l.find((x) => x.startsWith('| Health grade'))).toMatch(/\| F +\| D +\| changed +\|$/);
   });
+  it('3. only dimensions that moved get a trend row, each with real Before/Now values; none moved, no row', () => {
+    const base = humanize();
+    const same = block({ ...base, previous: { ...status.snapshotOf(base), at: '2026-10-13 09:00:00 UTC' } });
+    expect(same.filter((x) => /^\| (Dimensions|Health: )/.test(x))).toEqual([]);
+    const prev = status.snapshotOf(base); prev.health.dims.Docs = 0; prev.health.dims.Project = 25; prev.at = 'x';
+    const moved = block({ ...base, previous: prev }).filter((x) => /^\| Health: /.test(x));
+    expect(moved).toHaveLength(2);
+    expect(moved[0]).toMatch(/^\| Health: Docs +\| 0 +\| 10 +\| up \+10 +\|$/);
+    expect(moved[1]).toMatch(/^\| Health: Project +\| 25 +\| 15 +\| down -10 +\|$/);
+  });
   it('3. the snapshot lives under XDG state keyed by the project path, never inside the project', async () => {
     const env = { HOME: '/home/dev', XDG_STATE_HOME: '' };
     expect(status.snapshotPath('/home/dev/humanize', env)).toMatch(/^\/home\/dev\/\.local\/state\/nxtg-forge\/status\/[0-9a-f]{16}\.json$/);
@@ -205,6 +215,10 @@ describe('status: the enterprise report (founder directive via EMMA-SOUL 02:29Z)
   });
   it('6. plain ASCII except the orchestrator lines, and every table row within 80 columns, even with long names', () => {
     const long = { ...humanize(), root: `/home/dev/${'x'.repeat(120)}`, project: { name: 'n'.repeat(90), version: '1.0.0-rc.1+build.123456' },
+      tests: { ...humanize().tests, runner: 'r'.repeat(200) }, versions: { plugin: 'p'.repeat(200), orchestrator: 'o'.repeat(200) }, generatedAt: 'g'.repeat(200),
+      governance: { initialized: true, source: 'plugin', vision: 'v'.repeat(200), status: 's'.repeat(200), workstreams: 3 },
+      previous: { version: 1, at: 'a'.repeat(200), commit: 'c'.repeat(200), health: null, tests: { files: 1, cases: 2 }, git: null, orchestrator: 'z'.repeat(200) },
+      snapshot: { saved: false, error: 'e'.repeat(200) },
       git: { ...humanize().git, branch: 'b'.repeat(90), commits: [{ hash: 'abcdef1', message: `m|${'é'.repeat(120)}` }] } };
     for (const d of [humanize(), long]) {
       const l = block(d);
@@ -484,6 +498,36 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
     expect(gate.taskReader(tmp)('T-001')).toEqual(ROW.completed);
     expect(gate.taskReader(tmp)('T-002')).toBeNull();
     expect(gate.taskReader(tmp)('../../etc/passwd')).toBeNull();
+  });
+  it('a turn that writes .forge/tasks/ itself is refused, naming the file, even when the record it wrote says completed', () => {
+    const forge = [
+      { name: 'Write', input: { file_path: '/p/.forge/tasks/T-001.json', content: JSON.stringify(ROW.completed) } },
+      { name: 'Edit', input: { file_path: '.forge/tasks/T-001.json', old_string: 'assigned', new_string: 'completed' } },
+      { name: 'Bash', input: { command: `echo '${JSON.stringify(ROW.completed)}' > .forge/tasks/T-001.json` } },
+      { name: 'Bash', input: { command: "python3 -c \"import json;open('.forge/tasks/T-001.json','w').write('{}')\"" } },
+      { name: 'Bash', input: { command: 'sed -i s/assigned/completed/ .forge/tasks/T-001.json' } },
+    ];
+    for (const w of forge) {
+      const r = feat(gate, [HELPER, CLAIM, w, COMPLETE, GET]);
+      expect(r, JSON.stringify(w.input).slice(0, 60)).toMatch(/^FORGE REQUIRED OUTPUT: gate=feature block=1\/3 missing=1\n[\s\S]*wrote to the orchestrator's task records itself \([^)]*\.forge\/tasks\/T-001\.json/);
+    }
+  });
+  it('reading .forge/tasks/ (cat, ls, grep, jq, a 2>/dev/null redirect) is not a write', () => {
+    for (const c of ['cat .forge/tasks/T-001.json 2>/dev/null', 'ls .forge/tasks 2>&1; grep -h T-001 .forge/events.jsonl', 'jq .status .forge/tasks/T-001.json'])
+      expect(gate.taskRecordWrites([{ name: 'Bash', input: { command: c } }]), c).toEqual([]);
+    expect(feat(gate, [HELPER, CLAIM, { name: 'Bash', input: { command: 'cat .forge/tasks/T-001.json' } }, COMPLETE, GET])).toBeNull();
+  });
+  it('mutant: ignoring the turn\'s own writes lets a forged record pass, so the forged-record check turns red', async () => {
+    const m = await mutant('required-output.mjs', '  if (forged.length) {', '  if (false) {');
+    expect(feat(m, [HELPER, CLAIM, { name: 'Write', input: { file_path: '/p/.forge/tasks/T-001.json' } }, COMPLETE, GET])).toBeNull();
+  });
+  it('the exit lines also count as list items or in bold', () => {
+    expect(feat(gate, [], ['- No task created: intcomma already has a usage example'], null)).toBeNull();
+    expect(feat(gate, [HELPER, CLAIM], ['* Task T-001 left claimed: the tests still fail'], ROW.claimed)).toBeNull();
+    expect(feat(gate, [], ['- No task created:'], null)).toMatch(/gate=feature/);
+  });
+  it('a created task with no .forge/ found says so instead of "not claimed"', () => {
+    expect(feat(gate, [HELPER, CLAIM, COMPLETE, GET], [], null, { forgeDir: false })).toMatch(/no `\.forge\/` was found from the project directory/);
   });
   it('the project is CLAUDE_PROJECT_DIR, else the nearest .forge/ above cwd: a `cd src` by the model does not hide the task (preflight feature-r1)', () => {
     const root = join(tmp, 'proj');

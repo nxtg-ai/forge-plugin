@@ -134,7 +134,8 @@ function textGate(kind, turn, n) {
 }
 
 const named = (t, tool) => t.name === tool || t.name.endsWith(`__${tool}`);
-const lines = (texts) => texts.join('\n').split('\n').map((l) => l.trim().replace(/^\*\*|\*\*$/g, '').trim());
+// One line as said, without list markers or bold, so `- No task created: x` and `**No task created: x**` count.
+const lines = (texts) => texts.join('\n').split('\n').map((l) => l.trim().replace(/^[-*+]\s+/, '').replace(/^\*\*|\*\*$/g, '').trim());
 
 // The project whose `.forge/` the gate reads. The hook's `cwd` is the shell's current directory, which moves
 // when the model runs `cd` (alpha preflight, feature-r1: `cd src` made the gate look in src/.forge and refuse a
@@ -160,6 +161,29 @@ export function taskReader(cwd) {
 // Proof comes from that record, never from the transcript (EMMA-SOUL 02:26Z): a printed "completed" or a
 // tool call whose effect is not in the record does not count.
 const claimedByClaude = (row) => row?.assigned_to === 'claude' && ['assigned', 'in_progress', 'completed'].includes(row.status);
+// Writes to .forge/tasks/ made by the turn itself: a record the model wrote is not the orchestrator's record.
+const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+// A Bash command writes there when a redirect, tee/cp/mv/ln/install/rm/touch/truncate or sed -i targets
+// .forge/tasks, or an interpreter (python, node, perl, ruby, jq) writes in a command that names it.
+// Reading it (cat, grep, ls, jq without a write) is not a write.
+const bashWritesTasks = (c) => /\.forge\/tasks/.test(c) && !/feature-task\.sh/.test(c) && (
+  />>?\s*['"]?[^\s'";|&]*\.forge\/tasks/.test(c)
+  || /\b(tee|cp|mv|ln|install|rm|touch|truncate)\b[^;|&]*\.forge\/tasks/.test(c)
+  || /\bsed\s+(-[a-zA-Z]*i\b|--in-place)[^;|&]*\.forge\/tasks/.test(c)
+  || (/\b(python3?|node|perl|ruby)\b/.test(c) && /write|dump|open\([^)]*['"][wa+]|>/.test(c)));
+export function taskRecordWrites(tools) {
+  const out = [];
+  for (const t of tools) {
+    if (WRITE_TOOLS.has(t.name)) {
+      const f = String(t.input.file_path ?? t.input.notebook_path ?? '');
+      if (/(^|\/)\.forge\/tasks\//.test(f)) out.push(f);
+    } else if (t.name === 'Bash') {
+      const c = String(t.input.command ?? '');
+      if (bashWritesTasks(c)) out.push(c.match(/[^\s'"]*\.forge\/tasks[^\s'";|&]*/)?.[0] ?? '.forge/tasks/');
+    }
+  }
+  return out;
+}
 const completedByClaude = (row) => row?.status === 'completed' && row.completed_by === 'claude' && String(row.result_summary ?? '').trim() !== '';
 
 function featureGate(turn, n, { forgeDir, readTask }) {
@@ -177,7 +201,15 @@ function featureGate(turn, n, { forgeDir, readTask }) {
   // The task id comes from the helper; the transcript's claim is used only when an older helper printed none.
   const id = helper.text.match(/^task_id=(T-\d+)$/m)?.[1]
     ?? turn.tools.find((t) => named(t, 'forge_claim_task') && t.input.agent === 'claude')?.input.task_id ?? null;
+  const forged = taskRecordWrites(turn.tools);
+  if (forged.length) {
+    return blockFor('feature', n, forged.length,
+      `This turn wrote to the orchestrator's task records itself (${forged.slice(0, 3).join(', ')}). A record the model wrote is not proof that the task was claimed or completed, so this turn cannot pass the check. Only \`forge_claim_task\` and \`forge_complete_task\` may change a task; say plainly that you edited the record.`);
+  }
   const row = id ? readTask(id) : null;
+  if (!row && !forgeDir) {
+    return blockFor('feature', n, 1, `The helper created ${id ?? 'a task'}, but no \`.forge/\` was found from the project directory, so its record cannot be read. Run the command from the project where \`forge init\` ran.`);
+  }
   if (!claimedByClaude(row)) {
     return blockFor('feature', n, 1, `The helper created ${id ?? 'a task'}, and the orchestrator does not record it as claimed by claude. Claim it with \`forge_claim_task\` (task_id \`${id ?? '<the new task>'}\`, agent \`claude\`) before the work, then continue.`);
   }
