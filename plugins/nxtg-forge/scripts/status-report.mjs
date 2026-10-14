@@ -135,23 +135,24 @@ function changes(d) {
   if (!p) out.push(FIRST_RUN);
   else {
     const now = snapshotOf(d);
-    out.push(`Compared with the run at ${cell(p.at)} (commit \`${cell(p.commit ?? 'none')}\`).`);
+    out.push(`Compared with the run at ${clip(cell(p.at), 30)} (commit \`${clip(cell(p.commit ?? 'none'), 12)}\`).`);
     const num = (label, a, b) => [label, a ?? 'n/a', b ?? 'n/a', a == null || b == null ? 'n/a' : a === b ? 'same' : `${b > a ? 'up' : 'down'} ${signed(b - a)}`];
-    const moved = DIMENSIONS.map(([l]) => [l, (now.health?.dims?.[l] ?? 0) - (p.health?.dims?.[l] ?? 0)]).filter(([, x]) => x);
-    const short = (o) => ({ not_initialized: 'not init', not_installed: 'not installed' }[o] ?? o ?? 'n/a');
+    const moved = DIMENSIONS.map(([l]) => l).filter((l) => p.health?.dims?.[l] != null && now.health?.dims?.[l] != null && p.health.dims[l] !== now.health.dims[l]);
+    const short = (o) => clip(cell({ not_initialized: 'not init', not_installed: 'not installed' }[o] ?? o ?? 'n/a'), 14);
     const rows = [
       num('Health score', p.health?.score, now.health?.score),
       ['Health grade', p.health?.grade ?? 'n/a', now.health?.grade ?? 'n/a', p.health?.grade === now.health?.grade ? 'same' : 'changed'],
-      ['Dimensions', '', '', moved.length ? clip(moved.map(([l, x]) => `${l} ${signed(x)}`).join(', '), 30) : 'same'],
+      // Only the dimensions that moved, each with its own values; none moved, no rows.
+      ...moved.map((l) => num(`Health: ${l}`, p.health.dims[l], now.health.dims[l])),
       num('Test files', p.tests?.files, now.tests.files),
       num('Test cases', p.tests?.cases, now.tests.cases),
       num('Changed files', p.git?.changed, now.git?.changed),
       ['Orchestrator', short(p.orchestrator), short(now.orchestrator), p.orchestrator === now.orchestrator ? 'same' : 'changed'],
-      ['Commit', p.commit ?? 'none', now.commit ?? 'none', p.commit === now.commit ? 'same' : 'changed'],
+      ['Commit', clip(cell(p.commit ?? 'none'), 12), clip(cell(now.commit ?? 'none'), 12), p.commit === now.commit ? 'same' : 'changed'],
     ];
     out.push(...table(['Metric', 'Before', 'Now', 'Trend'], rows));
   }
-  out.push(d.snapshot?.saved ? `Snapshot: \`${d.snapshot.display}\` (outside the project).` : `Snapshot not saved: ${cell(d.snapshot?.error ?? 'no state directory')}.`);
+  out.push(d.snapshot?.saved ? `Snapshot: \`${d.snapshot.display}\` (outside the project).` : `Snapshot not saved: ${clip(cell(d.snapshot?.error ?? 'no state directory'), 40)}.`);
   return out;
 }
 
@@ -208,9 +209,9 @@ export function render(d) {
 
   out.push(`## Tests: ${plural(d.tests.testFiles, 'file')}, ${plural(d.tests.testCases, 'case')}`);
   out.push(...table(['Metric', 'Value'], [
-    ['Test files', d.tests.testFiles],
-    ['Test cases', d.tests.testCases],
-    ['Runner', cell(d.tests.runner || 'none detected')],
+    ['Test files', clip(cell(d.tests.testFiles), 12)],
+    ['Test cases', clip(cell(d.tests.testCases), 12)],
+    ['Runner', clip(cell(d.tests.runner || 'none detected'), 60)],
     ['Coverage', d.tests.coverage ? clip(cell(d.tests.coverage), 60) : 'not scored'],
   ]));
 
@@ -220,7 +221,7 @@ export function render(d) {
     out.push('Initialized by `forge init`; no vision or goals recorded here (`/nxtg-forge:init` adds them).');
   } else {
     out.push(...table(['Metric', 'Value'], [
-      ['Status', cell(d.governance.status || 'initialized')],
+      ['Status', clip(cell(d.governance.status || 'initialized'), 60)],
       ['Vision', clip(cell(d.governance.vision || 'none recorded'), 60)],
       ['Workstreams', d.governance.workstreams ?? 0],
     ]));
@@ -242,9 +243,9 @@ export function render(d) {
   // 5. Provenance.
   out.push('## Provenance');
   out.push(...table(['Item', 'Value'], [
-    ['Plugin', `nxtg-forge ${cell(d.versions?.plugin ?? 'unknown')}`],
-    ['Orchestrator', d.versions?.orchestrator ? `forge ${cell(d.versions.orchestrator)}` : 'not installed'],
-    ['Generated', `${cell(d.generatedAt)} (${(Number(d.elapsedMs) / 1000).toFixed(1)} s)`],
+    ['Plugin', `nxtg-forge ${clip(cell(d.versions?.plugin ?? 'unknown'), 40)}`],
+    ['Orchestrator', d.versions?.orchestrator ? `forge ${clip(cell(d.versions.orchestrator), 40)}` : 'not installed'],
+    ['Generated', `${clip(cell(d.generatedAt), 30)} (${(Number(d.elapsedMs) / 1000).toFixed(1)} s)`],
     ['Project', `\`${clipLeft(cell(d.root ?? ''), 54)}\``],
     ['Commit', g.isRepo && g.hash ? `\`${g.hash}\` on \`${clip(cell(g.branch || 'detached'), 40)}\`` : 'none'],
   ]));

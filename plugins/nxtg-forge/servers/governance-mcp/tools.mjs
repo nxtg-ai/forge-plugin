@@ -27,7 +27,9 @@ import { tmpdir } from "os";
  */
 export function run(cmd, opts = {}) {
   try {
-    return execSync(cmd, { encoding: "utf-8", timeout: 15000, ...opts }).trim();
+    // stderr is captured, not inherited: /nxtg-forge:status runs these from a `!` step, whose output
+    // includes stderr, so a git "not a repository" message would land in the command body.
+    return execSync(cmd, { encoding: "utf-8", timeout: 15000, stdio: ["pipe", "pipe", "pipe"], ...opts }).trim();
   } catch (err) {
     console.error('[governance-mcp] run() failed:', cmd, err.message || err);
     return null;
