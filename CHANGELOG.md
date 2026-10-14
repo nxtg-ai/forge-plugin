@@ -8,6 +8,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.12.1] — 2026-10-13
+
+Fixes alpha run 4's C6 failure (F-N): `/nxtg-forge:status` called a connected but not-initialized orchestrator "Not connected". No new commands, agents, skills or hooks; no breaking changes.
+
+### Fixed
+
+- **The status orchestrator line is computed by code, not worded by the model** (F-N, DIRECTIVE-NXTG-20261013-20).
+  - `scripts/orchestrator-status.mjs` starts the plugin's own orchestrator launcher, calls `tools/list` and `forge_get_state` over MCP, and maps the results to one exact line: not installed, connected but not initialized here, connected, or an error line.
+  - A server that never answers is reported as "did not respond", never as "not installed".
+  - `/nxtg-forge:status` and `/nxtg-forge:status-enhanced` run it as a `!` step and print its line as given. `--json` `"orchestrator"` takes the same value, and a fixed line covers a step that did not run (#75).
+
+### Tests
+
+- **A no-model test** feeds recorded tool results to the script: the exact run-4 `forge_get_state` result, and replies recorded from the published forge 1.6.3. It asserts the exact line for each state. A mutant that maps "not initialized" to "not installed" turns it red.
+- End-to-end probes cover fake servers, the real stand-in, a hang, a crash, garbage output and a missing launcher.
+- L2 leg H runs the script on forge 1.6.3 before and after `forge init`.
+- vitest 196 → 214, L2 28 → 30, L1 16, L3 26, binding 5.
+
 ## [3.12.0] — 2026-10-13
 
 Forge is labelled a Public preview everywhere, a new opt-in enforced task, the two review commands demoted to optional prompts with no accuracy claim, the feature command recording the completing agent, and today's tool support stated with its build marker. Adds one command (`/nxtg-forge:task`) and one hook script; no breaking changes.
