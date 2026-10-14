@@ -8,7 +8,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
-## [Unreleased]
+## [3.14.0] — 2026-10-14
+
+MINOR. The orchestrator moves to an optional companion plugin, `nxtg-forge-orchestrator`, so `nxtg-forge` alone registers no `orchestrator-mcp` (C1 as registered). `/nxtg-forge:feature` creates its task through MCP with `forge_create_task` (C7 as registered). Semgrep MCP no longer shows as failed when the published package crashes. Plus the hardening from the codex review of v3.13.1 and the re-landed status order (#82). **Breaking:** the orchestrator tools' full names change, and `forge_open_dashboard` honours `BROWSER` again (3.13.1 had dropped it).
 
 ### Changed (breaking for anyone who calls orchestrator tools by full name)
 
