@@ -14,7 +14,7 @@
         "url": "https://github.com/nxtg-ai/forge-plugin.git",
         "path": "plugins/nxtg-forge",
         "ref": "feat/companion-orchestrator-14-12",
-        "sha": "f1ed12c2dd7d70222d11bed82cad1f74387ee62d"
+        "sha": "49c7ea45da77c8b2df9b0c63a9f1ad97a146fd46"
       },
       "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code (public preview)",
       "version": "3.13.1",
@@ -41,7 +41,7 @@
         "url": "https://github.com/nxtg-ai/forge-plugin.git",
         "path": "plugins/nxtg-forge-orchestrator",
         "ref": "feat/companion-orchestrator-14-12",
-        "sha": "f1ed12c2dd7d70222d11bed82cad1f74387ee62d"
+        "sha": "49c7ea45da77c8b2df9b0c63a9f1ad97a146fd46"
       },
       "description": "Connects Claude Code to the Forge orchestrator (forge mcp), bound to the project root. Optional companion to nxtg-forge (public preview)",
       "version": "3.13.1",
