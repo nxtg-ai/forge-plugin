@@ -25,56 +25,15 @@ beforeEach(() => { tmp = mkdtempSync(join(tmpdir(), 'req-out-')); });
 afterEach(() => rmSync(tmp, { recursive: true, force: true }));
 
 const STAGE = '**Stage: Public preview.** Forge is public: anyone may install and use it. Its maturity is below alpha (pre-alpha): no SLA, and interfaces may change without notice.';
-const humanize = () => ({ ...structuredClone(FX.humanize_785e5dc), stage: STAGE, tooling: { agents: 33, commands: 24, hooks: 14, registrations: 27 } });
+const humanize = () => ({
+  ...structuredClone(FX.humanize_785e5dc), stage: STAGE, tooling: { agents: 33, commands: 24, hooks: 14, registrations: 27 },
+  root: '/home/dev/humanize', versions: { plugin: '3.13.0', orchestrator: '1.6.3' }, generatedAt: '2026-10-14 01:52:10 UTC', elapsedMs: 1234,
+  previous: null, snapshot: { saved: true, display: '~/.local/state/nxtg-forge/status/2c6a1d0e9b7f4a31.json' },
+});
 
-// The report for the recorded humanize inputs, exactly. Health D (60/100) is what alpha run 5 printed.
-const HUMANIZE_REPORT = `<!-- forge-required: status v1 -->
-# ⚡ Forge Status
-**humanize** on \`detached\` @ \`785e5dc\`
-${STAGE}
----
-## Git
-| Metric | Value |
-|---|---|
-| Branch | \`detached\` |
-| Staged | 0 |
-| Modified | 0 |
-| Untracked | 0 |
-**Recent commits:**
-| Hash | Message |
-|---|---|
-| \`785e5dc\` | [pre-commit.ci] pre-commit autoupdate (#444) |
-| \`6ed367f\` | Drop support for EOL Python 3.10 (#440) |
-| \`8bf85bb\` | Update config |
-| \`4d13dd5\` | Test PyPy3.12 |
-| \`71c730d\` | Drop support for EOL Python 3.10 |
-## Health
-| Dimension | Bar | Score |
-|---|---|---|
-| Tests | ████████████████████ | 20/20 |
-| Types | ░░░░░░░░░░░░░░░░░░░░ | 0/10 |
-| Security | ████████████████████ | 15/15 |
-| Docs | ██████████░░░░░░░░░░ | 10/20 |
-| Project | █████████░░░░░░░░░░░ | 15/35 |
-| **Overall** | **████████████░░░░░░░░** | **D (60/100)** |
-## Tests
-| Metric | Value |
-|---|---|
-| Test files | 6 |
-| Test cases | 68 |
-| Runner | pytest |
-| Coverage | 20/20 (68 tests across 13 files (5.2/file)) |
-## Governance
-Not initialized. Run \`/nxtg-forge:init\` (or \`forge init\`) to set up Forge here.
-## Orchestrator
-◐ **Connected; not initialized here** — run \`forge init\` in this project
-## Tooling
-| Category | Count | Source |
-|---|---|---|
-| Agents | 33 | Forge plugin |
-| Commands | 24 | Forge plugin |
-| Hooks | 14 scripts (27 registrations) | Forge plugin |
-<!-- /forge-required -->`;
+// The report for the recorded humanize inputs, exactly (reviewed by hand; health D (60/100) is what alpha
+// run 5 printed). Run fields that vary by run (time, path, versions, snapshot) are fixed in humanize().
+const HUMANIZE_REPORT = readFileSync(join(HERE, 'fixtures', 'status-report.humanize.md'), 'utf8');
 
 // Writes a mutated copy of a script (and the siblings it imports) into tmp and imports it.
 async function mutant(file, from, to) {
@@ -115,10 +74,14 @@ const gapBody = (block) => `# NXTG-Forge Gap Analysis\n\n${block}\n\nStart your 
 
 // Sections of the status report and of the gap block: [name, the lines that make it, a wrong version].
 const STATUS_SECTIONS = [
-  ['Git', /^\| (Branch|Staged|Modified|Untracked) \|/, (l) => l.replace('| Untracked | 0 |', '| Untracked | 3 |')],
-  ['Health', /^\| (Tests|Types|Security|Docs|Project|\*\*Overall\*\*) \|.*[█░]/, (l) => l.replace('**D (60/100)**', '**C (70/100)**')],
-  ['Tests', /^\| (Test files|Test cases|Runner|Coverage) \|/, (l) => l.replace('| Test cases | 68 |', '| Test cases | 70 |')],
-  ['Orchestrator', /^◐ \*\*Connected; not initialized here\*\*/, (l) => l.replace(/^◐ .*/, '○ **Not connected** — add multi-agent orchestration')],
+  ['Summary', /^\*\*Verdict: |^\| [123] +\| \[(HIGH|MED|LOW)\]/, (l) => l.replace('NEEDS ATTENTION', 'HEALTHY').replace('[HIGH]', '[LOW] ')],
+  ['Changes', /^No previous run recorded|^Snapshot: /, (l) => l.replace('this run is the baseline', 'nothing changed')],
+  ['Git', /^\| (Branch|Staged|Modified|Untracked) +\|/, (l) => l.replace(/^(\| Untracked +\| )0/, '$13')],
+  ['Health', /^\| (Tests|Types|Security|Docs|Project|\*\*Overall\*\*) +\| .*\[[#.]{20}\]/, (l) => l.replace('**D (60/100)**', '**C (70/100)**').replace('0/10 ', '5/10 ')],
+  ['Tests', /^\| (Test files|Test cases|Runner|Coverage) +\|/, (l) => l.replace(/^(\| Test cases +\| )68/, '$170')],
+  ['Orchestrator', /^◐ \*\*Connected; not initialized here\*\*|^Plain text: /, (l) => l.replace(/^◐ .*/, '○ **Not connected** — add multi-agent orchestration').replace(/^Plain text: .*/, 'Plain text: CONNECTED')],
+  ['Next actions', /^\d\. .*: `/, (l) => l.replace(/`[^`]+`$/, '`/nxtg-forge:status`')],
+  ['Provenance', /^\| (Plugin|Orchestrator|Generated|Project|Commit) +\|/, (l) => l.replace('3.13.0', '3.12.1')],
 ];
 
 describe('status: the report is computed by code', () => {
@@ -128,7 +91,7 @@ describe('status: the report is computed by code', () => {
 
   it('no health result gives the fixed "Not scored" line and no table, no bars, no grade', () => {
     const out = status.render({ ...humanize(), health: null });
-    expect(out).toContain(`## Health\n${status.NOT_SCORED}\n## Tests`);
+    expect(out).toContain(`## Health\n${status.NOT_SCORED}\n## Tests: `);
     expect(out).not.toMatch(/Overall|\(\d+\/100\)/);
   });
 
@@ -146,14 +109,17 @@ describe('status: the report is computed by code', () => {
     execFileSync('git', ['-C', tmp, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'first | commit']);
     const stand = join(tmp, 'standin.sh');
     writeFileSync(stand, `exec bash ${JSON.stringify(join(PLUGIN, 'servers', 'lib', 'unavailable-mcp.sh'))} orchestrator-mcp "not installed"\n`);
-    const r = spawnSync('node', [join(SCRIPTS, 'status-report.mjs'), '--project', tmp], { encoding: 'utf8', env: { ...process.env, FORGE_ORCHESTRATOR_LAUNCHER: stand, FORGE_ORCHESTRATOR_TIMEOUT_MS: '3000' }, timeout: 30000 });
+    const r = spawnSync('node', [join(SCRIPTS, 'status-report.mjs'), '--project', tmp], { encoding: 'utf8', env: { ...process.env, FORGE_ORCHESTRATOR_LAUNCHER: stand, FORGE_ORCHESTRATOR_TIMEOUT_MS: '3000', FORGE_STATUS_STATE_DIR: join(tmp, 'state') }, timeout: 30000 });
     expect(r.status).toBe(0);
     expect(r.stdout.split('\n')[0]).toBe('orchestrator=not_installed');
     expect(r.stdout).toContain('**demo** v1.2.3 on `');
-    expect(r.stdout).toMatch(/\| `[0-9a-f]{7,}` \| first \\\| commit \|/);
-    expect(r.stdout).toMatch(/\| \*\*Overall\*\* \| \*\*[█░]{20}\*\* \| \*\*[A-F] \(\d+\/100\)\*\* \|/);
-    expect(r.stdout).toContain('| Runner | unittest |');
-    expect(r.stdout.trim().endsWith(status.END)).toBe(true);
+    expect(r.stdout).toMatch(/\| `[0-9a-f]{7,}` \| first \\\| commit +\|/);
+    expect(r.stdout).toMatch(/\| \*\*Overall\*\* +\| \*\*[A-F] \(\d+\/100\)\*\* +\| \[[#.]{20}\] \|/);
+    expect(r.stdout).toMatch(/\| Runner +\| unittest +\|/);
+    expect(r.stdout).toContain(status.FIRST_RUN);
+    const lines = r.stdout.trim().split('\n');
+    expect(lines[lines.length - 2]).toBe(status.END);
+    expect(JSON.parse(lines[lines.length - 1].slice(5)).orchestrator).toBe('not_installed');
     expect(r.stdout + r.stderr).not.toMatch(/^\s+at .+:\d+:\d+\)?$/m);
   });
 
@@ -169,7 +135,103 @@ describe('status: the report is computed by code', () => {
   });
 
   it('mutant: dropping the Untracked row turns the exact-report check red', async () => {
-    const m = await mutant('status-report.mjs', ", `| Untracked | ${d.git.untracked} |`", '');
+    const m = await mutant('status-report.mjs', ", ['Untracked', g.untracked]", '');
+    expect(m.render(humanize())).not.toBe(HUMANIZE_REPORT);
+  });
+});
+
+describe('status: the enterprise report (founder directive via EMMA-SOUL 02:29Z)', () => {
+  const block = (d) => status.render(d).split('\n');
+  it('1. an executive summary leads: one verdict, the health score and grade, the top 3 findings with severity', () => {
+    const l = block(humanize());
+    expect(l.indexOf('## Summary')).toBe(l.indexOf('---') + 1);
+    expect(l).toContain('**Verdict: NEEDS ATTENTION** - health **D (60/100)**');
+    expect(l).toContain('What matters now (top 3 of 5 findings):');
+    expect(l.filter((x) => /^\| [123] +\| \[(HIGH|MED|LOW)\]/.test(x))).toHaveLength(3);
+  });
+  it('verdict rules: A/B with no HIGH finding is HEALTHY; F or an orchestrator error is AT RISK; no score is NOT SCORED', () => {
+    const d = humanize();
+    const full = { ...d, health: { score: 92, grade: 'A', checks: Object.entries({ Governance: 15, 'Git Clean': 10, 'Test Coverage': 20, README: 10, 'CLAUDE.md': 10, 'Type Safety': 10, 'File Size': 10, Security: 7 }).map(([name, points]) => ({ name, points })) }, orchestrator: { state: 'connected', line: '● **Connected**' } };
+    expect(status.verdict(full)).toBe('HEALTHY');
+    expect(status.verdict({ ...d, health: { ...d.health, grade: 'F', score: 40 } })).toBe('AT RISK');
+    expect(status.verdict({ ...d, orchestrator: { state: 'error', line: 'x' } })).toBe('AT RISK');
+    expect(status.verdict({ ...d, health: null })).toBe('NOT SCORED');
+  });
+  it('2. sections carry counts in their headings, severity badges, and padded (aligned) tables', () => {
+    const l = block(humanize());
+    for (const h of ['## Git: 0 changed files', '## Health: D (60/100), 3 of 5 dimensions below max', '## Tests: 6 files, 68 cases', '## Tooling: 33 agents, 24 commands, 14 hook scripts', '## Next actions (3)'])
+      expect(l).toContain(h);
+    expect(l.filter((x) => /\| \[(OK|WARN|FAIL)\] +\|$/.test(x)).length).toBe(6);
+    const health = l.slice(l.findIndex((x) => x.startsWith('| Dimension')), l.findIndex((x) => x.startsWith('| **Overall**')) + 1);
+    expect(health).toHaveLength(8);
+    expect(new Set(health.map((x) => x.length)).size).toBe(1);
+  });
+  it('3. a first run prints the fixed no-previous-run line; a later run shows trends against the XDG snapshot', () => {
+    expect(block(humanize())).toContain(status.FIRST_RUN);
+    const prev = { ...status.snapshotOf({ ...humanize(), health: { ...humanize().health, score: 55, grade: 'F' } }), at: '2026-10-13 09:00:00 UTC' };
+    const l = block({ ...humanize(), previous: prev });
+    expect(l).toContain('**Verdict: NEEDS ATTENTION** - health **D (60/100)**, up 5 since last run');
+    expect(l).toContain('Compared with the run at 2026-10-13 09:00:00 UTC (commit `785e5dc`).');
+    expect(l.find((x) => x.startsWith('| Health score'))).toMatch(/\| 55 +\| 60 +\| up \+5 +\|$/);
+    expect(l.find((x) => x.startsWith('| Health grade'))).toMatch(/\| F +\| D +\| changed +\|$/);
+  });
+  it('3. the snapshot lives under XDG state keyed by the project path, never inside the project', async () => {
+    const env = { HOME: '/home/dev', XDG_STATE_HOME: '' };
+    expect(status.snapshotPath('/home/dev/humanize', env)).toMatch(/^\/home\/dev\/\.local\/state\/nxtg-forge\/status\/[0-9a-f]{16}\.json$/);
+    expect(status.snapshotPath('/p', { XDG_STATE_HOME: '/x/state' })).toMatch(/^\/x\/state\/nxtg-forge\/status\//);
+    execFileSync('git', ['init', '-q', join(tmp, 'p')]);
+    const before = execFileSync('git', ['-C', join(tmp, 'p'), 'status', '--porcelain', '--ignored'], { encoding: 'utf8' });
+    process.env.FORGE_STATUS_STATE_DIR = join(tmp, 'state');
+    try {
+      const orch = { state: 'not_installed', line: 'x' };
+      const d1 = await status.gather(join(tmp, 'p'), { tools: null, orchestrator: orch });
+      expect(d1.previous).toBeNull();
+      expect(d1.snapshot.saved).toBe(true);
+      expect(d1.snapshot.path.startsWith(join(tmp, 'state'))).toBe(true);
+      const d2 = await status.gather(join(tmp, 'p'), { tools: null, orchestrator: orch });
+      expect(d2.previous?.orchestrator).toBe('not_installed');
+    } finally { delete process.env.FORGE_STATUS_STATE_DIR; }
+    expect(execFileSync('git', ['-C', join(tmp, 'p'), 'status', '--porcelain', '--ignored'], { encoding: 'utf8' })).toBe(before);
+  });
+  it('4. next actions each carry a command', () => {
+    const l = block(humanize());
+    expect(l.filter((x) => /^\d\. .+: `[^`]+`$/.test(x))).toEqual(['1. Initialize governance: `/nxtg-forge:init`', '2. Add a CLAUDE.md: `/init`', '3. Configure a type checker: `/nxtg-forge:gap-analysis`']);
+  });
+  it('5. a provenance footer names plugin and orchestrator versions, run time, project and commit', () => {
+    const l = block(humanize());
+    for (const re of [/^\| Plugin +\| nxtg-forge 3\.13\.0 +\|$/, /^\| Orchestrator +\| forge 1\.6\.3 +\|$/, /^\| Generated +\| 2026-10-14 01:52:10 UTC \(1\.2 s\) +\|$/, /^\| Project +\| `\/home\/dev\/humanize` +\|$/, /^\| Commit +\| `785e5dc` on `detached` +\|$/])
+      expect(l.some((x) => re.test(x)), String(re)).toBe(true);
+  });
+  it('6. plain ASCII except the orchestrator lines, and every table row within 80 columns, even with long names', () => {
+    const long = { ...humanize(), root: `/home/dev/${'x'.repeat(120)}`, project: { name: 'n'.repeat(90), version: '1.0.0-rc.1+build.123456' },
+      git: { ...humanize().git, branch: 'b'.repeat(90), commits: [{ hash: 'abcdef1', message: `m|${'é'.repeat(120)}` }] } };
+    for (const d of [humanize(), long]) {
+      const l = block(d);
+      const lines = l.filter((x) => x !== d.orchestrator.line && !x.startsWith('<!--'));
+      expect(lines.filter((x) => /[^\x20-\x7e]/.test(x))).toEqual([]);
+      expect(l.filter((x) => x.startsWith('|') && [...x].length > status.WIDTH)).toEqual([]);
+    }
+  });
+  it('(a) the orchestrator lines are byte-identical to v3.12.1, with the ASCII form only after them', async () => {
+    const { LINES } = await import('../../../scripts/orchestrator-status.mjs');
+    expect(LINES.not_initialized).toBe('◐ **Connected; not initialized here** — run `forge init` in this project');
+    const l = block(humanize());
+    const i = l.indexOf('## Orchestrator');
+    expect(l.slice(i, i + 3)).toEqual(['## Orchestrator', LINES.not_initialized, `Plain text: ${status.PLAIN_ORCHESTRATOR.not_initialized}`]);
+  });
+  it('7. --json carries the same data: verdict, health, findings, orchestrator, changes and provenance', () => {
+    const d = humanize();
+    const j = status.toJson(d);
+    expect(j).toMatchObject({ stage: 'Public preview', verdict: 'NEEDS ATTENTION', health: { score: 60, grade: 'D' }, orchestrator: 'not_initialized', orchestratorLine: d.orchestrator.line, changes: null,
+      provenance: { plugin: '3.13.0', orchestrator: '1.6.3', generatedAt: '2026-10-14 01:52:10 UTC', project: '/home/dev/humanize', commit: '785e5dc' } });
+    expect(j.findings.slice(0, 3).map((f) => `[${f.severity}]`)).toEqual(['[HIGH]', '[MED]', '[MED]']);
+  });
+  it('mutant: dropping the plain-text fallback turns the orchestrator check red', async () => {
+    const m = await mutant('status-report.mjs', "out.push('## Orchestrator', d.orchestrator.line, `Plain text: ${PLAIN_ORCHESTRATOR[d.orchestrator.state] ?? PLAIN_ORCHESTRATOR.error}`);", "out.push('## Orchestrator', d.orchestrator.line);");
+    expect(m.render(humanize())).not.toBe(HUMANIZE_REPORT);
+  });
+  it('mutant: a summary without the verdict turns the exact-report check red', async () => {
+    const m = await mutant('status-report.mjs', "out.push('## Summary', `**Verdict: ${v}** - health **${score}**${trend}`);", "out.push('## Summary', `Health **${score}**${trend}`);");
     expect(m.render(humanize())).not.toBe(HUMANIZE_REPORT);
   });
 });

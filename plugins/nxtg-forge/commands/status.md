@@ -13,9 +13,9 @@ You are the **Status Reporter** - show complete project state in a zero-context-
 
 !`node "${CLAUDE_PLUGIN_ROOT}/scripts/status-report.mjs"`
 
-The output above is the status report, computed by `scripts/status-report.mjs`: the first line is `orchestrator=<state>`, and the report is the block between `<!-- forge-required: status v1 -->` and `<!-- /forge-required -->`. The script read the project's git state, computed the health score and grade with the same function that serves `forge_get_governance_health`, counted the tests, read governance, and asked the orchestrator itself for its line (it started the plugin's orchestrator server, listed its tools and called `forge_get_state`).
+The output above is the status report, computed by `scripts/status-report.mjs`: the first line is `orchestrator=<state>`, the report is the block between `<!-- forge-required: status v1 -->` and `<!-- /forge-required -->`, and the last line, `json=`, carries the same data as JSON. The block opens with an executive summary (verdict, health score and grade, the three findings that matter now), then what changed since the last run, Git, Health, Tests, Governance, Orchestrator, Tooling, next actions with their commands, and provenance. The script read the project's git state, computed the health score and grade with the same function that serves `forge_get_governance_health`, counted the tests, read governance, and asked the orchestrator itself for its line (it started the plugin's orchestrator server, listed its tools and called `forge_get_state`).
 
-**Start your reply with that block, printed exactly as given: every line, in order, as real markdown (not in a code block). You may leave out the two marker comments. Do not reword, reorder, round, summarize or skip any line, and do not decide the orchestrator's state yourself from any tool result.** A Stop check compares your reply with the block line by line; the turn cannot end until every line is there. The `orchestrator=` value is the `--json` `"orchestrator"` value.
+**Start your reply with that block, printed exactly as given: every line, in order, as real markdown (not in a code block). Never print the `json=` line unless `--json` was given. You may leave out the two marker comments. Do not reword, reorder, round, summarize or skip any line, and do not decide the orchestrator's state yourself from any tool result.** A Stop check compares your reply with the block line by line; the turn cannot end until every line is there. The `orchestrator=` value is the `--json` `"orchestrator"` value.
 
 **If the output above is empty or has no `<!-- forge-required: status v1 -->` block (the step did not run), print exactly `◌ **Forge status unavailable** — the status step did not run` instead, and use `"orchestrator": "unavailable"` in `--json`. Never decide the state from tool results instead. Never estimate a health score.**
 
@@ -26,7 +26,7 @@ Add these only after the block, never in place of any part of it:
 1. **Orchestrator metrics** (only when `orchestrator=connected`): call `forge_get_state`, `forge_get_tasks`, `forge_get_health` and `forge_check_drift` in parallel and output `## Orchestrator metrics` with a `| Metric | Value |` table of Tasks, Locks, Knowledge and Drift. For any other value, do not call them: the computed line stands, whatever a tool says. Do not show raw error messages.
 2. **Build:** only for the detected project type. If `tsconfig.json` exists, run `npx tsc --noEmit 2>&1 | tail -5`; if `Cargo.toml` exists, `cargo check 2>&1 | tail -5`; otherwise skip it. Never run `npx tsc` without a `tsconfig.json`. Output `## Build` with a `| Check | Status |` table.
 3. **Recovery:** if the Git table shows staged, modified or untracked files, output `## Recovery Needed` with a table of those files (`git status --porcelain`) and their status.
-4. **Next actions:** if `AskUserQuestion` is available, offer up to 4 next actions (for example: commit changes, add tests, run `/nxtg-forge:gap-analysis`, plan a feature with `/nxtg-forge:feature`, initialize with `/nxtg-forge:init`), and run the one the user picks. If it is not available (a non-interactive run such as `claude -p`), skip this step. The menu never replaces the report.
+4. **Menu:** the block already lists the next actions with their commands. If `AskUserQuestion` is available, you may offer those actions as a menu and run the one the user picks. If it is not available (a non-interactive run such as `claude -p`), skip this step. The menu never replaces the report.
 
 ## Stage line
 
@@ -59,7 +59,7 @@ Report: the Tooling table in the block.
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output the report's data as a JSON object instead of the block (skip the interactive menu). Take every value from the block; do not gather it again. Include `"stage": "Public preview"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`, or `unavailable` when the step did not run), and `"health": null` when the Health section says "Not scored".
+- `--json`: Output the object on the step's `json=` line, pretty-printed, instead of the block (skip the interactive menu). It holds the same data as the block; do not gather it again. Include `"stage": "Public preview"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`, or `unavailable` when the step did not run), and `"health": null` when the Health section says "Not scored".
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
