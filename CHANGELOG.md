@@ -8,6 +8,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
+## [3.13.1] — 2026-10-14
+
+Fixes the alpha outside re-run's C1 failure: in the first Claude Code session after a fresh install, `governance-mcp` was listed as `pending` with none of its tools, because its first launch ran `npm install`. No new commands, agents, skills, hooks or tools; no breaking changes.
+
+### Fixed
+
+- **governance-mcp has no runtime dependencies, so it connects in the first session after install** (#79, DIRECTIVE-NXTG-20261014-01).
+  - Claude Code (2.1.299) lists a plugin MCP server as `pending` if it has not answered within about 1.5–2 s of launch (measured: an answer at 1500 ms is connected, at 2000 ms pending). On a cold npm cache the first-run install of the MCP SDK took longer than that on CLX9.
+  - `index.mjs` now speaks MCP over stdio itself instead of through the SDK. `forge_open_dashboard` opens the file with the system's `xdg-open`, `open` or `start` instead of the `open` package; on WSL it goes straight to PowerShell, then `wslview`, then a URL to paste. `start.sh` checks for Node 20 and never runs npm.
+  - Reproduced in fresh ubuntu:24.04 containers with a cold npm cache. On CLX9, before: 3 of 3 first sessions `pending` with 0 governance tools. After: 3 of 3 `connected` with all 8.
+- **The server starts on Node 20.0–20.10.** It used an API added in Node 20.11, so on those versions it crashed at load instead of starting or showing the stand-in. This bug predates 3.13.0.
+- **A large reply is not cut off** when a client closes stdin right after its last request; the server exits only after its output has flushed.
+
+### Tests
+
+- A no-model first-launch test installs the plugin from its tracked files, with an empty npm cache and an npm registry that never answers. It requires `initialize` plus all 8 governance tools within 1000 ms. A red control runs 3.13.0's launcher under the same conditions, and it is still installing when the window closes.
+- MCP conformance is judged by the SDK's own client, plus raw-frame cases: notifications, unknown methods, malformed JSON, id types, version negotiation, and stdout purity.
+- vitest 304 → 326, L1 16, L2 30, L3 26, binding 5.
+
+---
+
 ## [3.13.0] — 2026-10-13
 
 Fixes alpha run 5's C2 failure (F-O, the status report was not printed) and C3 failure (F-P, gap-analysis gave no dimensions). The required output of `/nxtg-forge:status`, `/nxtg-forge:gap-analysis` and `/nxtg-forge:feature` is now computed by code or enforced by a check. MINOR: one new Stop hook. No new commands, agents or skills; no breaking changes.
