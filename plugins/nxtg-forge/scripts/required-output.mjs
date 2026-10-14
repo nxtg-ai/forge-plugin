@@ -17,7 +17,7 @@
 //
 //   node required-output.mjs hook     (Stop hook: JSON on stdin; prints a block decision or nothing)
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const MAX_BLOCKS = 3;
@@ -136,6 +136,20 @@ function textGate(kind, turn, n) {
 const named = (t, tool) => t.name === tool || t.name.endsWith(`__${tool}`);
 const lines = (texts) => texts.join('\n').split('\n').map((l) => l.trim().replace(/^\*\*|\*\*$/g, '').trim());
 
+// The project whose `.forge/` the gate reads. The hook's `cwd` is the shell's current directory, which moves
+// when the model runs `cd` (alpha preflight, feature-r1: `cd src` made the gate look in src/.forge and refuse a
+// task that was claimed and completed). So: the session's project dir (CLAUDE_PROJECT_DIR) when it has a
+// `.forge/`, else the nearest ancestor of cwd that has one, else cwd.
+export function projectRoot(cwd, env = process.env) {
+  const has = (d) => existsSync(join(d, '.forge'));
+  if (env.CLAUDE_PROJECT_DIR && has(env.CLAUDE_PROJECT_DIR)) return resolve(env.CLAUDE_PROJECT_DIR);
+  for (let d = resolve(cwd); ; d = dirname(d)) {
+    if (has(d)) return d;
+    if (dirname(d) === d) break;
+  }
+  return resolve(cwd);
+}
+
 // The orchestrator's own record of a task, `.forge/tasks/<id>.json` under the project; null if absent.
 export function taskReader(cwd) {
   return (id) => {
@@ -197,12 +211,13 @@ function hook(stdin) {
   if (!input.transcript_path) return '';
   let raw = '';
   try { raw = readFileSync(input.transcript_path, 'utf8'); } catch { return ''; }
+  const root = projectRoot(input.cwd || process.cwd());
   const reason = evaluate({
     rows: parseTranscript(raw),
     promptId: input.prompt_id,
     lastAssistant: input.last_assistant_message,
-    forgeDir: existsSync(join(input.cwd || process.cwd(), '.forge')),
-    readTask: taskReader(input.cwd || process.cwd()),
+    forgeDir: existsSync(join(root, '.forge')),
+    readTask: taskReader(root),
   });
   return reason ? JSON.stringify({ decision: 'block', reason }) : '';
 }

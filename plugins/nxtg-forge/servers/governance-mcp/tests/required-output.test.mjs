@@ -485,6 +485,32 @@ describe('Stop gate: /nxtg-forge:feature (C7 amended), proven by the orchestrato
     expect(gate.taskReader(tmp)('T-002')).toBeNull();
     expect(gate.taskReader(tmp)('../../etc/passwd')).toBeNull();
   });
+  it('the project is CLAUDE_PROJECT_DIR, else the nearest .forge/ above cwd: a `cd src` by the model does not hide the task (preflight feature-r1)', () => {
+    const root = join(tmp, 'proj');
+    mkdirSync(join(root, '.forge', 'tasks'), { recursive: true });
+    mkdirSync(join(root, 'src', 'pkg'), { recursive: true });
+    expect(gate.projectRoot(join(root, 'src', 'pkg'), {})).toBe(root);
+    expect(gate.projectRoot(join(root, 'src'), { CLAUDE_PROJECT_DIR: root })).toBe(root);
+    expect(gate.projectRoot(tmp, {})).toBe(tmp);
+  });
+  it('hook entry: a completed task is found while the shell sits in a subdirectory', () => {
+    const root = join(tmp, 'proj');
+    mkdirSync(join(root, '.forge', 'tasks'), { recursive: true });
+    mkdirSync(join(root, 'src'), { recursive: true });
+    writeFileSync(join(root, '.forge', 'tasks', 'T-001.json'), JSON.stringify(ROW.completed));
+    const tp = join(tmp, 't.jsonl');
+    writeFileSync(tp, transcript({ command: 'feature', body: 'x', tools: [HELPER, CLAIM, COMPLETE, GET] }).map((r) => JSON.stringify(r)).join('\n') + '\n');
+    const env = { ...process.env }; delete env.CLAUDE_PROJECT_DIR;
+    const r = spawnSync('bash', [join(PLUGIN, 'hooks', 'scripts', 'required-output.sh')], { input: JSON.stringify({ transcript_path: tp, prompt_id: PID, cwd: join(root, 'src') }), encoding: 'utf8', env, timeout: 15000 });
+    expect([r.status, r.stdout]).toEqual([0, '']);
+  });
+  it('mutant: reading .forge/ from the shell cwd again turns the subdirectory check red', async () => {
+    const m = await mutant('required-output.mjs', "  const has = (d) => existsSync(join(d, '.forge'));\n", "  const has = (d) => existsSync(join(d, '.forge'));\n  return resolve(cwd);\n");
+    const root = join(tmp, 'proj2');
+    mkdirSync(join(root, '.forge'), { recursive: true });
+    mkdirSync(join(root, 'src'), { recursive: true });
+    expect(m.projectRoot(join(root, 'src'), {})).not.toBe(root);
+  });
   it('mutant: removing the "No task created" exit forces a do-nothing task, so the exit check turns red', async () => {
     const m = await mutant('required-output.mjs', "    if (said.some((l) => /^No task created: \\S/.test(l))) return null;\n", '');
     expect(feat(m, [], ['No task created: already done'], null)).not.toBeNull();
