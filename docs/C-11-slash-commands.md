@@ -63,6 +63,6 @@ All 23 slash commands provided by the forge-plugin. These are available inside C
 ## Usage Tips
 
 - **Start with `/nxtg-forge:status`** — it's the fastest way to understand any project's state
-- **Use `/nxtg-forge:gap-analysis` after major changes** — catches regressions across all 5 dimensions
+- **Use `/nxtg-forge:gap-analysis` after major changes** — an optional structured review across 5 dimensions (no accuracy claim)
 - **Save checkpoints before risky changes** — `/nxtg-forge:checkpoint` then `/nxtg-forge:restore` if things go wrong
 - **Commands work without L2** — all slash commands function with just the plugin installed. L2 (orchestrator) adds task management and knowledge features but is not required.

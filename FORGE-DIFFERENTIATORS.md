@@ -12,10 +12,10 @@ NXTG-Forge is the only developer governance system that makes AI agents safer as
 
 These five capabilities exist nowhere else in the AI coding ecosystem:
 
-### 1. CRUCIBLE Protocol — Test Integrity Auditing
-Nobody else audits whether tests actually catch bugs. Every other tool counts tests. Forge verifies that tests have real assertions, catch real mutations, and don't game coverage metrics. The CRUCIBLE Detective agent performs forensic audits across 8 gates: xfail governance, hollow assertion detection, mock drift analysis, delta gates, silent exception hunting, mutation testing, spec-test traceability, and coverage integrity.
+### 1. CRUCIBLE Protocol — Test-Quality Review Prompt (optional, no accuracy claim)
+On forge-done-fixture and forge-done-fixture-2, a plain review prompt found the same defects at roughly a third to a quarter of the cost (fixtures 1 and 2, 24 runs). CRUCIBLE is a structured checklist, not a verifier. The CRUCIBLE Detective agent reviews against 8 gates: xfail governance, hollow assertion detection, mock drift analysis, delta gates, silent exception hunting, mutation testing, spec-test traceability, and coverage integrity.
 
-**Why it matters:** A project can have 1,500 tests and ship broken software. CRUCIBLE catches the gap between test count and test quality.
+**Why it exists:** A project can have 1,500 tests and ship broken software. CRUCIBLE lists what to look for in that gap; it does not claim to find it.
 
 ### 2. PreToolUse Security Guards — Prevention Before Detection
 4 blocking hooks that intercept dangerous actions before they execute:
@@ -113,7 +113,7 @@ Similar outcome to gstack's `/ship`, but implemented as a pre-push git hook with
 | PreToolUse security guards | Yes (4 hooks) | No | Partial (2 hooks) | No |
 | Semgrep SAST integration | Yes (auto-scan) | No | No | No |
 | OWASP skill (ASI01-10) | Yes (822 lines) | No | Partial (no ASI) | No |
-| CRUCIBLE test auditing | Yes (8 gates) | No | No | No |
+| CRUCIBLE test-review prompt (no accuracy claim) | Yes (8 gates) | No | No | No |
 | Rust orchestrator | Yes (4MB binary) | No | No | No |
 | MCP governance protocol | Yes (8 tools) | No | No | No |
 | Multi-agent orchestration | Yes (Task tool) | No | No | No |

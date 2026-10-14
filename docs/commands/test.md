@@ -40,7 +40,7 @@ Without this command, you run your test runner directly, scroll through raw outp
 - **Before committing**: Quick sanity check that the test suite is green.
 - **Investigating failures**: Use `--file <pattern>` to isolate a specific test file, or `--failed` to re-run only the broken ones.
 
-For test gap identification and test generation, use `/nxtg-forge:gap-analysis --scope testing`. For comprehensive pre-deployment validation that includes tests plus type checking and security audits, use `/nxtg-forge:deploy --validate-only`.
+For test gap identification and test generation, use `/nxtg-forge:gap-analysis --scope testing`. For a broader pre-deployment validation that includes tests plus type checking and security audits, use `/nxtg-forge:deploy --validate-only`.
 
 ## Examples
 

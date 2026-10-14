@@ -14,7 +14,7 @@
 
 `/nxtg-forge:command-center` is the command you run when you sit down and ask "what should I work on?" It presents a four-option menu -- Continue/Resume, Review & Plan Features, Soundboard, and Health Check -- each backed by real data from both local state and the forge-orchestrator. Before showing the menu, it runs a pre-flight check: governance.json exists, git is initialized, and the orchestrator connection is verified.
 
-Option 1 (Continue) restores your full context: governance directive, recent git activity, uncommitted work, saved checkpoints, AND the orchestrator task board showing pending, in-progress, and blocked tasks plus drift detection. Option 2 (Plan Features) lets you design new work with access to the existing master plan and task decomposition from the orchestrator. Option 3 (Soundboard) opens a strategic discussion grounded in real project data. Option 4 (Health Check) runs a comprehensive health analysis equivalent to `/nxtg-forge:gap-analysis`.
+Option 1 (Continue) restores your full context: governance directive, recent git activity, uncommitted work, saved checkpoints, AND the orchestrator task board showing pending, in-progress, and blocked tasks plus drift detection. Option 2 (Plan Features) lets you design new work with access to the existing master plan and task decomposition from the orchestrator. Option 3 (Soundboard) opens a strategic discussion grounded in real project data. Option 4 (Health Check) runs a health review equivalent to `/nxtg-forge:gap-analysis` (an optional review prompt with no accuracy claim).
 
 The command also handles natural language input. Instead of typing "1", you can say "let's keep going" or "how are we doing?" and it maps your intent to the right option.
 

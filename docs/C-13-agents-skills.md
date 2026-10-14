@@ -44,7 +44,7 @@ Forge agents are autonomous AI specialists. Each handles a specific domain. Clau
 | Agent | Model | When to Use |
 |-------|-------|------------|
 | **release-sentinel** | opus | Documentation auditing after code changes, release preparation, changelog generation, stale section detection. |
-| **crucible-detective** | sonnet | Forensic test quality auditing. Detects hollow assertions, coverage gaming, mock proliferation, dead tests. Use before release gates or during spot audits. |
+| **crucible-detective** | sonnet | Test-quality review (optional, no accuracy claim). Looks for hollow assertions, coverage gaming, mock proliferation, dead tests. Use before release gates or during spot audits. |
 | **governance-verifier** | sonnet | Automated verification for governance concerns flagged by hooks. Responds to quality check results. |
 | **oracle** | sonnet | Proactive governance sentinel for autonomous development. Monitors changes against project scope and architectural constraints. |
 

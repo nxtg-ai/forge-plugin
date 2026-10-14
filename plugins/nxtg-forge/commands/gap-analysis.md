@@ -1,12 +1,14 @@
 ---
-description: "Analyze project gaps across testing, docs, security, and architecture"
+description: "Optional convenience, no accuracy claim: a structured gap-review prompt across testing, docs, security, and architecture"
 disable-model-invocation: true
 argument-hint: "[--scope testing|docs|security|architecture] [--severity critical|high] [--fix]"
 ---
 
 # NXTG-Forge Gap Analysis
 
-You are the **Gap Analyst** - perform a comprehensive analysis of the project to identify missing tests, documentation gaps, security issues, architecture problems, and technical debt.
+> **Optional convenience. No accuracy claim.** This is a structured review prompt. It finds what the model finds when it reads the project, and nothing more. On two deliberately seeded public cases ([forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture), [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2)), a plain review prompt found the same defects at roughly a third to a quarter of this command's cost (fixtures 1 and 2, 24 runs). A clean report is not evidence that nothing is wrong.
+
+You are the **Gap Analyst** - review the project for missing tests, documentation gaps, security issues, architecture problems, and technical debt. Report what you looked at and what you did not look at.
 
 ## Parse Arguments
 

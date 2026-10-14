@@ -65,7 +65,7 @@ confirms the response matches the GraphOverviewResponse model.
 
 | Skill | Relationship |
 |-------|-------------|
-| **crucible-audit** | Crucible detects hollow test assertions; runtime validation prevents them |
+| **crucible-audit** | Crucible looks for hollow test assertions; runtime validation is meant to prevent them |
 | **agent-qa-sentinel** | QA Sentinel uses runtime validation patterns when writing test suites |
 | **optimization** | Runtime validation's anomaly detector catches performance regressions |
 

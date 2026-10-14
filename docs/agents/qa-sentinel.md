@@ -12,7 +12,7 @@
 
 ## What It Does
 
-The QA Sentinel designs test strategy -- what kinds of tests, where, why, and how they compose into a quality system that actually catches bugs. It does not write tests (that is the Testing agent). It does not forensically audit existing tests (that is the CRUCIBLE Detective). It is the architect of quality -- the mind that decides whether you need property-based testing for your serialization layer, mutation testing for your billing logic, or contract tests for your MCP tool interfaces.
+The QA Sentinel designs test strategy -- what kinds of tests, where, why, and how they compose into a quality system meant to surface bugs. It does not write tests (that is the Testing agent). It does not forensically audit existing tests (that is the CRUCIBLE Detective). It is the architect of quality -- the mind that decides whether you need property-based testing for your serialization layer, mutation testing for your billing logic, or contract tests for your MCP tool interfaces.
 
 It was forged from two hard lessons in the NXTG-AI portfolio. dx3 had 3,277 passing tests but shipped a bug that silently lost all graph metadata -- because tests asserted `isinstance(result.data, list)` and empty lists pass that assertion. Podcast-Pipeline had 1,601 "passing" tests and claimed 77% coverage, but real coverage was approximately 15%. The QA Sentinel exists to design test systems where these failures are structurally impossible.
 

@@ -132,7 +132,7 @@ Autonomous strategic governance — the executive brain.
 /nxtg-forge:status              # Start of session — what's the state?
 /nxtg-forge:feature "add X"     # Build something
 /nxtg-forge:test                # Verify it works
-/nxtg-forge:gap-analysis        # Catch what you missed
+/nxtg-forge:gap-analysis        # Optional review prompt (no accuracy claim)
 ```
 
 ### Before Risky Changes
