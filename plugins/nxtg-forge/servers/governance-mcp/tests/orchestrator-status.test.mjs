@@ -110,8 +110,11 @@ describe('orchestrator line: computed by code from tool results', () => {
     expect(classify({ tools: [], getState: null })).toEqual({ state: 'not_installed', line: EXPECT.not_installed });
   });
 
-  it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s: when the step did not run, a fixed line, never a model-decided state', (f) => {
-    expect(read(f)).toContain('**If the output above is empty or has no `line=` (the step did not run), print exactly `◌ **Orchestrator status unavailable** — the status step did not run` instead');
+  it.each([
+    ['commands/status.md', '**If the output above is empty or has no `<!-- forge-required: status v1 -->` block (the step did not run), print exactly `◌ **Forge status unavailable** — the status step did not run` instead'],
+    ['commands/status-enhanced.md', '**If the output above is empty or has no `line=` (the step did not run), print exactly `◌ **Orchestrator status unavailable** — the status step did not run` instead'],
+  ])('%s: when the step did not run, a fixed line, never a model-decided state', (f, sentinel) => {
+    expect(read(f)).toContain(sentinel);
     expect(read(f)).toContain('Never decide the state from tool results instead.');
   });
 
@@ -129,9 +132,9 @@ describe('orchestrator line: computed by code from tool results', () => {
     expect(runScript(silent('hang2', 'exec sleep 30\n'), m)).toEqual({ orchestrator: 'not_installed', line: EXPECT.not_installed });
   });
 
-  it.each(['commands/status.md', 'commands/status-enhanced.md'])('%s runs the script and prints its line; it holds no state mapping of its own', (f) => {
+  it.each([['commands/status.md', 'status-report.mjs'], ['commands/status-enhanced.md', 'orchestrator-status.mjs']])('%s runs the script and prints its line; it holds no state mapping of its own', (f, script) => {
     const md = read(f);
-    expect(md).toContain('!`node "${CLAUDE_PLUGIN_ROOT}/scripts/orchestrator-status.mjs"`');
+    expect(md).toContain(`!\`node "\${CLAUDE_PLUGIN_ROOT}/scripts/${script}"\``);
     expect(md).toMatch(/^allowed-tools: Bash\(node:\*\)$/m);
     expect(md).toMatch(/do not decide the (orchestrator's )?state yourself/);
     for (const line of Object.values(EXPECT)) expect(md).not.toContain(line);

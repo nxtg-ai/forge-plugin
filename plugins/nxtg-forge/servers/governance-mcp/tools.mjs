@@ -12,7 +12,8 @@ import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import open from "open";
+// `open` is imported where it is used (generateDashboard), so the scoring functions load
+// without node_modules: /nxtg-forge:status imports getHealthScore from its `!` step.
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -1085,6 +1086,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
   // DISPLAY and WSL_INTEROP env vars are not forwarded. Try two fallbacks before giving up.
   let opened = false;
   try {
+    const { default: open } = await import("open");
     await open(isWSL ? browserUrl : tmpPath);
     opened = true;
   } catch (err) {
