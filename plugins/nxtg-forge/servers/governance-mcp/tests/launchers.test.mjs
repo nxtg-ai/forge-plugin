@@ -32,7 +32,8 @@ beforeAll(() => {
   bin = join(root, 'bin');
   mkdirSync(home);
   mkdirSync(bin);
-  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm']) symlinkSync(which(tool), join(bin, tool));
+  // mktemp and sleep: find-forge's bounded --version probe (coreutils, like dirname).
+  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm', 'mktemp', 'sleep']) symlinkSync(which(tool), join(bin, tool));
 });
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
@@ -83,7 +84,8 @@ describe('orchestrator-mcp launcher', () => {
     const local = join(home, '.local', 'bin');
     mkdirSync(local, { recursive: true });
     const fake = join(local, 'forge');
-    writeFileSync(fake, '#!/usr/bin/env bash\necho "fake-forge args=$*"\n');
+    // It identifies as NXTG forge (find-forge launches nothing else since -12's fix pass).
+    writeFileSync(fake, '#!/usr/bin/env bash\n[ "$1" = --version ] && { echo "forge 1.7.0"; exit 0; }\necho "fake-forge args=$*"\n');
     chmodSync(fake, 0o755);
     try {
       const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: bin } });
@@ -98,7 +100,7 @@ describe('orchestrator-mcp launcher', () => {
 
   it('FORGE_BIN wins over everything else', () => {
     const custom = join(root, 'custom-forge');
-    writeFileSync(custom, '#!/usr/bin/env bash\necho custom\n');
+    writeFileSync(custom, '#!/usr/bin/env bash\n[ "$1" = --version ] && { echo "forge 1.7.0"; exit 0; }\necho custom\n');
     chmodSync(custom, 0o755);
     const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: bin, FORGE_BIN: custom } });
     expect(found.stdout.trim()).toBe(custom);

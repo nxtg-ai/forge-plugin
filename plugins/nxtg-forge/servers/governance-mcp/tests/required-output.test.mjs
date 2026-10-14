@@ -455,7 +455,8 @@ describe('Stop gate: /nxtg-forge:gap-analysis', () => {
 });
 
 // ---------------------------------------------------------------------------------------------------
-const TOOL = (n) => `mcp__plugin_nxtg-forge_orchestrator-mcp__${n}`;
+// orchestrator-mcp comes from the companion plugin since DIRECTIVE-NXTG-20261014-12; the gate matches the tool suffix.
+const TOOL = (n) => `mcp__plugin_nxtg-forge-orchestrator_orchestrator-mcp__${n}`;
 const HELPER = { name: 'Bash', input: { command: 'bash "/c/nxtg-forge/3.13.0/scripts/feature-task.sh" "Add usage example" "Adds one"' }, result: 'status=created\ntitle=Add usage example\nspec=.forge/feature-requests/F-001.md\ntask_id=T-001' };
 const CREATE = { name: TOOL('forge_create_task'), input: { title: 'Add usage example', description: 'Adds one' }, result: '{\n  "task_id": "T-001",\n  "title": "Add usage example",\n  "status": "pending",\n  "next": "forge_claim_task, then forge_complete_task"\n}' };
 const CLAIM = { name: TOOL('forge_claim_task'), input: { task_id: 'T-001', agent: 'claude' }, result: '{"status":"claimed"}' };
