@@ -48,9 +48,11 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
     expect(rd(join(COMPANION, '.mcp.json'))).toEqual({ mcpServers: { 'orchestrator-mcp': ORCH_ENTRY } });
   });
 
-  it('its find-forge and stand-in are byte copies of nxtg-forge\'s, and every launcher file is executable', () => {
+  it('its launcher, find-forge and stand-in are byte copies of nxtg-forge\'s, and every launcher file is executable', () => {
     // Plugins are cached separately and cannot share files, so the companion vendors them; this keeps them equal.
-    for (const f of ['servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
+    // nxtg-forge's own orchestrator-mcp/start.sh is what /nxtg-forge:status probes (-13 item 1): equal launchers
+    // bind the same project root.
+    for (const f of ['servers/orchestrator-mcp/start.sh', 'servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
       expect(sha(join(COMPANION, f)), f).toBe(sha(join(PLUGIN, f)));
     }
     for (const f of ['servers/orchestrator-mcp/start.sh', 'servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {

@@ -4,7 +4,7 @@
 // from the published forge 1.6.3) to scripts/orchestrator-status.mjs, with no model in the loop.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -153,5 +153,54 @@ describe('orchestrator line: computed by code from tool results', () => {
     writeFileSync(m, src.replace(from, "if (NOT_INITIALIZED.test(text)) return { state: 'not_installed', line: LINES.not_installed };"));
     const mod = await import(pathToFileURL(m).href);
     expect(() => stateChecks(mod.classify, mod.toolResult)).toThrow(/not_initialized|not initialized here/);
+  });
+});
+
+// DIRECTIVE-NXTG-20261014-13 item 1: the status line probes nxtg-forge's own orchestrator launcher. It had no
+// walk-up, so a session started in a subdirectory of a Forge project read "not initialized here" while the
+// companion's tools, bound to the project root, worked. The launcher is now a byte copy of the companion's
+// (companion-plugin.test.mjs keeps them equal), so status binds the same root the session tools do.
+describe("status binds the project root as the companion's launcher does", () => {
+  // A fake NXTG forge: `--version` names it, `mcp` serves forge_get_state with the recorded 1.6.3 replies,
+  // connected only when $FORGE_PROJECT_ROOT holds .forge/state.json (forge mcp does not walk up).
+  function fakeForge() {
+    const server = join(tmp, 'forge-mcp.mjs');
+    writeFileSync(server, `
+import { createInterface } from 'node:readline';
+import { existsSync } from 'node:fs';
+const ok = existsSync((process.env.FORGE_PROJECT_ROOT || '') + '/.forge/state.json');
+const reply = ${JSON.stringify(FX.forge_1_6_3)}[ok ? 'connected_reply' : 'not_initialized_reply'];
+createInterface({ input: process.stdin }).on('line', (l) => {
+  const m = JSON.parse(l);
+  if (m.id === undefined) return;
+  const out = (result) => process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: m.id, result }) + '\\n');
+  if (m.method === 'initialize') out({ protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'forge', version: '1.7.0' } });
+  else if (m.method === 'tools/list') out({ tools: ${JSON.stringify(FX.run4.orchestrator_tools)}.map((n) => ({ name: n, inputSchema: { type: 'object' } })) });
+  else if (m.method === 'tools/call') process.stdout.write(JSON.stringify({ ...reply, id: m.id }) + '\\n');
+});`);
+    const bin = join(tmp, 'forge');
+    writeFileSync(bin, `#!/usr/bin/env bash\nif [ "$1" = --version ]; then echo 'forge 1.7.0'; exit 0; fi\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(server)}\n`);
+    chmodSync(bin, 0o755);
+    return bin;
+  }
+  const status = (dir, bin) => {
+    const env = { ...process.env, HOME: join(tmp, 'home'), FORGE_BIN: bin, FORGE_ORCHESTRATOR_TIMEOUT_MS: '8000' };
+    delete env.FORGE_ORCHESTRATOR_LAUNCHER; // the plugin's own launcher, as /nxtg-forge:status runs it
+    delete env.FORGE_PROJECT_ROOT;
+    const r = spawnSync('node', [SCRIPT, '--project', dir], { encoding: 'utf8', env, timeout: 20000 });
+    expect(r.status).toBe(0);
+    return r.stdout.trim().split('\n')[0];
+  };
+
+  it('a session started two levels down reads connected; with no project above it reads not initialized', () => {
+    const bin = fakeForge();
+    const proj = join(tmp, 'home', 'proj');
+    mkdirSync(join(proj, '.forge'), { recursive: true });
+    writeFileSync(join(proj, '.forge', 'state.json'), '{}');
+    mkdirSync(join(proj, 'src', 'deep'), { recursive: true });
+    mkdirSync(join(tmp, 'home', 'loose', 'sub'), { recursive: true });
+    expect(status(join(proj, 'src', 'deep'), bin)).toBe('orchestrator=connected');
+    expect(status(proj, bin)).toBe('orchestrator=connected');
+    expect(status(join(tmp, 'home', 'loose', 'sub'), bin)).toBe('orchestrator=not_initialized');
   });
 });

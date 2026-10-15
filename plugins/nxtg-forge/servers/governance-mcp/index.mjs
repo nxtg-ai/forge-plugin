@@ -152,7 +152,8 @@ export const NODE_MIN = 20;
  * load on Node 18.20.8, so the check runs there and answers with the stand-in instead of crashing.
  */
 export function nodeVersionReason(version = process.versions.node) {
-  const major = Number.parseInt(String(version).split(".")[0], 10);
+  // A leading "v" (process.version's form) is accepted too (#91 seat L-4).
+  const major = Number.parseInt(String(version).replace(/^v/, "").split(".")[0], 10);
   if (Number.isInteger(major) && major >= NODE_MIN) return null;
   return `Health scoring needs Node.js ${NODE_MIN} or newer; this machine has ${version}. Upgrade from https://nodejs.org. ` +
     "Without it there is no health score or grade, and the forge_* governance tools are missing. After installing, start a new Claude Code session.";
@@ -187,6 +188,11 @@ export async function handleMessage(msg) {
   if (msg.jsonrpc !== "2.0") {
     const id = typeof msg.id === "string" || typeof msg.id === "number" ? msg.id : null;
     return { jsonrpc: "2.0", id, error: { code: -32600, message: "Invalid Request" } };
+  }
+  // An id that is not a string, number or null is invalid (JSON-RPC 2.0 section 4); answering it keeps a client that
+  // sent one from waiting forever for a reply (#91 seat L-5).
+  if (typeof msg.method === "string" && "id" in msg && msg.id !== null && typeof msg.id !== "string" && typeof msg.id !== "number") {
+    return { jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request" } };
   }
   const isRequest = typeof msg.method === "string" && (typeof msg.id === "string" || typeof msg.id === "number");
   if (!isRequest) {

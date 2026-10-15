@@ -54,6 +54,11 @@ jobs:
         with:
           node-version: '22'
 
+      # The semgrep-mcp launcher test runs under real bash 3.2, the stock macOS /bin/bash; without the
+      # image it would be skipped (DIRECTIVE-NXTG-20261014-13 item 2). In CI the test fails if the image is absent.
+      - name: Pull bash 3.2 for the launcher test
+        run: docker pull bash:3.2
+
       - name: Install and test
         id: tests
         working-directory: plugins/nxtg-forge/servers/governance-mcp

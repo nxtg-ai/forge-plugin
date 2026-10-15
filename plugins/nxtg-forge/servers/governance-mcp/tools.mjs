@@ -733,6 +733,15 @@ function launchDetached(cmd, args, spawnFn) {
  * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
  * @returns {Promise<{ path: string, projectName: string, healthScore: number, healthGrade: string }>}
  */
+/**
+ * When nothing opened the dashboard, say where it is: on WSL the Windows URL, elsewhere the file URL
+ * (#91 seat L-1: non-WSL Linux with no opener and no BROWSER returned no hint). Exported for tests.
+ */
+export function dashboardHint({ isWSL, opened, browserUrl }) {
+  if (opened) return {};
+  return { hint: isWSL ? `Paste this URL into your Windows browser: ${browserUrl}` : `Open this file in your browser: ${browserUrl}` };
+}
+
 export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
@@ -1194,7 +1203,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
     projectName,
     healthScore: health.score,
     healthGrade: health.grade,
-    ...(isWSL && !opened ? { hint: `Paste this URL into your Windows browser: ${browserUrl}` } : {}),
+    ...dashboardHint({ isWSL, opened, browserUrl }),
   };
 }
 
