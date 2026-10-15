@@ -325,7 +325,8 @@ describe('semgrep-mcp launcher with an upstream that exits early', () => {
 // PR #92 review L-1 (made blocking): .mcp.json runs plain `bash`, which on macOS is /bin/bash
 // 3.2: no coproc, no {fd} allocation, no fractional `read -t`. The same portable checks run
 // with this machine's bash and, when the official `bash:3.2` image is present, under real bash
-// 3.2 in docker (pull it with `docker pull bash:3.2`; CI skips it when the image is absent).
+// 3.2 in docker (pull it with `docker pull bash:3.2`). Locally it is skipped when the image is absent; in CI
+// (CI=true) it runs and fails without the image, which pr-protection.yml pulls (-13 item 2).
 describe('semgrep-mcp launcher, portable checks (tests/fixtures/semgrep-guard-check.sh)', () => {
   const CHECK = join(SERVERS, 'governance-mcp', 'tests', 'fixtures', 'semgrep-guard-check.sh');
   const hasBash32 =
@@ -351,7 +352,8 @@ describe('semgrep-mcp launcher, portable checks (tests/fixtures/semgrep-guard-ch
     expectAllPass(r);
   });
 
-  it.skipIf(!hasBash32)('pass under real bash 3.2 (docker image bash:3.2, stock macOS /bin/bash)', () => {
+  it.skipIf(!hasBash32 && process.env.CI !== 'true')('pass under real bash 3.2 (docker image bash:3.2, stock macOS /bin/bash)', () => {
+    expect(hasBash32, 'the bash:3.2 image must be present in CI (pr-protection.yml pulls it)').toBe(true);
     const r = spawnSync(
       'docker',
       ['run', '--rm', '-v', `${SERVERS}:${SERVERS}:ro`, 'bash:3.2', 'bash', CHECK, SEMGREP, STANDIN],
@@ -411,5 +413,8 @@ describe('governance-mcp launcher', () => {
     expect(nodeVersionReason('18.19.1')).toContain('Node.js 20 or newer; this machine has 18.19.1');
     expect(nodeVersionReason('16.20.2')).toContain('this machine has 16.20.2');
     expect(nodeVersionReason('garbage')).toContain('this machine has garbage');
+    // #91 seat L-4: process.version's "v" form is read the same way.
+    expect(nodeVersionReason('v22.21.1')).toBeNull();
+    expect(nodeVersionReason('v18.19.1')).toContain('this machine has v18.19.1');
   });
 });

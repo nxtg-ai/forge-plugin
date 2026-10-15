@@ -90,6 +90,19 @@ describe('a frame that is not JSON-RPC 2.0 gets -32600 and is never dispatched (
     expect(dashboards()).toEqual([]);
   });
 
+  // #91 seat L-5: an object id made the frame look like a notification, so it got no reply and a client waiting
+  // on it hung. An id that is not a string, number or null is an Invalid Request (JSON-RPC 2.0 section 4).
+  it('an id that is an object, array or boolean gets -32600 with id null, and the tool did not run', async () => {
+    const bad = { jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Invalid Request' } };
+    expect(await handleMessage({ jsonrpc: '2.0', id: {}, method: 'ping' })).toEqual(bad);
+    expect(await handleMessage({ jsonrpc: '2.0', id: [1], method: 'ping' })).toEqual(bad);
+    expect(await handleMessage({ jsonrpc: '2.0', id: true, method: 'tools/call', params: { name: 'forge_run_tests', arguments: {} } })).toEqual(bad);
+    expect(existsSync(receipt)).toBe(false);
+    // Controls: a string or number id is answered; no id at all is a notification and gets no reply.
+    expect(await handleMessage({ jsonrpc: '2.0', id: 'p', method: 'ping' })).toEqual({ jsonrpc: '2.0', id: 'p', result: {} });
+    expect(await handleMessage({ jsonrpc: '2.0', method: 'notifications/initialized' })).toBeNull();
+  });
+
   it('a non-2.0 notification also gets -32600, with id null', async () => {
     expect(await handleMessage({ method: 'notifications/initialized' })).toEqual({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Invalid Request' } });
   });

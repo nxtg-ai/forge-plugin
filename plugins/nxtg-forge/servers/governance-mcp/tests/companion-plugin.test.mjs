@@ -48,9 +48,11 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
     expect(rd(join(COMPANION, '.mcp.json'))).toEqual({ mcpServers: { 'orchestrator-mcp': ORCH_ENTRY } });
   });
 
-  it('its find-forge and stand-in are byte copies of nxtg-forge\'s, and every launcher file is executable', () => {
+  it('its launcher, find-forge and stand-in are byte copies of nxtg-forge\'s, and every launcher file is executable', () => {
     // Plugins are cached separately and cannot share files, so the companion vendors them; this keeps them equal.
-    for (const f of ['servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
+    // nxtg-forge's own orchestrator-mcp/start.sh is what /nxtg-forge:status probes (-13 item 1): equal launchers
+    // bind the same project root.
+    for (const f of ['servers/orchestrator-mcp/start.sh', 'servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
       expect(sha(join(COMPANION, f)), f).toBe(sha(join(PLUGIN, f)));
     }
     for (const f of ['servers/orchestrator-mcp/start.sh', 'servers/lib/find-forge.sh', 'servers/lib/unavailable-mcp.sh']) {
@@ -100,12 +102,12 @@ describe('companion launcher binds the Forge project root, not the session subdi
   // GNU timeout runs the launcher in its own process group and kills the whole group on expiry. spawnSync's own
   // timeout signals only the bash it started, and a walk looping inside `$(bind_project_root)` is a child subshell:
   // it outlived the SIGTERM and spun for 6 h (2026-10-14, red-before run of the relative-path case).
-  const bind = (start, envRoot = start, homeVar = home, deleteCwd = false) => {
+  const bind = (start, envRoot = start, homeVar = home, deleteCwd = false, extraEnv = {}) => {
     rmSync(log, { force: true });
     const launcher = join(COMPANION, 'servers/orchestrator-mcp/start.sh');
     const r = spawnSync('bash', ['-c', `cd "$1" && { [ "$3" = 0 ] || rmdir "$1"; } && exec timeout -s KILL 4 bash "$2"`, 'bind', start, launcher, deleteCwd ? '1' : '0'], {
       input: '', encoding: 'utf8', timeout: 8000,
-      env: { HOME: homeVar, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }) },
+      env: { HOME: homeVar, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }), ...extraEnv },
     });
     expect(r.status).toBe(0);
     return readFileSync(log, 'utf8').trim();
@@ -147,6 +149,12 @@ describe('companion launcher binds the Forge project root, not the session subdi
   it('FORGE_PROJECT_ROOT unset: starts from the working directory', () => {
     const p = join(home, 'proj');
     expect(bind(join(p, 'src'), null)).toBe(`root=${p} cwd=${p}`);
+  });
+  // #97 seat fix 3: with CDPATH set, `cd deep` prints the directory it found, so the resolved path was two lines.
+  it('a set CDPATH does not change the binding of a relative FORGE_PROJECT_ROOT', () => {
+    const p = join(home, 'proj');
+    expect(bind(join(p, 'src'), 'deep', home, false, { CDPATH: join(p, 'src') })).toBe(`root=${p} cwd=${p}`);
+    expect(bind(join(home, 'loose'), 'sub', home, false, { CDPATH: join(home, 'loose') })).toBe(`root=${join(home, 'loose', 'sub')} cwd=${join(home, 'loose', 'sub')}`);
   });
   // forge-pm lead al:05a79cf5796d4c75: a shell started in a deleted directory resolves "." to "." (getcwd fails),
   // and `dirname .` is ".", so a relative FORGE_PROJECT_ROOT walked forever. The given value now stands.

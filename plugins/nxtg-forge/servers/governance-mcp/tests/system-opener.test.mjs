@@ -7,7 +7,7 @@ import { readFileSync, mkdtempSync, writeFileSync, chmodSync, existsSync, rmSync
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { systemOpener, openWithSystem, browserCommands, openWithBrowserEnv, openDashboardFile } from '../tools.mjs';
+import { systemOpener, openWithSystem, browserCommands, openWithBrowserEnv, openDashboardFile, dashboardHint } from '../tools.mjs';
 
 const SERVER_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -119,5 +119,22 @@ describe('BROWSER for forge_open_dashboard', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+// #91 seat L-1: when nothing opened the dashboard, only WSL got a hint; on other Linux the result had a path and
+// a URL but no sentence saying the browser did not open.
+describe('forge_open_dashboard hint when nothing opened it', () => {
+  it('WSL: the Windows URL; elsewhere: the file URL; nothing when it opened', () => {
+    expect(dashboardHint({ isWSL: true, opened: false, browserUrl: 'file://///wsl.localhost/U/tmp/d.html' }))
+      .toEqual({ hint: 'Paste this URL into your Windows browser: file://///wsl.localhost/U/tmp/d.html' });
+    expect(dashboardHint({ isWSL: false, opened: false, browserUrl: 'file:///tmp/d.html' }))
+      .toEqual({ hint: 'Open this file in your browser: file:///tmp/d.html' });
+    expect(dashboardHint({ isWSL: false, opened: true, browserUrl: 'file:///tmp/d.html' })).toEqual({});
+    expect(dashboardHint({ isWSL: true, opened: true, browserUrl: 'x' })).toEqual({});
+  });
+  it('generateDashboard returns the hint from dashboardHint', () => {
+    const src = readFileSync(join(SERVER_DIR, 'tools.mjs'), 'utf8');
+    expect(src).toContain('...dashboardHint({ isWSL, opened, browserUrl }),');
   });
 });

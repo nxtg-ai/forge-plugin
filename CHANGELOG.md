@@ -20,6 +20,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 - **The companion launcher no longer loops forever when it starts in a deleted directory with a relative `FORGE_PROJECT_ROOT`.** A shell started in a deleted directory resolves `.` to `.`, and `dirname .` is `.`, so the walk-up to the Forge project root never reached `/`. Only an absolute path is walked now; otherwise the given value stands, as it did before the walk-up existed. Found as a 6-hour orphan left by a test run (forge-pm, al:05a79cf5796d4c75).
 - Tests: the project-root tests run the launcher under `timeout`, which kills its whole process group. A walk looping inside `$(bind_project_root)` runs in a child subshell, which outlived the SIGTERM that spawnSync sends to the bash it started.
+- **`/nxtg-forge:status` binds the project root as the session tools do** (DIRECTIVE-NXTG-20261014-13 item 1). The status line probes nxtg-forge's own orchestrator launcher, which had no walk-up: a session started in a subdirectory of a Forge project read "not initialized here" while the companion's tools worked. That launcher is now a byte copy of the companion's, and a test keeps them equal.
+- **The bash 3.2 launcher test runs in CI** (item 2). The Quality Gate pulls `bash:3.2`, and under `CI=true` the test fails instead of skipping when the image is absent.
+- **governance-mcp, the #91 review's Lows** (item 3): a request whose `id` is an object, array or boolean now gets `-32600` instead of no reply (L-5); `forge_open_dashboard` gives a hint with the file URL on non-WSL systems when nothing opened it (L-1); the Node version check reads a leading `v` (L-4).
+- **CI: a failing test now fails the Quality Gate** (#97 seat). Its test step ran under `bash -e` without pipefail and took `tee`'s exit code, so no required check failed on a vitest failure; the step is now `shell: bash` (`-eo pipefail`) and runs `npm run test:ci` (vitest, the L1 journey and the binding journey; L2 and L3 need a real forge and forge-ui and run locally). The test-count gate read the first `N tests` match, which on coloured output was nothing, so it compared 0 with 0; it now reads the vitest summary total and fails closed without one.
+- The L1 journey's stub forge answers `--version` with `forge 1.7.0`; since #89 the launcher runs only a forge that does, and CI never showed the two failures.
+- The project-root walk clears `CDPATH`: with it set, `cd` to a relative root printed a second line.
 
 ## [3.14.0] — 2026-10-14
 
