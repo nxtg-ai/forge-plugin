@@ -160,7 +160,8 @@ async function main() {
 
     const stubDir = mkdtempSync(join(tmpdir(), "forge-l1-stub-"));
     const stubForge = join(stubDir, "forge");
-    writeFileSync(stubForge, "#!/bin/sh\necho \"stub-forge $*\"\n"); // `exec forge mcp` runs it
+    // Since #89 the launcher execs only a forge whose --version reads `forge X.Y.Z` (NXTG forge); the stub says so.
+    writeFileSync(stubForge, "#!/bin/sh\n[ \"$1\" = --version ] && { echo 'forge 1.7.0'; exit 0; }\necho \"stub-forge $*\"\n"); // `exec forge mcp` runs it
     chmodSync(stubForge, 0o755);
     const onPath = runOrchestratorCommand(`${stubDir}:/usr/bin:/bin`, emptyHome);
     check("stub forge on PATH → orchestrator command execs `forge mcp`",
@@ -168,7 +169,7 @@ async function main() {
 
     // F-C: install.sh puts forge in ~/.local/bin, which may not be on the PATH Claude Code was started with.
     mkdirSync(join(emptyHome, ".local", "bin"), { recursive: true });
-    writeFileSync(join(emptyHome, ".local", "bin", "forge"), "#!/bin/sh\necho \"stub-forge $*\"\n");
+    writeFileSync(join(emptyHome, ".local", "bin", "forge"), "#!/bin/sh\n[ \"$1\" = --version ] && { echo 'forge 1.7.0'; exit 0; }\necho \"stub-forge $*\"\n");
     chmodSync(join(emptyHome, ".local", "bin", "forge"), 0o755);
     const offPath = runOrchestratorCommand(`${shadowBin}:/usr/bin:/bin`, emptyHome);
     check("forge only in ~/.local/bin (not on PATH) → orchestrator command still execs `forge mcp`",

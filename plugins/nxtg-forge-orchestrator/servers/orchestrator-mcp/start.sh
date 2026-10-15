@@ -20,9 +20,10 @@ source "$HERE/../lib/find-forge.sh"
 # fails), and `dirname .` is ".", so the walk would never end.
 bind_project_root() {
   local given="${FORGE_PROJECT_ROOT:-$PWD}" dir start home
-  dir="$(cd "$given" 2>/dev/null && pwd -P)" || dir=""
+  # CDPATH is cleared: with it set, `cd` to a relative name prints the directory it found, a second line.
+  dir="$(CDPATH= cd -- "$given" >/dev/null 2>&1 && pwd -P)" || dir=""
   [[ "$dir" == /* ]] || { printf '%s\n' "$given"; return; }
-  home="$(cd "${HOME:-/}" 2>/dev/null && pwd -P)" || home="/"
+  home="$(CDPATH= cd -- "${HOME:-/}" >/dev/null 2>&1 && pwd -P)" || home="/"
   [[ "$home" == /* ]] || home="/"
   start="$dir"
   while [[ "$dir" != "/" && "$dir" != "$home" ]]; do

@@ -59,15 +59,22 @@ jobs:
       - name: Pull bash 3.2 for the launcher test
         run: docker pull bash:3.2
 
+      # `shell: bash` runs `bash --noprofile --norc -eo pipefail`, so a failing test fails this step. Without it the
+      # step ran under `bash -e` and took tee's exit code: no required check failed on a vitest failure (#97 seat).
+      # test:ci is vitest, the L1 journey and the binding journey. L2 and L3 need a real forge binary and a forge-ui
+      # checkout and run locally (npm test).
       - name: Install and test
         id: tests
+        shell: bash
         working-directory: plugins/nxtg-forge/servers/governance-mcp
         env:
           FORGE_TEST_MODE: '1'
         run: |
           npm install
-          npm test 2>&1 | tee test-output.txt
-          TEST_COUNT=$(grep -oP '\d+ tests?' test-output.txt | head -1 | grep -oP '\d+' || echo "0")
+          npm run test:ci 2>&1 | tee test-output.txt
+          # The total is the "Tests  N passed (T)" summary line's T, not the first per-file count.
+          TEST_COUNT=$(sed 's/\x1b\[[0-9;]*m//g' test-output.txt | grep -E '^[[:space:]]*Tests[[:space:]]' | tail -1 | grep -oE '\([0-9]+\)' | tr -d '()' || true)
+          [ -n "$TEST_COUNT" ] || { echo "::error::no vitest summary line in the test output"; exit 1; }
           echo "test_count=$TEST_COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Check for hollow assertions
@@ -79,12 +86,17 @@ jobs:
           fi
 
       - name: Verify test count didn't decrease
+        shell: bash
         env:
           FORGE_TEST_MODE: '1'
         run: |
           git checkout ${{ github.event.pull_request.base.sha }} -- plugins/nxtg-forge/servers/governance-mcp/__tests__ plugins/nxtg-forge/servers/governance-mcp/tests 2>/dev/null || true
           cd plugins/nxtg-forge/servers/governance-mcp
-          BASE_COUNT=$(npm test 2>&1 | grep -oP '\d+ tests?' | head -1 | grep -oP '\d+' || echo "0")
+          # Only the base's test COUNT is needed. Its tests may fail against this PR's code when the PR changes
+          # behaviour on purpose, so their exit status is not the verdict; a missing summary line fails closed.
+          npx vitest run > base-output.txt 2>&1 || true
+          BASE_COUNT=$(sed 's/\x1b\[[0-9;]*m//g' base-output.txt | grep -E '^[[:space:]]*Tests[[:space:]]' | tail -1 | grep -oE '\([0-9]+\)' | tr -d '()' || true)
+          [ -n "$BASE_COUNT" ] || { echo "::error::no vitest summary line in the base run"; tail -20 base-output.txt; exit 1; }
           git checkout ${{ github.sha }} -- . 2>/dev/null || git checkout HEAD -- .
           echo "Base test count: $BASE_COUNT, PR test count: ${{ steps.tests.outputs.test_count }}"
           if [ "${{ steps.tests.outputs.test_count }}" -lt "$BASE_COUNT" ]; then
