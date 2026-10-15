@@ -54,16 +54,28 @@ desc_check() {  # <file> <jq path> <label>
   local d; d=$(jq -r "$2" "$1")
   if [[ "$d" == *"($LOW)"* ]]; then ok "$3"; else bad "$3 (description lacks '($LOW)')"; fi
   if [[ "$d" =~ \(stage:\ [a-z-]+\) ]]; then bad "$3 still has a '(stage: …)' marker: ${BASH_REMATCH[0]}"; fi
+  if [ "$L" != 'Public preview' ] && grep -qiE 'pre-alpha|public preview' <<<"$d"; then bad "$3 still says pre-alpha or public preview"; fi
 }
 desc_check plugins/nxtg-forge/.claude-plugin/plugin.json '.description'             "plugin.json description"
 desc_check .claude-plugin/plugin.json                   '.description'              "root plugin.json description"
 desc_check .claude-plugin/marketplace.json              '.description'              "marketplace description"
 desc_check .claude-plugin/marketplace.json              '.plugins[0].description'   "marketplace plugin entry description"
+desc_check .claude-plugin/marketplace.json              '.plugins[1].description'   "marketplace companion entry description"
+desc_check plugins/nxtg-forge-orchestrator/.claude-plugin/plugin.json '.description' "companion plugin.json description"
 
 STATUS=plugins/nxtg-forge/commands/status.md
 has  "$STATUS" "**Stage: $L.**"                            "/nxtg-forge:status stage line"
 has  "$STATUS" "\"stage\": \"$L\""                         "/nxtg-forge:status --json stage field"
 none "$STATUS" "(\*\*Stage: ($OTHERS)\.|\"stage\": \"($OTHERS)\")" "/nxtg-forge:status has no other stage"
+has  plugins/nxtg-forge/scripts/status-report.mjs "stage: '$L'," "status --json stage value"
+
+# Red control (.64, dx3-pm 1.18.7.5.53): above public preview, no pre-alpha or public-preview sentence may survive
+# anywhere on the README or the status line. A checker that matches the bare word "alpha" would pass
+# "below alpha (pre-alpha)", so the old sentence must be gone, not just outranked.
+if [ "$L" != 'Public preview' ]; then
+  none "$README" "pre-alpha|public preview"                 "README has no pre-alpha or public-preview text"
+  none "$STATUS" "pre-alpha|public preview"                 "/nxtg-forge:status has no pre-alpha or public-preview text"
+fi
 
 echo "stage-check: $fail red over $checked checked"
 [ "$fail" -eq 0 ]

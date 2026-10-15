@@ -41,7 +41,7 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
     expect(c.name).toBe('nxtg-forge-orchestrator');
     expect(c.version).toBe(p.version);
     expect(c.author).toEqual(p.author);
-    expect(c.description).toMatch(/public preview/);
+    expect(c.description).toMatch(/\(alpha\)/);
   });
 
   it('.mcp.json registers exactly the orchestrator-mcp entry nxtg-forge used to, bound to the project root', () => {

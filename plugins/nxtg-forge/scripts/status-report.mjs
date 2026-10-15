@@ -271,7 +271,7 @@ function spaced(lines) {
 export function toJson(d) {
   const f = findings(d);
   return {
-    stage: 'Public preview',
+    stage: 'Alpha',
     project: d.project, verdict: verdict(d, f),
     health: d.health ? { score: d.health.score, grade: d.health.grade, checks: d.health.checks } : null,
     findings: f.map(({ severity, issue, action, command }) => ({ severity, issue, action, command })),

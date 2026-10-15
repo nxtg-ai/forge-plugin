@@ -3,7 +3,7 @@
   "name": "nxtg-forge-orchestrator",
   "displayName": "NXTG Forge Orchestrator",
   "version": "3.14.0",
-  "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (public preview)",
+  "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (alpha)",
   "defaultEnabled": true,
   "author": {
     "name": "NXTG AI",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "nxtg-forge",
-  "description": "NXTG-Forge plugin marketplace \u2014 AI-powered development governance for Claude Code (public preview)",
+  "description": "NXTG-Forge plugin marketplace \u2014 AI-powered development governance for Claude Code (alpha)",
   "owner": {
     "name": "NXTG AI",
     "email": "engage@nxtg.ai"
@@ -16,7 +16,7 @@
         "ref": "v3.14.0",
         "sha": "6436b7754964d0c20bfea63e43b79c09729350e6"
       },
-      "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code (public preview)",
+      "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code (alpha)",
       "version": "3.14.0",
       "author": {
         "name": "NXTG AI"
@@ -43,7 +43,7 @@
         "ref": "v3.14.0",
         "sha": "6436b7754964d0c20bfea63e43b79c09729350e6"
       },
-      "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (public preview)",
+      "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (alpha)",
       "version": "3.14.0",
       "author": {
         "name": "NXTG AI"
