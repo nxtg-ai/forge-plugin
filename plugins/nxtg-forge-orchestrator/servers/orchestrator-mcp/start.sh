@@ -16,10 +16,14 @@ source "$HERE/../lib/find-forge.sh"
 # With no Forge project above, the session directory stands, as before.
 # Both paths are resolved first (`pwd -P`): a relative value is taken from the working directory, so the
 # walk always ends at "/", and a trailing slash or a symlink cannot hide $HOME from the comparison.
+# Only an absolute result is walked: a shell started in a deleted directory resolves "." to "." (getcwd
+# fails), and `dirname .` is ".", so the walk would never end.
 bind_project_root() {
   local given="${FORGE_PROJECT_ROOT:-$PWD}" dir start home
-  dir="$(cd "$given" 2>/dev/null && pwd -P)" || { printf '%s\n' "$given"; return; }
+  dir="$(cd "$given" 2>/dev/null && pwd -P)" || dir=""
+  [[ "$dir" == /* ]] || { printf '%s\n' "$given"; return; }
   home="$(cd "${HOME:-/}" 2>/dev/null && pwd -P)" || home="/"
+  [[ "$home" == /* ]] || home="/"
   start="$dir"
   while [[ "$dir" != "/" && "$dir" != "$home" ]]; do
     if [[ -f "$dir/.forge/state.json" ]]; then printf '%s\n' "$dir"; return; fi
