@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+### Changed
+
+- **README: no binary size or test counts that no named run backs** (DIRECTIVE-NXTG-20261014-16 item 2). The orchestrator line said "4MB. 356 tests."; the measured v1.7.0 sizes run from 4.7 MB (macOS arm64) to 6.4 MB (Linux x86_64), and 356 is not a current count. The forge-ui line "58 components. 4,165 tests. 87% coverage." is dropped for the same reason.
+
 ### Fixed
 
 - **The companion launcher no longer loops forever when it starts in a deleted directory with a relative `FORGE_PROJECT_ROOT`.** A shell started in a deleted directory resolves `.` to `.`, and `dirname .` is `.`, so the walk-up to the Forge project root never reached `/`. Only an absolute path is walked now; otherwise the given value stands, as it did before the walk-up existed. Found as a 6-hour orphan left by a test run (forge-pm, al:05a79cf5796d4c75).
