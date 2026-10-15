@@ -176,7 +176,7 @@ Running forge-ui inside WSL2 and want to access from Windows or your phone?
 **Step 1: Check your WSL2 IP**
 ```bash
 ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1
-# Example: 192.168.1.206
+# Example: 192.0.2.10
 ```
 
 **Step 2: Add Windows Firewall rule** (run in PowerShell as Administrator)
@@ -191,7 +191,7 @@ New-NetFirewallRule `
 
 **Step 3: Access from other devices**
 ```
-http://192.168.1.206:5050
+http://192.0.2.10:5050
 ```
 
 The UI uses Vite's proxy, so all `/api` and `/ws` requests are automatically forwarded to the API server. No configuration needed.

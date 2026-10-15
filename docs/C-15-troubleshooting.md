@@ -58,7 +58,7 @@ Default allowed origins:
 
 To allow additional origins, set `ALLOWED_ORIGINS` in your `.env`:
 ```bash
-ALLOWED_ORIGINS=http://192.168.1.206:5050,http://localhost:5050
+ALLOWED_ORIGINS=http://192.0.2.10:5050,http://localhost:5050
 ```
 
 **Fix 3 — Check for a firewall block (WSL2):**
@@ -166,7 +166,7 @@ ps aux | grep pty
 
 ### Can't access from other devices (WSL2)
 
-**Symptom**: `http://192.168.1.206:5050` times out when accessed from Windows, phone, or another machine.
+**Symptom**: `http://192.0.2.10:5050` times out when accessed from Windows, phone, or another machine.
 
 **Root cause**: Windows Firewall blocks inbound connections to WSL2, even though WSL2 binds to `0.0.0.0`.
 
@@ -198,7 +198,7 @@ Then access via `http://<wsl2-ip>:5050` from any device on the same network.
 **Fix**: Set `ALLOWED_ORIGINS` in `v3/.env` before starting the dev server:
 ```bash
 # v3/.env
-ALLOWED_ORIGINS=http://192.168.1.206:5050,http://localhost:5050,http://127.0.0.1:5050
+ALLOWED_ORIGINS=http://192.0.2.10:5050,http://localhost:5050,http://127.0.0.1:5050
 ```
 
 Restart `npm run dev` after changing `.env`.

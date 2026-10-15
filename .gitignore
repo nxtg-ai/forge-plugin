@@ -5,3 +5,5 @@
 .vscode/
 .idea/
 plugins/nxtg-forge/servers/governance-mcp/coverage/
+.asif/
+.claude/settings.json

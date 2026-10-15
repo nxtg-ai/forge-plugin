@@ -271,7 +271,7 @@ This is how the portfolio compounds intelligence. Your work benefits from every 
 <!-- ASIF:TEAM-ALIGNMENT-WIRING:START -->
 ## ASIF Alignment Wiring
 
-@/home/axw/ASIF/standards/claude-team-alignment-wiring.md
+@~/ASIF/standards/claude-team-alignment-wiring.md
 
 - Team alignment id: `forge-plugin` (this pane's lane; it must match `.claude/settings.json` `ALIGNMENT_AGENT`, or the dx3 key helper refuses).
 - Cross-team room: `/alignment`, written through `~/ASIF/scripts/alignment-say`.

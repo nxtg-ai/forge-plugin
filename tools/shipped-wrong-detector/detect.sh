@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # B3 Shipped-Wrong Detector — method v1
-# Spec: /home/axw/ASIF/initiatives/undeniable-portfolio/b3-evidence/harmony-turn-row-partition.md §4.3
+# Spec: ~/ASIF/initiatives/undeniable-portfolio/b3-evidence/harmony-turn-row-partition.md §4.3
 # Owner: forge-plugin team (B3 §3B, PRM-CLX9-20260719-B3G1B)
 #
 # Usage:
@@ -51,7 +51,7 @@ AUDIT_END="${AUDIT_END_DATE}T23:59:59Z"
 RUN_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 RUN_DATE=$(date -u +%Y-%m-%d)
 
-ASIF_ROOT="${ASIF_ROOT:-/home/axw/ASIF}"
+ASIF_ROOT="${ASIF_ROOT:-$HOME/ASIF}"
 CORRECTION_CAPTURE="${ASIF_ROOT}/scripts/correction-capture.sh"
 CORRECTIONS_LEDGER="${ASIF_ROOT}/governance/corrections-ledger.jsonl"
 ALIGNMENT_LEDGER_DIR="${ASIF_ROOT}/governance/alignment"
@@ -90,19 +90,19 @@ ledger_emit_shipped_wrong() {
 # ─────────────────────────────────────────────────────────────────────────────
 REPOS=(
   "${ASIF_ROOT}"
-  "/home/axw/projects/dx3"
-  "/home/axw/projects/NXTG-Forge/forge-plugin"
-  "/home/axw/projects/NXTG-Forge/forge-orchestrator"
-  "/home/axw/projects/NXTG-Forge/forge-ui"
-  "/home/axw/projects/nxtg.ai"
-  "/home/axw/projects/atlas"
-  "/home/axw/projects/geo-grader"
-  "/home/axw/projects/nxtg-content-engine"
-  "/home/axw/projects/cosmux"
-  "/home/axw/projects/synapps"
-  "/home/axw/projects/skinny.cloud"
-  "/home/axw/projects/product-oracle"
-  "/home/axw/projects/oneDB"
+  "$HOME/projects/dx3"
+  "$HOME/projects/NXTG-Forge/forge-plugin"
+  "$HOME/projects/NXTG-Forge/forge-orchestrator"
+  "$HOME/projects/NXTG-Forge/forge-ui"
+  "$HOME/projects/nxtg.ai"
+  "$HOME/projects/atlas"
+  "$HOME/projects/geo-grader"
+  "$HOME/projects/nxtg-content-engine"
+  "$HOME/projects/cosmux"
+  "$HOME/projects/synapps"
+  "$HOME/projects/skinny.cloud"
+  "$HOME/projects/product-oracle"
+  "$HOME/projects/oneDB"
 )
 
 # Keyword patterns — lead generators only; adjudication is against the diff/body
