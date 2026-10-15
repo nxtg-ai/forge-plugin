@@ -46,7 +46,7 @@ The NXTG-Forge governance MCP server has **14 bugs** across 5 functions that cau
 ### Project Layout That Exposes the Bugs
 
 ```
-/home/axw/projects/POC/forge-demo/        ← FORGE_PROJECT_ROOT (set by start.sh)
+~/projects/POC/forge-demo/        ← FORGE_PROJECT_ROOT (set by start.sh)
 ├── CLAUDE.md                              ← exists at root (health check passes)
 ├── .claude/
 │   └── governance.json
@@ -92,7 +92,7 @@ The NXTG-Forge governance MCP server has **14 bugs** across 5 functions that cau
 const hasPackageJson = existsSync(join(root, "package.json"));
 ```
 
-**Problem:** `root` resolves to `/home/axw/projects/POC/forge-demo` — no `package.json` exists there. The actual file is at `game.clicker/package.json`. All four manifest checks (`hasPackageJson`, `hasCargoToml`, `hasPyproject`, `hasGoMod`) return `false`, causing the entire type-detection chain to fall through.
+**Problem:** `root` resolves to `~/projects/POC/forge-demo` — no `package.json` exists there. The actual file is at `game.clicker/package.json`. All four manifest checks (`hasPackageJson`, `hasCargoToml`, `hasPyproject`, `hasGoMod`) return `false`, causing the entire type-detection chain to fall through.
 
 ---
 
@@ -236,7 +236,7 @@ const hasVitest = existsSync(join(root, "node_modules", ".bin", "vitest"));
 const hasJest   = existsSync(join(root, "node_modules", ".bin", "jest"));
 ```
 
-**Problem:** Resolves to `/home/axw/projects/POC/forge-demo/node_modules/.bin/jest` which does not exist. The actual binary is at `game.clicker/node_modules/.bin/jest`.
+**Problem:** Resolves to `~/projects/POC/forge-demo/node_modules/.bin/jest` which does not exist. The actual binary is at `game.clicker/node_modules/.bin/jest`.
 
 **Result:** `{ runner: null, message: "No test runner detected" }`
 
@@ -391,7 +391,7 @@ Three conflicting version strings: directory path = `3.2.1`, MCP declaration = `
 ## 4. Cascade Failure Chain
 
 ```
-FORGE_PROJECT_ROOT = /home/axw/projects/POC/forge-demo
+FORGE_PROJECT_ROOT = ~/projects/POC/forge-demo
         │
         ▼
 getCodeMetrics() called

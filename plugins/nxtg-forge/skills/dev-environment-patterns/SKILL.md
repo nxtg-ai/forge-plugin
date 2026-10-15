@@ -76,8 +76,8 @@ server: {
 
 ### Why it works
 
-Accessed via `http://192.168.1.206:5050`, a `/api/...` fetch resolves to
-`http://192.168.1.206:5050/api/...` (relative to `window.location.host`). Vite's
+Accessed via `http://192.0.2.10:5050`, a `/api/...` fetch resolves to
+`http://192.0.2.10:5050/api/...` (relative to `window.location.host`). Vite's
 dev server intercepts `/api`, `/ws`, `/terminal` and forwards to `localhost:5051`
 server-side. The browser only sees same-origin requests, so there is no CORS.
 
