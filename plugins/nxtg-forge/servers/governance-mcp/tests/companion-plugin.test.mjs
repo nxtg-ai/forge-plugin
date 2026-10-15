@@ -97,10 +97,14 @@ describe('companion launcher binds the Forge project root, not the session subdi
   });
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
-  const bind = (start, envRoot = start, homeVar = home) => {
+  // GNU timeout runs the launcher in its own process group and kills the whole group on expiry. spawnSync's own
+  // timeout signals only the bash it started, and a walk looping inside `$(bind_project_root)` is a child subshell:
+  // it outlived the SIGTERM and spun for 6 h (2026-10-14, red-before run of the relative-path case).
+  const bind = (start, envRoot = start, homeVar = home, deleteCwd = false) => {
     rmSync(log, { force: true });
-    const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
-      cwd: start, input: '', encoding: 'utf8', timeout: 5000,
+    const launcher = join(COMPANION, 'servers/orchestrator-mcp/start.sh');
+    const r = spawnSync('bash', ['-c', `cd "$1" && { [ "$3" = 0 ] || rmdir "$1"; } && exec timeout -s KILL 4 bash "$2"`, 'bind', start, launcher, deleteCwd ? '1' : '0'], {
+      input: '', encoding: 'utf8', timeout: 8000,
       env: { HOME: homeVar, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }) },
     });
     expect(r.status).toBe(0);
@@ -143,6 +147,15 @@ describe('companion launcher binds the Forge project root, not the session subdi
   it('FORGE_PROJECT_ROOT unset: starts from the working directory', () => {
     const p = join(home, 'proj');
     expect(bind(join(p, 'src'), null)).toBe(`root=${p} cwd=${p}`);
+  });
+  // forge-pm lead al:05a79cf5796d4c75: a shell started in a deleted directory resolves "." to "." (getcwd fails),
+  // and `dirname .` is ".", so a relative FORGE_PROJECT_ROOT walked forever. The given value now stands.
+  it('a deleted working directory with a relative FORGE_PROJECT_ROOT ends, and the given value stands', () => {
+    for (const rel of ['.', 'deep']) {
+      const gone = join(home, 'proj', 'src', `gone-${rel === '.' ? 'dot' : rel}`);
+      mkdirSync(gone, { recursive: true });
+      expect(bind(gone, rel, home, true)).toMatch(new RegExp(`^root=${rel === '.' ? '\\.' : rel} cwd=`));
+    }
   });
 });
 
