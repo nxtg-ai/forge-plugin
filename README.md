@@ -111,7 +111,7 @@ forge init
 
 One Rust binary. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
 
-Once `forge init` has run, `/nxtg-forge:feature` tracks each feature as an orchestrator task. It writes a one-heading spec to `.forge/feature-requests/F-NNN.md`, runs `forge plan --generate --spec` on it, claims the new task as `claude`, and completes it with a summary of the work. An existing `.forge/plan.md` is kept: the feature's plan is appended below it, and a copy of the plan as it was is saved next to the spec.
+Once `forge init` has run, and the orchestrator's tools are in the session (they come from the `nxtg-forge-orchestrator` companion plugin), `/nxtg-forge:feature` tracks each feature as an orchestrator task. With forge 1.7.0 or later it creates the task with the `forge_create_task` MCP tool. With an older forge, or when that call returns an error or no task id, a helper is the fallback: it writes a one-heading spec to `.forge/feature-requests/F-NNN.md` and runs `forge plan --generate --spec` on it. The helper keeps an existing `.forge/plan.md`: the feature's plan is appended below it, and a copy of the plan as it was is saved next to the spec. Either way the command claims the task as `claude` and completes it with a summary of the work; if the work does not finish, it leaves the task claimed and says why.
 
 For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add NXTG-Forge UI:
 

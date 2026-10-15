@@ -19,7 +19,7 @@ If you're using Claude Code solo, [L1](C-02-quick-start-l1.md) is sufficient. L2
 curl -fsSL https://forge.nxtg.ai/install.sh | sh
 ```
 
-Single binary. 4 MB. No runtime dependencies. Works on Linux and macOS.
+Single binary. No runtime dependencies. Works on Linux and macOS.
 
 Or via Homebrew:
 ```bash

@@ -12,7 +12,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ### Changed
 
-- **README: no binary size or test counts that no named run backs** (DIRECTIVE-NXTG-20261014-16 item 2). The orchestrator line said "4MB. 356 tests."; the measured v1.7.0 sizes run from 4.7 MB (macOS arm64) to 6.4 MB (Linux x86_64), and 356 is not a current count. The forge-ui line "58 components. 4,165 tests. 87% coverage." is dropped for the same reason.
+- **README: no binary size or test counts that no named run backs** (DIRECTIVE-NXTG-20261014-16 item 2). The orchestrator line said "4MB. 356 tests."; the measured v1.7.0 sizes run from 4.7 MB (macOS arm64) to 6.4 MB (Linux x86_64), and 356 is not a current count. The forge-ui line "58 components. 4,165 tests. 87% coverage." is dropped for the same reason. The same claims go from `FORGE-DIFFERENTIATORS.md`, `docs/C-03-upgrade-to-pro-builder.md` and the `core-nxtg-forge` skill.
+- **README: `/nxtg-forge:feature` is described as 3.14.0 runs it.** With forge 1.7.0 or later the task is created by the `forge_create_task` MCP tool; the spec-file helper is the fallback for an older forge or a failed call. The README described only the helper.
 
 ### Fixed
 

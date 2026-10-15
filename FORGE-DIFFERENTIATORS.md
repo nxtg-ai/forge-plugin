@@ -37,13 +37,13 @@ Replaces $50K+ of paid tools (Snyk $900/yr, SonarQube $360/yr, Checkmarx $50K+) 
 ### 4. 3-Repo MCP Architecture
 Every competitor uses a monorepo. Forge separates concerns across three independent repos connected only by MCP:
 - **forge-plugin** (Claude Code plugin — pure markdown, no build step)
-- **forge-orchestrator** (Rust binary — 4MB, 356 tests, zero runtime deps)
-- **forge-ui** (React dashboard — 58 components, 4,165 tests)
+- **forge-orchestrator** (Rust binary — zero runtime deps)
+- **forge-ui** (React dashboard)
 
 This is the only modular multi-repo system in the AI coding ecosystem. Each component evolves independently. MCP is the only integration layer.
 
 ### 5. Rust Orchestrator (Single Binary, Zero Dependencies)
-The only Rust-based AI orchestration engine in the ecosystem. 4MB compiled. 356 tests. Ships as a single binary. Provides: task management with file locking, knowledge capture, drift detection, 5-dimension health scoring, event audit trail, TUI dashboard, and MCP server.
+The only Rust-based AI orchestration engine in the ecosystem. Ships as a single binary. Provides: task management with file locking, knowledge capture, drift detection, 5-dimension health scoring, event audit trail, TUI dashboard, and MCP server.
 
 No other tool gives you a compiled, dependency-free coordination layer. Every competitor requires Node.js, Python, or Docker.
 
@@ -114,7 +114,7 @@ Similar outcome to gstack's `/ship`, but implemented as a pre-push git hook with
 | Semgrep SAST integration | Yes (auto-scan) | No | No | No |
 | OWASP skill (ASI01-10) | Yes (822 lines) | No | Partial (no ASI) | No |
 | CRUCIBLE test-review prompt (no accuracy claim) | Yes (8 gates) | No | No | No |
-| Rust orchestrator | Yes (4MB binary) | No | No | No |
+| Rust orchestrator | Yes (one binary) | No | No | No |
 | MCP governance protocol | Yes (8 tools) | No | No | No |
 | Multi-agent orchestration | Yes (Task tool) | No | No | No |
 | Cross-IDE support | Feasible (see analysis) | Yes (5 platforms) | No | No |
