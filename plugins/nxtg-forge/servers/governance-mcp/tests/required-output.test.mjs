@@ -24,7 +24,7 @@ let tmp;
 beforeEach(() => { tmp = mkdtempSync(join(tmpdir(), 'req-out-')); });
 afterEach(() => rmSync(tmp, { recursive: true, force: true }));
 
-const STAGE = '**Stage: Public preview.** Forge is public: anyone may install and use it. Its maturity is below alpha (pre-alpha): no SLA, and interfaces may change without notice.';
+const STAGE = '**Stage: Alpha.** The Forge plugin and orchestrator are in alpha. On 2026-10-15 (UTC) a separate NXTG.AI team (product-oracle) ran the pre-registered core-job test on a clean install of the plugin (v3.14.0) and the orchestrator (forge 1.7.0). The test passed; each repeated check passed 3 of 3 (run 7). The evidence is attached to the forge-plugin v3.14.0 release. No SLA; interfaces may change without notice.';
 const humanize = () => ({
   ...structuredClone(FX.humanize_785e5dc), stage: STAGE, tooling: { agents: 33, commands: 24, hooks: 14, registrations: 27 },
   root: '/home/dev/humanize', versions: { plugin: '3.13.0', orchestrator: '1.6.3' }, generatedAt: '2026-10-14 01:52:10 UTC', elapsedMs: 1234,
@@ -261,7 +261,7 @@ describe('status: the enterprise report (founder directive via EMMA-SOUL 02:29Z)
   it('7. --json carries the same data: verdict, health, findings, orchestrator, changes and provenance', () => {
     const d = humanize();
     const j = status.toJson(d);
-    expect(j).toMatchObject({ stage: 'Public preview', verdict: 'NEEDS ATTENTION', health: { score: 60, grade: 'D' }, orchestrator: 'not_initialized', orchestratorLine: d.orchestrator.line, changes: null,
+    expect(j).toMatchObject({ stage: 'Alpha', verdict: 'NEEDS ATTENTION', health: { score: 60, grade: 'D' }, orchestrator: 'not_initialized', orchestratorLine: d.orchestrator.line, changes: null,
       provenance: { plugin: '3.13.0', orchestrator: '1.6.3', generatedAt: '2026-10-14 01:52:10 UTC', project: '/home/dev/humanize', commit: '785e5dc' } });
     expect(j.findings.slice(0, 3).map((f) => `[${f.severity}]`)).toEqual(['[HIGH]', '[MED]', '[MED]']);
   });
