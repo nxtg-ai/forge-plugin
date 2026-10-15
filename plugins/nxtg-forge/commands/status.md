@@ -32,7 +32,7 @@ Add these only after the block, never in place of any part of it:
 
 The report's stage line is this line, read from this file by the script (CI checks it against the repo's `STAGE` file):
 
-**Stage: Public preview.** Forge is public: anyone may install and use it. Its maturity is below alpha (pre-alpha): no SLA, and interfaces may change without notice.
+**Stage: Alpha.** The Forge plugin and orchestrator are in alpha. On 2026-10-15 (UTC) a separate NXTG.AI team (product-oracle) ran the pre-registered core-job test on a clean install of the plugin (v3.14.0) and the orchestrator (forge 1.7.0). The test passed; each repeated check passed 3 of 3 (run 7). The evidence is attached to the forge-plugin v3.14.0 release. No SLA; interfaces may change without notice.
 
 ## What the report counts
 
@@ -59,7 +59,7 @@ Report: the Tooling table in the block.
 ## Parse Arguments
 
 If `$ARGUMENTS` contains:
-- `--json`: Output the object on the step's `json=` line, pretty-printed, instead of the block (skip the interactive menu). It holds the same data as the block; do not gather it again. Include `"stage": "Public preview"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`, or `unavailable` when the step did not run), and `"health": null` when the Health section says "Not scored".
+- `--json`: Output the object on the step's `json=` line, pretty-printed, instead of the block (skip the interactive menu). It holds the same data as the block; do not gather it again. Include `"stage": "Alpha"` at the top level. Include `"orchestrator"` set to the computed `orchestrator=` value (`connected`, `not_initialized`, `not_installed` or `error`, or `unavailable` when the step did not run), and `"health": null` when the Health section says "Not scored".
 - `--git`: Show only git section with more detail (full log, diff stats)
 - `--tests`: Show only test section with full test output
 - `--governance`: Show only governance section with full sentinel log
