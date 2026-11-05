@@ -5,6 +5,7 @@ on:
     - cron: '30 1 * * *'
 
 permissions:
+  contents: read
   issues: write
   pull-requests: write
 
@@ -12,6 +13,15 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
+      # Outside authors are never marked stale or closed (emma-soul al:66c6c92e0cfbf5a2): label them `community`
+      # first, and `community` is exempt below.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - name: Label outside authors' issues and PRs `community`
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/label-community.sh "${{ github.repository }}"
       - uses: actions/stale@v9
         with:
           days-before-issue-stale: 30
@@ -34,8 +44,8 @@ jobs:
           close-pr-message: >
             Closed due to inactivity. Feel free to reopen to continue work.
 
-          exempt-issue-labels: 'pinned,security,blocked,in-progress'
-          exempt-pr-labels: 'pinned,security,blocked,in-progress'
+          exempt-issue-labels: 'pinned,security,blocked,in-progress,community'
+          exempt-pr-labels: 'pinned,security,blocked,in-progress,community'
           exempt-draft-pr: true
           operations-per-run: 100
           remove-stale-when-updated: true
