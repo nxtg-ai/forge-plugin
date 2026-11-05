@@ -1,6 +1,6 @@
 # Dashboard Guide — forge-ui
 
-> **Level**: L3 Ship Lord | **Requires**: forge-ui v3.5.4 (Node.js 22.12+); forge-orchestrator optional (it supplies the health score)
+> **Level**: L3 Ship Lord | **Requires**: forge-ui v3.5.5 (Node.js 22.12+); forge-orchestrator optional (it supplies the health score)
 
 The forge-ui dashboard puts health scores, agent activity, an embedded terminal, and a command center in one browser window. The terminal's shell keeps running when you close the tab or lose the network: reopen the page within 5 minutes and you are back in the same shell. Restarting the forge-ui server ends it.
 
@@ -9,7 +9,7 @@ The forge-ui dashboard puts health scores, agent activity, an embedded terminal,
 ## Quick Start
 
 ```bash
-git clone --branch v3.5.4 https://github.com/nxtg-ai/forge-ui && cd forge-ui
+git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui && cd forge-ui
 npm install
 npm run dev
 ```
