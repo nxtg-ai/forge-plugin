@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { serverVersion } from "../index.mjs";
 import { checkVersionsAgree } from "./lib/checks.mjs";
@@ -48,6 +49,20 @@ describe("version-surface agreement", () => {
     for (const p of rd(join(REPO, ".claude-plugin/marketplace.json")).plugins) {
       expect(p.version, p.name).toMatch(/^\d+\.\d+\.\d+$/);
       expect(notAfter(p.version, manifest), `${p.name} ${p.version} is ahead of the manifests (${manifest})`).toBe(true);
+    }
+  });
+
+  // The lag ends when the release is tagged: from then on the pin must serve it, or a marketplace install keeps
+  // getting the previous release while the advisory and CHANGELOG say it is patched (forge-pm seat N1, v3.14.1).
+  // CI's Quality Gate checks out with fetch-depth 0, so tags are present; with no git or no tags this cannot be
+  // known and the check is skipped.
+  it("once the manifests' release is tagged, both marketplace entries pin it", () => {
+    const manifest = rd(join(REPO, "plugins/nxtg-forge/.claude-plugin/plugin.json")).version;
+    const tagged = spawnSync("git", ["rev-parse", "-q", "--verify", `refs/tags/v${manifest}`], { cwd: REPO }).status === 0;
+    if (!tagged) return;
+    for (const p of rd(join(REPO, ".claude-plugin/marketplace.json")).plugins) {
+      expect(p.version, `${p.name}: v${manifest} is tagged, so the pin PR must move this entry`).toBe(manifest);
+      expect(p.source.ref, p.name).toBe(`v${manifest}`);
     }
   });
 
