@@ -125,7 +125,7 @@ Your selected mode persists across browser sessions (stored in `localStorage`). 
 
 ## Infinity Terminal
 
-The terminal inside your dashboard. Start a `forge` command, close the tab, and reopen the page within 5 minutes — the shell is still running. Output from while you were away is not replayed, and restarting the forge-ui server ends the shell.
+The terminal inside your dashboard. Start a `forge` command, close the tab, and reopen the page within 5 minutes — the shell is still running. Up to about 100 KB of the output from while you were away is replayed when you reconnect, and restarting the forge-ui server ends the shell.
 
 ### Starting a Terminal Session
 

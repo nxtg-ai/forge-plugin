@@ -50,7 +50,7 @@ Open **http://localhost:5050** in your browser. The dashboard asks for this inst
 
 **Web Dashboard** — Five views (Dashboard, Vision, Terminal, Command, Architect) with a governance sidebar showing the 0-100 health score.
 
-**Infinity Terminal** — A full terminal in your browser powered by xterm.js and a server-side PTY bridge. If you close the tab or lose the network, the shell keeps running: reopen the page within 5 minutes and you are back in the same shell, though output from while you were away is not replayed. Restarting the forge-ui server ends the shell. No tmux or Zellij required — persistence is built into the PTY bridge.
+**Infinity Terminal** — A full terminal in your browser powered by xterm.js and a server-side PTY bridge. If you close the tab or lose the network, the shell keeps running: reopen the page within 5 minutes and you are back in the same shell, and up to about 100 KB of the output from while you were away is replayed. Restarting the forge-ui server ends the shell. No tmux or Zellij required — persistence is built into the PTY bridge.
 
 **Health score** — The right sidebar shows a 0-100 health score for the folder forge-ui runs from. It comes from the orchestrator when that is installed, otherwise from the plugin's governance health, otherwise from a local estimate labelled as one.
 

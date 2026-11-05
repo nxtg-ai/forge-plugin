@@ -68,7 +68,7 @@
 
 **Like:** A phone call that doesn't drop even when you lose signal — it's still there when you reconnect.
 **Definition:** A browser-based terminal (L3) whose shell keeps running if the tab closes or the network drops. Reopen it within 5 minutes to return; restarting the forge-ui server ends it.
-**In Forge:** Part of forge-ui. The shell survives because the server keeps the PTY process running independently of the browser connection. Output from while you were away is not replayed.
+**In Forge:** Part of forge-ui. The shell survives because the server keeps the PTY process running independently of the browser connection. It buffers the shell's recent output (up to about 100 KB) and replays it when you reconnect within the 5-minute keep-alive.
 
 ## Knowledge
 
