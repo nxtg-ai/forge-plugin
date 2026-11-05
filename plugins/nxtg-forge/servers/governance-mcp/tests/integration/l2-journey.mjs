@@ -272,7 +272,9 @@ async function main() {
       noBin.code === 0 && standIn?.serverInfo?.version === "unavailable", `exit ${noBin.code}`);
     const stubDir = mkdtempSync(join(tmpdir(), "forge-l2-stub-"));
     const stubForge = join(stubDir, "forge");
-    writeFileSync(stubForge, "#!/bin/sh\necho \"stub-forge $*\"\n");
+    // Since #89 the launcher execs only a forge whose --version reads `forge X.Y.Z` (NXTG forge); the stub says so,
+    // as the L1 journey's stub has since #97.
+    writeFileSync(stubForge, "#!/bin/sh\n[ \"$1\" = --version ] && { echo 'forge 1.7.0'; exit 0; }\necho \"stub-forge $*\"\n");
     chmodSync(stubForge, 0o755);
     const stub = runOrchSpec(orchSpec, `${stubDir}:/usr/bin:/bin`, emptyHome);
     check("stub forge on PATH → orchestrator command execs `forge mcp`",

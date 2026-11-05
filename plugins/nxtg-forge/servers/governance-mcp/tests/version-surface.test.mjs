@@ -17,9 +17,6 @@ describe("version-surface agreement", () => {
       "root .claude-plugin/plugin.json": rd(join(REPO, ".claude-plugin/plugin.json")).version,
       "plugin manifest": rd(join(REPO, "plugins/nxtg-forge/.claude-plugin/plugin.json")).version,
       "companion manifest": rd(join(REPO, "plugins/nxtg-forge-orchestrator/.claude-plugin/plugin.json")).version,
-      // Required since the pin PR: both marketplace entries serve this release.
-      "marketplace.json nxtg-forge": rd(join(REPO, ".claude-plugin/marketplace.json")).plugins.find((p) => p.name === "nxtg-forge")?.version,
-      "marketplace.json nxtg-forge-orchestrator": rd(join(REPO, ".claude-plugin/marketplace.json")).plugins.find((p) => p.name === "nxtg-forge-orchestrator")?.version,
       "governance-mcp/package.json": rd(join(import.meta.dirname, "../package.json")).version,
       "package-lock.json": rd(join(import.meta.dirname, "../package-lock.json")).version,
       "mcp handshake (serverVersion)": serverVersion,
@@ -36,6 +33,21 @@ describe("version-surface agreement", () => {
     for (const p of rd(join(REPO, ".claude-plugin/marketplace.json")).plugins) {
       expect(p.source.ref, p.name).toMatch(/^v\d+\.\d+\.\d+$/);
       expect(`v${p.version}`, p.name).toBe(p.source.ref);
+    }
+  });
+
+  // The marketplace entries are checked here, not in the agreement above: the release PR bumps the manifests
+  // but cannot move the pin (its tag and squash do not exist yet), so between the release PR and the pin PR the
+  // entries still serve the previous release. They may lag the manifests by that window, never lead them. After
+  // the pin PR they are equal again. (Before 3.14.1 the agreement above required equality, which no release PR
+  // could pass.)
+  it("the marketplace entries are the manifest version, or an older release while its pin PR is pending", () => {
+    const manifest = rd(join(REPO, "plugins/nxtg-forge/.claude-plugin/plugin.json")).version;
+    const num = (v) => v.split(".").map(Number);
+    const notAfter = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] < y[i]; return true; };
+    for (const p of rd(join(REPO, ".claude-plugin/marketplace.json")).plugins) {
+      expect(p.version, p.name).toMatch(/^\d+\.\d+\.\d+$/);
+      expect(notAfter(p.version, manifest), `${p.name} ${p.version} is ahead of the manifests (${manifest})`).toBe(true);
     }
   });
 

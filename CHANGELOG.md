@@ -10,11 +10,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [3.14.1] — 2026-11-05
+
+### Security
+
+- **Two local temp-file issues are fixed (severity Low; a GitHub security advisory is published with this release).** Both need a second local user account on the same machine; there is no remote vector. The dashboard was written to a predictable path in the shared temp directory, and the session-marker hooks wrote into a predictable directory another local user could create first, which let that user make the plugin overwrite or truncate a file the victim owns. Affected: 3.14.0 and earlier, including the 3.14.0 companion plugin. Details under Fixed (#110, #113).
+
 ### Changed
 
 - **Docs say what the released plugin does** (DIRECTIVE-NXTG-20261105-01; EMMA-SOUL Dx3 af296688). The README, `docs/**`, `CONTRIBUTING.md` and `FORGE-DIFFERENTIATORS.md` were checked against plugin v3.14.0, forge v1.7.1 and forge-ui v3.5.3, and every claim the released code does not back is corrected or removed. That covers counts, agent models, commands, flags, MCP tools, ports and sign-in. Roadmap dates, invented numbers and superlatives are gone. `FORGE-DIFFERENTIATORS.md` now lists only what ships, with no comparison to other tools. Pages for the six skills removed in 3.10 are deleted. `tools/shipped-wrong-detector/audits/` is untracked and ignored; the file stays on disk. Docs only, no behaviour change.
 - **The repository no longer tracks internal governance files or machine addresses** (DIRECTIVE-NXTG-20261015-02; EMMA-SOUL Dx3 4f272546). `.asif/` and `.claude/settings.json` are untracked and listed in `.gitignore`; the files stay on disk. The WSL2 docs (C-08, C-15) and the `dev-environment-patterns` skill use the documentation address 192.0.2.10 in place of a LAN address; `CLAUDE.md`, `bug-report03.md` and the shipped-wrong detector use `~` or `$HOME` in place of a home path. No behaviour change.
-- **Stage: Alpha** (.64; EMMA-SOUL ruling Dx3 cc950597, dx3-pm GoPMO 1.18.7.5.88). `STAGE` says `maturity: alpha`. README line 9 and the `/nxtg-forge:status` stage line carry the ruled alpha text; the badge, CHANGELOG top line, status `--json` stage and the six manifest descriptions say alpha. The pre-alpha and public-preview sentences are removed, and `check-stage.sh` now fails if either survives (red control, tested). Releases stay normal (not prerelease): `install.sh` resolves releases/latest.
+- **Stage: Alpha** (.64; EMMA-SOUL ruling Dx3 cc950597, dx3-pm GoPMO 1.18.7.5.88). `STAGE` says `maturity: alpha`. README line 9 and the `/nxtg-forge:status` stage line carry the ruled alpha text; the badge, CHANGELOG top line, status `--json` stage and the six manifest descriptions say alpha. The pre-alpha and public-preview sentences are removed, and `check-stage.sh` now fails if either survives (red control, tested). Releases are not marked prerelease.
 - **README: no binary size or test counts that no named run backs** (DIRECTIVE-NXTG-20261014-16 item 2). The orchestrator line said "4MB. 356 tests."; the measured v1.7.0 sizes run from 4.7 MB (macOS arm64) to 6.4 MB (Linux x86_64), and 356 is not a current count. The forge-ui line "58 components. 4,165 tests. 87% coverage." is dropped for the same reason. The same claims go from `FORGE-DIFFERENTIATORS.md`, `docs/C-03-upgrade-to-pro-builder.md` and the `core-nxtg-forge` skill.
 - **README: `/nxtg-forge:feature` is described as 3.14.0 runs it.** With forge 1.7.0 or later the task is created by the `forge_create_task` MCP tool; the spec-file helper is the fallback for an older forge or a failed call. The README described only the helper.
 
@@ -30,6 +36,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 - **CI: a failing test now fails the Quality Gate** (#97 seat). Its test step ran under `bash -e` without pipefail and took `tee`'s exit code, so no required check failed on a vitest failure; the step is now `shell: bash` (`-eo pipefail`) and runs `npm run test:ci` (vitest, the L1 journey and the binding journey; L2 and L3 need a real forge and forge-ui and run locally). The test-count gate read the first `N tests` match, which on coloured output was nothing, so it compared 0 with 0; it now reads the vitest summary total and fails closed without one.
 - The L1 journey's stub forge answers `--version` with `forge 1.7.0`; since #89 the launcher runs only a forge that does, and CI never showed the two failures.
 - The project-root walk clears `CDPATH`: with it set, `cd` to a relative root printed a second line.
+- Tests: a release PR no longer fails the version-surface check. Since the 3.14.0 pin PR the check required the marketplace entries to equal the manifests, but the release PR cannot move the pin before its tag exists. Now the entries may lag the manifests until the pin PR moves them, and may never lead them.
+- Tests: the L2 journey's stub forge answers `--version` like the L1 stub, so the local L2 suite passes again (it failed one check since #89 made the launcher run only a forge that does).
 
 ## [3.14.0] — 2026-10-14
 
