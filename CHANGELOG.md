@@ -10,14 +10,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [3.14.2] — 2026-11-05
+
+### Security
+
+- **Low: on a host without `mktemp`, the forge `--version` probe wrote through a guessable temp path** (#118). `servers/lib/find-forge.sh` (both plugins) wrote the probe output with `>` to `$TMPDIR/forge-version.<pid>.<random>`, which follows a symlink another local user planted there. Exploiting it needs a second local user account on the same machine; there is no remote vector. The probe now writes inside a new `0700` directory made with `mkdir -m 700`, which fails on any existing path, and removes it afterwards. Every supported platform ships `mktemp`, so the fallback is rarely reached.
+
 ### Changed
 
 - **The marketplace serves v3.14.1.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.1` at its release commit, so `claude plugin update` delivers the 3.14.1 fixes. A test now fails when a release is tagged but the marketplace still pins an older one; until this pin moved, a marketplace install got 3.14.0 while the CHANGELOG said 3.14.1 was out.
+- **The docs point the forge-ui install at v3.5.6** (#119), forge-ui's security fix release: 12 references in 8 files, version string only.
 
-### Security
-
-- **The forge `--version` probe never writes through a guessable temp path.** On a machine without `mktemp`, `servers/lib/find-forge.sh` (both plugins) wrote the probe output to `$TMPDIR/forge-version.<pid>.<random>` with `>`, which follows a symlink another local user planted there. It now creates a new `0700` directory with `mkdir -m 700`, which fails on any existing path, and removes it afterwards. Local access only; every supported platform ships `mktemp`, so the fallback is rarely reached.
-
+### Fixed
+
+- Tests: the local L2 suite pins forge 1.8.0, the latest orchestrator release (#117), and expects its twelfth MCP tool, `forge_create_task`.
+
 ## [3.14.1] — 2026-11-05
 
 ### Security
