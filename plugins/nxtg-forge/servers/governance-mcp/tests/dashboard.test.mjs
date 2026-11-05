@@ -1,10 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, mkdtempSync as mkdtemp, rmSync as rm } from 'fs';
+import { tmpdir as osTmpdir } from 'os';
+import { join as pjoin } from 'path';
 import { generateDashboard } from '../tools.mjs';
 import { setupFixture, teardownFixture, getFixturePath } from './setup.mjs';
 
 beforeAll(setupFixture);
 afterAll(teardownFixture);
+
+// Dashboards from this file go to their own TMPDIR, removed afterwards, so a test run leaves nothing in /tmp.
+let savedTmp, dashTmp;
+beforeAll(() => { savedTmp = process.env.TMPDIR; dashTmp = mkdtemp(pjoin(osTmpdir(), 'forge-dash-test-')); process.env.TMPDIR = dashTmp; });
+afterAll(() => { if (savedTmp === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = savedTmp; rm(dashTmp, { recursive: true, force: true }); });
 
 describe('generateDashboard', () => {
   it('returns an object with path, browserUrl, and metadata', async () => {
@@ -69,13 +76,26 @@ describe('generateDashboard temp file', () => {
     }
   });
 
-  it('writes into a fresh directory only the user can read (0700 dir, 0600 file)', async () => {
-    const { statSync } = await import('fs');
+  it('writes into one private directory per process (0700), a new 0600 file each time', async () => {
+    const { statSync, readdirSync } = await import('fs');
     const { dirname } = await import('path');
     const a = await generateDashboard(getFixturePath());
     const b = await generateDashboard(getFixturePath());
-    expect(dirname(a.path)).not.toBe(dirname(b.path));
+    expect(dirname(a.path)).toBe(dirname(b.path));
+    expect(a.path).not.toBe(b.path);
     expect(statSync(dirname(a.path)).mode & 0o777).toBe(0o700);
     expect(statSync(a.path).mode & 0o777).toBe(0o600);
+    expect(statSync(b.path).mode & 0o777).toBe(0o600);
+    // A session leaves one directory in the temp dir, however many dashboards it opens (opus seat Low).
+    expect(readdirSync(process.env.TMPDIR).filter((n) => n.startsWith('forge-dashboard-'))).toHaveLength(1);
+  });
+
+  it('makes a new private directory when the old one is gone', async () => {
+    const { rmSync, existsSync } = await import('fs');
+    const { dirname } = await import('path');
+    const a = await generateDashboard(getFixturePath());
+    rmSync(dirname(a.path), { recursive: true, force: true });
+    const b = await generateDashboard(getFixturePath());
+    expect(existsSync(b.path)).toBe(true);
   });
 });

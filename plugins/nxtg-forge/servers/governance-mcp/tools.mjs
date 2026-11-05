@@ -9,7 +9,7 @@
  */
 
 import { execSync, spawn } from "child_process";
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdtempSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, lstatSync, mkdtempSync } from "fs";
 import { join, dirname, delimiter } from "path";
 import { fileURLToPath } from "url";
 import { tmpdir } from "os";
@@ -742,6 +742,20 @@ export function dashboardHint({ isWSL, opened, browserUrl }) {
   return { hint: isWSL ? `Paste this URL into your Windows browser: ${browserUrl}` : `Open this file in your browser: ${browserUrl}` };
 }
 
+// One private dashboard directory per server process, made on first use, so a session leaves one directory in
+// the temp dir rather than one per dashboard. It is made again if TMPDIR changes or the directory is gone.
+let dashboardDir = null;
+let dashboardSeq = 0;
+function privateDashboardDir() {
+  const base = tmpdir();
+  let ok = false;
+  if (dashboardDir && dirname(dashboardDir) === base) {
+    try { const st = lstatSync(dashboardDir); ok = st.isDirectory() && !st.isSymbolicLink(); } catch { ok = false; }
+  }
+  if (!ok) dashboardDir = mkdtempSync(join(base, "forge-dashboard-"));
+  return dashboardDir;
+}
+
 export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
@@ -1151,10 +1165,10 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
 </body>
 </html>`;
 
-  // Write into a fresh private directory (mkdtemp: random name, mode 0700), never to a predictable path in the
-  // shared temp dir, where a file or symlink another local user planted would be written through (CodeQL
+  // Write into this process's private directory (mkdtemp: random name, mode 0700), never to a predictable path in
+  // the shared temp dir, where a file or symlink another local user planted would be written through (CodeQL
   // js/insecure-temporary-file). `wx` refuses an existing path; the file is readable by this user only.
-  const tmpPath = join(mkdtempSync(join(tmpdir(), "forge-dashboard-")), "dashboard.html");
+  const tmpPath = join(privateDashboardDir(), `dashboard-${++dashboardSeq}.html`);
   writeFileSync(tmpPath, html, { flag: "wx", mode: 0o600 });
 
   // Detect WSL2 — tmux sessions strip WSL_DISTRO_NAME, so also check the interop file
