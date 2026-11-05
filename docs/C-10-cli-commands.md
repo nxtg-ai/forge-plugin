@@ -275,7 +275,7 @@ Aggregate health verdict: quality gates, release debt and drift, in one fail-clo
 
 ## forge pod
 
-Declarative tmux pod management (Unix only): `forge pod start|stop|list|validate|show|state|ps|gc|reload|completions|preflight|adopt|unadopt|pane-recover|after-detach <...>`. Run `forge pod --help` for each verb.
+Declarative tmux pod management (Unix only): `forge pod start|stop|list|validate|show|state|ps|gc|reload|completions|preflight|adopt|unadopt <...>`. Run `forge pod --help` for each verb.
 
 ## forge uninstall
 
