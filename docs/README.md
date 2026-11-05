@@ -41,7 +41,7 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 **What you unlock:** A dashboard at `localhost:5050` (sign-in with an access token) with a 0-100 health score, a command center, and the Infinity Terminal (a browser terminal whose shell keeps running if the tab closes or the network drops).
 
 **Start here:**
-1. Clone and run: `git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`
+1. Clone and run: `git clone --branch v3.5.6 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`
 2. Open `http://localhost:5050` and sign in with the access token (the forge-ui README shows how to print the sign-in link). [/nxtg-forge:dashboard](commands/dashboard.md) is separate: it writes a static HTML health snapshot and does not start forge-ui.
 
 **Read:** The L3 sections in individual agent/command docs to see what becomes visual.
@@ -146,6 +146,6 @@ curl -fsSL https://forge.nxtg.ai/install.sh | sh
 forge init
 
 # Add the dashboard (L3 — visual governance)
-git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui
+git clone --branch v3.5.6 https://github.com/nxtg-ai/forge-ui
 cd forge-ui && npm install && npm run dev
 ```

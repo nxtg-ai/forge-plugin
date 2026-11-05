@@ -12,7 +12,7 @@ Common issues and fixes for forge-ui, the forge CLI, and the plugin. If somethin
 
 **Fix**:
 ```bash
-# first time: git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install
+# first time: git clone --branch v3.5.6 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install
 cd forge-ui
 npm run dev
 ```
