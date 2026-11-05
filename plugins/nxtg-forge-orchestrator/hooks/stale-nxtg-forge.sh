@@ -15,10 +15,25 @@ input=""
 [ -t 0 ] || input="$(cat 2>/dev/null || true)"
 sid="unknown"
 if [[ "$input" =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([A-Za-z0-9_-]+)\" ]]; then sid="${BASH_REMATCH[1]}"; fi
+# The marker dir has a predictable name in the shared temp dir, so it is used only when it is a real directory
+# this user owns and no one else can write to (then made 0700). Otherwise another local user could have created
+# it, or a symlink at it, and planted a symlink at a marker name that `>` would follow and truncate. The marker
+# itself is created with noclobber, so an existing entry of any kind is never written through.
+private_marker_dir() {
+  local d="$1" perm
+  [ -L "$d" ] && return 1
+  mkdir -m 700 "$d" 2>/dev/null || true
+  [ -d "$d" ] && [ ! -L "$d" ] && [ -O "$d" ] || return 1
+  perm="$(stat -c %a "$d" 2>/dev/null || stat -f %Lp "$d" 2>/dev/null)" || return 1
+  [[ "$perm" =~ ^[0-7]+$ ]] && (( (8#$perm & 8#022) == 0 )) || return 1
+  chmod 700 "$d" 2>/dev/null
+}
 mark_dir="${TMPDIR:-/tmp}/nxtg-forge-orchestrator-$(id -u 2>/dev/null || echo 0)"
 mark="$mark_dir/stale-$sid"
-if [ "$sid" != "unknown" ] && [ -e "$mark" ]; then exit 0; fi
-mkdir -p "$mark_dir" 2>/dev/null && : > "$mark" 2>/dev/null || true
+if private_marker_dir "$mark_dir"; then
+  if [ "$sid" != "unknown" ] && [ -e "$mark" ]; then exit 0; fi
+  if [ ! -e "$mark" ] && [ ! -L "$mark" ]; then ( set -C; : > "$mark" ) 2>/dev/null || true; fi
+fi
 
 root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)}"
 list="${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/installed_plugins.json"
