@@ -71,10 +71,27 @@ SESSION_ID="unknown"
 if [[ "$HOOK_INPUT" =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([A-Za-z0-9_-]+)\" ]]; then
     SESSION_ID="${BASH_REMATCH[1]}"
 fi
+# The marker dir has a predictable name in the shared temp dir, so it is used only when it is a real directory
+# this user owns and no one else can write to (then made 0700). Otherwise another local user could have created
+# it, or a symlink at it, and planted a symlink at a marker name that `>` would follow and truncate. The marker
+# itself is created with noclobber, so an existing entry of any kind is never written through.
+private_marker_dir() {
+    local d="$1" perm
+    [ -L "$d" ] && return 1
+    mkdir -m 700 "$d" 2>/dev/null || true
+    [ -d "$d" ] && [ ! -L "$d" ] && [ -O "$d" ] || return 1
+    perm="$(stat -c %a "$d" 2>/dev/null || stat -f %Lp "$d" 2>/dev/null)" || return 1
+    [[ "$perm" =~ ^[0-7]+$ ]] && (( (8#$perm & 8#022) == 0 )) || return 1
+    chmod 700 "$d" 2>/dev/null
+}
 NOTICE_DIR="${TMPDIR:-/tmp}/nxtg-forge-$(id -u)"
 NOTICE_MARK="$NOTICE_DIR/deps-$SESSION_ID"
-if [ "$SESSION_ID" = "unknown" ] || [ ! -e "$NOTICE_MARK" ]; then
-    mkdir -p "$NOTICE_DIR" 2>/dev/null && : > "$NOTICE_MARK" 2>/dev/null || true
+MARK_OK=0
+private_marker_dir "$NOTICE_DIR" && MARK_OK=1
+if [ "$SESSION_ID" = "unknown" ] || [ "$MARK_OK" = 0 ] || [ ! -e "$NOTICE_MARK" ]; then
+    if [ "$MARK_OK" = 1 ] && [ ! -e "$NOTICE_MARK" ] && [ ! -L "$NOTICE_MARK" ]; then
+        ( set -C; : > "$NOTICE_MARK" ) 2>/dev/null || true
+    fi
     NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
     if [[ ! "$NODE_MAJOR" =~ ^[0-9]+$ ]] || [ "$NODE_MAJOR" -lt 20 ]; then
         log_warning "Health scoring is off: the governance MCP server needs Node.js 20 or newer (https://nodejs.org). Install it, then start a new Claude Code session."
