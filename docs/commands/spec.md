@@ -99,8 +99,6 @@ In `--interactive` mode, the questions surface architectural decisions you might
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full spec generation with codebase analysis, requirements, and test planning |
-| **L2 Pro Builder** | Specs are recorded as decisions via `forge_capture_knowledge` for project memory |
-| **L3 Ship Lord** | Spec status and implementation progress visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 

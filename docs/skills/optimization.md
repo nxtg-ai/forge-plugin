@@ -44,7 +44,7 @@ For frontend work, the skill covers code splitting, lazy loading, bundle optimiz
 
 ### Database Optimization
 
-Database optimization gets dedicated coverage: index strategy, N+1 query elimination, batch operations, query explain plans, normalization vs. denormalization trade-offs, table partitioning, and data archival. These are among the highest-leverage optimizations in most applications.
+Database optimization gets dedicated coverage: index strategy, N+1 query elimination, batch operations, query explain plans, normalization vs. denormalization trade-offs, table partitioning, and data archival.
 
 ## How to Leverage It
 

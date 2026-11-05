@@ -118,7 +118,6 @@ Refactor:
 |-------|-------------|
 | **L1 Vibe Coder** | Full refactoring safety protocol. Extract Function, Extract Hook, Replace Conditional with Polymorphism, Early Returns. Complexity thresholds. Import verification. Step-by-step test validation. |
 | **L2 Pro Builder** | Refactoring decisions recorded via `forge_capture_knowledge`. Past patterns recalled via `forge_get_knowledge` to maintain consistency across refactoring sessions. |
-| **L3 Ship Lord** | Complexity metrics before/after refactoring visible in forge-ui dashboard. Trend tracking shows code health improvement over time. |
 
 ## Tips & Gotchas
 

@@ -111,7 +111,7 @@ Oracle:
 |-------|-------------|
 | **L1 Vibe Coder** | Scope validation, drift detection, governance compliance checks, sentinel log output |
 | **L2 Pro Builder** | + `forge_check_drift` for orchestrator-level drift detection; `forge_get_state` for real-time governance context |
-| **L3 Ship Lord** | + Dashboard Governance HUD with real-time Oracle feed, scope violation history, and drift trend visualization |
+| **L3 Ship Lord** | + forge-ui's Governance HUD shows sentinel log entries in its Oracle feed |
 
 ## Tips & Gotchas
 

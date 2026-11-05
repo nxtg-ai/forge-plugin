@@ -12,11 +12,11 @@
 
 ## What It Does
 
-`/nxtg-forge:agent-assign` is the intelligent dispatcher for Forge's 22 specialized agents. You describe a task, and the command analyzes its domain (architecture, backend, frontend, testing, devops, security, docs), complexity, and required skills, then recommends the best-fit agent with a match score and reasoning. It also suggests alternative agents in case you want a different approach.
+`/nxtg-forge:agent-assign` is the intelligent dispatcher for Forge's 33 specialized agents. You describe a task, and the command analyzes its domain (architecture, backend, frontend, testing, devops, security, docs), complexity, and required skills, then recommends the best-fit agent with a match score and reasoning. It also suggests alternative agents in case you want a different approach.
 
 Behind the scenes, the command uses keyword mapping to score each agent against the task description. Terms like "refactor" and "pattern" score high for the architect agents; "deploy" and "docker" score high for the devops agent; "vulnerability" and "audit" score high for the security agent. The scoring is transparent -- you see why a particular agent was chosen.
 
-Without this command, you would need to memorize which of the 22 agents handles what, manually invoke the Task tool with the right agent type and prompt, and handle orchestrator task claiming yourself. `/nxtg-forge:agent-assign` automates the matching, handles orchestrator integration (claiming tasks, locking files, recording knowledge), and confirms before launching.
+Without this command, you would need to memorize which of the 33 agents handles what, manually invoke the Task tool with the right agent type and prompt, and handle orchestrator task claiming yourself. `/nxtg-forge:agent-assign` automates the matching, handles orchestrator integration (claiming tasks, locking files, recording knowledge), and confirms before launching.
 
 ## Syntax & Options
 
@@ -27,14 +27,14 @@ Without this command, you would need to memorize which of the 22 agents handles 
 | Option | Description |
 |--------|------------|
 | `task description` | Natural language description of the task to assign |
-| `--list` | Display all 22 available agents with their specialties and tools |
-| `--auto` | Auto-assign based on task analysis without asking for confirmation (default behavior) |
+| `--list` | Display the available agents with their specialties and tools |
+| `--auto` | Auto-assign based on task analysis (default behavior). The command still asks you to confirm before launching the agent. |
 | `--agent <name>` | Manually assign to a specific agent by name, bypassing the matching algorithm |
 
 ## When to Use It
 
 - **Delegating specialized work**: "Scan the codebase for XSS vulnerabilities" goes to the security agent; "Refactor the auth module into smaller functions" goes to the refactor agent.
-- **Exploring available agents**: Run `--list` to see all 22 agents and what they can do.
+- **Exploring available agents**: Run `--list` to see the agents and what they can do.
 - **Connecting orchestrator tasks to agents**: The command checks the orchestrator task board for pending tasks and offers to assign agents to them.
 
 For full-lifecycle feature implementation with specs and quality gates, use `/nxtg-forge:feature` instead. For running multiple agents in a coordinated pipeline, use the orchestrator agent or `/nxtg-forge:command-center`.
@@ -72,7 +72,7 @@ After confirmation, the testing agent is launched with the Task tool.
 /nxtg-forge:agent-assign --list
 ```
 
-Displays all 22 agents with descriptions, available tools, and specialties. Useful for discovering agents you did not know existed.
+Displays the agents with descriptions, available tools, and specialties. Useful for discovering agents you did not know existed.
 
 ### Example 3: Manual Assignment
 
@@ -101,13 +101,12 @@ After an agent completes its work, the command calls `forge_complete_task` and `
 
 | Level | What You Get |
 |-------|-------------|
-| **L1 Vibe Coder** | Full agent matching, scoring, and launch with all 22 plugin agents |
+| **L1 Vibe Coder** | Full agent matching, scoring, and launch with the 33 plugin agents |
 | **L2 Pro Builder** | Orchestrator task board integration: claim tasks, lock files, complete tasks, capture knowledge |
-| **L3 Ship Lord** | Agent activity and task completion visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 
-- The 22 agents are loaded from the plugin automatically. You do not need to create or configure them.
+- The 33 agents are loaded from the plugin automatically. You do not need to create or configure them.
 - Agents run via the Task tool and execute autonomously. Review their output after completion.
 - The `--agent` flag requires an exact agent name from the list (e.g., `security`, `testing`, `refactor`). Use `--list` to see valid names.
 - If no agent is a strong match (all scores below 50%), the command suggests the closest option and offers manual selection.

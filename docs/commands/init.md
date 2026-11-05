@@ -14,9 +14,9 @@
 
 `/nxtg-forge:init` is the starting point for every NXTG-Forge project. It runs a guided setup wizard that detects your project type (Node.js, Rust, Python, Go, Java), checks for existing configuration, captures your product vision and goals, then creates the governance files that power every other Forge command.
 
-The wizard creates two files: `.claude/governance.json` (the project state tracker that records workstreams, quality gates, metrics, and sentinel audit entries) and optionally appends a Forge section to your `CLAUDE.md` with project context. This is all that is needed -- commands, agents, skills, and hooks are loaded automatically from the plugin.
+The wizard creates two files: `.claude/governance.json` (the project state tracker that records workstreams, quality gates, metrics, and sentinel audit entries) and appends a Forge section to your `CLAUDE.md` with project context (or creates one). This is all that is needed -- commands, agents, skills, and hooks are loaded automatically from the plugin.
 
-Without `/nxtg-forge:init`, you would need to manually create governance configuration, remember to track quality gates, and lose the contextual intelligence that makes commands like `/nxtg-forge:status` and `/nxtg-forge:gap-analysis` understand your project. The wizard replaces all of that with four questions and a confirmation.
+Without `/nxtg-forge:init`, you would need to manually create governance configuration, remember to track quality gates, and lose the contextual intelligence that makes commands like `/nxtg-forge:status` and `/nxtg-forge:gap-analysis` understand your project. The wizard replaces all of that with two questions and a confirmation.
 
 ## Syntax & Options
 
@@ -69,7 +69,7 @@ What was created:
 /nxtg-forge:init
 ```
 
-The wizard detects `Cargo.toml`, finds an existing `CLAUDE.md`, and asks whether to append or leave it alone. After setup:
+The wizard detects `Cargo.toml`, finds an existing `CLAUDE.md`, and appends a Forge section to it without asking separately. After setup:
 
 ```
 Your Next Steps:
@@ -98,8 +98,6 @@ For monorepos, run `/nxtg-forge:init` in each sub-project directory separately. 
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full setup wizard with stack detection, vision capture, and governance file creation |
-| **L2 Pro Builder** | Init also registers the project with forge-orchestrator via `forge_set_project` for task management |
-| **L3 Ship Lord** | Init completion unlocks the visual governance dashboard at localhost:5050 |
 
 ## Tips & Gotchas
 

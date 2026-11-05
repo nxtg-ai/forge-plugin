@@ -116,7 +116,6 @@ UI:
 |-------|-------------|
 | **L1 Vibe Coder** | React 19 component creation with TypeScript interfaces. Tailwind-only styling. WCAG 2.1 AA accessibility. Mobile-first responsive design. data-testid hooks. Framer Motion animation guidance. |
 | **L2 Pro Builder** | Component decisions recorded via `forge_capture_knowledge`. Design patterns recalled via `forge_get_knowledge` for consistency across sessions. |
-| **L3 Ship Lord** | Components render in the forge-ui dashboard at localhost:5050. The UI agent's work is directly visible in the L3 visual experience. |
 
 ## Tips & Gotchas
 

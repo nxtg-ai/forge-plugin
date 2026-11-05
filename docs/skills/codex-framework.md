@@ -23,7 +23,7 @@ The knowledge is deliberately narrow -- it teaches agents what Codex expects, no
 - When an agent encounters `AGENTS.md`, `AGENT.md`, or `.agents/` directories
 - When discussing cross-platform AI coding tool compatibility
 
-Skills load automatically based on context. The user does not invoke them -- they activate when relevant.
+This skill does not load automatically (`disable-model-invocation: true`). Invoke it as `/nxtg-forge:codex-framework`.
 
 ## The Knowledge Inside
 

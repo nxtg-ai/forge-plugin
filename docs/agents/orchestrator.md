@@ -133,7 +133,6 @@ Orchestrator:
 |-------|-------------|
 | **L1 Vibe Coder** | 4-option command center menu. Agent delegation to specialists. Natural language input parsing. Error handling with recovery options. |
 | **L2 Pro Builder** | Full MCP integration: `forge_get_state` for project state, `forge_get_tasks` for task board, `forge_get_plan` for master plan, `forge_claim_task`/`forge_complete_task` for task lifecycle, `forge_capture_knowledge`/`forge_get_knowledge` for cross-session learning, `forge_check_drift` for vision alignment, `forge_get_health` for governance scores. |
-| **L3 Ship Lord** | Task board, health scores, agent activity, and plan progress rendered in the forge-ui dashboard at localhost:5050. Visual context restoration with timeline view. |
 
 ## Tips & Gotchas
 

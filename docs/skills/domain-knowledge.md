@@ -24,11 +24,13 @@ The skill is a living document that accumulates institutional knowledge from rea
 - When onboarding to the project or working on cross-cutting concerns
 - When an agent needs terminology definitions (checkpoint, health score, orchestrator, skill, hook)
 
+This skill does not load automatically (`disable-model-invocation: true`). Invoke it as `/nxtg-forge:domain-knowledge`.
+
 ## The Knowledge Inside
 
 ### Core Concepts
 
-The skill teaches six foundational concepts. **Project Specification**: natural language descriptions parsed into structured project generation. **Agent Orchestration**: six specialized agents (Lead Architect, Backend Master, CLI Artisan, Platform Builder, Integration Specialist, QA Sentinel) coordinated by capability matching. **State Management**: persistent JSON state in `.claude/state.json` enabling session recovery, progress tracking, and checkpoint/restore. **Clean Architecture**: four-layer dependency model where inner layers never depend on outer layers. **Gap Analysis**: continuous quality scanning across testing, architecture, security, documentation, and code quality. **MCP Integration**: automatic detection and configuration of required Model Context Protocol servers.
+The skill teaches six foundational concepts. **Project Specification**: natural language descriptions parsed into structured project generation. **Agent Orchestration**: six specialized agents (Lead Architect, Backend Master, CLI Artisan, Platform Builder, Integration Specialist, QA Sentinel) coordinated by capability matching. **State Management**: state persisted to `.forge/state.json`, with an append-only audit log at `.forge/events.jsonl`. **Clean Architecture**: four-layer dependency model where inner layers never depend on outer layers. **Drift / Gap Analysis**: health and gap signals from MCP tools (`forge_get_health`, `forge_check_drift`, `forge_get_governance_health`). **MCP Integration**: the plugin registers governance-mcp (Node), the companion plugin registers orchestrator-mcp (Rust), and semgrep-mcp is optional.
 
 ### Key Workflows
 
@@ -44,7 +46,7 @@ A living knowledge base section captures lessons from real debugging sessions. E
 
 ## How to Leverage It
 
-This skill activates automatically when agents encounter NXTG-Forge-specific concepts. Reference it explicitly when you need agents to make decisions aligned with the product vision.
+Invoke this skill when agents work with NXTG-Forge-specific concepts. Reference it explicitly when you need agents to make decisions aligned with the product vision.
 
 ### Example: Architecture Decision
 ```

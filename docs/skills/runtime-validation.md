@@ -71,7 +71,6 @@ confirms the response matches the GraphOverviewResponse model.
 
 ## Tips
 
-- Runtime validation adds approximately 5% overhead to test execution -- a small price for catching 15-30% more bugs
 - Define invariants at the domain level, not per-test -- they should be universal truths about your data
 - Never suppress a runtime validation error without fixing the root cause; the error is real even if the test passes
 

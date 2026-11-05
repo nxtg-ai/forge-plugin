@@ -65,20 +65,23 @@ Scout:
 User: "What's the TAM/SAM/SOM for AI developer tools?"
 
 Scout:
-  - Top-down: $18.5B global developer tools market.
-    AI-assisted tools segment: $4.2B (2026).
-    SAM (teams >5 devs, using AI): $1.8B.
-    SOM (realistic year 1 capture): $9M.
-  - Bottom-up: 27M professional developers globally.
-    Target: 500K who use AI coding tools actively.
-    Addressable: 50K who need governance/autonomy.
-    At $180/yr avg: SOM = $9M.
-  - Divergence check: Both methods converge at ~$9M SOM.
+  (All figures below are placeholders; the agent fills them
+   from the sources it finds and cites.)
+  - Top-down: $A global developer tools market.
+    AI-assisted tools segment: $B.
+    SAM (teams >5 devs, using AI): $C.
+    SOM (realistic year 1 capture): $X.
+  - Bottom-up: N professional developers globally.
+    Target: N1 who use AI coding tools actively.
+    Addressable: N2 who need governance/autonomy.
+    At $P/yr avg: SOM = N2 x $P.
+  - Divergence check: compares the two SOM estimates and
+    investigates if they differ widely.
   - Growth vectors: Autonomous operation expanding TAM as
     it enables new use cases (overnight builds, CI-driven agents)
   - Risk factors: Large players (GitHub, Google) entering with
     free tiers could compress pricing
-  - Decision: $9M SOM validates the opportunity. Price above
+  - Decision: states whether the SOM supports the opportunity. Price above
     free-tier competition on governance value.
 ```
 
@@ -88,16 +91,16 @@ Scout:
 User: "Which AI coding assistants are gaining traction?"
 
 Scout:
-  - GitHub signals analysis (90-day window):
-    Rising: Cursor (+12K stars, 3.2x npm downloads increase)
-    Rising: Continue.dev (+8K stars, strong fork ratio)
-    Plateau: Copilot (stable enterprise adoption, flat growth)
-    Decline: TabNine (stars flat, downloads declining 15%/mo)
-  - Key insight: The market is bifurcating -- enterprise
-    (Copilot/Cursor) vs open source (Continue/Cody). Middle
-    ground is getting squeezed.
-  - Signal: Cursor's hiring (12 senior engineers) suggests
-    a platform play. Watch for plugin ecosystem launch.
+  - GitHub signals analysis (90-day window; tool names and
+    figures are placeholders, the agent uses what it measures):
+    Rising: Tool A (+N stars, download growth)
+    Rising: Tool B (+N stars, strong fork ratio)
+    Plateau: Tool C (flat growth)
+    Decline: Tool D (stars flat, downloads declining)
+  - Key insight: names the pattern the signals show, e.g. a
+    split between enterprise and open-source tools.
+  - Signal: hiring or release activity that suggests a
+    platform play, with what to watch for next.
   - Decision: Position in the governance/autonomous space
     before Cursor's platform play creates ecosystem lock-in.
     Window: 3-6 months.
@@ -126,7 +129,6 @@ Scout:
 |-------|-------------|
 | **L1 Vibe Coder** | Feature matrices, market sizing, ecosystem mapping, SWOT, Porter's Five Forces, Blue Ocean analysis, signal tracking |
 | **L2 Pro Builder** | + `forge_capture_knowledge` stores intelligence findings; `forge_get_knowledge` recalls past competitive data before re-researching |
-| **L3 Ship Lord** | + Dashboard panel showing competitive landscape visualization, signal trends, and intelligence brief history |
 
 ## Tips & Gotchas
 

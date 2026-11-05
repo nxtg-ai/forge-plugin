@@ -12,7 +12,7 @@
 
 ## What It Does
 
-`/nxtg-forge:deploy` is the safety-first deployment command. Before any deployment action occurs, it runs a five-point pre-flight validation: TypeScript compilation, full test suite, security audit, git cleanliness check, and production build. Each check produces a PASS or FAIL result, and the overall verdict is READY or NOT READY. If any check fails, deployment is blocked with specific guidance on what to fix.
+`/nxtg-forge:deploy` is the safety-first deployment command. Before any deployment action occurs, it runs a five-point pre-flight validation: TypeScript compilation, test suite (vitest only: `npx vitest run`), security audit, git cleanliness check, and production build. The security audit reports PASS or WARN and never blocks; the other checks report PASS or FAIL, and the overall verdict is READY or NOT READY. If a blocking check fails, deployment is blocked with specific guidance on what to fix.
 
 When all checks pass and you confirm, the command creates a pre-deployment checkpoint (so you can roll back), executes the build, and runs your project's deploy script. If no deploy script exists in `package.json`, it suggests common deployment targets: Vercel, Netlify, Docker, or custom SCP. After deployment, it shows the version, commit hash, branch, and checkpoint ID for rollback.
 
@@ -26,14 +26,14 @@ Without this command, deployment is a manual checklist: run tests, check types, 
 
 | Option | Description |
 |--------|------------|
-| `--validate-only` | Run all pre-deployment checks without deploying. Useful as a CI gate. |
+| `--validate-only` | Run all pre-deployment checks without deploying |
 | `--dry-run` | Show what would happen at each step without executing any actions |
 | `--skip-tests` | Skip the test suite execution (not recommended; the command warns you) |
 
 ## When to Use It
 
 - **Before any production deployment**: Run the full pipeline to catch issues before they reach users.
-- **As a CI validation gate**: Use `--validate-only` to run all checks without deploying, suitable for pull request checks.
+- **Checking readiness without deploying**: Use `--validate-only` to run all checks and stop before deployment. It is a slash command, so it runs inside a Claude Code session, not in CI or a git hook.
 - **After a sprint of changes**: When you have accumulated multiple commits and want to deploy with confidence.
 
 For just running tests, use `/nxtg-forge:test`. For just checking project health, use `/nxtg-forge:status`.
@@ -103,8 +103,6 @@ Fix these issues before deploying:
 
 Chain `/nxtg-forge:checkpoint save pre-deploy` then `/nxtg-forge:deploy` to create a named checkpoint before the deployment's automatic checkpoint. This gives you two rollback points: one at your explicit save and one at the deployment start.
 
-Use `--validate-only` in a pre-push hook script to enforce deployment readiness before code leaves your machine.
-
 ## Combines With
 
 | Feature | Synergy |
@@ -120,15 +118,13 @@ Use `--validate-only` in a pre-push hook script to enforce deployment readiness 
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full pre-flight validation, build, and deploy with automatic checkpointing |
-| **L2 Pro Builder** | Deployment events recorded in orchestrator audit trail; drift check run post-deploy |
-| **L3 Ship Lord** | Deployment status and history visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 
 - The deploy command looks for a `"deploy"` script in `package.json`. If none exists, it shows you how to add one for common platforms.
 - The automatic checkpoint is named `pre-deploy-{timestamp}`. Use `/nxtg-forge:restore pre-deploy-{timestamp}` to roll back.
 - `--skip-tests` is available but explicitly discouraged. The command warns you when you use it.
-- Security warnings (moderate vulnerabilities) do not block deployment by default, but critical and high vulnerabilities do.
+- Security findings only warn (PASS or WARN). They do not block deployment at any severity.
 
 ---
 

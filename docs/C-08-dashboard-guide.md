@@ -1,20 +1,26 @@
 # Dashboard Guide — forge-ui
 
-> **Level**: L3 Ship Lord | **Requires**: forge-orchestrator running, forge-ui v3.1.0+
+> **Level**: L3 Ship Lord | **Requires**: forge-ui v3.5.3 (Node.js 22.12+); forge-orchestrator optional (it supplies the health score)
 
-The forge-ui dashboard is your project's single pane of glass. Health scores, agent activity, an embedded terminal, and a command center — all in one browser window. Sessions survive close, disconnect, and device switches. You start a long task on your laptop, close the tab, and pick it up on your phone. The session is still there.
+The forge-ui dashboard puts health scores, agent activity, an embedded terminal, and a command center in one browser window. The terminal's shell keeps running when you close the tab or lose the network: reopen the page within 5 minutes and you are back in the same shell. Restarting the forge-ui server ends it.
 
 ---
 
 ## Quick Start
 
 ```bash
-# From the forge-ui directory
-cd ~/projects/NXTG-Forge/v3
+git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui
+npm install
 npm run dev
 ```
 
-Open **http://localhost:5050** in your browser. That's it.
+Open **http://localhost:5050** in your browser. The first time, it asks for this install's access token. Print a sign-in link on the machine running forge-ui and open it:
+
+```bash
+npx tsx src/server/auth/print-auth-url.ts
+```
+
+The token is created on first run at `~/.config/nxtg-forge/ui-secret` (mode 0600); you can also paste it into the sign-in screen. Tools send it as `Authorization: Bearer <token>`.
 
 The dev server starts two services:
 - **Port 5050** — Vite UI (your browser talks here)
@@ -67,7 +73,7 @@ Shows the strategic goals driving your project — read from `.forge/SPEC.md` if
 
 ### Terminal
 
-The **Infinity Terminal** — a full browser-based terminal that persists across browser close, network drops, and device switches.
+The **Infinity Terminal** — a browser-based terminal whose shell survives a closed tab or a network drop (reopen within 5 minutes).
 
 See [Infinity Terminal](#infinity-terminal) for complete usage.
 
@@ -119,7 +125,7 @@ Your selected mode persists across browser sessions (stored in `localStorage`). 
 
 ## Infinity Terminal
 
-The terminal inside your dashboard. Start a `forge` command, close the browser, reopen it later — the session is still running.
+The terminal inside your dashboard. Start a `forge` command, close the tab, and reopen the page within 5 minutes — the shell is still running. Output from while you were away is not replayed, and restarting the forge-ui server ends the shell.
 
 ### Starting a Terminal Session
 
@@ -173,6 +179,14 @@ The HUD updates automatically when the forge-orchestrator detects state changes.
 
 Running forge-ui inside WSL2 and want to access from Windows or your phone?
 
+Both servers listen on `127.0.0.1` only by default. Start forge-ui with `FORGE_UI_HOST=0.0.0.0` and set `ALLOWED_ORIGINS` to every origin you will open it from (it replaces the defaults), for example:
+
+```bash
+FORGE_UI_HOST=0.0.0.0 ALLOWED_ORIGINS=http://localhost:5050,http://127.0.0.1:5050,http://192.0.2.10:5050 npm run dev
+```
+
+Every request still needs the access token.
+
 **Step 1: Check your WSL2 IP**
 ```bash
 ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1
@@ -194,7 +208,7 @@ New-NetFirewallRule `
 http://192.0.2.10:5050
 ```
 
-The UI uses Vite's proxy, so all `/api` and `/ws` requests are automatically forwarded to the API server. No configuration needed.
+The UI uses Vite's proxy, so all `/api` and `/ws` requests are forwarded to the API server.
 
 > **Do NOT set `VITE_API_URL` or `VITE_WS_URL` in `.env`** — hardcoding localhost breaks multi-device access. Relative URLs through the Vite proxy work for all devices automatically.
 
@@ -212,11 +226,12 @@ ws://localhost:5051/ws?token=<token>
 
 **Authentication**: Every connection requires a token passed as a query parameter. Connections without a valid token are rejected immediately.
 
-**Origin allowlist** (configurable via `ALLOWED_ORIGINS` env var):
+**Origin allowlist** (default; `ALLOWED_ORIGINS` replaces it):
 ```
 http://localhost:5050
 http://127.0.0.1:5050
-http://localhost:5173
+http://localhost:5051
+http://127.0.0.1:5051
 ```
 
 ### Message Format
@@ -338,10 +353,10 @@ The API server also exposes HTTP endpoints (proxied via Vite to `/api`):
 
 | Port | Service | Bound To |
 |------|---------|---------|
-| 5050 | Vite Dev Server (UI) | 0.0.0.0 (all interfaces) |
-| 5051 | API Server + WebSocket + PTY Bridge | 0.0.0.0 (all interfaces) |
+| 5050 | Vite Dev Server (UI) | 127.0.0.1 (default) |
+| 5051 | API Server + WebSocket + PTY Bridge | 127.0.0.1 (default) |
 
-Both ports bind to `0.0.0.0` so they're reachable from any device on the network — that's what makes multi-device access work without extra configuration.
+Both ports bind to `127.0.0.1` by default. `FORGE_UI_HOST=0.0.0.0` binds both to all interfaces; set `ALLOWED_ORIGINS` too (see [Multi-Device Setup](#multi-device-setup-wsl2)).
 
 ---
 

@@ -126,8 +126,6 @@ Use parallel agent execution for large codebases. When the Task tool is availabl
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full seven-dimension analysis with optimization score and recommendations |
-| **L2 Pro Builder** | Optimization findings recorded via `forge_capture_knowledge` for trend tracking |
-| **L3 Ship Lord** | Optimization metrics and trends visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 

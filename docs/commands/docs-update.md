@@ -14,7 +14,7 @@
 
 `/nxtg-forge:docs-update` is the documentation fixer. It compares recently changed source files (from the last 20 commits or 7 days) against documentation files to find staleness, then reads both the outdated doc and the current source code to identify discrepancies -- new functions, changed interfaces, removed features. For each stale doc, it shows what will change, updates the content to match the current source, and preserves the existing doc structure and formatting.
 
-The `--jsdoc` mode focuses on source code documentation. It finds exported functions, classes, and interfaces that are missing JSDoc comments, reads the implementation to understand what they do, and generates appropriate JSDoc annotations directly in the source files. This is the fastest way to boost your documentation coverage percentage.
+The `--jsdoc` mode focuses on source code documentation. It finds exported functions, classes, and interfaces that are missing JSDoc comments, reads the implementation to understand what they do, and generates appropriate JSDoc annotations directly in the source files. This raises your documentation coverage percentage directly.
 
 Without this command, keeping docs current is a manual process: you notice something is wrong, find the doc, read the source, figure out what changed, and update. Most of the time, you do not notice until someone reads the wrong information. `/nxtg-forge:docs-update` proactively finds staleness and fixes it.
 
@@ -117,8 +117,6 @@ Use `--file docs/API.md` to update a single doc after a specific API change, rat
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full stale documentation detection, auto-update, and JSDoc generation |
-| **L2 Pro Builder** | Documentation updates recorded in orchestrator knowledge base |
-| **L3 Ship Lord** | Documentation freshness trends visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 

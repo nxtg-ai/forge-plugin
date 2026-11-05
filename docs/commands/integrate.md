@@ -96,8 +96,6 @@ Chain `/nxtg-forge:integrate postgres --scaffold` followed by `/nxtg-forge:test`
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full integration setup with package installation, config guides, and scaffold generation |
-| **L2 Pro Builder** | Integration decisions recorded via `forge_capture_knowledge` for project memory |
-| **L3 Ship Lord** | Integration status visible in the forge-ui dashboard service health panel |
 
 ## Tips & Gotchas
 

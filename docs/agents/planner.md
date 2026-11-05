@@ -6,13 +6,13 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Core Workflow |
-| **Model** | Sonnet |
+| **Model** | Opus |
 
 ---
 
 ## What It Does
 
-The Planner is the strategic architect you wish you had on every project. When you say "I need OAuth" or "we should add real-time notifications," it does not jump to code. Instead, it runs a five-phase planning framework: requirements gathering, architecture design, task breakdown, risk analysis, and implementation strategy. Each phase produces concrete artifacts -- not handwavy recommendations, but actual plan files written to `.claude/plans/` with YAML frontmatter, dependency graphs, and time estimates.
+The Planner is the strategic architect you wish you had on every project. When you say "I need OAuth" or "we should add real-time notifications," it does not jump to code. Instead, it runs a five-phase planning framework: requirements gathering, architecture design, task breakdown, risk analysis, and implementation strategy. Each phase produces concrete artifacts -- not handwavy recommendations, but actual plans with YAML frontmatter, dependency graphs, and time estimates. Its prompt asks it to save each plan to `.claude/plans/`; it has no Write or Edit tool, so it can do that only through Bash.
 
 What makes the Planner valuable is what it encodes about good software planning. It enforces SOLID principles in every architecture it designs. It recommends clean architecture layers (Interface, Application, Domain, Infrastructure) with dependencies flowing inward. It insists on test strategies alongside implementation plans -- not as an afterthought, but as first-class tasks with coverage targets. It knows that a "simple" feature like user preferences actually involves schema design, migration strategy, API endpoints, validation, and frontend state management.
 
@@ -39,7 +39,7 @@ When invoked, the Planner follows a strict five-phase protocol:
 
 4. **Risk Analysis** -- Identifies potential blockers with probability and impact ratings. Attaches mitigation strategies to each risk. Flags hard dependencies on external services or team decisions.
 
-5. **Implementation Strategy** -- Organizes tasks into phases (Foundation, Feature Complete, Polish) with testable milestones. Writes the complete plan to `.claude/plans/{slug}.md`.
+5. **Implementation Strategy** -- Organizes tasks into phases (Foundation, Feature Complete, Polish) with testable milestones, and produces the complete plan.
 
 When orchestrator MCP tools are available (L2), it reads existing plans via `forge_get_plan`, checks the task board via `forge_get_tasks`, recalls past decisions via `forge_get_knowledge`, verifies alignment via `forge_check_drift`, and records architecture decisions via `forge_capture_knowledge`.
 
@@ -56,8 +56,8 @@ Planner:
   - Asks: "Which providers? Google, GitHub, or custom? Do you need refresh tokens? What's the session strategy?"
   - Designs: Domain model (User, Session, OAuthToken), API endpoints (POST /auth/login, GET /auth/callback, POST /auth/refresh)
   - Breaks down: 8 tasks across 3 phases -- token handling, session management, middleware, tests
-  - Writes plan to: .claude/plans/oauth2-authentication.md
-  - Result: A 45-line plan file with YAML frontmatter, task dependencies, and 12-hour estimate
+  - Produces: a plan named oauth2-authentication (saved under .claude/plans/ only if it writes it through Bash)
+  - Result: A plan with YAML frontmatter, task dependencies, and 12-hour estimate
 ```
 
 ### Example 2: Refactoring a Monolithic Service
@@ -108,9 +108,8 @@ Planner:
 
 | Level | What You Get |
 |-------|-------------|
-| **L1 Vibe Coder** | Full planning framework with five phases. Plans written to `.claude/plans/`. Agent delegation via Task tool. Architecture design with SOLID principles. Risk analysis and phased implementation strategies. |
+| **L1 Vibe Coder** | Full planning framework with five phases. Plans produced as markdown (saved under `.claude/plans/` only via Bash; the agent has no Write tool). Agent delegation via Task tool. Architecture design with SOLID principles. Risk analysis and phased implementation strategies. |
 | **L2 Pro Builder** | Reads existing master plan via `forge_get_plan` to avoid duplicate work. Checks current task board via `forge_get_tasks`. Recalls past architecture decisions via `forge_get_knowledge`. Verifies plan alignment with project vision via `forge_check_drift`. Records new decisions via `forge_capture_knowledge`. |
-| **L3 Ship Lord** | Plan progress and task status visible in the forge-ui dashboard. Task board renders pending/active/completed tasks from the orchestrator state. |
 
 ## Tips & Gotchas
 

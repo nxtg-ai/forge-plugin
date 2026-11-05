@@ -31,6 +31,12 @@ Before writing a single line, the command analyzes your existing codebase: direc
 
 Without this command, planning a feature means mentally mapping the codebase, writing a spec document by hand, implementing sequentially (code first, tests after), and hoping you catch integration issues. `/nxtg-forge:feature` parallelizes the build-and-test phase, enforces quality gates, and records the implementation as knowledge in the orchestrator for future reference.
 
+## Orchestrator Task (Step 4.2)
+
+When the orchestrator tools are available in the session (the companion plugin and the `forge` binary are installed), the command tracks the feature as one orchestrator task. After you approve the plan, it creates the task with `forge_create_task` (or, on an orchestrator without that tool, with the plugin's `feature-task.sh` helper, which runs `forge plan --generate --spec` on a one-feature file) and claims it as `claude` with `forge_claim_task`. At the end it completes the task with `forge_complete_task` and a result summary, then shows it with `forge_get_tasks`. If the work did not finish, it leaves the task claimed and prints `Task <id> left claimed: <reason>`.
+
+When the project has a `.forge/` directory, a Stop check enforces this: the turn cannot end until the task was created, claimed and completed (or reported as left claimed), or the command printed `No task created: <reason>` because no work was needed.
+
 ## Syntax & Options
 
 ```
@@ -44,7 +50,6 @@ Without this command, planning a feature means mentally mapping the codebase, wr
 ## When to Use It
 
 - **Adding a new capability**: Describe what you want ("user authentication with JWT") and let Forge analyze the codebase, plan the implementation, and build it with tests.
-- **Implementing a spec you already have**: If a spec file exists in `.claude/plans/`, reference it and skip straight to implementation.
 - **Rapid prototyping**: Even for small features, the structured spec and parallel test generation save time over ad-hoc implementation.
 
 For generating just the spec without implementation, use `/nxtg-forge:spec` instead. For assigning a task to a specific agent without the full pipeline, use `/nxtg-forge:agent-assign`.
@@ -92,7 +97,7 @@ Without arguments, the command asks what you want to build and what scope to tar
 
 ## Power Use Cases
 
-Chain `/nxtg-forge:spec "feature name"` to create and refine a spec, then `/nxtg-forge:feature "feature name"` to implement it. The feature command detects existing specs in `.claude/plans/` and uses them directly.
+Use `/nxtg-forge:spec "feature name"` to create and refine a spec first. `/nxtg-forge:feature` does not look for existing specs in `.claude/plans/`; it writes its own, so pass the refined requirements in its arguments.
 
 For large features, the parallel agent pipeline (Phase B) can cut implementation time significantly. The builder agent writes source files while the testing agent writes test files -- they never conflict because the spec defines file boundaries upfront in Phase A.
 
@@ -111,15 +116,14 @@ For large features, the parallel agent pipeline (Phase B) can cut implementation
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full feature pipeline with spec, implementation, tests, and validation |
-| **L2 Pro Builder** | Completed features are recorded via `forge_capture_knowledge`; tasks are tracked via `forge_complete_task` |
-| **L3 Ship Lord** | Feature progress and task status are visible in the forge-ui dashboard |
+| **L2 Pro Builder** | The feature is tracked as one orchestrator task (created, claimed and completed, enforced by a Stop check) and recorded via `forge_capture_knowledge` |
 
 ## Tips & Gotchas
 
-- The spec is saved to `.claude/plans/{feature-slug}-spec.md`. You can edit this file and re-run the command to implement a modified plan.
+- The spec is saved to `.claude/plans/{feature-slug}-spec.md`. Re-running the command writes a new spec; it does not read an edited one.
 - Phase B (parallel build + test) requires the Task tool. If it is unavailable, the command falls back to sequential inline implementation.
 - The quality gate in Phase C checks types (`tsc --noEmit`), tests (`vitest run`), and security. If it finds issues, they are addressed before the feature is marked complete.
-- Governance state in `.claude/governance.json` is updated with the new workstream automatically.
+- Governance state in `.claude/governance.json` is updated with the new workstream when that file exists.
 
 ---
 

@@ -93,7 +93,7 @@ DevOps:
     { status: 'ok', uptime: 12345, version: '3.1.0',
       services: { api: 'healthy', websocket: 'healthy' } }
   - Adds: Structured JSON logger (replaces console.log)
-  - Result: Production-ready environment config with health monitoring
+  - Result: Environment config with health monitoring
 ```
 
 ## Power Use Cases
@@ -119,7 +119,6 @@ DevOps:
 |-------|-------------|
 | **L1 Vibe Coder** | GitHub Actions workflow creation. Docker multi-stage builds. Environment variable management. Health endpoint implementation. Structured logging setup. |
 | **L2 Pro Builder** | CI/CD status tracked as part of `forge_get_health` scores. Infrastructure decisions recorded via `forge_capture_knowledge`. |
-| **L3 Ship Lord** | CI/CD status, deployment history, and health endpoint data visible in the forge-ui dashboard. Build status indicators on the task board. |
 
 ## Tips & Gotchas
 

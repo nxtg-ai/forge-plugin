@@ -141,7 +141,6 @@ Docs:
 |-------|-------------|
 | **L1 Vibe Coder** | TSDoc/JSDoc generation with parameter descriptions and examples. Changelog generation from conventional commits. Documentation audit with coverage metrics. README accuracy checking. |
 | **L2 Pro Builder** | Documentation coverage tracked in `forge_get_health` scores. Documentation decisions recorded via `forge_capture_knowledge`. |
-| **L3 Ship Lord** | Documentation coverage percentage visible in the forge-ui dashboard health panel. Gap list surfaced alongside other quality metrics. |
 
 ## Tips & Gotchas
 

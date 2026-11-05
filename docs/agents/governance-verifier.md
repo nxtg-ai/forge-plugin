@@ -6,7 +6,7 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Governance & Analysis |
-| **Model** | Haiku |
+| **Model** | Sonnet |
 
 ---
 
@@ -104,7 +104,6 @@ Governance Verifier:
 |-------|-------------|
 | **L1 Vibe Coder** | Hook-triggered verification, scope validation, test-mismatch analysis, structured verdicts |
 | **L2 Pro Builder** | + `forge_check_drift` for directive-aware scope validation; `forge_get_state` for workstream boundary checks |
-| **L3 Ship Lord** | + Dashboard panel showing governance verification history, verdict distribution, and concern trends |
 
 ## Tips & Gotchas
 

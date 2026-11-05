@@ -109,7 +109,6 @@ Release Sentinel:
 |-------|-------------|
 | **L1 Vibe Coder** | Full documentation auditing, changelog generation, coverage scoring, stale doc detection |
 | **L2 Pro Builder** | + `forge_get_plan` for release-aware documentation updates; `forge_capture_knowledge` records audit findings |
-| **L3 Ship Lord** | + Dashboard panel showing documentation health trends, coverage history, and pending update queue |
 
 ## Tips & Gotchas
 

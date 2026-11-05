@@ -61,7 +61,7 @@ API:
   - Implements handler: validate -> find agent -> apply update -> return updated agent
   - Error cases: 400 (invalid body), 404 (agent not found), 500 (server error)
   - Response: { data: Agent } with 200 status
-  - Result: Production-ready endpoint matching existing API conventions
+  - Result: A complete, tested endpoint matching existing API conventions
 ```
 
 ### Example 2: External API Integration
@@ -116,7 +116,6 @@ API:
 |-------|-------------|
 | **L1 Vibe Coder** | REST endpoint design and implementation. Zod validation schemas. Structured error handling. WebSocket protocol design. OpenAPI spec generation. Express middleware patterns. |
 | **L2 Pro Builder** | API endpoints integrate with orchestrator task tracking. Endpoint metrics captured via `forge_capture_knowledge`. |
-| **L3 Ship Lord** | API health metrics (response times, error rates) visible in the forge-ui dashboard. WebSocket connection status displayed in real-time. |
 
 ## Tips & Gotchas
 

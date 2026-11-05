@@ -1,6 +1,6 @@
 # NXTG-Forge Documentation
 
-> Your AI Chief of Staff for software development. 33 specialized agents, 23 commands, 33 knowledge skills, 13 security & governance hooks — orchestrated intelligence that makes you mass-productive.
+> Your AI Chief of Staff for software development. 33 specialized agents, 24 commands, 27 knowledge skills, 27 hook registrations (including 4 blocking security guards).
 
 ---
 
@@ -12,7 +12,7 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 
 **What you have:** The forge-plugin installed in Claude Code.
 
-**What you get:** All 33 agents, 23 slash commands, 33 skills, and 13 hooks (4 blocking security guards + 9 advisory governance) — working inside Claude Code with zero additional setup.
+**What you get:** All 33 agents, 24 slash commands, 27 skills, and 27 hook registrations (including 4 blocking security guards) — working inside Claude Code. The health score needs Node.js 20 or newer, and the security guards need `jq`.
 
 **Start here:**
 1. [/nxtg-forge:init](commands/init.md) — 60-second setup wizard
@@ -25,7 +25,7 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 
 **What you add:** The [forge-orchestrator](https://github.com/nxtg-ai/forge-orchestrator) Rust binary.
 
-**What you unlock:** Multi-agent task management, persistent knowledge capture, vision drift detection, and cross-session memory. Agents coordinate through 10 MCP tools instead of working in isolation.
+**What you unlock:** Multi-agent task management, persistent knowledge capture, vision drift detection, and cross-session memory. Agents coordinate through 12 MCP tools instead of working in isolation.
 
 **Start here:**
 1. Install: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`
@@ -38,11 +38,11 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 
 **What you add:** [forge-ui](https://github.com/nxtg-ai/forge-ui) — the visual governance dashboard.
 
-**What you unlock:** Real-time dashboard at `localhost:5050` with task boards, health visualizations, agent activity feeds, and the Infinity Terminal (browser-based terminal that survives disconnects).
+**What you unlock:** A dashboard at `localhost:5050` (sign-in with an access token) with a 0-100 health score, a command center, and the Infinity Terminal (a browser terminal whose shell keeps running if the tab closes or the network drops).
 
 **Start here:**
-1. Clone and run: `cd forge-ui && npm install && npm run dev`
-2. [/nxtg-forge:dashboard](commands/dashboard.md) — open the dashboard
+1. Clone and run: `git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`
+2. Open `http://localhost:5050` and sign in with the access token (the forge-ui README shows how to print the sign-in link). [/nxtg-forge:dashboard](commands/dashboard.md) is separate: it writes a static HTML health snapshot and does not start forge-ui.
 
 **Read:** The L3 sections in individual agent/command docs to see what becomes visual.
 
@@ -53,10 +53,10 @@ NXTG-Forge grows with you. Start where you are, level up when you're ready.
 | Section | What's Inside | Count |
 |---------|--------------|-------|
 | [Agents](agents/README.md) | Autonomous AI specialists — each handles a domain | 33 |
-| [Commands](commands/README.md) | Slash commands you type in Claude Code | 23 |
-| [Skills](skills/README.md) | Knowledge that auto-loads when agents need it | 33 |
+| [Commands](commands/README.md) | Slash commands you type in Claude Code | 24 |
+| [Skills](skills/README.md) | Knowledge that auto-loads when agents need it | 27 |
 | [Levels](LEVELS.md) | L1 → L2 → L3 upgrade journey with feature matrix | 3 |
-| [Glossary](GLOSSARY.md) | Every Forge term explained in plain language | 18 |
+| [Glossary](GLOSSARY.md) | Every Forge term explained in plain language | 17 |
 
 ---
 
@@ -79,13 +79,13 @@ graph TD
 ```
 
 **Three products, one experience:**
-- **forge-plugin** (L1): 33 agents, 23 commands, 33 skills, 13 hooks (4 blocking security guards), 3 MCP servers
-- **forge-orchestrator** (L2): Rust binary. Task management, knowledge, governance via 10 MCP tools.
-- **forge-ui** (L3): React dashboard. Visual governance, Infinity Terminal, real-time feeds.
+- **forge-plugin** (L1): 33 agents, 24 commands, 27 skills, 27 hook registrations (including 4 blocking security guards), 2 MCP servers
+- **forge-orchestrator** (L2): Rust binary. Task management, knowledge, governance via 12 MCP tools.
+- **forge-ui** (L3): React dashboard. Health score, command center, Infinity Terminal.
 
 **Three MCP servers:**
 - **governance-mcp** (Node.js, 8 tools) — ships with the plugin; needs Node.js 20 or newer
-- **orchestrator-mcp** (Rust, 10 tools) — available when `forge` binary installed (L2)
+- **orchestrator-mcp** (Rust, 12 tools) — registered by the companion plugin `nxtg-forge-orchestrator` (same marketplace; install.sh adds it) when the `forge` binary is installed (L2)
 - **semgrep-mcp** (Python, SAST tools) — available when `uv` or `semgrep-mcp` is installed
 
 No code dependencies between products. MCP is the only integration layer. Each works independently. Together, they're a force multiplier.
@@ -127,7 +127,7 @@ No code dependencies between products. MCP is the only integration layer. Each w
 | [C-07: Brain Config](C-07-brain-config.md) | LLM backend configuration |
 | [C-08: Dashboard Guide](C-08-dashboard-guide.md) | forge-ui features and usage (L3) |
 | [C-10: CLI Commands](C-10-cli-commands.md) | `forge` binary command reference (L2) |
-| [C-12: MCP Tools](C-12-mcp-tools.md) | All 18 MCP tools across 3 servers |
+| [C-12: MCP Tools](C-12-mcp-tools.md) | All 20 Forge MCP tools (8 governance + 12 orchestrator), plus Semgrep's |
 | [C-12: Three Levels](C-12-three-levels.md) | Detailed level architecture and invariants |
 | [C-14: Health Scoring](C-14-health-scoring.md) | How the 0-100 health score works |
 | [C-15: Troubleshooting](C-15-troubleshooting.md) | Common issues and fixes |
@@ -146,6 +146,6 @@ curl -fsSL https://forge.nxtg.ai/install.sh | sh
 forge init
 
 # Add the dashboard (L3 — visual governance)
-git clone https://github.com/nxtg-ai/forge-ui
+git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui
 cd forge-ui && npm install && npm run dev
 ```

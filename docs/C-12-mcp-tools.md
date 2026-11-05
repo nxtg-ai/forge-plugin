@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Forge exposes tools via two MCP servers that connect automatically when the plugin loads. Together they provide 18 tools: 8 governance tools (Node.js) and 10 orchestration tools (Rust). You do not call these tools directly -- agents, hooks, and commands invoke them behind the scenes.
+Forge exposes tools via two MCP servers: 8 governance tools (Node.js) from the `nxtg-forge` plugin, and 12 orchestration tools (Rust) from the companion plugin `nxtg-forge-orchestrator`, which needs the `forge` binary. You do not call these tools directly -- agents and commands invoke them.
 
 ---
 
@@ -25,7 +25,9 @@ Forge exposes tools via two MCP servers that connect automatically when the plug
 | `forge_get_knowledge` | Orchestrator | Query or search the knowledge base |
 | `forge_check_drift` | Orchestrator | Compare completed work against SPEC.md vision |
 | `forge_get_health` | Orchestrator | Governance health check (5 dimensions + drift) |
-| `forge_set_project` | Orchestrator | Switch which .forge/ directory is active |
+| `forge_get_events` | Orchestrator | Query the event log (recent events, optional filters) |
+| `forge_create_task` | Orchestrator | Create one pending task from a title and description |
+| `forge_set_project` | Orchestrator | Switch which .forge/ directory is active (refused when the project is bound) |
 
 The two servers each expose a health tool with a **different name**: the Governance (plugin) server's `forge_get_governance_health` (0-100 code-quality score) and the Orchestrator (Rust) server's `forge_get_health` (5-dimension governance check + drift). They are distinct tools, not a name collision. See the note at the bottom of this page and [Health Scoring](C-14-health-scoring.md) for details.
 
@@ -121,7 +123,7 @@ Generate a standalone HTML governance dashboard and open it in the default brows
 
 ## Orchestrator MCP (Rust)
 
-Runtime: Rust binary (`forge mcp`). Transport: stdio. Available when the `forge` binary is installed and in PATH.
+Runtime: Rust binary (`forge mcp`). Transport: stdio. Registered by the companion plugin `nxtg-forge-orchestrator` (`claude plugin install nxtg-forge-orchestrator@nxtg-forge`); available when that plugin and the `forge` binary are both installed.
 
 This server reads from the `.forge/` directory. The project must be initialized with `forge init` before these tools work.
 
@@ -228,36 +230,53 @@ Run a comprehensive governance health check across 5 dimensions: documentation q
 
 Switch the active project directory. All subsequent orchestrator tool calls will use the `.forge/` directory at the new path. The target directory must already be initialized with `forge init`.
 
+The server refuses this tool when the project is bound explicitly with `--project` or `FORGE_PROJECT_ROOT`. The companion plugin always sets `FORGE_PROJECT_ROOT`, so under Claude Code the call returns an error and the project stays the one the session started in.
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `path` | string | Yes | Absolute path to the project root (must contain a `.forge/` directory) |
 
-**Returns:** Confirmation of the project switch, or an error if no `.forge/` directory exists at the path.
+**Returns:** Confirmation of the project switch, or an error if no `.forge/` directory exists at the path or the project is bound.
+
+### forge_get_events
+
+Query the event log.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `count` | integer | No | Number of events to return (default: 50) |
+| `task_id` | string | No | Filter by task ID (e.g., `T-001`) |
+| `event_type` | string | No | Filter by event type (e.g., `task_completed`, `knowledge_captured`) |
+
+### forge_create_task
+
+Create one pending task. Returns its `task_id` for `forge_claim_task` and `forge_complete_task`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `title` | string | Yes | Short one-line title (max 200 characters) |
+| `description` | string | Yes | What the task must achieve |
 
 ---
 
 ## How They Connect
 
-The plugin's `.mcp.json` registers both servers as stdio transports:
+The `nxtg-forge` plugin's `.mcp.json` registers `governance-mcp` and `semgrep-mcp`. The orchestrator server is registered by the companion plugin `nxtg-forge-orchestrator`, in its own `.mcp.json`:
 
 ```json
 {
-  "governance-mcp": {
-    "type": "stdio",
-    "command": "bash",
-    "args": ["${CLAUDE_PLUGIN_ROOT}/servers/governance-mcp/start.sh"]
-  },
   "orchestrator-mcp": {
     "type": "stdio",
     "command": "bash",
-    "args": ["-c", "command -v forge >/dev/null 2>&1 && exec forge mcp || exit 0"]
+    "args": ["${CLAUDE_PLUGIN_ROOT}/servers/orchestrator-mcp/start.sh"],
+    "env": { "FORGE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}" }
   }
 }
 ```
 
-When Claude Code loads the plugin, it automatically connects to both servers. The governance-mcp server is always available because it ships with the plugin as a Node.js module. The orchestrator-mcp server is available only when the `forge` binary is installed and in PATH -- if the binary is not found, the connection exits silently and orchestrator tools are simply unavailable.
+The governance-mcp server is available whenever the plugin is installed and Node.js 20+ is present. The companion's `start.sh` finds the `forge` binary and runs `forge mcp`; if it is not found, a stand-in server starts that explains how to install it, and the orchestrator tools are unavailable.
 
-This is the "Lego Snap" (N-12): L1 users get the 8 governance tools out of the box. When they upgrade to L2 by installing the `forge` binary, the 10 orchestrator tools appear automatically on the next session -- no configuration needed.
+L1 users get the 8 governance tools out of the box. For L2, install the `forge` binary (`curl -fsSL https://forge.nxtg.ai/install.sh | sh`) and the companion plugin (`claude plugin install nxtg-forge-orchestrator@nxtg-forge`), then start a new session: the 12 orchestrator tools appear.
 
 ---
 
@@ -266,16 +285,13 @@ This is the "Lego Snap" (N-12): L1 users get the 8 governance tools out of the b
 Users do not invoke MCP tools directly. Agents, hooks, and commands call them automatically based on context:
 
 **Governance tools are called when:**
-- The `guardian` agent runs a pre-commit quality check (calls `forge_get_governance_health`, `forge_security_scan`)
-- `/nxtg-forge:status` displays project health (calls `forge_get_governance_health`, `forge_get_git_status`, `forge_get_code_metrics`)
+- `/nxtg-forge:status` displays project health (its script uses the same function as `forge_get_governance_health`)
 - `/nxtg-forge:dashboard` opens the visual dashboard (calls `forge_open_dashboard`)
-- The `pre-task.sh` hook syncs state at session start (calls `forge_get_governance_state`)
 
 **Orchestrator tools are called when:**
 - The `orchestrator` agent assigns work to sub-agents (calls `forge_get_tasks`, `forge_claim_task`)
 - An agent finishes a task (calls `forge_complete_task` with a result summary)
 - `/nxtg-forge:status-enhanced` shows the full task board (calls `forge_get_tasks`, `forge_get_state`)
-- The `learning` agent captures a decision or pattern (calls `forge_capture_knowledge`)
 - `/nxtg-forge:gap-analysis` checks for vision drift (calls `forge_check_drift`)
 
 ---
@@ -292,4 +308,4 @@ Each server has its own health tool — **different names, different focus** (`f
 | **Requires** | Any codebase | `forge init` (initialized project) |
 | **Score** | 0-100 with letter grade (A-F) | 0-100 with dimensional breakdown |
 
-When `/nxtg-forge:status` runs at L1 (no `forge` binary) it calls `forge_get_governance_health`; at L2 it also calls the orchestrator's `forge_get_health` for the drift/governance dimensions. When `forge status` runs from the CLI, it uses the orchestrator version. See [Health Scoring](C-14-health-scoring.md) for the full scoring methodology.
+`/nxtg-forge:status` computes its score with the same function that serves `forge_get_governance_health`; when the orchestrator is connected it also calls `forge_get_health` and `forge_check_drift` for an optional metrics table. From the CLI, `forge doctor` reports the orchestrator's health verdict; `forge status` shows no health score. See [Health Scoring](C-14-health-scoring.md) for the full scoring methodology.

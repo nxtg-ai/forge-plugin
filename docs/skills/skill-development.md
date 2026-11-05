@@ -24,6 +24,8 @@ The skill draws directly from Anthropic's engineering blog and product documenta
 - When a skill's description needs refinement for better trigger accuracy
 - When deciding how to split large knowledge bases into progressive disclosure layers
 
+This skill does not load automatically (`disable-model-invocation: true`). Invoke it as `/nxtg-forge:skill-development`.
+
 ## The Knowledge Inside
 
 ### The SKILL.md Anatomy

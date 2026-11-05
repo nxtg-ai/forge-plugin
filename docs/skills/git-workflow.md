@@ -79,7 +79,6 @@ The recommended git configuration (pull.rebase, rebase.autoStash, fetch.prune) p
 |-------|-------------|
 | **coding-standards** | Commit message format defined in coding standards, enforced here |
 | **documentation** | Changelog generation depends on conventional commits defined here |
-| **claude-code-best-practices** | Claude Code workflow patterns that integrate with this git workflow |
 
 ## Tips
 

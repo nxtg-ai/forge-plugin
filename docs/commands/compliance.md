@@ -12,7 +12,7 @@
 
 ## What It Does
 
-`/nxtg-forge:compliance` audits every dependency in your project against your project's license (typically MIT). It scans the full dependency tree via `npm ls`, reads each package's license field, and classifies every dependency as Compatible (MIT, ISC, BSD, Apache-2.0), Conditional (LGPL, MPL), Incompatible (GPL, AGPL, SSPL), or Unknown (missing or custom license). The result is a compliance score from 0-100 with deductions based on severity: incompatible production dependencies cost 10 points each, incompatible dev dependencies cost 5, conditional licenses cost 2, and unknown licenses cost 3.
+`/nxtg-forge:compliance` audits every dependency in your project for compatibility with the MIT license. The command fixes the project license to MIT; it does not read your project's own license. It scans the full dependency tree via `npm ls`, reads each package's license field, and classifies every dependency as Compatible (MIT, ISC, BSD, Apache-2.0), Conditional (LGPL, MPL), Incompatible (GPL, AGPL, SSPL), or Unknown (missing or custom license). The result is a compliance score from 0-100 with deductions based on severity: incompatible production dependencies cost 10 points each, incompatible dev dependencies cost 5, conditional licenses cost 2, and unknown licenses cost 3.
 
 Beyond license scanning, the command inventories your full tech stack (runtime version, frameworks, language, dependency counts) and can generate a CycloneDX 1.5 SBOM with purl identifiers for every component. The SBOM is saved to `.claude/reports/` and is suitable for compliance reporting and supply chain security requirements.
 
@@ -113,8 +113,6 @@ Use `--conflicts-only` for a quick pass/fail check in CI: if any conflicts exist
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full license scan, compliance score, SBOM generation, and fix suggestions |
-| **L2 Pro Builder** | Compliance findings recorded in orchestrator knowledge base for audit trails |
-| **L3 Ship Lord** | Compliance status and SBOM history visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 

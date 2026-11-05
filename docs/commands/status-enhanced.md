@@ -68,8 +68,6 @@ GIT ACTIVITY (last 7 days)
 
 Run `/nxtg-forge:status-enhanced` before and after a dependency upgrade cycle to compare outdated package counts, vulnerability counts, and quality scores. The before/after comparison gives clear evidence of whether the upgrade improved or regressed project health.
 
-Combine with `/nxtg-forge:report` to capture the enhanced dashboard as part of a session activity report for team visibility.
-
 ## Combines With
 
 | Feature | Synergy |
@@ -77,7 +75,6 @@ Combine with `/nxtg-forge:report` to capture the enhanced dashboard as part of a
 | **/nxtg-forge:status** | Use standard status for quick checks, enhanced for deep reviews |
 | **/nxtg-forge:optimize** | Enhanced status identifies the problems; optimize provides fix plans |
 | **/nxtg-forge:gap-analysis** | Similar depth but gap-analysis is fix-oriented; enhanced status is metric-oriented |
-| **/nxtg-forge:report** | Capture the enhanced snapshot in a session report |
 
 ## Level Progression
 
@@ -85,7 +82,6 @@ Combine with `/nxtg-forge:report` to capture the enhanced dashboard as part of a
 |-------|-------------|
 | **L1 Vibe Coder** | Full enhanced dashboard with code metrics, heatmap, dependency audit, and health scoring |
 | **L2 Pro Builder** | Orchestrator section adds task board, knowledge base size, health dimensions, and drift status |
-| **L3 Ship Lord** | Metrics feed into the forge-ui dashboard for historical trend visualization |
 
 ## Tips & Gotchas
 

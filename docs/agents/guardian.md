@@ -41,7 +41,7 @@ The Guardian runs quality checks across five dimensions, optionally in parallel 
 
 5. **Documentation Check** -- Scans for public functions missing docstrings, classes without documentation, and API endpoints without specs.
 
-For large codebases, the Guardian spawns Testing and Security as parallel Task agents while running type checking inline. This reduces validation time roughly 3x compared to sequential execution.
+For large codebases, the Guardian spawns Testing and Security as parallel Task agents while running type checking inline, instead of running each check in sequence.
 
 When orchestrator MCP tools are available (L2), it checks which tasks are being validated via `forge_get_tasks`, looks up past security findings via `forge_get_knowledge`, records quality findings via `forge_capture_knowledge`, and marks validated tasks complete via `forge_complete_task`.
 
@@ -57,7 +57,7 @@ Guardian:
   - Runs: tsc --noEmit (0 errors)
   - Scans: No hardcoded secrets, no eval usage, npm audit clean
   - Reviews: Functions under 25 lines, DI used, Result types for errors
-  - Reports: ALL QUALITY GATES PASSED -- production-ready
+  - Reports: ALL QUALITY GATES PASSED
   - Result: Confidence to commit with specific coverage and security metrics
 ```
 
@@ -114,7 +114,6 @@ Guardian:
 |-------|-------------|
 | **L1 Vibe Coder** | Full quality gate with five dimensions. Test generation for new code. MOCK_SHAPE_SYNC, TYPECHECK_ZERO_TOLERANCE, and NEW_FILE_NEW_TEST enforcement rules. Parallel subagent execution for speed. |
 | **L2 Pro Builder** | Validates tasks from the orchestrator task board via `forge_get_tasks`. Records quality findings and security issues via `forge_capture_knowledge`. Marks validated tasks complete via `forge_complete_task`. Recalls past quality patterns via `forge_get_knowledge`. |
-| **L3 Ship Lord** | Quality gate results visible in the forge-ui dashboard. Health score trends displayed over time. Security findings surfaced in the governance panel. |
 
 ## Common Rationalizations (Don't Fall For These)
 
@@ -123,7 +122,7 @@ Guardian:
 | "Tests pass, so it's fine to ship" | Tests passing means your *known* scenarios work. Guardian checks for *unknown* gaps: missing coverage, type drift, unhandled error paths, mock shape mismatches. "Tests pass" ≠ "code is correct." |
 | "I'll add tests later" | You won't. Technical debt compounds. Guardian's NEW_FILE_NEW_TEST rule exists because every untested file is a future production bug. |
 | "It's just a small change" | Small changes cause big outages. A one-line auth tweak can break every protected route. Guardian catches cascading impact regardless of change size. |
-| "We're in a rush, skip quality gates" | Skipping gates doesn't save time — it moves the time cost to production debugging, which is 10x more expensive. Run the gate. |
+| "We're in a rush, skip quality gates" | Skipping gates doesn't save time — it moves the time cost to production debugging, which usually costs more. Run the gate. |
 | "The type error is pre-existing, not my fault" | TYPECHECK_ZERO_TOLERANCE doesn't care whose fault it is. Pre-existing type errors mask new ones. Fix it now or it multiplies. |
 
 ## Tips & Gotchas

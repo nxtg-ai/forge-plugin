@@ -6,18 +6,18 @@ The L3 harness does **not** repair this — a release gate must never fix produc
 
 ## The consumed fields (authoritative — `servers/governance-mcp/tools.mjs`)
 
-`getGovernanceState()` reads `<root>/.claude/governance.json` (`tools.mjs:108-109`) and returns (`tools.mjs:120-126`):
+`getGovernanceState()` reads `<root>/.claude/governance.json`, or `<root>/.forge/governance.json` when only `forge init` has run (`resolveGovernancePath()`; `.claude/` wins when both exist), and returns:
 
 | Field read from `governance.json` | Used as | Source line | Consumed by |
 |---|---|---|---|
-| top-level file presence | `initialized: true` | `tools.mjs:121` | `getHealthScore()` **Governance check (+15)** — `tools.mjs:317` |
-| `version` (string) | `version` | `tools.mjs:122` | state readout |
-| **`project`** (object: `.name`, `.vision`, `.goals[]`) | `project` | `tools.mjs:123` | **identity** (`project.name`), dashboard title/vision/goals — `tools.mjs:643-644,736` |
-| `workstreams` (array; `.length`) | `workstreams` count | `tools.mjs:124` | state readout |
-| `qualityGates` (object) | `qualityGates` | `tools.mjs:125` | state readout |
-| `metrics` (object) | `metrics` | `tools.mjs:126` | state readout |
+| top-level file presence (valid JSON) | `initialized: true` | `getGovernanceState()` | `getHealthScore()` **Governance check (+15)** |
+| `version` (string) | `version` | `getGovernanceState()` | state readout |
+| **`project`** (object: `.name`, `.vision`, `.goals[]`) | `project` | `getGovernanceState()` | **identity** (`project.name`), dashboard title/vision/goals — `generateDashboard()` |
+| `workstreams` (array; `.length`) | `workstreams` count | `getGovernanceState()` | state readout |
+| `qualityGates` (object) | `qualityGates` | `getGovernanceState()` | state readout |
+| `metrics` (object) | `metrics` | `getGovernanceState()` | state readout |
 
-Tool wiring: `index.mjs:62-64` registers `forge_get_governance_state` ("project name, vision, goals, workstreams, quality gates, and session metrics"); `index.mjs:134` dispatches to `getGovernanceState()`.
+It also returns `source` (`plugin` or `orchestrator`) and `path`. Tool wiring: `index.mjs` registers `forge_get_governance_state` and `dispatchToolCall()` dispatches it to `getGovernanceState()`.
 
 ## The canonical shape governance-mcp expects
 

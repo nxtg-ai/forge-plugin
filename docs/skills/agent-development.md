@@ -11,9 +11,9 @@
 
 ## What It Provides
 
-Agent Development is the definitive guide for creating NXTG-Forge agents. It covers the complete agent lifecycle: YAML frontmatter schema (required and optional fields), system prompt structure, execution protocol design, decision frameworks, quality gates, and coordination patterns (sequential, parallel, iterative).
+Agent Development is a guide for creating NXTG-Forge agents. It covers the complete agent lifecycle: YAML frontmatter schema (required and optional fields), system prompt structure, execution protocol design, decision frameworks, quality gates, and coordination patterns (sequential, parallel, iterative).
 
-Without this skill, agents produce agent definitions with missing required fields that fail to load, vague descriptions that never trigger correctly, no execution protocols that leave the agent directionless, and overlapping responsibilities that cause delegation conflicts. With it, agents create production-ready agent definitions with precise trigger descriptions, phased execution protocols, clear decision criteria, and explicit quality gates.
+Without this skill, agents produce agent definitions with missing required fields that fail to load, vague descriptions that never trigger correctly, no execution protocols that leave the agent directionless, and overlapping responsibilities that cause delegation conflicts. With it, agents create complete agent definitions with precise trigger descriptions, phased execution protocols, clear decision criteria, and explicit quality gates.
 
 The skill provides three agent templates (specialist, coordinator, analyzer), a minimal valid example, and detailed guidance on the frontmatter fields that control model selection, tool access, isolation, memory persistence, and skill preloading.
 

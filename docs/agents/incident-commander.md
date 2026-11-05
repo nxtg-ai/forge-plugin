@@ -132,7 +132,6 @@ Incident Commander:
 |-------|-------------|
 | **L1 Vibe Coder** | SEV classification, incident response framework, post-mortem facilitation, blast radius analysis, runbook generation, alert tuning |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records incident learnings; `forge_get_knowledge` recalls past incident patterns and resolutions |
-| **L3 Ship Lord** | + Dashboard panel showing incident history, MTTR trends, runbook library, and alert quality metrics |
 
 ## Tips & Gotchas
 

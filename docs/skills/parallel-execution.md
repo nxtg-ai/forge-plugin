@@ -1,6 +1,6 @@
 # Parallel Execution
 
-> The canonical reference for Claude Code's two highest-leverage capabilities: Plan Mode (explore, plan, wait for approval, then execute) and Agent Teams (parallel subagent spawning with non-overlapping file scopes).
+> A reference for Claude Code's two force-multipliers: Plan Mode (explore, plan, wait for approval, then execute) and Agent Teams (parallel subagent spawning with non-overlapping file scopes).
 
 | | |
 |---|---|
@@ -15,7 +15,7 @@ Parallel Execution teaches agents how to use Plan Mode and Agent Teams -- the tw
 
 Without this skill, agents jump straight into implementation on complex tasks (touching 3+ files without a plan), work serially on tasks that could be parallelized, and spawn agents without declaring file boundaries (causing merge conflicts). With it, agents follow a decision tree: 3+ files means Plan Mode first, multiple independent dimensions means Fan-Out Analysis, and feature implementation uses Plan-Then-Parallel-Build.
 
-The skill includes the complete agent routing guide (all 23 agents with their specialties, models, and delegation criteria) and the rules for which agents need the Task tool (orchestrators) vs. which should not have it (leaf workers).
+The skill includes the complete agent routing guide (all 33 agents with their specialties, models, and delegation criteria) and the rules for which agents need the Task tool (orchestrators) vs. which should not have it (leaf workers).
 
 ## When It Activates
 
@@ -48,7 +48,7 @@ A clear routing algorithm: Is the task touching 3+ files? Use Plan Mode. Does it
 
 ### Agent Routing Guide
 
-The skill catalogs all 23 agents with model, specialty, and delegation criteria. Critically, it defines which agents need the Task tool (planner, builder, guardian, detective, orchestrator -- they coordinate other agents) and which must NOT have it (testing, refactor, api, database, ui, devops, security, docs, performance, integration -- they are leaf workers that should not sub-delegate).
+The skill catalogs all 33 agents with model, specialty, and delegation criteria. Critically, it defines which agents need the Task tool (planner, builder, guardian, detective, orchestrator -- they coordinate other agents) and which must NOT have it (testing, refactor, api, database, ui, devops, security, docs, performance, integration -- they are leaf workers that should not sub-delegate).
 
 ## How to Leverage It
 

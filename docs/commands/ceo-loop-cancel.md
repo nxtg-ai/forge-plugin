@@ -83,8 +83,6 @@ The final session summary appended to `.claude/ceo-loop-progress.md` creates a s
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full graceful cancellation with statistics, journal preservation, and session summary |
-| **L2 Pro Builder** | Cancellation event recorded in orchestrator event trail |
-| **L3 Ship Lord** | Loop session history visible in the forge-ui dashboard governance timeline |
 
 ## Tips & Gotchas
 

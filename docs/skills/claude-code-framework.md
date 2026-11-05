@@ -11,7 +11,7 @@
 
 ## What It Provides
 
-This skill is the definitive reference for Claude Code's capabilities. It covers MCP server configuration (HTTP, SSE, stdio transports with scope hierarchy), the CLAUDE.md project intelligence system, the skills discovery and progressive disclosure mechanism, Plan Mode for architecture-before-implementation workflows, and Unix-style composability with pipes and scripting. It is the knowledge base that NXTG-Forge was built on -- understanding Claude Code's architecture is essential for extending it effectively.
+This skill is a reference for Claude Code's capabilities. It covers MCP server configuration (HTTP, SSE, stdio transports with scope hierarchy), the CLAUDE.md project intelligence system, the skills discovery and progressive disclosure mechanism, Plan Mode for architecture-before-implementation workflows, and Unix-style composability with pipes and scripting. It is the knowledge base that NXTG-Forge was built on -- understanding Claude Code's architecture is essential for extending it effectively.
 
 Without this skill, agents building on Claude Code would not understand MCP scope precedence (Local > Project > User), would not know how skills use progressive disclosure (100 tokens of YAML metadata first, full content loaded on demand), and would not leverage Plan Mode for complex features. The skill prevents agents from fighting the platform by teaching them how it works.
 
@@ -24,7 +24,7 @@ The knowledge is sourced from official Anthropic documentation, verified third-p
 - When designing multi-agent workflows or subagent architectures
 - When optimizing context usage or managing token budgets
 
-Skills load automatically based on context. The user does not invoke them -- they activate when relevant.
+This skill does not load automatically (`disable-model-invocation: true`). Invoke it as `/nxtg-forge:claude-code-framework`.
 
 ## The Knowledge Inside
 
@@ -64,7 +64,7 @@ for personal credentials), and test the connection with a simple query.
 
 ## Power Applications
 
-The dynamic tool loading mechanism is critical for NXTG-Forge, which registers two MCP servers (governance-mcp with 8 tools, orchestrator-mcp with 10 tools). Without dynamic loading, 18 tool definitions would consume significant context. With it, only relevant tools are loaded per query.
+The dynamic tool loading mechanism matters for NXTG-Forge: the nxtg-forge plugin registers governance-mcp (8 tools) and its companion plugin nxtg-forge-orchestrator registers orchestrator-mcp (12 tools). Without dynamic loading, those 20 tool definitions would consume significant context. With it, only relevant tools are loaded per query.
 
 Understanding the skills system internals enables writing better skill descriptions. A well-written description (100 tokens of precise context) activates correctly; a vague description activates too broadly or not at all.
 
@@ -72,15 +72,14 @@ Understanding the skills system internals enables writing better skill descripti
 
 | Skill | Relationship |
 |-------|-------------|
-| **claude-code-best-practices** | Practical usage patterns built on this architectural foundation |
 | **core-nxtg-forge** | NXTG-Forge platform that extends Claude Code using these capabilities |
 | **codex-framework** | Comparison framework for cross-platform compatibility |
 
 ## Tips
 
-- This skill is reference material about Claude Code's architecture. For practical best practices, see claude-code-best-practices.
+- This skill is reference material about Claude Code's architecture.
 - MCP scope precedence (Local > Project > User) means local config always wins. Debug MCP issues by checking all three levels.
 
 ---
 
-*See also: [claude-code-best-practices](claude-code-best-practices.md) | [core-nxtg-forge](core-nxtg-forge.md)*
+*See also: [core-nxtg-forge](core-nxtg-forge.md)*

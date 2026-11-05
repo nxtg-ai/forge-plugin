@@ -123,7 +123,6 @@ Master Architect:
 |-------|-------------|
 | **L1 Vibe Coder** | System design patterns, ADR generation, database selection, API design, security review, tech debt scoring, migration planning |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records architecture decisions; `forge_get_knowledge` recalls past decisions as precedent; `forge_check_drift` verifies implementation matches architecture |
-| **L3 Ship Lord** | + Dashboard panel showing ADR history, tech debt scores, architecture review results, and drift metrics |
 
 ## Tips & Gotchas
 

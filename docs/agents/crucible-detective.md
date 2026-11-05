@@ -114,7 +114,6 @@ CRUCIBLE Detective:
 |-------|-------------|
 | **L1 Vibe Coder** | Full 8-pattern forensic audit, fraud margin calculation, evidence-backed verdicts |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records audit findings; `forge_check_drift` compares the project against its spec between audits (needs a configured model) |
-| **L3 Ship Lord** | + Dashboard panel showing audit history, fraud margin trends, and per-pattern violation counts |
 
 ## Tips & Gotchas
 

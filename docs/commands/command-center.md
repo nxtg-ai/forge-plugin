@@ -45,7 +45,7 @@ For a non-interactive status overview, use `/nxtg-forge:status`. For going direc
 ```
 NXTG-FORGE COMMAND CENTER
 ===========================
-Orchestrator: CONNECTED (v1.4.0)
+Orchestrator: CONNECTED (v1.7.1)
 
 What shall we accomplish today?
 
@@ -111,7 +111,6 @@ The Soundboard option is underutilized. It enters an open discussion mode ground
 |-------|-------------|
 | **L1 Vibe Coder** | Four-option menu with local state (git, governance, checkpoints) |
 | **L2 Pro Builder** | Orchestrator integration: task board, master plan, drift detection, knowledge capture |
-| **L3 Ship Lord** | Command center accessible from the forge-ui dashboard with visual task boards |
 
 ## Tips & Gotchas
 

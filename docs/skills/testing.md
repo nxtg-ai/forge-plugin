@@ -11,7 +11,7 @@
 
 ## What It Provides
 
-This skill provides high-level testing philosophy and methodology that transcends specific frameworks. Where core-testing teaches the mechanics of writing tests and testing-strategy teaches project-specific planning, this skill teaches agents how to think about testing: when to apply Test-Driven Development (write failing test first), when to use Behavior-Driven Development (Given-When-Then format), when property-based testing reveals edge cases that example-based tests miss, and how to select the right testing tools for JavaScript, Python, or performance workloads.
+This skill provides high-level testing philosophy and methodology that transcends specific frameworks. This skill teaches agents how to think about testing: when to apply Test-Driven Development (write failing test first), when to use Behavior-Driven Development (Given-When-Then format), when property-based testing reveals edge cases that example-based tests miss, and how to select the right testing tools for JavaScript, Python, or performance workloads.
 
 Without this skill, agents default to writing tests after implementation (missing TDD's design benefits), focus only on happy paths (missing edge cases that property-based testing catches), and use the same testing approach regardless of context (unit testing strategies applied to E2E scenarios). The skill teaches agents to select the testing methodology that matches the situation.
 
@@ -69,8 +69,6 @@ The test characteristics checklist (fast, reliable, isolated, descriptive, maint
 
 | Skill | Relationship |
 |-------|-------------|
-| **core-testing** | Specific test patterns (AAA, fixtures, mocking) used within these methodologies |
-| **testing-strategy** | Project-specific test planning that uses these methodologies |
 | **coding-standards** | Test naming and organization conventions |
 
 ## Tips
@@ -80,4 +78,4 @@ The test characteristics checklist (fast, reliable, isolated, descriptive, maint
 
 ---
 
-*See also: [core-testing](core-testing.md) | [testing-strategy](testing-strategy.md)*
+*See also: [crucible-audit](crucible-audit.md) | [coding-standards](coding-standards.md)*

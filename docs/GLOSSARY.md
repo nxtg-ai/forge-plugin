@@ -20,7 +20,7 @@
 
 **Like:** A recipe card — step-by-step instructions for a specific task.
 **Definition:** A user-invocable action triggered by typing `/nxtg-forge:{name}` in Claude Code. Commands are markdown files with YAML frontmatter that Claude reads and executes.
-**In Forge:** 23 commands cover setup, feature development, testing, deployment, documentation, and governance. See [Commands Reference](commands/README.md).
+**In Forge:** 24 commands cover setup, feature development, testing, deployment, documentation, and governance. See [Commands Reference](commands/README.md).
 
 ## Drift Detection
 
@@ -32,19 +32,19 @@
 
 **Like:** An air traffic controller directing planes (AI tools) to avoid collisions.
 **Definition:** A Rust binary that provides task management, file locking, knowledge capture, and drift detection via MCP. The L2 product.
-**In Forge:** Installed via `curl -fsSL https://forge.nxtg.ai/install.sh | sh`. Exposes 10 MCP tools. Plugin auto-detects it in your PATH. See [L1→L2→L3](LEVELS.md).
+**In Forge:** Installed via `curl -fsSL https://forge.nxtg.ai/install.sh | sh`. Exposes 12 MCP tools, which reach Claude Code through the companion plugin `nxtg-forge-orchestrator` (install.sh adds it). See [L1→L2→L3](LEVELS.md).
 
 ## Forge-Plugin
 
 **Like:** A toolkit you add to your workshop — all the specialized tools in one box.
-**Definition:** A Claude Code plugin containing 33 agents, 23 commands, 33 skills, 13 hooks, and 8 MCP tools. Pure markdown, no build step. The L1 product.
+**Definition:** A Claude Code plugin containing 33 agents, 24 commands, 27 skills, 27 hook registrations, and 8 MCP tools. Pure markdown, no build step. The L1 product.
 **In Forge:** Installed via `claude plugin install nxtg-forge`. Everything loads automatically on Claude Code start.
 
 ## Forge-UI
 
-**Like:** A mission control dashboard — visual displays showing everything at once.
-**Definition:** A React web application providing visual governance, real-time agent feeds, and the Infinity Terminal. The L3 product.
-**In Forge:** Runs at `localhost:5050`. Launched via `/nxtg-forge:dashboard` or `cd forge-ui && npm run dev`.
+**Like:** A wall of gauges — visual displays in one place.
+**Definition:** A React web application providing a health score, a command center, and the Infinity Terminal. The L3 product.
+**In Forge:** Runs at `localhost:5050` after `git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`. `/nxtg-forge:dashboard` does not launch it: that command writes a static HTML health snapshot.
 
 ## Governance
 
@@ -55,20 +55,20 @@
 ## Health Score
 
 **Like:** A credit score for your codebase — one number summarizing overall quality.
-**Definition:** A 0-100 score across 5 dimensions: testing, documentation, security, architecture, and governance. Displayed as a letter grade (A-F).
-**In Forge:** Computed by the governance-mcp server via `forge_get_governance_health` (the orchestrator's `forge_get_health` adds the drift dimension at L2). Visible in `/nxtg-forge:status` output and the L3 dashboard.
+**Definition:** A 0-100 score from 8 checks: Governance, Git Clean, Test Coverage, Type Safety, README, CLAUDE.md, File Size, and Security. Displayed with a letter grade (A-F).
+**In Forge:** Computed by the governance-mcp server via `forge_get_governance_health`. The orchestrator's `forge_get_health` (L2) is a separate check over documentation, architecture, task health, knowledge coverage, and drift. Visible in `/nxtg-forge:status` output.
 
 ## Hook
 
 **Like:** A doorbell that rings when someone arrives — automated actions triggered by events.
 **Definition:** A shell script that executes when Claude Code performs specific actions (submitting a prompt, writing a file, completing a task).
-**In Forge:** 13 hooks. 4 are **blocking security guards** (PreToolUse — they STOP dangerous operations like `rm -rf /`, accessing `.env` files, writing `eval()`, or SQL injection). 9 are **advisory** (they observe and report but don't block). See your plugin's `hooks/` directory.
+**In Forge:** 27 hook registrations. 4 of the hooks are **blocking security guards** (PreToolUse — they STOP dangerous operations like `rm -rf /`, accessing `.env` files, writing `eval()`, or SQL injection). See your plugin's `hooks/hooks.json`.
 
 ## Infinity Terminal
 
 **Like:** A phone call that doesn't drop even when you lose signal — it's still there when you reconnect.
-**Definition:** A browser-based terminal (L3) where PTY sessions persist across browser close, network drops, and server restarts.
-**In Forge:** Part of forge-ui. Sessions survive because the server maintains PTY processes independently of the browser connection.
+**Definition:** A browser-based terminal (L3) whose shell keeps running if the tab closes or the network drops. Reopen it within 5 minutes to return; restarting the forge-ui server ends it.
+**In Forge:** Part of forge-ui. The shell survives because the server keeps the PTY process running independently of the browser connection. Output from while you were away is not replayed.
 
 ## Knowledge
 
@@ -86,7 +86,7 @@
 
 **Like:** A USB cable that lets different devices talk — one standard plug, many devices.
 **Definition:** A stdio-based JSON-RPC 2.0 protocol that connects AI tools to servers providing additional capabilities (tools, resources, prompts).
-**In Forge:** Three MCP servers: governance-mcp (Node.js, 8 tools), orchestrator-mcp (Rust, 10 tools), semgrep-mcp (Python, SAST scanning). Claude Code connects to all three simultaneously when available.
+**In Forge:** Three MCP servers: governance-mcp (Node.js, 8 tools) and semgrep-mcp (Python, SAST scanning) from the plugin, and orchestrator-mcp (Rust, 12 tools) from the companion plugin `nxtg-forge-orchestrator`. Claude Code connects to all three simultaneously when available.
 
 ## ORBIT
 
@@ -98,7 +98,7 @@
 
 **Like:** A textbook on a shelf — the agent pulls it down when the topic comes up.
 **Definition:** A contextual knowledge document that auto-loads when agents work on relevant tasks. Skills are NOT agents — they teach agents patterns, conventions, and best practices.
-**In Forge:** 33 skills covering architecture, testing, security, coding standards, framework knowledge, and more. **100% automatic — you configure nothing.** See [Skills Reference](skills/README.md).
+**In Forge:** 27 skills covering architecture, testing, security, coding standards, framework knowledge, and more. **100% automatic — you configure nothing.** See [Skills Reference](skills/README.md).
 
 ## Worktree
 

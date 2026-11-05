@@ -126,8 +126,6 @@ Use `--branch main` to see what landed on main recently, even when you are worki
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full session reports with git activity, PR status, tests, governance, and recommendations |
-| **L2 Pro Builder** | Orchestrator task completion history included in the report |
-| **L3 Ship Lord** | Session reports viewable in the forge-ui dashboard activity timeline |
 
 ## Tips & Gotchas
 
