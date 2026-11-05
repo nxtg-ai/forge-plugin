@@ -36,8 +36,8 @@ const ORCH_REF =
   /\borchestrator\b|forge_get_tasks|forge_claim_task|forge_complete_task|forge_get_state|forge_get_plan|forge_check_drift|forge_capture_knowledge|forge_get_knowledge|forge_set_project|forge_get_events|forge_get_health(?![_a-zA-Z])/i;
 
 // ── L2 (Pro Builder journey) surface — DIRECTIVE-NXTG-20260718-11 ──
-// The 11 orchestrator-mcp tools shipped by the Rust `forge mcp` server. Source of truth: the LIVE
-// v1.5.2 handshake (probed 2026-07-18), unchanged on v1.6.2 (2026-10-13). The live L2 leg asserts the handshake set == this list AND
+// The 12 orchestrator-mcp tools shipped by the Rust `forge mcp` server. Source of truth: the LIVE
+// v1.5.2 handshake (probed 2026-07-18; 11 tools, unchanged on v1.6.2), plus forge_create_task (live v1.8.0 handshake, 2026-11-05). The live L2 leg asserts the handshake set == this list AND
 // reports any delta as a finding (never "fixes" orchestrator surfaces from the plugin repo — the
 // directive's escalation clause). This list is also the expected input for the missing-Rust-tool
 // negative control.
@@ -53,10 +53,11 @@ export const ORCH_TOOLS = [
   "forge_get_health",
   "forge_get_events",
   "forge_set_project",
+  "forge_create_task",
 ];
 
 // The pinned orchestrator binary version the L2 harness requires (fixture dep, not a package dep).
-export const FORGE_PIN = "1.6.3"; // first with completed_by + result_summary in forge_get_tasks (F-L); was 1.6.2
+export const FORGE_PIN = "1.8.0"; // latest orchestrator release (2026-11-05); 1.6.3 was the first with completed_by + result_summary in forge_get_tasks (F-L)
 
 // `forge --version` string matches the pin? actual = parsed version (e.g. "1.5.2") or null if absent.
 // Returns { ok, reason } — named findings FORGE_ABSENT / WRONG_BINARY_VERSION for deterministic fail.

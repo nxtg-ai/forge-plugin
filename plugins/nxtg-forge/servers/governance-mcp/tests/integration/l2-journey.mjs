@@ -3,7 +3,7 @@
 //
 // Boots BOTH MCP servers LIVE against ONE clean temp fixture with the REAL pinned forge binary:
 //   * governance-mcp (Node, stdio) via start.sh                     — the 8 L1 tools
-//   * orchestrator-mcp (Rust `forge mcp`, stdio) via the .mcp.json command VERBATIM — the 11 L2 tools
+//   * orchestrator-mcp (Rust `forge mcp`, stdio) via the .mcp.json command VERBATIM — the 12 L2 tools
 // and exercises: dual handshake + full tool surfaces, the cross-server contract (both health tools
 // shaped + fixture identity bound on both sides = G-04 proven live), and the task lifecycle
 // (get→claim→complete) with a durable-state VALUE proof (state.json task_summary transition +
@@ -215,7 +215,7 @@ async function main() {
     const orchTools = (await orchClient.listTools()).tools.map((t) => t.name);
     const oset = checkToolSet(orchTools, ORCH_TOOLS);
     // Delta from the pinned surface is reported as a finding, not silently tolerated (escalation clause).
-    check(`orchestrator tools/list == the 11 v${FORGE_PIN} tools (live count ${orchTools.length})`, oset.ok,
+    check(`orchestrator tools/list == the ${ORCH_TOOLS.length} v${FORGE_PIN} tools (live count ${orchTools.length})`, oset.ok,
       oset.ok ? "" : `DELTA_FROM_PINNED_SURFACE missing=[${oset.missing}] extra=[${oset.extra}] (record for FPL; do not patch orchestrator from here)`);
 
     // ── Leg B: cross-server contract — G-04 no-collision proven live ──
