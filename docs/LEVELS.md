@@ -9,7 +9,7 @@
 | | L1: Vibe Coder | L2: Pro Builder | L3: Ship Lord |
 |---|---|---|---|
 | **Product** | forge-plugin | + forge-orchestrator | + forge-ui |
-| **Install** | `claude plugin install nxtg-forge` | + `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | + `git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev` |
+| **Install** | `claude plugin install nxtg-forge` | + `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | + `git clone --branch v3.5.4 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev` |
 | **What it adds** | 33 agents, 24 commands, 27 skills, 27 hook registrations, 8 MCP tools | + 12 MCP tools, task management, knowledge persistence, drift detection, TUI | + Web dashboard with a health score, Infinity Terminal, command center, opt-in multi-device access |
 | **Setup time** | 30 seconds | + 2 minutes | + 5 minutes |
 

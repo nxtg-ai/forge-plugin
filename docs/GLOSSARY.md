@@ -44,7 +44,7 @@
 
 **Like:** A wall of gauges — visual displays in one place.
 **Definition:** A React web application providing a health score, a command center, and the Infinity Terminal. The L3 product.
-**In Forge:** Runs at `localhost:5050` after `git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`. `/nxtg-forge:dashboard` does not launch it: that command writes a static HTML health snapshot.
+**In Forge:** Runs at `localhost:5050` after `git clone --branch v3.5.4 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`. `/nxtg-forge:dashboard` does not launch it: that command writes a static HTML health snapshot.
 
 ## Governance
 
