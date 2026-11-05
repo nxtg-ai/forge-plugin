@@ -13,9 +13,15 @@
 # killed, and a slow one counts as not NXTG forge. Background-and-poll, because stock macOS has no
 # `timeout` and runs bash 3.2. Output goes to a file, not a pipe, so a child that keeps the pipe open
 # cannot hold the probe either.
+# Without mktemp the output goes in a new private directory: mkdir -m 700 fails on any existing path,
+# a planted symlink included, so the probe never writes through a path someone else created.
 is_nxtg_forge() {
-  local out pid i v rc
-  out="$(mktemp "${TMPDIR:-/tmp}/forge-version.XXXXXX" 2>/dev/null)" || out="${TMPDIR:-/tmp}/forge-version.$$.$RANDOM"
+  local out pid i v rc dir=""
+  if ! out="$(mktemp "${TMPDIR:-/tmp}/forge-version.XXXXXX" 2>/dev/null)"; then
+    dir="${TMPDIR:-/tmp}/forge-version.$$.$RANDOM"
+    mkdir -m 700 "$dir" 2>/dev/null || return 1
+    out="$dir/out"
+  fi
   "$1" --version >"$out" 2>/dev/null </dev/null &
   pid=$!
   for ((i = 0; i < ${FORGE_PROBE_TICKS:-40}; i++)); do
@@ -25,13 +31,13 @@ is_nxtg_forge() {
   if kill -0 "$pid" 2>/dev/null; then
     kill -9 "$pid" 2>/dev/null
     wait "$pid" 2>/dev/null
-    rm -f "$out"
+    rm -f "$out"; [ -n "$dir" ] && rm -rf "$dir"
     return 1
   fi
   wait "$pid"
   rc=$?
   IFS= read -r v <"$out" || true
-  rm -f "$out"
+  rm -f "$out"; [ -n "$dir" ] && rm -rf "$dir"
   [[ $rc -eq 0 && "$v" =~ ^forge\ [0-9]+\.[0-9]+ ]]
 }
 
