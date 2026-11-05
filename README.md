@@ -113,10 +113,10 @@ One Rust binary with no runtime dependencies. It keeps the task board, file lock
 
 Once `forge init` has run, and the orchestrator's tools are in the session (they come from the `nxtg-forge-orchestrator` companion plugin), `/nxtg-forge:feature` tracks each feature as an orchestrator task. With forge 1.7.0 or later it creates the task with the `forge_create_task` MCP tool. With an older forge, or when that call returns an error or no task id, a helper is the fallback: it writes a one-heading spec to `.forge/feature-requests/F-NNN.md` and runs `forge plan --generate --spec` on it. The helper keeps an existing `.forge/plan.md`: the feature's plan is appended below it, and a copy of the plan as it was is saved next to the spec. Either way the command claims the task as `claude` and completes it with a summary of the work; if the work does not finish, it leaves the task claimed and says why.
 
-For a browser dashboard and the Infinity Terminal (a browser shell that keeps running for 5 minutes after you close the tab or lose the network; restarting the forge-ui server ends it), add NXTG-Forge UI (v3.5.4). It listens on 127.0.0.1 and asks for an access token; its README explains sign-in:
+For a browser dashboard and the Infinity Terminal (a browser shell that keeps running for 5 minutes after you close the tab or lose the network; restarting the forge-ui server ends it), add NXTG-Forge UI (v3.5.5). It listens on 127.0.0.1 and asks for an access token; its README explains sign-in:
 
 ```bash
-git clone --branch v3.5.4 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev
+git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev
 ```
 
 Each depth builds on the last. Nothing forces you to go deeper. Adoption follows the pain.

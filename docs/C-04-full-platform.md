@@ -16,7 +16,7 @@ If the TUI dashboard (`forge dashboard --pty`) covers your needs, stay on [L2](C
 ## Install
 
 ```bash
-git clone --branch v3.5.4 https://github.com/nxtg-ai/forge-ui
+git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui
 cd forge-ui
 npm install
 npm run dev
@@ -31,7 +31,7 @@ This starts two services:
 
 Open **http://localhost:5050** in your browser. The dashboard asks for this install's access token the first time: run `npx tsx src/server/auth/print-auth-url.ts` in the forge-ui folder and open the link it prints.
 
-> **Other devices**: both servers listen on `127.0.0.1` only. To open the dashboard from another device, set `FORGE_UI_HOST=0.0.0.0` and set `ALLOWED_ORIGINS` to the full list of origins you will open it from; every request still needs the token. See "Sign-in and network access" in the [forge-ui README](https://github.com/nxtg-ai/forge-ui/tree/v3.5.4#sign-in-and-network-access).
+> **Other devices**: both servers listen on `127.0.0.1` only. To open the dashboard from another device, set `FORGE_UI_HOST=0.0.0.0` and set `ALLOWED_ORIGINS` to the full list of origins you will open it from; every request still needs the token. See "Sign-in and network access" in the [forge-ui README](https://github.com/nxtg-ai/forge-ui/tree/v3.5.5#sign-in-and-network-access).
 
 <!-- VISUAL: D-03 — forge-dashboard-web.gif -->
 
