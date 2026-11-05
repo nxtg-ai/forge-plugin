@@ -33,7 +33,7 @@ L2 adds multi-tool orchestration. When you run several AI tools on the same code
 ### L3: Ship Lord
 
 **Product**: forge-plugin + forge-orchestrator + forge-ui (React dashboard)
-**Install**: `git clone --branch v3.5.5 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev` (sign in with the access token, see the forge-ui README)
+**Install**: `git clone --branch v3.5.6 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev` (sign in with the access token, see the forge-ui README)
 **What it adds**: Visual web dashboard, Infinity Terminal (sessions survive a closed tab), real-time graphs, governance HUD, multi-device access
 
 L3 adds a browser dashboard: a governance dashboard with a health score, a command center that runs a fixed set of project commands, and the Infinity Terminal — a browser-based terminal whose shell keeps running across a closed tab or a network drop (reopen within 5 minutes); restarting the forge-ui server ends it.
