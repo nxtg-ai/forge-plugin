@@ -743,14 +743,19 @@ export function dashboardHint({ isWSL, opened, browserUrl }) {
 }
 
 // One private dashboard directory per server process, made on first use, so a session leaves one directory in
-// the temp dir rather than one per dashboard. It is made again if TMPDIR changes or the directory is gone.
+// the temp dir rather than one per dashboard. It is made again if TMPDIR changes, or if the path no longer holds a
+// directory this user owns with no group or other access: names in the temp dir are listable, so after a tmp
+// cleaner removes ours, another local user could create the same name and read what we write there.
 let dashboardDir = null;
 let dashboardSeq = 0;
 function privateDashboardDir() {
   const base = tmpdir();
   let ok = false;
   if (dashboardDir && dirname(dashboardDir) === base) {
-    try { const st = lstatSync(dashboardDir); ok = st.isDirectory() && !st.isSymbolicLink(); } catch { ok = false; }
+    try {
+      const st = lstatSync(dashboardDir);
+      ok = st.isDirectory() && !st.isSymbolicLink() && st.uid === process.getuid() && (st.mode & 0o077) === 0;
+    } catch { ok = false; }
   }
   if (!ok) dashboardDir = mkdtempSync(join(base, "forge-dashboard-"));
   return dashboardDir;

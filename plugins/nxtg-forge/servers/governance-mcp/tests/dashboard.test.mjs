@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { existsSync, readFileSync, mkdtempSync as mkdtemp, rmSync as rm } from 'fs';
+import { existsSync, readFileSync, statSync, mkdtempSync as mkdtemp, rmSync as rm } from 'fs';
 import { tmpdir as osTmpdir } from 'os';
 import { join as pjoin } from 'path';
 import { generateDashboard } from '../tools.mjs';
@@ -88,6 +88,31 @@ describe('generateDashboard temp file', () => {
     expect(statSync(b.path).mode & 0o777).toBe(0o600);
     // A session leaves one directory in the temp dir, however many dashboards it opens (opus seat Low).
     expect(readdirSync(process.env.TMPDIR).filter((n) => n.startsWith('forge-dashboard-'))).toHaveLength(1);
+  });
+
+  // forge-pm on #114: directory names in /tmp are listable. If a tmp cleaner removes ours, another local user can
+  // mkdir the same name; reusing it by name would let them read every dashboard we write there.
+  it('does not reuse a directory at the same path that is now 0755 (someone else could read it)', async () => {
+    const { rmSync, mkdirSync, chmodSync } = await import('fs');
+    const { dirname } = await import('path');
+    const a = await generateDashboard(getFixturePath());
+    const d = dirname(a.path);
+    rmSync(d, { recursive: true, force: true });
+    mkdirSync(d); chmodSync(d, 0o755);
+    const b = await generateDashboard(getFixturePath());
+    expect(dirname(b.path)).not.toBe(d);
+    expect(statSync(dirname(b.path)).mode & 0o777).toBe(0o700);
+  });
+
+  it('does not reuse a directory at the same path owned by another user', async () => {
+    const { vi } = await import('vitest');
+    const { dirname } = await import('path');
+    const a = await generateDashboard(getFixturePath());
+    const spy = vi.spyOn(process, 'getuid').mockReturnValue(process.getuid() + 1);
+    try {
+      const b = await generateDashboard(getFixturePath());
+      expect(dirname(b.path)).not.toBe(dirname(a.path));
+    } finally { spy.mockRestore(); }
   });
 
   it('makes a new private directory when the old one is gone', async () => {
