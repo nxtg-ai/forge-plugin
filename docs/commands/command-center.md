@@ -45,7 +45,7 @@ For a non-interactive status overview, use `/nxtg-forge:status`. For going direc
 ```
 NXTG-FORGE COMMAND CENTER
 ===========================
-Orchestrator: CONNECTED (v1.7.1)
+Orchestrator: CONNECTED (v1.8.0)
 
 What shall we accomplish today?
 

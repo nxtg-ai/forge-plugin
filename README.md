@@ -102,7 +102,7 @@ Set `FORGE_ENFORCE=implement`, or create `.claude/forge-enforce.json`, to begin 
 
 ## Upgrade Path
 
-For multi-tool orchestration (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator. The install script installs forge v1.7.1. It is for Claude Code, and launches Codex CLI and Antigravity CLI (`agy`) as task runners:
+For multi-tool orchestration (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator. The install script installs forge v1.8.0. It is for Claude Code, and launches Codex CLI and Antigravity CLI (`agy`) as task runners:
 
 ```bash
 curl -fsSL https://forge.nxtg.ai/install.sh | sh

@@ -1,6 +1,6 @@
 # What the Forge Plugin Ships
 
-This page lists what the Forge plugin and its orchestrator companion do in the release users install today: plugin v3.14.0 and forge v1.7.1. It compares Forge with no other tool. Each line can be checked against the files at the `v3.14.0` tag.
+This page lists what the Forge plugin and its orchestrator companion do in the release users install today: plugin v3.14.2 and forge v1.8.0. It compares Forge with no other tool. Each line can be checked against the files at the `v3.14.2` tag.
 
 ## Hooks that block
 
