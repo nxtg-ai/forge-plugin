@@ -9,7 +9,7 @@
  */
 
 import { execSync, spawn } from "child_process";
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdtempSync } from "fs";
 import { join, dirname, delimiter } from "path";
 import { fileURLToPath } from "url";
 import { tmpdir } from "os";
@@ -1151,9 +1151,11 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
 </body>
 </html>`;
 
-  // Write to temp file
-  const tmpPath = join(tmpdir(), `forge-dashboard-${Date.now()}.html`);
-  writeFileSync(tmpPath, html);
+  // Write into a fresh private directory (mkdtemp: random name, mode 0700), never to a predictable path in the
+  // shared temp dir, where a file or symlink another local user planted would be written through (CodeQL
+  // js/insecure-temporary-file). `wx` refuses an existing path; the file is readable by this user only.
+  const tmpPath = join(mkdtempSync(join(tmpdir(), "forge-dashboard-")), "dashboard.html");
+  writeFileSync(tmpPath, html, { flag: "wx", mode: 0o600 });
 
   // Detect WSL2 — tmux sessions strip WSL_DISTRO_NAME, so also check the interop file
   const isWSL = !!process.env.WSL_DISTRO_NAME || existsSync('/proc/sys/fs/binfmt_misc/WSLInterop');
