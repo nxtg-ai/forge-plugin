@@ -9,8 +9,8 @@
 | | L1: Vibe Coder | L2: Pro Builder | L3: Ship Lord |
 |---|---|---|---|
 | **Product** | forge-plugin | + forge-orchestrator | + forge-ui |
-| **Install** | `claude plugin install nxtg-forge` | + `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | + `cd forge-ui && npm run dev` |
-| **What it adds** | 33 agents, 23 commands, 33 skills, 13 hooks, 8 MCP tools | + 10 MCP tools, task management, knowledge persistence, drift detection, TUI | + Visual dashboard, Infinity Terminal, real-time feeds, multi-device access |
+| **Install** | `claude plugin install nxtg-forge` | + `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | + `git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev` |
+| **What it adds** | 33 agents, 24 commands, 27 skills, 27 hook registrations, 8 MCP tools | + 12 MCP tools, task management, knowledge persistence, drift detection, TUI | + Web dashboard with a health score, Infinity Terminal, command center, opt-in multi-device access |
 | **Setup time** | 30 seconds | + 2 minutes | + 5 minutes |
 
 ---
@@ -21,11 +21,11 @@
 
 **What you get:**
 - 33 specialized agents (security, testing, API design, database, UI, performance, etc.)
-- 23 slash commands (`/nxtg-forge:feature`, `/nxtg-forge:status`, `/nxtg-forge:test`, etc.)
-- 33 knowledge skills that auto-load based on context
-- 13 hook scripts (4 blocking security guards + 9 advisory governance hooks)
+- 24 slash commands (`/nxtg-forge:feature`, `/nxtg-forge:status`, `/nxtg-forge:test`, etc.)
+- 27 knowledge skills that auto-load based on context
+- 27 hook registrations (including 4 blocking security guards)
 - 8 MCP governance tools (health, metrics, git status, tests, security scan)
-- 3 MCP servers: governance-mcp (needs Node.js 20+), orchestrator-mcp (if L2 installed), semgrep-mcp (if uv or semgrep-mcp is installed). A server whose runtime is missing connects with no tools and says what to install.
+- 2 MCP servers: governance-mcp (needs Node.js 20+) and semgrep-mcp (if uv or semgrep-mcp is installed). At L2, the companion plugin `nxtg-forge-orchestrator` (same marketplace; install.sh adds it) registers a third, orchestrator-mcp. A server whose runtime is missing connects with no tools and says what to install.
 
 **What L1 can't do:**
 - No persistent task tracking across sessions (agents forget between conversations)
@@ -35,7 +35,7 @@
 - No visual dashboard
 
 **You're ready for L2 when:**
-- You run multiple AI tools and they conflict (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27))
+- You run multiple AI tools and they conflict (Forge orchestrates Claude Code, with Codex CLI and Antigravity CLI (`agy`) as task runners)
 - You want task progress to survive between Claude Code sessions
 - You want learnings from one implementation to inform the next
 - You need to detect when work has drifted from your spec
@@ -56,7 +56,7 @@
 | Project state | Shared state file at `.forge/state.json` all tools read | `forge_get_state` |
 | Plan awareness | Agents read and follow your `SPEC.md` plan | `forge_get_plan` |
 | File locking | Prevents two tools from editing the same file | Built into task system |
-| Health scoring | 5-dimension governance health with trend tracking | `forge_get_health` |
+| Health scoring | Governance health over documentation, architecture, task health, knowledge coverage and drift | `forge_get_health` |
 | Event audit trail | Every action logged to `.forge/events.jsonl` | `forge_get_events` |
 
 **The TUI dashboard:** `forge dashboard` launches a terminal dashboard with task boards, agent activity, and governance metrics — all in your terminal, no browser needed.
@@ -77,11 +77,10 @@
 
 | Feature | What It Does |
 |---------|-------------|
-| **Visual dashboard** | Real-time web UI at `localhost:5050` with task boards, health gauges, agent feeds |
-| **Infinity Terminal** | Browser terminal that survives close, network drops, and server restarts via PTY persistence |
-| **Governance HUD** | Visual display of Oracle warnings, sentinel findings, health trends |
-| **Agent activity feed** | Watch agents work in real-time — which agent is doing what, on which files |
-| **Multi-device access** | Dashboard accessible from any device on your network (WSL2 compatible) |
+| **Visual dashboard** | Web UI at `localhost:5050` with a 0-100 health score and the project's governance state; sign-in with an access token |
+| **Infinity Terminal** | Browser terminal whose shell keeps running if the tab closes or the network drops; reopen within 5 minutes to return. A server restart ends it |
+| **Command center** | Runs project status, tests, a type-check and build pre-flight, and a gap analysis from the browser |
+| **Multi-device access** | Off by default (both servers bind `127.0.0.1`). Set `FORGE_UI_HOST=0.0.0.0` and `ALLOWED_ORIGINS` to open it from another device; every request still needs the token |
 | **5 engagement modes** | CEO / VP / Engineer / Builder / Founder views — same data, different depth |
 
 ---
@@ -92,10 +91,10 @@
 graph LR
     A[You in Claude Code] -->|slash commands| B[forge-plugin L1]
     B -->|stdio MCP| C[governance-mcp<br/>8 tools]
-    B -->|stdio MCP| D[orchestrator-mcp<br/>10 tools]
+    B -->|stdio MCP| D[orchestrator-mcp<br/>12 tools, companion plugin]
     B -->|stdio MCP| G[semgrep-mcp<br/>SAST scanning]
     D --> E[forge-orchestrator L2<br/>.forge/state.json]
-    E -->|WebSocket| F[forge-ui L3<br/>localhost:5050]
+    E -->|health score| F[forge-ui L3<br/>localhost:5050]
 ```
 
 **No code dependencies between products.** MCP is the only integration layer. Remove any product and the others keep working.
@@ -115,14 +114,12 @@ graph LR
 - You want knowledge to accumulate → what agents learn persists
 - You're on a team → task assignments coordinate work
 - You need drift detection → keeps work aligned with spec
-- **ROI:** L2 pays for itself the first time it prevents a file conflict or recalls a past decision
 
 ### Upgrade to L3 if:
 - You want visual monitoring → dashboard gives bird's-eye view
-- You need Infinity Terminal → terminal that never dies
+- You need Infinity Terminal → a shell that survives a closed tab or a network drop
 - You manage others → shared dashboard for team visibility
 - You present to stakeholders → visual governance is more persuasive than CLI output
-- **ROI:** L3 pays for itself the first time you don't lose a terminal session
 
 ---
 
@@ -130,7 +127,7 @@ graph LR
 
 Each level can be removed independently:
 - **Remove L3:** Stop `forge-ui` dev server. Everything else keeps working.
-- **Remove L2:** Uninstall the `forge` binary. Plugin falls back to L1 behavior automatically — no errors, no warnings.
+- **Remove L2:** Uninstall the `forge` binary. The plugin keeps working at L1: the companion's stand-in server says the orchestrator is not installed (it is optional), and `/nxtg-forge:status` shows "Not connected".
 - **Remove L1:** `claude plugin uninstall nxtg-forge`. You're back to vanilla Claude Code.
 
 No data is lost. `.forge/` directory, governance state, and knowledge files remain on disk.

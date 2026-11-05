@@ -123,7 +123,6 @@ Performance:
 |-------|-------------|
 | **L1 Vibe Coder** | Bundle analysis and size optimization. React render profiling. Memory leak detection. API latency checking. Performance budget enforcement with concrete thresholds. |
 | **L2 Pro Builder** | Performance metrics tracked as task metadata via orchestrator. Budget violations surfaced in `forge_get_health` scores. |
-| **L3 Ship Lord** | Bundle size trends, memory charts, and latency graphs rendered in the forge-ui dashboard. Visual budget indicators (green/yellow/red). |
 
 ## Tips & Gotchas
 

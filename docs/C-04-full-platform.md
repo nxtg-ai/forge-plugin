@@ -1,22 +1,22 @@
 # Full Platform — L3 Ship Lord
 
-L2 gives you multi-tool orchestration from the terminal. L3 adds a **visual web dashboard** — real-time health graphs, an agent activity feed, and the Infinity Terminal, a browser-based terminal where sessions survive browser close, network drops, and device switches. This is mission control.
+L2 gives you multi-tool orchestration from the terminal. L3 adds a **visual web dashboard** — a 0-100 health score, a command center, and the Infinity Terminal, a browser-based terminal whose shell keeps running if the tab closes or the network drops.
 
 ## When You Need This
 
 You need L3 when the terminal alone isn't enough:
 
-- **Visual oversight** — you want to see agent activity, health trends, and task progress at a glance instead of reading CLI output
-- **Sessions that never die** — you start a long-running task, close your laptop, and pick it up from your phone. The session is still there
+- **Visual oversight** — you want the health score and governance state in a browser instead of reading CLI output
+- **Sessions that survive a closed tab** — you start a long-running command, close the tab or lose the network, and reopen the page within 5 minutes to the same shell. Restarting the forge-ui server ends it
 - **Team dashboard** — multiple people need to see the same project state in a browser
-- **Multi-device workflow** — monitor builds from your phone while your workstation runs agents
+- **Multi-device workflow** — open the dashboard from another device on your network (opt-in; see below)
 
 If the TUI dashboard (`forge dashboard --pty`) covers your needs, stay on [L2](C-03-upgrade-to-pro-builder.md). L3 is for when you want a persistent visual layer.
 
 ## Install
 
 ```bash
-git clone https://github.com/nxtg-ai/forge-ui
+git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui
 cd forge-ui
 npm install
 npm run dev
@@ -29,9 +29,9 @@ This starts two services:
 | 5050 | Vite UI (your browser connects here) |
 | 5051 | Express API + WebSocket + PTY bridge |
 
-Open **http://localhost:5050** in your browser.
+Open **http://localhost:5050** in your browser. The dashboard asks for this install's access token the first time: run `npx tsx src/server/auth/print-auth-url.ts` in the forge-ui folder and open the link it prints.
 
-> **WSL2 users**: `localhost` only works from within WSL. To access from Windows or other devices on your network, use your WSL2 machine's IP address (run `ip addr show eth0` to find it). See the [Dashboard Guide](C-08-dashboard-guide.md#multi-device-setup-wsl2) for firewall setup.
+> **Other devices**: both servers listen on `127.0.0.1` only. To open the dashboard from another device, set `FORGE_UI_HOST=0.0.0.0` and set `ALLOWED_ORIGINS` to the full list of origins you will open it from; every request still needs the token. See "Sign-in and network access" in the [forge-ui README](https://github.com/nxtg-ai/forge-ui/tree/v3.5.3#sign-in-and-network-access).
 
 <!-- VISUAL: D-03 — forge-dashboard-web.gif -->
 
@@ -39,24 +39,20 @@ Open **http://localhost:5050** in your browser.
 
 | Capability | L2 (Orchestrator) | L3 (+ Web Dashboard) |
 |-----------|:-:|:-:|
-| Task board | TUI text output | Visual web UI with filters |
-| Agent activity | Event log in TUI | Real-time activity feed in browser |
-| Health score | CLI grade (A-F) | Governance HUD with trend graphs |
-| Terminal sessions | Tied to your terminal window | Infinity Terminal — survives browser close |
-| Multi-device access | No | Yes — phone, tablet, remote machine |
+| Health score | CLI grade (A-F) | 0-100 score in the browser |
+| Terminal sessions | Tied to your terminal window | Infinity Terminal — survives a closed tab or a network drop |
+| Multi-device access | No | Opt-in (`FORGE_UI_HOST` + `ALLOWED_ORIGINS` + access token) |
 | Engagement modes | No | Yes — CEO, VP, Engineer, Builder, Founder views |
 | Architecture decisions | No | ADR view with impact analysis |
 | Command execution | CLI only | Browser command center + keyboard shortcuts |
 
 ## Key Features
 
-**Web Dashboard** — Five views (Dashboard, Vision, Terminal, Command, Architect) with a governance HUD sidebar showing real-time health grade, active agents, and blocking decisions.
+**Web Dashboard** — Five views (Dashboard, Vision, Terminal, Command, Architect) with a governance sidebar showing the 0-100 health score.
 
-**Infinity Terminal** — A full terminal in your browser powered by xterm.js and a server-side PTY bridge. Sessions persist for 5 minutes after you close the browser tab. Reopen the tab and you're right where you left off. No tmux or Zellij required — persistence is built into the PTY bridge.
+**Infinity Terminal** — A full terminal in your browser powered by xterm.js and a server-side PTY bridge. If you close the tab or lose the network, the shell keeps running: reopen the page within 5 minutes and you are back in the same shell, and up to about 100 KB of the output from while you were away is replayed. Restarting the forge-ui server ends the shell. No tmux or Zellij required — persistence is built into the PTY bridge.
 
-**Real-Time Health HUD** — The right sidebar always shows your project's health grade (A through F across 8 quality dimensions), active agent count, blocking decisions, and memory insights. Updates automatically via WebSocket.
-
-**Agent Activity Feed** — Watch your agents coordinate in real time (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)): task claims, file lock acquisitions, knowledge captures, and governance events. Filter by All, Important, or Errors.
+**Health score** — The right sidebar shows a 0-100 health score for the folder forge-ui runs from. It comes from the orchestrator when that is installed, otherwise from the plugin's governance health, otherwise from a local estimate labelled as one.
 
 ## How It Connects
 
@@ -65,9 +61,9 @@ The web dashboard is a **separate product** from the L2 TUI dashboard. They are 
 - `forge dashboard --pty` = L2 TUI dashboard (runs in your terminal, part of the orchestrator binary)
 - `npm run dev` in forge-ui = L3 web dashboard (runs in your browser, separate React application)
 
-From the L1 plugin, the `/nxtg-forge:dashboard` command can launch the web dashboard. Or run it standalone with `npm run dev` — no plugin required.
+The L1 plugin's `/nxtg-forge:dashboard` command does not start the web dashboard: it writes a static HTML health snapshot. Run forge-ui with `npm run dev` — no plugin required.
 
-The web dashboard reads state from the forge-orchestrator via its API. The architecture is one-directional: the UI reads and displays, the orchestrator makes decisions.
+The web dashboard gets its health score from the `forge` binary when it is installed. The architecture is one-directional: the UI reads and displays; policy decisions are made by Forge's other tools.
 
 ## Next Steps
 

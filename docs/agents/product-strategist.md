@@ -47,8 +47,8 @@ User: "I have an idea for a tool that auto-generates API docs
 Product Strategist:
   - JTBD: "When I update my API, I want docs to stay in sync
     automatically, so I can stop doing manual doc maintenance."
-  - Market sizing: $2.1B API tooling market, SAM of $180M
-    (teams with 5+ API endpoints), SOM of $9M (year 1)
+  - Market sizing (placeholders): $A API tooling market, SAM of $B
+    (teams with 5+ API endpoints), SOM of $X (year 1)
   - Competitive analysis: Swagger/OpenAPI dominates spec-first,
     but comment-first has no clear leader
   - Personas: Solo dev (speed), team lead (consistency), DevRel
@@ -126,7 +126,6 @@ Product Strategist:
 |-------|-------------|
 | **L1 Vibe Coder** | JTBD analysis, RICE/MoSCoW prioritization, competitive positioning, GTM planning, pricing frameworks, Lean Canvas |
 | **L2 Pro Builder** | + `forge_get_plan` for plan-aware strategy; `forge_capture_knowledge` records strategic decisions; `forge_check_drift` verifies product direction |
-| **L3 Ship Lord** | + Dashboard panel showing feature priority scores, roadmap visualization, and metric tracking |
 
 ## Tips & Gotchas
 

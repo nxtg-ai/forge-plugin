@@ -108,8 +108,6 @@ Chain `/nxtg-forge:checkpoint save safety-net` then `/nxtg-forge:restore {target
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full restore with preview, diff comparison, interactive selection, and safety warnings |
-| **L2 Pro Builder** | Checkpoint list also available via `forge_list_checkpoints` MCP tool |
-| **L3 Ship Lord** | Restoration events logged in the forge-ui dashboard timeline |
 
 ## Tips & Gotchas
 

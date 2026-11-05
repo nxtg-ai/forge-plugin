@@ -23,7 +23,7 @@ The knowledge covers Gemini's context discovery mechanism, configuration system,
 - When an agent encounters `GEMINI.md`, `.gemini/` directories, or playbook files
 - When discussing cross-platform AI coding tool compatibility
 
-Skills load automatically based on context. The user does not invoke them -- they activate when relevant.
+This skill does not load automatically (`disable-model-invocation: true`). Invoke it as `/nxtg-forge:gemini-framework`.
 
 ## The Knowledge Inside
 

@@ -1,6 +1,6 @@
 # Builder
 
-> The master implementer. Transforms approved plans into production-ready code with tests, type safety, and documentation — so you ship features, not TODOs.
+> The master implementer. Transforms approved plans into complete, tested code with type safety and documentation — so you ship features, not TODOs.
 
 | | |
 |---|---|
@@ -143,7 +143,6 @@ Builder enforces 6 non-negotiable quality rules:
 |-------|-------------|
 | **L1 Vibe Coder** | Full Builder capabilities — code generation, refactoring, test spawning, quality rules. Everything works with just the plugin. |
 | **L2 Pro Builder** | Builder reads tasks from forge-orchestrator (`forge_get_tasks`), claims work (`forge_claim_task`), checks past learnings (`forge_get_knowledge`), and records what it learned (`forge_capture_knowledge`). Multi-agent task coordination. |
-| **L3 Ship Lord** | Builder's progress visible in the forge-ui dashboard. Real-time task board, agent activity feed, governance health impact visible as Builder works. |
 
 ## Tips & Gotchas
 

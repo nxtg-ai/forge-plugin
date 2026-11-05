@@ -36,14 +36,6 @@ The skill defines `state.json` as the single source of truth for project status.
 
 NXTG-Forge uses specialized agents (Lead Architect, Backend Master, CLI Artisan, Platform Builder, Integration Specialist, QA Sentinel). The skill teaches the handoff protocol: when one agent finishes its work, it must document what was done, what was decided, and what the next agent needs to know. A handoff from Lead Architect to Backend Master includes domain model locations, use case specifications, API endpoint designs, and database schemas. Vague handoffs like "implement user stuff" are explicitly flagged as anti-patterns.
 
-### Zero-Context Recovery
-
-Checkpoints are state snapshots that enable time-travel recovery. The skill teaches agents to create meaningful checkpoints at milestones (not "stuff" but "User auth: JWT implementation + tests complete (92% coverage)"). On recovery, agents can check `forge recovery` to see the last active session, in-progress features, and available checkpoints. This turns session interruptions from disasters into minor inconveniences.
-
-### MCP Auto-Detection
-
-The skill covers the MCP integration system: how `forge mcp detect` scans the project for GitHub repos, database dependencies, payment providers, and communication tools, then configures the appropriate MCP servers. Agents learn to check MCP availability before attempting tool calls and to configure missing servers when needed.
-
 ## How to Leverage It
 
 When starting work in an NXTG-Forge project, check state first. The skill teaches agents to read `state.json` before making any changes, ensuring they understand the current phase, active features, and quality metrics. After completing significant work, update state and create a checkpoint.
@@ -68,8 +60,8 @@ It also enables parallel agent work. When two agents know the handoff protocol, 
 
 | Skill | Relationship |
 |-------|-------------|
-| **core-architecture** | Defines the code structure that state.json tracks |
-| **core-testing** | Quality metrics in state.json reflect testing standards defined here |
+| **architecture** | Code-structure guidance for the projects Forge manages |
+| **testing** | Testing methodology behind the quality signals Forge reports |
 | **claude-code-framework** | Platform capabilities that NXTG-Forge builds upon |
 
 ## Tips

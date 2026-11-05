@@ -41,7 +41,7 @@ The Detective runs a parallel analysis framework for speed:
 
 5. **Architecture Quality** -- Measures file sizes (flags files over 300 lines), counts `as any` casts, checks for circular dependencies, assesses layer separation, counts TODO/FIXME/HACK comments.
 
-For comprehensive health checks, the Detective spawns four parallel Task agents (Testing, Security, Docs, Performance) and runs architecture analysis inline simultaneously. This produces a full report roughly 4x faster than sequential analysis.
+For comprehensive health checks, the Detective spawns four parallel Task agents (Testing, Security, Docs, Performance) and runs architecture analysis inline at the same time, instead of running each analysis in sequence.
 
 Results are synthesized into the weighted health score and presented in a structured report format with per-dimension grades and a prioritized action list.
 
@@ -117,7 +117,6 @@ Detective:
 |-------|-------------|
 | **L1 Vibe Coder** | Full five-dimension analysis. Parallel agent spawning. Weighted health scoring. Technology stack detection. Best-practice checklists for Python, JavaScript/TypeScript, and Go. Structured report format. |
 | **L2 Pro Builder** | Enriches analysis with orchestrator data: `forge_get_health` for governance scores, `forge_get_tasks` for project activity, `forge_get_knowledge` for historical patterns, `forge_check_drift` for vision alignment. Records findings via `forge_capture_knowledge` for cross-session persistence. |
-| **L3 Ship Lord** | Health scores, dimension breakdowns, and trend charts rendered in the forge-ui dashboard. Visual representation of the Detective's findings alongside agent activity and task progress. |
 
 ## Tips & Gotchas
 

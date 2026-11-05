@@ -6,7 +6,7 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Governance & Analysis |
-| **Model** | Haiku |
+| **Model** | Sonnet |
 
 ---
 
@@ -128,7 +128,6 @@ Compliance:
 |-------|-------------|
 | **L1 Vibe Coder** | License compatibility auditing. GDPR compliance checklist. WCAG 2.1 AA verification. Coding standards enforcement. Finding classification with remediation actions. |
 | **L2 Pro Builder** | Compliance findings recorded via `forge_capture_knowledge`. Historical compliance state recalled via `forge_get_knowledge` to track improvement over time. |
-| **L3 Ship Lord** | Compliance status (license count, GDPR gaps, WCAG violations) visible in the forge-ui dashboard governance panel. |
 
 ## Tips & Gotchas
 

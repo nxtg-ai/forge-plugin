@@ -107,15 +107,13 @@ Use the link validation dimension as a pre-merge check. Broken internal links in
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full five-dimension audit with scores, findings, and recommendations |
-| **L2 Pro Builder** | Audit scores contribute to orchestrator health dimensions |
-| **L3 Ship Lord** | Documentation audit history and trends visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 
 - The Overall score is an unweighted average of the four dimensions. A single weak dimension (e.g., 20% coverage) drags the overall score down significantly.
 - Link validation checks internal markdown links (`[text](./path.md)`). External URLs are not validated.
 - Code example validation checks whether TypeScript code blocks reference function or file names that exist in the codebase. It does not execute the examples.
-- The freshness check uses `git log` timestamps. Recently committed files (even without content changes) are considered "fresh."
+- The freshness check uses file modification times (`stat` mtime), not git history. A file that was only touched or re-checked-out counts as "fresh."
 
 ---
 

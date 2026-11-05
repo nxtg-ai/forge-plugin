@@ -109,8 +109,6 @@ Use named checkpoints as decision points: `checkpoint save approach-a`, try it, 
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full checkpoint management with save, restore, list, and clear operations |
-| **L2 Pro Builder** | Checkpoint list also available via the governance MCP `forge_list_checkpoints` tool |
-| **L3 Ship Lord** | Checkpoint history visible in the forge-ui dashboard timeline view |
 
 ## Tips & Gotchas
 

@@ -14,7 +14,7 @@
 
 ## What It Does
 
-`/nxtg-forge:gap-analysis` is the deepest diagnostic command in Forge. It spawns five parallel agents (testing, docs, security, detective, performance) that simultaneously analyze your project across every quality dimension. The testing agent maps source files to test files and calculates file-level coverage. The docs agent checks for README, CHANGELOG, JSDoc on exports, and API documentation. The security agent scans for hardcoded secrets, dangerous patterns (eval, innerHTML), dependency vulnerabilities, and committed `.env` files. The detective agent finds large files, coupling indicators, type safety issues, and technical debt markers. The performance agent measures bundle size, dependency counts, and production console usage.
+`/nxtg-forge:gap-analysis` is an optional review prompt with no accuracy claim. It first prints a block of fixed checks computed by `scripts/gap-report.mjs`, then the model's own review. For that review it spawns five parallel agents (testing, docs, security, detective, performance) that simultaneously analyze your project across every quality dimension. The testing agent maps source files to test files and calculates file-level coverage. The docs agent checks for README, CHANGELOG, JSDoc on exports, and API documentation. The security agent scans for hardcoded secrets, dangerous patterns (eval, innerHTML), dependency vulnerabilities, and committed `.env` files. The detective agent finds large files, coupling indicators, type safety issues, and technical debt markers. The performance agent measures bundle size, dependency counts, and production console usage.
 
 Before running local analysis, the command pulls orchestrator data if available -- governance health, drift detection against your project vision, and existing knowledge base entries. This means gap-analysis findings account for strategic alignment, not just code metrics.
 
@@ -125,14 +125,12 @@ Combine with orchestrator knowledge: gap analysis findings are recorded via `for
 |-------|-------------|
 | **L1 Vibe Coder** | Full five-dimension analysis with severity rankings and recommendations |
 | **L2 Pro Builder** | Orchestrator integration: health scores, drift detection, and knowledge base contribute to findings |
-| **L3 Ship Lord** | Gap analysis results and trends visible in the forge-ui governance dashboard |
 
 ## Tips & Gotchas
 
-- The five-agent parallel execution requires the Task tool. Without it, dimensions run sequentially (still accurate, just slower).
+- The five-agent parallel execution requires the Task tool. Without it, dimensions run sequentially (slower).
 - Effort estimates are rough approximations based on gap type and scope. Use them for relative prioritization, not project scheduling.
-- Skipped dimensions (due to errors or missing tools) are clearly marked with `[SKIPPED]` and a reason.
-- When `--scope` is specified, the pre-flight confirmation prompt is skipped for faster targeted runs.
+- With `--scope`, the review covers only that area. There is no confirmation prompt before the review.
 
 ---
 

@@ -10,7 +10,7 @@ Forge is structured as three independent products that snap together. Each level
 
 **Product**: forge-plugin (Claude Code plugin)
 **Install**: `claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge`
-**What it adds**: 23 specialized agents, 23 slash commands, 32 knowledge skills, 7 governance hooks, 8 MCP tools
+**What it adds**: 33 specialized agents, 24 slash commands, 27 knowledge skills, 27 hook registrations, 8 MCP tools
 
 L1 gives you governance inside Claude Code. Health scoring, gap analysis, quality gates, and specialized agents for building, testing, security review, and documentation — all running automatically through hooks and on-demand through slash commands.
 
@@ -20,11 +20,11 @@ L1 gives you governance inside Claude Code. Health scoring, gap analysis, qualit
 
 ### L2: Pro Builder
 
-**Product**: forge-plugin + forge-orchestrator (Rust binary)
-**Install**: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`
-**What it adds**: File locking, task planning, knowledge capture, drift detection, TUI dashboard, headless mode, 10 additional MCP tools
+**Product**: forge-plugin + forge-orchestrator (Rust binary) + the companion plugin `nxtg-forge-orchestrator`
+**Install**: `curl -fsSL https://forge.nxtg.ai/install.sh | sh`, then `claude plugin install nxtg-forge-orchestrator@nxtg-forge`
+**What it adds**: File locking, task planning, knowledge capture, drift detection, TUI dashboard, headless mode, 12 additional MCP tools
 
-L2 adds multi-tool orchestration. When you run several AI tools on the same codebase (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)), the orchestrator prevents them from conflicting. It plans work, assigns tasks, locks files, captures decisions, and detects when work drifts from your spec.
+L2 adds multi-tool orchestration. When you run several AI tools on the same codebase (Claude Code, with Codex CLI and Antigravity CLI (`agy`) as task runners), the orchestrator prevents them from conflicting. It plans work, assigns tasks, locks files, captures decisions, and detects when work drifts from your spec.
 
 **You need L2 when**: You're running multiple AI tools on the same codebase and hitting file conflicts, lost context, or coordination chaos.
 
@@ -33,12 +33,12 @@ L2 adds multi-tool orchestration. When you run several AI tools on the same code
 ### L3: Ship Lord
 
 **Product**: forge-plugin + forge-orchestrator + forge-ui (React dashboard)
-**Install**: `git clone https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev`
-**What it adds**: Visual web dashboard, Infinity Terminal (sessions survive browser close), real-time graphs, governance HUD, multi-device access
+**Install**: `git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev` (sign in with the access token, see the forge-ui README)
+**What it adds**: Visual web dashboard, Infinity Terminal (sessions survive a closed tab), real-time graphs, governance HUD, multi-device access
 
-L3 adds a visual control room. Real-time dashboard with agent activity feeds, governance health visualization, and the Infinity Terminal — a browser-based terminal where sessions persist across browser close, network drops, and server restarts.
+L3 adds a visual control room. Real-time dashboard with agent activity feeds, governance health visualization, and the Infinity Terminal — a browser-based terminal whose shell keeps running across a closed tab or a network drop (reopen within 5 minutes); restarting the forge-ui server ends it.
 
-**You need L3 when**: You want visual oversight of multi-agent activity, need a terminal that never dies, or manage a team and want a shared dashboard.
+**You need L3 when**: You want visual oversight of multi-agent activity, need a terminal that survives a closed tab, or manage a team and want a shared dashboard.
 
 ## How They Connect
 
@@ -52,12 +52,12 @@ forge-plugin (Claude Code)  ──MCP──►  forge-orchestrator (Rust binary)
                                         forge-ui (React dashboard)
 ```
 
-When you install the orchestrator binary (`forge`), the L1 plugin auto-detects it in your PATH. The plugin's `.mcp.json` registers both MCP servers:
+Two plugins register the MCP servers:
 
-1. **governance-mcp** (Node.js, 8 tools) — ships with the plugin, always available
-2. **orchestrator-mcp** (Rust, 10 tools) — available when `forge` is in PATH
+1. **governance-mcp** (Node.js, 8 tools) — registered by `nxtg-forge`, ships with the plugin
+2. **orchestrator-mcp** (Rust, 12 tools) — registered by the companion plugin `nxtg-forge-orchestrator`; available when that plugin and the `forge` binary are installed
 
-No manual configuration. The plugin starts calling orchestrator tools automatically. If the orchestrator isn't installed, those tools simply don't appear — no errors, no warnings.
+Once both are installed, commands and agents call orchestrator tools when they are present. If the orchestrator isn't installed, those tools don't appear and the session-start hook prints one optional install line.
 
 This is the **Lego Snap**: two independent pieces that click together through a standard protocol.
 
@@ -66,7 +66,7 @@ This is the **Lego Snap**: two independent pieces that click together through a 
 These rules are always true, regardless of which levels are installed:
 
 - **L1 works completely standalone** — no errors referencing L2 or L3 components
-- **L2 auto-activates** when the `forge` binary appears in PATH — no manual config
+- **L2 activates** when the `forge` binary and the companion plugin `nxtg-forge-orchestrator` are both installed (new session)
 - **L3 is never required** for any CLI workflow — it's a visual layer, not a dependency
 - **Each level can be removed** without breaking the others
 - **Adoption follows the pain** — you go deeper when the problems at your current level demand it
@@ -76,6 +76,6 @@ These rules are always true, regardless of which levels are installed:
 | Server | Location | Runtime | Tools |
 |--------|----------|---------|-------|
 | governance-mcp | forge-plugin | Node.js | 8 (health, metrics, git, tests, security, checkpoints, governance state, dashboard) |
-| orchestrator-mcp | forge-orchestrator | Rust | 10 (tasks, claims, completions, state, plan, knowledge, drift, health, project) |
+| orchestrator-mcp | nxtg-forge-orchestrator (runs `forge mcp`) | Rust | 12 (tasks, task creation, claims, completions, state, plan, events, knowledge, drift, health, project) |
 
 Both servers run as stdio MCP servers. Claude Code connects to both simultaneously when both are available. No conflicts — the tool names are distinct.

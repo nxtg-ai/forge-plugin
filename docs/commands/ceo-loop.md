@@ -91,8 +91,6 @@ The retrograde inspection phase is where the loop learns. It reviews previous de
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full ORBIT loop with decision journal, trust escalation, and retrograde analysis |
-| **L2 Pro Builder** | Loop decisions integrated with orchestrator task board and knowledge base |
-| **L3 Ship Lord** | Decision history and loop progress visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 

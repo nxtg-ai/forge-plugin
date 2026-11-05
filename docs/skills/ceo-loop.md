@@ -24,6 +24,8 @@ The five innovations ORBIT adds: a real loop mechanism (Stop hook plus state fil
 - When retrograde analysis is needed to verify whether past decisions were correct
 - When trust calibration alerts surface due to declining decision accuracy
 
+This skill does not load automatically (`disable-model-invocation: true`). The `/nxtg-forge:ceo-loop` command tells Claude to read it.
+
 ## The Knowledge Inside
 
 ### The Five ORBIT Phases

@@ -122,7 +122,6 @@ Database:
 |-------|-------------|
 | **L1 Vibe Coder** | Schema design with normalization. Zod validation schema generation. Safe reversible migrations. Index strategy design. Query optimization analysis. |
 | **L2 Pro Builder** | Schema decisions recorded via `forge_capture_knowledge` (category: "decisions"). Past data patterns recalled via `forge_get_knowledge` to inform new schema design. |
-| **L3 Ship Lord** | Data metrics (query latency, table sizes, index utilization) visible in the forge-ui dashboard performance panels. |
 
 ## Tips & Gotchas
 

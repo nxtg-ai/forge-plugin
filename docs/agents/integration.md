@@ -120,7 +120,6 @@ Integration:
 |-------|-------------|
 | **L1 Vibe Coder** | Typed HTTP clients for external services. Retry with exponential backoff. Webhook signature verification. Rate limit tracking. OAuth flow implementation. Error mapping. |
 | **L2 Pro Builder** | Integration patterns recorded via `forge_capture_knowledge`. Service configuration and connection details tracked in orchestrator state. |
-| **L3 Ship Lord** | External service health status visible in the forge-ui dashboard. WebSocket connection indicators show real-time connectivity. |
 
 ## Tips & Gotchas
 

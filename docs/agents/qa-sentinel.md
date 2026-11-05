@@ -112,7 +112,7 @@ QA Sentinel:
 
 **Testing Trophy Calibration**: For an existing project, the QA Sentinel can analyze the current test distribution and compare it against the ideal testing trophy. If 90% of tests are unit tests and 2% are integration tests, the suite is bottom-heavy -- most confidence lives in the integration layer, which is underinvested. The sentinel recommends redistributing effort.
 
-**Mock-vs-Real Decision Matrix**: Produces a definitive guide for the team: your own database (use real), your own services (use real), your own file system (use temp directories), third-party APIs (mock or use sandboxes), system clock (freeze), RNG (seed), GPU (real if available, skip if not). This eliminates the recurring debate about when mocking is appropriate.
+**Mock-vs-Real Decision Matrix**: Produces a guide for the team: your own database (use real), your own services (use real), your own file system (use temp directories), third-party APIs (mock or use sandboxes), system clock (freeze), RNG (seed), GPU (real if available, skip if not). This eliminates the recurring debate about when mocking is appropriate.
 
 ## Combines With
 
@@ -129,7 +129,6 @@ QA Sentinel:
 |-------|-------------|
 | **L1 Vibe Coder** | Test strategy design, CRUCIBLE gate enforcement, hollow assertion detection, flaky test diagnosis, mutation testing planning |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records test strategy decisions; `forge_get_knowledge` recalls past quality patterns |
-| **L3 Ship Lord** | + Dashboard panel showing CRUCIBLE gate compliance, mutation scores, test distribution chart, and flaky test quarantine status |
 
 ## Tips & Gotchas
 

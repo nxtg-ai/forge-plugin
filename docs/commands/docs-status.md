@@ -100,8 +100,6 @@ Track JSDoc coverage percentage over time. Run docs-status at sprint boundaries 
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full documentation health check with key files, JSDoc coverage, and freshness |
-| **L2 Pro Builder** | Documentation metrics contribute to orchestrator health scores |
-| **L3 Ship Lord** | Documentation health visible in the forge-ui dashboard documentation panel |
 
 ## Tips & Gotchas
 

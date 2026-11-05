@@ -107,7 +107,6 @@ The ORBIT loop cycles through five phases per iteration:
 |-------|-------------|
 | **L1 Vibe Coder** | ORBIT loop, 4-tier decision matrix, decision journal, trust calibration, retrograde analysis |
 | **L2 Pro Builder** | + `forge_get_tasks` for task-aware prioritization; `forge_get_plan` for plan-aligned decision-making |
-| **L3 Ship Lord** | + Dashboard panel showing decision history, trust calibration trends, and active loop status |
 
 ## Tips & Gotchas
 

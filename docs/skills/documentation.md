@@ -71,7 +71,7 @@ The auto-generation pattern means documentation accuracy is guaranteed for refer
 |-------|-------------|
 | **coding-standards** | Docstring format (Google-style) defined in coding standards, applied here |
 | **git-workflow** | Conventional commits that this skill uses for changelog generation |
-| **claude-code-best-practices** | CLAUDE.md as a documentation pattern for project context |
+| **claude-code-framework** | CLAUDE.md as a documentation pattern for project context |
 
 ## Tips
 

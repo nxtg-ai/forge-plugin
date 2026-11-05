@@ -6,7 +6,7 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Domain Specialist |
-| **Model** | Haiku |
+| **Model** | Sonnet |
 
 ---
 
@@ -137,7 +137,6 @@ Analytics:
 |-------|-------------|
 | **L1 Vibe Coder** | Metrics instrumentation patterns. Structured reporting with targets and trends. Performance, quality, usage, and DX metric categories. Budget-based alerting. |
 | **L2 Pro Builder** | Metrics stored via `forge_capture_knowledge` for cross-session trend analysis. Historical metrics recalled via `forge_get_knowledge`. |
-| **L3 Ship Lord** | Metrics dashboards rendered in forge-ui with trend charts, budget indicators, and real-time updates via WebSocket. |
 
 ## Tips & Gotchas
 

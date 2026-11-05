@@ -10,8 +10,8 @@ Forge agents are autonomous AI specialists. Each handles a specific domain. Clau
 
 | Agent | Model | When to Use |
 |-------|-------|------------|
-| **planner** | sonnet | Feature planning, architecture design, task breakdown. Use when you need to decompose complex work into manageable tasks with dependencies and estimates. |
-| **builder** | sonnet | Feature implementation, production-ready code, refactoring, test generation. Invoked after a plan is approved or when specific implementation is needed. |
+| **planner** | opus | Feature planning, architecture design, task breakdown. Use when you need to decompose complex work into manageable tasks with dependencies and estimates. |
+| **builder** | sonnet | Feature implementation, working code, refactoring, test generation. Invoked after a plan is approved or when specific implementation is needed. |
 | **guardian** | sonnet | Quality assurance, testing, security validation. Use after implementation is complete, when pre-commit quality gates need to run, or for code review. |
 | **orchestrator** | opus | Multi-agent coordination. Activates the Forge developer experience — context restoration, feature planning, soundboard discussions, health checks. |
 
@@ -54,9 +54,24 @@ Forge agents are autonomous AI specialists. Each handles a specific domain. Clau
 |-------|-------|------------|
 | **nxtg-ceo-loop** | opus | CEO Digital Twin for autonomous strategic decisions. Product direction, architecture decisions, resource allocation, risk assessment. Only escalates CRITICAL decisions to humans. |
 
+### Additional Specialists
+
+| Agent | Model | When to Use |
+|-------|-------|------------|
+| **design-vanguard** | opus | UI/UX design and frontend implementation: components, responsive layouts, design systems, animations, accessibility audits, design critiques. |
+| **dx-engineer** | sonnet | Developer experience: CLI UX audits, SDK API design review, onboarding, error message quality, installation experience. |
+| **growth-engine** | sonnet | Growth strategy, go-to-market planning, content marketing, SEO, community building, developer relations. |
+| **incident-commander** | opus | Incident triage and coordination when something breaks in production, plus post-incident reviews and runbooks. |
+| **master-architect** | opus | System design, architecture review, design pattern selection, API design, technical debt assessment. |
+| **product-strategist** | opus | Product strategy, market positioning, feature prioritization, user personas, product metrics. |
+| **qa-sentinel** | sonnet | Test strategy and quality architecture (not test generation): CRUCIBLE gates, mutation and property-based testing targets, flaky-test diagnosis. |
+| **revenue-architect** | opus | Pricing strategy, monetization design, Stripe integration, revenue modeling. |
+| **scout** | sonnet | Competitive intelligence and market analysis: competitor feature matrices, market sizing, technology trends. |
+| **wordsmith** | sonnet | Writing, rewriting or reviewing content: landing page copy, blog posts, READMEs, docs, error messages, changelogs. |
+
 ---
 
-## 29 Knowledge Skills
+## 27 Knowledge Skills
 
 Skills are contextual knowledge documents that Claude Code loads automatically when relevant. They encode patterns, conventions, and best practices so agents make informed decisions without being told the same things repeatedly.
 
@@ -64,10 +79,7 @@ Skills are contextual knowledge documents that Claude Code loads automatically w
 
 | Skill | What It Provides |
 |-------|-----------------|
-| **core-architecture** | Project architecture patterns, module boundaries, dependency rules |
-| **core-coding-standards** | Code style, naming conventions, error handling patterns |
 | **core-nxtg-forge** | Forge-specific conventions, MCP tool usage, governance patterns |
-| **core-testing** | Test strategy, coverage targets, assertion standards |
 
 ### Domain Knowledge
 
@@ -76,8 +88,7 @@ Skills are contextual knowledge documents that Claude Code loads automatically w
 | **architecture** | System design patterns, component relationships, data flow |
 | **coding-standards** | Language-specific conventions, formatting, documentation standards |
 | **documentation** | Doc structure, API documentation patterns, README conventions |
-| **security** | Security patterns, vulnerability categories, remediation approaches |
-| **testing-strategy** | Test pyramid, integration testing patterns, mock guidelines |
+| **owasp-security** | OWASP vulnerability detection and remediation, plus why a Forge security guard blocked a call |
 | **testing** | Test framework usage, assertion patterns, coverage tools |
 
 ### Framework Skills
@@ -85,7 +96,6 @@ Skills are contextual knowledge documents that Claude Code loads automatically w
 | Skill | What It Provides |
 |-------|-----------------|
 | **claude-code-framework** | Claude Code capabilities, tool usage, agent patterns |
-| **claude-code-best-practices** | Effective Claude Code usage, prompt patterns, workflow optimization |
 | **codex-framework** | Codex CLI conventions, task mode, AGENTS.md format |
 | **gemini-framework** | Gemini CLI conventions, GEMINI.md format |
 
@@ -96,6 +106,7 @@ Skills are contextual knowledge documents that Claude Code loads automatically w
 | **dev-environment-patterns** | Environment setup, toolchain configuration, CI/CD patterns |
 | **git-workflow** | Branching strategy, commit conventions, PR patterns |
 | **runtime-validation** | Input validation, error boundaries, runtime safety patterns |
+| **parallel-execution** | Plan Mode and Agent Teams (parallel subagents via the Task tool) |
 
 ### Performance & Debugging
 
@@ -111,6 +122,13 @@ Skills are contextual knowledge documents that Claude Code loads automatically w
 | **skill-development** | How to create new skills, skill structure, progressive disclosure |
 | **domain-knowledge** | Project-specific domain concepts, business rules |
 | **verify-governance** | Governance verification patterns, health score interpretation |
+
+### Governance
+
+| Skill | What It Provides |
+|-------|-----------------|
+| **ceo-loop** | The CEO Decision Loop ORBIT protocol, preloaded into the nxtg-ceo-loop agent |
+| **crucible-audit** | An optional test-quality review prompt (no accuracy claim): hollow assertions, coverage-omit gaming, mock proliferation, dead tests |
 
 ### Agent Role Skills
 

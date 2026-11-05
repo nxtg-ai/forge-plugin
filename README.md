@@ -8,13 +8,13 @@
 
 **Stage: Alpha.** The Forge plugin and orchestrator are in alpha. On 2026-10-15 (UTC) a separate NXTG.AI team (product-oracle) ran the pre-registered core-job test on a clean install of the plugin (v3.14.0) and the orchestrator (forge 1.7.0). The test passed; each repeated check passed 3 of 3 (run 7). The evidence is attached to the forge-plugin v3.14.0 release. No SLA; interfaces may change without notice.
 
-**Zero-dependency governance for Claude Code.** *(Today, health scoring needs Node.js 20+; build B3, target 2026-10-20.)*
+**Governance for Claude Code.** Health scoring needs Node.js 20 or newer; the plugin installs no npm packages.
 
 This is L1: Vibe Coder.
 
 Inside Claude Code, agents already coordinate well. They share orchestration and context. What's missing is judgment: automated checks that catch problems before they reach production, skills that encode your conventions, and hooks that validate before and after every task.
 
-The plugin adds health scoring, gap analysis, quality gates, and specialized agents. Install in 30 seconds. No config. Health scoring needs Node.js 20 or newer; [what each part needs](#what-each-part-needs) is below.
+The plugin adds health scoring, gap analysis, quality gates, and specialized agents. No config. Health scoring needs Node.js 20 or newer; [what each part needs](#what-each-part-needs) is below.
 
 Every governance feature traces to a real failure mode. Hooks that validate before and after every task exist because I've watched audit findings pile up from shortcuts nobody caught in real time. Knowledge skills that encode project conventions exist because I've watched the same context re-explained across dozens of sessions. Gap analysis exists because the most expensive bugs are the ones you discover at deployment.
 
@@ -36,7 +36,7 @@ That's it. No build step. No config files.
 |------|-------|------------|
 | Commands, agents, skills, advisory hooks | Claude Code and bash | — |
 | 4 blocking security guards | `jq`, or `awk` (present on Linux and macOS) | With neither, the guards block every call they cover, and Forge says why |
-| Health score and governance tools (`governance-mcp`) | Node.js 20 or newer, with npm on first start | `/nxtg-forge:status` shows "Not scored", and Forge says Node is missing |
+| Health score and governance tools (`governance-mcp`) | Node.js 20 or newer | `/nxtg-forge:status` shows "Not scored", and Forge says Node is missing |
 | Orchestrator, L2 (`orchestrator-mcp`) | The `forge` binary: `curl -fsSL https://forge.nxtg.ai/install.sh \| sh` | Optional. Status shows "Not connected" with the install line; once installed, "Connected; not initialized here" until you run `forge init` |
 | Semgrep tools (`semgrep-mcp`) | `uv` (for `uvx`) or `pip install semgrep-mcp` | Optional |
 
@@ -70,7 +70,7 @@ Either init sets a project up. `/nxtg-forge:init` writes `.claude/governance.jso
 
 ### Review commands are optional conveniences
 
-`/nxtg-forge:gap-analysis` and `/nxtg-forge:crucible-audit` are structured review prompts. They make **no accuracy claim**: a prompt finds what the model finds, and a clean report is not evidence that nothing is wrong. On two deliberately seeded public cases, [forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture) and [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2), a plain review prompt found the same defects as both commands, at roughly a third to a quarter of their cost (fixtures 1 and 2, 24 runs). Use them if you like the structure; they are not a substitute for running the tests.
+`/nxtg-forge:gap-analysis` (a command) and `/nxtg-forge:crucible-audit` (a skill) are structured review prompts. They make **no accuracy claim**: a prompt finds what the model finds, and a clean report is not evidence that nothing is wrong. On two deliberately seeded public cases, [forge-done-fixture](https://github.com/nxtg-ai/forge-done-fixture) and [forge-done-fixture-2](https://github.com/nxtg-ai/forge-done-fixture-2), a plain review prompt found the same defects as both commands, at roughly a third to a quarter of their cost (fixtures 1 and 2, 24 runs). Use them if you like the structure; they are not a substitute for running the tests.
 
 ## How It Works
 
@@ -102,21 +102,21 @@ Set `FORGE_ENFORCE=implement`, or create `.claude/forge-enforce.json`, to begin 
 
 ## Upgrade Path
 
-For multi-tool orchestration (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator. Today it is for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27):
+For multi-tool orchestration (file locking, shared knowledge, task boards), add the NXTG-Forge Orchestrator. The install script installs forge v1.7.1. It is for Claude Code, and launches Codex CLI and Antigravity CLI (`agy`) as task runners:
 
 ```bash
 curl -fsSL https://forge.nxtg.ai/install.sh | sh
 forge init
 ```
 
-One Rust binary. Zero runtime dependencies. The orchestrator is the delivery control plane that makes separate AI tools work as a team.
+One Rust binary with no runtime dependencies. It keeps the task board, file locks and shared knowledge that separate AI tools work from.
 
 Once `forge init` has run, and the orchestrator's tools are in the session (they come from the `nxtg-forge-orchestrator` companion plugin), `/nxtg-forge:feature` tracks each feature as an orchestrator task. With forge 1.7.0 or later it creates the task with the `forge_create_task` MCP tool. With an older forge, or when that call returns an error or no task id, a helper is the fallback: it writes a one-heading spec to `.forge/feature-requests/F-NNN.md` and runs `forge plan --generate --spec` on it. The helper keeps an existing `.forge/plan.md`: the feature's plan is appended below it, and a copy of the plan as it was is saved next to the spec. Either way the command claims the task as `claude` and completes it with a summary of the work; if the work does not finish, it leaves the task claimed and says why.
 
-For visual dashboards and the Infinity Terminal (sessions that survive browser close, network drops, and server restarts), add NXTG-Forge UI:
+For a browser dashboard and the Infinity Terminal (a browser shell that keeps running for 5 minutes after you close the tab or lose the network; restarting the forge-ui server ends it), add NXTG-Forge UI (v3.5.3). It listens on 127.0.0.1 and asks for an access token; its README explains sign-in:
 
 ```bash
-git clone https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev
+git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install && npm run dev
 ```
 
 Each depth builds on the last. Nothing forces you to go deeper. Adoption follows the pain.

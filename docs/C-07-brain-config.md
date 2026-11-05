@@ -2,7 +2,7 @@
 
 Forge uses a pluggable AI brain for task planning. The brain reads your project spec and decomposes it into dependency-aware tasks with assignments, file locks, and acceptance criteria. Two backends are available: **OpenAI** (API-powered) and **rule-based** (free, offline).
 
-The brain is only used for planning and drift detection. It does not power the agents themselves: the agents do the actual work (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)).
+The brain is only used for planning and drift detection. It does not power the agents themselves: the agents do the actual work (Forge orchestrates Claude Code, with Codex CLI and Antigravity CLI (`agy`) as task runners).
 
 ## Quick Setup
 
@@ -20,7 +20,7 @@ Check your current config at any time with `forge config` (no arguments).
 
 The default brain. No API key, no network calls, no cost.
 
-**How it works:** Scans your SPEC.md for `##` headers and creates one task per section. Classifies each task by keyword analysis — words like "design" or "architect" produce design tasks, "test" or "coverage" produce test tasks, and so on. Agent assignment follows the same pattern: architecture tasks go to Claude, implementation to Codex, testing and documentation to Gemini.
+**How it works:** Scans your SPEC.md for `##` headers and creates one task per section. Classifies each task by keyword analysis — words like "design" or "architect" produce design tasks, "test" or "coverage" produce test tasks, and so on. Agent assignment follows the same pattern: architecture tasks go to Claude, implementation to Codex, testing and documentation to the `gemini` agent (Antigravity CLI, `agy`).
 
 **When to use it:**
 - Prototyping and quick experiments
@@ -49,10 +49,10 @@ Sends your spec to the OpenAI API and receives a structured task plan back.
 # Set the model (default: gpt-4.1)
 forge config brain.model gpt-4.1
 
-# Other supported models
+# Other models named in `forge config` help (the key accepts any OpenAI model name)
 forge config brain.model gpt-4o
-forge config brain.model o3
-forge config brain.model o4-mini
+forge config brain.model gpt-5
+forge config brain.model gpt-5-mini
 ```
 
 ### API Key Setup
@@ -96,7 +96,7 @@ The brain also powers the `forge_check_drift` MCP tool, which compares completed
 
 ## Extensibility
 
-The brain is defined by the `ForgeBrain` trait in Rust with four methods: `decompose_plan`, `assign_task`, `evaluate_drift`, and `route_knowledge`. Additional backends (Claude, Gemini, local models) can be added without changing existing code.
+The brain is defined by the `ForgeBrain` trait in Rust with four methods: `decompose_plan`, `assign_task`, `evaluate_drift`, and `route_knowledge`. The released binary ships two backends: rule-based and OpenAI.
 
 ## Next Steps
 

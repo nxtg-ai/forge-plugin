@@ -127,7 +127,6 @@ Wordsmith:
 |-------|-------------|
 | **L1 Vibe Coder** | Landing pages, READMEs, error messages, blog posts, email sequences, changelogs, CLI help text, social posts |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records voice guidelines and successful copy patterns for reuse |
-| **L3 Ship Lord** | + Dashboard integration for viewing and editing user-facing text with A/B test tracking |
 
 ## Tips & Gotchas
 

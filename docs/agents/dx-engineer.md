@@ -116,7 +116,6 @@ DX Engineer:
 |-------|-------------|
 | **L1 Vibe Coder** | Full 10-point DX audit, TTHW measurement, error message rewriting, API design review, configuration audit |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records DX audit findings and TTHW benchmarks over time |
-| **L3 Ship Lord** | + Dashboard panel showing TTHW trends, DX scorecard history, and error message quality metrics |
 
 ## Tips & Gotchas
 

@@ -1,6 +1,6 @@
 # Upgrade to Pro Builder — L2
 
-L1 gives you governance inside Claude Code. L2 adds **multi-tool orchestration** — file locking, task planning, knowledge capture, and a TUI dashboard that coordinates your AI tools as a team (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)).
+L1 gives you governance inside Claude Code. L2 adds **multi-tool orchestration** — file locking, task planning, knowledge capture, and a TUI dashboard that coordinates your AI tools as a team (Forge orchestrates Claude Code, with Codex CLI and Antigravity CLI (`agy`) as task runners).
 
 ## When You Need This
 
@@ -39,7 +39,7 @@ forge init
 
 # 2. Configure the AI brain
 forge config brain openai
-# Sets up GPT-4o for task planning (or use 'rule-based' for free heuristics)
+# Uses gpt-4.1 by default for task planning (or use 'rule-based' for free heuristics)
 
 # 3. Generate tasks from your project
 forge plan --generate
@@ -61,7 +61,7 @@ forge dashboard --pty
 This launches a TUI dashboard with:
 
 - **Task board** — all tasks with status, assignment, dependencies
-- **Agent panes** — live interactive terminals for each AI tool (Claude; Codex; Antigravity `agy` for the Gemini adapter. Gemini CLI support in development, build B1, target 2026-10-27)
+- **Agent panes** — live interactive terminals for each AI tool (Claude Code, Codex CLI, and Antigravity CLI `agy`)
 - **Event log** — real-time audit trail of every action
 - **Health status** — project health score in the header
 
@@ -73,21 +73,21 @@ Each agent runs in its own PTY session. You see their actual TUI, not piped text
 |-----------|:-:|:-:|
 | Health scoring | Yes | Yes |
 | Gap analysis | Yes | Yes |
-| Specialized agents | 22 | 22 + multi-tool dispatch |
+| Specialized agents | 33 | 33 + multi-tool dispatch |
 | **File locking** | No | Yes — exclusive locks per task |
 | **Task planning** | No | Yes — dependency-aware graphs |
 | **Knowledge capture** | No | Yes — decisions, patterns, learnings |
 | **Drift detection** | No | Yes — compares work vs. spec |
 | **TUI dashboard** | No | Yes — live agent panes |
 | **Headless mode** | No | Yes — `forge run` for CI/CD |
-| **MCP tools** | 8 | 8 + 10 orchestrator tools |
+| **MCP tools** | 8 | 8 + 12 orchestrator tools |
 
 ## How It Connects to L1
 
-When you install the orchestrator binary, the L1 plugin auto-detects it. The plugin's `.mcp.json` registers both MCP servers:
+When you install the orchestrator binary, install.sh also adds the companion plugin `nxtg-forge-orchestrator` from the same marketplace (or run `claude plugin install nxtg-forge-orchestrator@nxtg-forge`). Together the two plugins register both MCP servers:
 
-1. **governance-mcp** (Node.js, 8 tools) — always available
-2. **orchestrator-mcp** (Rust, 10 tools) — available when `forge` is in PATH
+1. **governance-mcp** (Node.js, 8 tools) — from `nxtg-forge`, always available
+2. **orchestrator-mcp** (Rust, 12 tools) — from `nxtg-forge-orchestrator`, available when `forge` is installed
 
 No manual configuration. The plugin starts calling orchestrator tools (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`) automatically. This is the "Lego Snap" — two independent pieces that click together via MCP.
 
@@ -128,7 +128,7 @@ No configuration. No manual lock management. The orchestrator handles it.
 
 L2 gives you everything you need for multi-tool orchestration from the terminal.
 
-L3 ([Ship Lord](C-04-full-platform.md)) adds a **visual web dashboard** with real-time graphs, the **Infinity Terminal** (sessions that survive browser close and network drops), and full mission control. You need it when:
+L3 ([Ship Lord](C-04-full-platform.md)) adds a **visual web dashboard** with real-time graphs, the **Infinity Terminal** (sessions that survive browser close and network drops). You need it when:
 
 - You want visual oversight of agent activity across projects
 - You need a terminal that persists across browser sessions
@@ -137,5 +137,5 @@ L3 ([Ship Lord](C-04-full-platform.md)) adds a **visual web dashboard** with rea
 ## Next Steps
 
 - [CLI Commands Reference](C-10-cli-commands.md) — All orchestrator commands in detail
-- [MCP Tools Reference](C-12-mcp-tools.md) — 17 tools across both MCP servers
+- [MCP Tools Reference](C-12-mcp-tools.md) — 20 tools across both MCP servers
 - [AI Brain Configuration](C-07-brain-config.md) — Rule-based vs. OpenAI, API keys

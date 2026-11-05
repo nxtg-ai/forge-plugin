@@ -52,7 +52,7 @@ forge init
 This runs three steps:
 
 1. **Context discovery** — scans for package.json, Cargo.toml, README.md, SPEC.md, and other project files. Detects your project type.
-2. **Tool detection** — checks PATH for `claude` (Claude Code), `codex` (Codex CLI) and `agy` (Antigravity, which the orchestrator's Gemini adapter drives). Gemini CLI support is in development (build B1, target 2026-10-27).
+2. **Tool detection** — checks PATH for `claude` (Claude Code), `codex` (Codex CLI) and `agy` (Antigravity CLI; its agent id in task files and config is `gemini`).
 3. **Scaffold** — creates the `.forge/` directory:
 
 ```
@@ -189,8 +189,9 @@ As you work, capture decisions and learnings so they persist across sessions. Us
 
 ```
 forge_capture_knowledge({
-  "entry": "Chose tab as default delimiter because our data sources use TSV",
-  "category": "decision"
+  "title": "Default delimiter",
+  "content": "Chose tab as default delimiter because our data sources use TSV",
+  "category": "decisions"
 })
 ```
 
@@ -208,7 +209,7 @@ This knowledge feeds back into future planning and drift detection.
 
 You now have a governed project with a spec, a task plan, completed work, and captured knowledge. From here:
 
-- **[Multi-Agent Orchestration](C-06-multi-agent-orchestration.md)** — run AI tools as a coordinated team with file locking (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27))
+- **[Multi-Agent Orchestration](C-06-multi-agent-orchestration.md)** — run AI tools as a coordinated team with file locking (Forge orchestrates Claude Code, with Codex CLI and Antigravity CLI (`agy`) as task runners)
 - **[AI Brain Configuration](C-07-brain-config.md)** — tune the OpenAI brain, switch models, configure API keys
 - **[CLI Commands Reference](C-10-cli-commands.md)** — every `forge` command with flags and examples
 - **[Health Scoring Guide](C-14-health-scoring.md)** — understand your project's governance score and how to improve it

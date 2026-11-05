@@ -6,7 +6,7 @@
 |---|---|
 | **Level** | L1 Vibe Coder |
 | **Category** | Governance & Analysis |
-| **Model** | Haiku |
+| **Model** | Sonnet |
 
 ---
 
@@ -101,7 +101,6 @@ Learning agent:
 |-------|-------------|
 | **L1 Vibe Coder** | Preference capture, session history analysis, recommendation improvement |
 | **L2 Pro Builder** | + `forge_capture_knowledge` stores preferences as orchestrator knowledge, shared across agent team |
-| **L3 Ship Lord** | + Dashboard visualization of learned patterns and preference evolution over time |
 
 ## Tips & Gotchas
 

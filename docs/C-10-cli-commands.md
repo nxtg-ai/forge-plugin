@@ -8,7 +8,7 @@ All commands provided by the `forge` binary (forge-orchestrator). Run `forge --h
 
 ## forge init
 
-Initialize Forge in a project. Creates the `.forge/` directory with state, event log, and knowledge base. Auto-detects installed AI tools via PATH scanning: `claude`, `codex`, and `agy` (Antigravity, driven by the Gemini adapter). Gemini CLI support is in development (build B1, target 2026-10-27).
+Initialize Forge in a project. Creates the `.forge/` directory with state, event log, and knowledge base. Auto-detects installed AI tools via PATH scanning: `claude`, `codex`, and `agy` (Antigravity, driven by the Gemini adapter). Git is optional: init records whether `.git` exists and continues without it.
 
 ```bash
 forge init
@@ -22,14 +22,14 @@ forge init --name "my-project"
 **What it creates:**
 ```
 .forge/
-├── state.json       # Project metadata, auth modes, agent config
-├── plan.md          # Master plan (empty until forge plan --generate)
-├── plan.yaml        # Machine-readable plan
+├── .gitignore       # Ignores worktrees/ and results/
+├── state.json       # Project metadata, detected tools, agent config
+├── governance.json  # Empty governance scaffold (constitution, workstreams, audit trail)
+├── plan.md          # Plan template (only when there is no SPEC.md)
 ├── events.jsonl     # Append-only audit log
-├── tasks/           # Task files (T-xxx.md, V-xxx.md, F-xxx.md)
+├── tasks/           # Task files
 ├── knowledge/       # decisions/, learnings/, research/, patterns/
-├── findings/        # UAT findings
-└── signals/         # Agent completion signals
+└── results/         # Agent run results
 ```
 
 **Next steps shown after init:**
@@ -59,7 +59,7 @@ forge config claude.auth subscription  # Set Claude to subscription mode
 
 **Brain options:**
 - `rule-based` — Free heuristic engine. No API key needed. Uses keyword analysis for task planning.
-- `openai` — GPT-4o/o3/o4-mini via OpenAI API. Requires `OPENAI_API_KEY` in environment or `.env` file.
+- `openai` — OpenAI API. Models: `gpt-4o`, `gpt-4.1` (default), `gpt-5`, `gpt-5-mini`. Requires `OPENAI_API_KEY` in environment or `.env` file.
 
 ---
 
@@ -91,7 +91,7 @@ forge plan --from-findings         # Generate fix tasks from UAT findings
 
 ## forge status
 
-Show the task board, agent activity, and project health.
+Show the task board and agent activity. It shows no health score; use `forge doctor` for health.
 
 ```bash
 forge status                       # Default: 5 recent events
@@ -101,12 +101,14 @@ forge status --events 20           # Show 20 recent events
 | Flag | Description |
 |------|------------|
 | `-e, --events <n>` | Number of recent events to show (default: 5) |
+| `--budget` | Show the context-budget HUD (per-pane ctx% and PREP/COMPACT/STOP) instead |
+| `--json` | With `--budget`: machine-readable JSON |
+| `--all` | With `--budget`: include panes with no ctx gauge |
 
 **Output includes:**
 - Task board with status, assignment, and dependencies
 - Agent activity (which tool is working on what)
 - File lock state
-- Project health score
 - Recent event log
 
 ---
@@ -125,7 +127,7 @@ forge run --task T-001 --agent claude      # Single task mode
 | Flag | Description |
 |------|------------|
 | `-t, --task <id>` | Task ID (e.g., T-001). Omit for autonomous mode. |
-| `-a, --agent <name>` | Agent name (claude, codex, gemini). Omit for auto-assign. |
+| `-a, --agent <name>` | Agent name (claude, codex, gemini). Required with `--task`; omit both for autonomous mode. |
 | `-p, --parallel <n>` | Max parallel tasks in autonomous mode (default: 3) |
 | `--dry-run` | Show what would run without executing |
 
@@ -226,30 +228,26 @@ Findings are stored in `.forge/findings/` as JSON with severity classification.
 
 ## forge ship
 
-Post-UAT wrap-up. Completes the development lifecycle by generating a changelog, archiving build artifacts, sorting knowledge, suggesting a version bump, and cleaning state for the next cycle.
+Post-UAT wrap-up. Checks release debt, generates a changelog, suggests a version bump, archives build artifacts, and cleans state for the next cycle.
 
 ```bash
 forge ship                         # Interactive — walks through each step
 forge ship --auto                  # Non-interactive — auto-approve all steps
 forge ship --dry-run               # Show what would happen, don't execute
-forge ship --skip-release          # Everything except version bump + release
 ```
 
 | Flag | Description |
 |------|------------|
 | `--auto` | Auto-approve all steps (non-interactive) |
 | `--dry-run` | Preview without executing |
-| `--skip-release` | Skip version bump and release preparation |
 
 **What it does (in order):**
 
-1. **Changelog** — generates entries from completed tasks in Keep-a-Changelog format
-2. **Archive** — moves `.forge/tasks/`, `results/`, `signals/` to `.forge/archive/{date}/`
-3. **Knowledge sort** — promotes high-value learnings to `LEARNINGS.md`, archives the rest
-4. **Health check** — runs quality gates one final time
-5. **Version bump** — suggests semver bump (feature=minor, fix=patch), you confirm
-6. **Release prep** — stages files, generates commit message, outputs tag commands
-7. **Clean state** — resets `state.json`, clears completed tasks, keeps plan + knowledge
+0. **Release preflight** — checks that version surfaces agree (the same check as `forge doctor`); a FAIL stops the ship
+1. **Changelog** — generates entries from completed tasks in Keep-a-Changelog format and inserts them into `CHANGELOG.md` if it exists
+2. **Version bump suggestion** — prints a suggested semver bump; it changes no file
+3. **Archive** — moves `.forge/tasks/`, `results/` and `signals/` to `.forge/archive/{date}/` and copies `events.jsonl` there
+4. **Clean state** — with `--auto`, resets the task summary, phase and locks in `state.json`; without it, prints how to run it
 
 After `forge ship`, your project is clean and ready for the next `forge plan --generate` cycle.
 
@@ -263,11 +261,25 @@ Start the MCP server via stdio transport. AI tools connect to this to query and 
 forge mcp
 ```
 
-This is typically not run directly — the forge-plugin's `.mcp.json` automatically starts this when Claude Code loads the plugin and `forge` is in PATH.
+This is typically not run directly. The companion plugin `nxtg-forge-orchestrator` starts it when Claude Code loads that plugin and `forge` is installed. The `nxtg-forge` plugin does not register it. Install the companion with `claude plugin install nxtg-forge-orchestrator@nxtg-forge`.
 
-**Tools exposed**: `forge_get_tasks`, `forge_claim_task`, `forge_complete_task`, `forge_get_state`, `forge_get_plan`, `forge_capture_knowledge`, `forge_get_knowledge`, `forge_check_drift`, `forge_get_health`, `forge_set_project`.
+**Tools exposed (12)**: `forge_get_tasks`, `forge_claim_task`, `forge_complete_task`, `forge_create_task`, `forge_get_state`, `forge_get_plan`, `forge_get_events`, `forge_capture_knowledge`, `forge_get_knowledge`, `forge_check_drift`, `forge_get_health`, `forge_set_project`.
 
 See [MCP Tools Reference](C-12-mcp-tools.md) for input/output schemas.
+
+---
+
+## forge doctor
+
+Aggregate health verdict: quality gates, release debt and drift, in one fail-closed exit code. Flags: `--strict` (a WARN also exits non-zero), `--json` (schema `forge.doctor.report.v1`).
+
+## forge pod
+
+Declarative tmux pod management (Unix only): `forge pod start|stop|list|validate|show|state|ps|gc|reload|completions|preflight|adopt|unadopt <...>`. Run `forge pod --help` for each verb.
+
+## forge uninstall
+
+Removes the `forge` binary. `--force` also removes `.forge/` in the current project and `~/.forge/`.
 
 ---
 

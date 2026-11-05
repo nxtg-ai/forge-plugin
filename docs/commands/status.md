@@ -14,7 +14,7 @@
 
 `/nxtg-forge:status` is the zero-context-friendly command you run at the start of every session. It gathers data from eight sources in parallel -- project metadata, git history, test results, governance state, orchestrator task board, build output, agent/command/hook inventory, and health scores -- then renders a richly formatted markdown dashboard with progress bars, tables, and color-coded headers.
 
-The health section is the centerpiece: five dimensions (Tests, Types, Security, Docs, Project) are scored against their actual point maximums and displayed as 20-character Unicode progress bars. An overall letter grade (A through F) gives you an instant read on project health. Every section uses pipe-delimited markdown tables that render with borders, bold text, and color in Claude Code's TUI.
+The health section is the centerpiece: five dimensions (Tests, Types, Security, Docs, Project) are scored against their actual point maximums and displayed as 20-character ASCII bars (`[####....]`). An overall letter grade (A through F) gives you an instant read on project health. Every section uses pipe-delimited markdown tables that render with borders, bold text, and color in Claude Code's TUI.
 
 Without this command, you would need to run `git status`, `git log`, your test runner, your type checker, `npm audit`, and manually inspect governance files -- then mentally combine the results. `/nxtg-forge:status` does all of that in one invocation and ends with an interactive menu that turns the dashboard from a dead-end into a launchpad for your next action.
 
@@ -51,14 +51,14 @@ When you need deeper analysis, use `/nxtg-forge:status-enhanced` for 7-day commi
 Produces a styled dashboard with sections for Git, Health (with progress bars), Tests, Build, Governance, Orchestrator, and Tooling. The Health section looks like:
 
 ```
-| Dimension   | Bar                  | Score    |
-|-------------|----------------------|----------|
-| Tests       | ████████████████░░░░ | 16/20    |
-| Types       | ████████████████████ | 10/10    |
-| Security    | ████████████░░░░░░░░ | 10/15    |
-| Docs        | ██████████░░░░░░░░░░ | 10/20    |
-| Project     | ████████████████████ | 35/35    |
-| **Overall** | **████████████░░░░░░░** | **B (81/100)** |
+| Dimension | Score | Bar | Status |
+|---|---|---|---|
+| Tests | 16/20 | [################....] | [WARN] |
+| Types | 10/10 | [####################] | [OK] |
+| Security | 10/15 | [#############.......] | [WARN] |
+| Docs | 10/20 | [##########..........] | [WARN] |
+| Project | 35/35 | [####################] | [OK] |
+| **Overall** | **B (81/100)** | [################....] | [WARN] |
 ```
 
 After the dashboard, an interactive menu offers four contextual options like "Add tests to boost health" or "Run gap analysis."
@@ -84,7 +84,6 @@ Run `/nxtg-forge:status --git` when you only need to see recent commits and unco
 | **/nxtg-forge:gap-analysis** | Status shows the score; gap-analysis explains why and how to fix it |
 | **/nxtg-forge:checkpoint** | Save the current state shown by status before risky changes |
 | **/nxtg-forge:test** | The interactive menu links directly to test runs when coverage is low |
-| **/nxtg-forge:command-center** | Status is run automatically inside the command center's Health Check option |
 
 ## Level Progression
 
@@ -92,7 +91,6 @@ Run `/nxtg-forge:status --git` when you only need to see recent commits and unco
 |-------|-------------|
 | **L1 Vibe Coder** | Full dashboard with git, tests, build, governance, and plugin tooling inventory |
 | **L2 Pro Builder** | Orchestrator section shows task board, file locks, knowledge entries, and drift status via MCP |
-| **L3 Ship Lord** | Health scores are also visualized in the forge-ui dashboard at localhost:5050 |
 
 ## Tips & Gotchas
 

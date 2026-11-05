@@ -69,7 +69,7 @@ The debugging checklist is the most immediately valuable part of this skill. Whe
 |-------|-------------|
 | **claude-code-framework** | Platform architecture that these dev environment patterns support |
 | **coding-standards** | Code patterns (URL construction, config management) applied to dev setup |
-| **security** | Security considerations for network-exposed dev servers |
+| **owasp-security** | Security considerations for network-exposed dev servers |
 
 ## Tips
 
@@ -78,4 +78,4 @@ The debugging checklist is the most immediately valuable part of this skill. Whe
 
 ---
 
-*See also: [security](security.md) | [claude-code-framework](claude-code-framework.md)*
+*See also: owasp-security | [claude-code-framework](claude-code-framework.md)*

@@ -50,16 +50,16 @@ For initial installation, use `claude plugin marketplace add nxtg-ai/forge-plugi
 ## Forge Update
 
 **Installed:** nxtg-forge (local)
-**Marketplace version:** v3.5.0
+**Marketplace version:** vX.Y.Z
 
-Syncing marketplace... SYNCED: v3.5.1
+Syncing marketplace... SYNCED: vX.Y.Z
 Updating plugin... Updated.
 
 ## Update Complete
 
 | Component | Status |
 |-----------|--------|
-| Marketplace | synced to v3.5.1 |
+| Marketplace | synced to vX.Y.Z |
 | Plugin | updated |
 | Governance | valid |
 | Hooks | active |
@@ -106,8 +106,6 @@ If you are testing a pre-release version with `--plugin-dir`, use `/nxtg-forge:u
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full plugin update with marketplace sync, escalation chain, and config check |
-| **L2 Pro Builder** | Update also checks forge-orchestrator binary version compatibility |
-| **L3 Ship Lord** | Update notifications shown in the forge-ui dashboard |
 
 ## Tips & Gotchas
 

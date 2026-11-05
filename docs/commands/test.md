@@ -12,7 +12,7 @@
 
 ## What It Does
 
-`/nxtg-forge:test` runs your test suite and transforms raw test output into a structured, actionable report. It starts with a pre-flight check to verify your test infrastructure is available, then constructs the appropriate test command based on your arguments, executes it, and parses the results into a summary showing total/passed/failed/skipped counts, duration, coverage metrics, and per-suite breakdowns.
+`/nxtg-forge:test` runs your test suite with vitest (it runs no other test runner) and transforms raw test output into a structured, actionable report. It starts with a pre-flight check to verify your test infrastructure is available, then constructs the appropriate test command based on your arguments, executes it, and parses the results into a summary showing total/passed/failed/skipped counts, duration, coverage metrics, and per-suite breakdowns.
 
 The real value is in the analysis layer. When tests fail, the command does not just show the error -- it prioritizes failures by severity, provides quick-fix hints based on common error patterns, and suggests next commands. When all tests pass, it identifies coverage gaps and recommends files that need tests. When no tests exist at all, it guides you toward `/nxtg-forge:gap-analysis --scope testing` to plan your testing strategy.
 
@@ -110,12 +110,10 @@ Run `/nxtg-forge:test --coverage` and pipe the output into a checkpoint with `/n
 | Level | What You Get |
 |-------|-------------|
 | **L1 Vibe Coder** | Full test execution with structured results, failure analysis, and recommendations |
-| **L2 Pro Builder** | Test results feed into orchestrator health scores via the governance MCP |
-| **L3 Ship Lord** | Test trends and coverage history visible in the forge-ui dashboard |
 
 ## Tips & Gotchas
 
-- The command auto-detects vitest as the test runner. For projects using jest, pytest, or cargo test, the MCP `forge_run_tests` tool handles framework detection.
+- The command runs vitest only (`npx vitest`). It does not call the governance MCP `forge_run_tests` tool. For jest, pytest, or cargo test, run your test runner directly.
 - If vitest is not installed, the command tells you and suggests `npm install`. It does not silently fail.
 - The `--watch` flag starts an interactive mode -- you stay in the test runner until you exit.
 - Pre-flight checks verify the test infrastructure before running. If `npx vitest --version` fails, you get clear guidance on what to install.

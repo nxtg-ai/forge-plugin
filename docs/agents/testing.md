@@ -130,7 +130,6 @@ Testing:
 |-------|-------------|
 | **L1 Vibe Coder** | Test generation for components, services, and utilities. Coverage gap analysis. Flaky test diagnosis. MOCK_SHAPE_SYNC, TYPECHECK_ZERO_TOLERANCE, NEW_FILE_NEW_TEST, and AUTH_E2E_GUARD enforcement rules. Worktree isolation for parallel execution. |
 | **L2 Pro Builder** | Test results correlated with orchestrator tasks. Coverage tracked as part of task completion criteria via `forge_complete_task`. |
-| **L3 Ship Lord** | Test results and coverage trends displayed in the forge-ui dashboard. Pass/fail status visible alongside task progress. |
 
 ## Tips & Gotchas
 

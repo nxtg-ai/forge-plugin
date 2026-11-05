@@ -127,7 +127,6 @@ Growth Engine:
 |-------|-------------|
 | **L1 Vibe Coder** | Channel playbooks, content calendars, launch planning, SEO audits, community strategy, analytics setup |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records growth experiments and learnings; `forge_get_knowledge` recalls past launch data |
-| **L3 Ship Lord** | + Dashboard panel showing growth metrics, content performance, and funnel conversion rates |
 
 ## Tips & Gotchas
 

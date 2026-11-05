@@ -12,9 +12,12 @@ Common issues and fixes for forge-ui, the forge CLI, and the plugin. If somethin
 
 **Fix**:
 ```bash
-cd ~/projects/NXTG-Forge/v3
+# first time: git clone --branch v3.5.3 https://github.com/nxtg-ai/forge-ui && cd forge-ui && npm install
+cd forge-ui
 npm run dev
 ```
+
+The first visit asks for the access token: run `npx tsx src/server/auth/print-auth-url.ts` in the forge-ui folder and open the link it prints (the token is in `~/.config/nxtg-forge/ui-secret`).
 
 Both services must be running: Vite UI on port 5050 and the API server on port 5051. The `npm run dev` command starts both.
 
@@ -25,8 +28,8 @@ ss -tlnp | grep 505
 
 Expected output:
 ```
-LISTEN 0.0.0.0:5050   # Vite UI
-LISTEN 0.0.0.0:5051   # API server
+LISTEN 127.0.0.1:5050   # Vite UI
+LISTEN 127.0.0.1:5051   # API server
 ```
 
 If port 5051 is missing, the API server failed to start. Check for TypeScript errors:
@@ -44,8 +47,8 @@ npx tsx src/server/api-server.ts
 
 **Fix 1 — Check the API server is running:**
 ```bash
-curl http://localhost:5051/api/health
-# Expected: {"status":"healthy"}
+curl -H "Authorization: Bearer $(cat ~/.config/nxtg-forge/ui-secret)" http://localhost:5051/api/health
+# Expected: HTTP 200 (401 means the token is missing or wrong)
 ```
 
 **Fix 2 — Check for origin mismatch:**
@@ -54,11 +57,12 @@ The WebSocket server only accepts connections from allowlisted origins. If you'r
 Default allowed origins:
 - `http://localhost:5050`
 - `http://127.0.0.1:5050`
-- `http://localhost:5173`
+- `http://localhost:5051`
+- `http://127.0.0.1:5051`
 
-To allow additional origins, set `ALLOWED_ORIGINS` in your `.env`:
+To allow other origins, set `ALLOWED_ORIGINS` in the environment when you start forge-ui. It replaces the defaults, so list the local origins you still use:
 ```bash
-ALLOWED_ORIGINS=http://192.0.2.10:5050,http://localhost:5050
+ALLOWED_ORIGINS=http://192.0.2.10:5050,http://localhost:5050,http://127.0.0.1:5050 npm run dev
 ```
 
 **Fix 3 — Check for a firewall block (WSL2):**
@@ -168,7 +172,7 @@ ps aux | grep pty
 
 **Symptom**: `http://192.0.2.10:5050` times out when accessed from Windows, phone, or another machine.
 
-**Root cause**: Windows Firewall blocks inbound connections to WSL2, even though WSL2 binds to `0.0.0.0`.
+**Root cause**: forge-ui listens on `127.0.0.1` only unless started with `FORGE_UI_HOST=0.0.0.0` (and `ALLOWED_ORIGINS`, see below). After that, Windows Firewall can still block inbound connections to WSL2.
 
 **Fix — Add a Windows Firewall rule** (PowerShell as Administrator):
 ```powershell
@@ -195,13 +199,12 @@ Then access via `http://<wsl2-ip>:5050` from any device on the same network.
 
 **Root cause**: The remote origin isn't in the WebSocket allowlist.
 
-**Fix**: Set `ALLOWED_ORIGINS` in `v3/.env` before starting the dev server:
+**Fix**: Start the dev server with `FORGE_UI_HOST` and `ALLOWED_ORIGINS` set:
 ```bash
-# v3/.env
-ALLOWED_ORIGINS=http://192.0.2.10:5050,http://localhost:5050,http://127.0.0.1:5050
+FORGE_UI_HOST=0.0.0.0 ALLOWED_ORIGINS=http://192.0.2.10:5050,http://localhost:5050,http://127.0.0.1:5050 npm run dev
 ```
 
-Restart `npm run dev` after changing `.env`.
+Use `<your-lan-ip>` in place of `192.0.2.10`. Every request still needs the access token.
 
 ---
 
@@ -230,42 +233,28 @@ The UI uses relative URLs (`/api/...`) which Vite proxies to the API server. Thi
 
 **Symptom**: Running `forge` gives a Python error or unexpected output about "forge-alchemy" or similar Python tools.
 
-**Root cause**: `pip install forge` installs a Python `forge` binary to `~/.local/bin/`, which may appear before `~/.cargo/bin/` in your PATH.
+**Root cause**: Another program named `forge` (for example from `pip install forge`) appears before the NXTG `forge` in your PATH. The installer puts NXTG `forge` in `~/.local/bin/`.
 
 **Fix — Check PATH order:**
 ```bash
 which forge
-# Should be: ~/.cargo/bin/forge (or ~/.local/bin/forge-orca if using the dev binary)
+# Should be: ~/.local/bin/forge
 ```
 
 **Fix — Reorder PATH** (add to `~/.bashrc` or `~/.zshrc`):
 ```bash
-export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 **Fix — Use the explicit path:**
 ```bash
-~/.cargo/bin/forge status
+~/.local/bin/forge status
 ```
 
 **Fix — Uninstall the Python package:**
 ```bash
 pip uninstall forge
 ```
-
----
-
-### `forge init` fails — "not a git repository"
-
-**Symptom**: `forge init` exits with an error about git.
-
-**Fix**:
-```bash
-git init
-forge init
-```
-
-Forge requires a git repository. If you're starting a brand new project, initialize git first.
 
 ---
 
@@ -316,7 +305,7 @@ which agy
 If any are missing, install them:
 - Claude Code: `npm install -g @anthropic-ai/claude-code`
 - Codex CLI: `npm install -g @openai/codex`
-- Antigravity (`agy`), which the Gemini adapter drives: install it from Google's Antigravity distribution. Gemini CLI itself is not supported yet (build B1, target 2026-10-27).
+- Antigravity (`agy`), which the Gemini adapter drives: install it from Google's Antigravity distribution.
 
 ---
 
@@ -324,25 +313,18 @@ If any are missing, install them:
 
 **Symptom**: Claude Code shows "forge_get_tasks not found" or the forge MCP tools are unavailable.
 
-**Fix 1 — Check `.mcp.json` is in your project root:**
-```json
-{
-  "mcpServers": {
-    "forge": {
-      "command": "forge",
-      "args": ["mcp"],
-      "cwd": "/path/to/your/project"
-    }
-  }
-}
+**Fix 1 — Install the companion plugin.** The orchestrator tools come from the `nxtg-forge-orchestrator` plugin, not from `nxtg-forge` or a project `.mcp.json`:
+```bash
+claude plugin install nxtg-forge-orchestrator@nxtg-forge
 ```
+Then start a new Claude Code session.
 
 **Fix 2 — Test the MCP server directly:**
 ```bash
 echo '{"jsonrpc":"2.0","method":"initialize","params":{},"id":1}' | forge mcp
 ```
 
-Expected: a JSON response with `serverInfo` containing `"name":"forge-orchestrator"`.
+Expected: a JSON response with `serverInfo` containing `"name":"forge-mcp"`.
 
 **Fix 3 — Confirm `forge init` was run** in the project directory. The MCP server needs `.forge/state.json` to exist.
 
@@ -351,17 +333,7 @@ Expected: a JSON response with `serverInfo` containing `"name":"forge-orchestrat
 which forge
 ```
 
-Claude Code spawns the MCP server using the PATH it inherits. If forge isn't findable, the server won't start. Add an absolute path in `.mcp.json` if needed:
-```json
-{
-  "mcpServers": {
-    "forge": {
-      "command": "/home/username/.cargo/bin/forge",
-      "args": ["mcp"]
-    }
-  }
-}
-```
+The companion plugin's launcher looks for `forge` on the PATH Claude Code inherits and in the installer's location. If it finds another program named `forge` first, set `FORGE_BIN` to the NXTG forge path (for example `~/.local/bin/forge`) before starting Claude Code.
 
 ---
 
@@ -387,7 +359,7 @@ After installation, restart Claude Code and the commands will be available.
 
 **Root cause**: The MCP server isn't connected, so the plugin falls back to placeholder responses.
 
-**Fix**: Ensure the forge MCP server is configured in `.mcp.json` (see [MCP server not starting](#mcp-server-not-starting--tool-not-found-in-claude-code) above) and that `forge init` has been run in the current project.
+**Fix**: For orchestrator tools, install the companion plugin (see [MCP server not starting](#mcp-server-not-starting--tool-not-found-in-claude-code) above) and run `forge init` in the current project.
 
 ---
 
@@ -411,7 +383,6 @@ Do **not** lower the threshold to fix this. Add real tests.
 ## Getting More Help
 
 - **GitHub Issues**: https://github.com/nxtg-ai/forge-ui/issues
-- **Discord**: https://discord.gg/nxtg-ai (coming soon)
 - **Docs**: https://forge.nxtg.ai/forge/docs
 
 When filing a bug report, include:

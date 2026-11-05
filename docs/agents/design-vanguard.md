@@ -113,7 +113,6 @@ Design Vanguard:
 |-------|-------------|
 | **L1 Vibe Coder** | Design system architecture, component design, accessibility audits, CLI UX design, error message templates |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records design decisions; `forge_get_knowledge` recalls past design patterns and audit findings |
-| **L3 Ship Lord** | + Dashboard integration with live design token preview, component gallery, and accessibility score tracking |
 
 ## Tips & Gotchas
 

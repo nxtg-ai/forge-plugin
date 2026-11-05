@@ -1,12 +1,12 @@
 # Slash Commands Reference
 
-All 23 slash commands provided by the forge-plugin. These are available inside Claude Code after installing the plugin.
+All 24 slash commands provided by the forge-plugin. These are available inside Claude Code after installing the plugin.
 
 ## Governance
 
 | Command | Description |
 |---------|------------|
-| `/nxtg-forge:status` | Display complete project state — health score, git status, test results, security scan. Zero-context-friendly (safe to run at any point). |
+| `/nxtg-forge:status` | Display complete project state — health score, git status, test count, governance, orchestrator state. Zero-context-friendly (safe to run at any point). |
 | `/nxtg-forge:status-enhanced` | Enhanced status with detailed dashboard and metrics. Includes dependency analysis, code quality trends, and workstream breakdown. |
 | `/nxtg-forge:gap-analysis` | Analyze project gaps across 5 dimensions: testing, docs, security, architecture, and performance. Returns prioritized remediation plan. |
 | `/nxtg-forge:compliance` | Scan tech stack, check license compatibility, and generate SBOM (Software Bill of Materials). Covers OWASP, dependency licenses, and regulatory requirements. |
@@ -16,7 +16,8 @@ All 23 slash commands provided by the forge-plugin. These are available inside C
 
 | Command | Description |
 |---------|------------|
-| `/nxtg-forge:feature "description"` | Add a new feature with full agent orchestration. Spawns planner → builder → tester → security reviewer. Pass a description of what you want to build. |
+| `/nxtg-forge:feature "description"` | Add a new feature with agent orchestration. Spawns builder and testing in parallel, then guardian. With the orchestrator, it creates, claims and completes one task. Pass a description of what you want to build. |
+| `/nxtg-forge:task begin\|status\|tests\|implement\|abort` | Begin, inspect, relax or end an enforced task: edits to existing test files are refused, and Claude cannot stop until the project's test command passes. |
 | `/nxtg-forge:spec "description"` | Generate a technical specification for a feature. Produces architecture, data flow, API contracts, and test strategy. |
 | `/nxtg-forge:agent-assign` | Assign tasks to specialized agents. Routes work to the right agent based on task type (security, testing, performance, etc.). |
 | `/nxtg-forge:integrate` | Set up third-party service integrations. Guides through API key setup, SDK installation, and connection validation. |
@@ -25,7 +26,7 @@ All 23 slash commands provided by the forge-plugin. These are available inside C
 
 | Command | Description |
 |---------|------------|
-| `/nxtg-forge:test` | Execute project tests with detailed analysis. Auto-detects test runner (vitest, jest, pytest, cargo test). Reports failures, coverage, and trends. |
+| `/nxtg-forge:test` | Run the project's tests with vitest (`npx vitest run`) and report failures and, with `--coverage`, coverage. It runs vitest only. |
 | `/nxtg-forge:deploy` | Deploy with pre-flight validation and safety checks. Runs quality gates, confirms branch state, and validates environment before deployment. |
 | `/nxtg-forge:optimize` | Analyze and optimize codebase for performance and maintainability. Covers bundle size, dependency weight, hot paths, and code complexity. |
 
@@ -50,7 +51,7 @@ All 23 slash commands provided by the forge-plugin. These are available inside C
 | Command | Description |
 |---------|------------|
 | `/nxtg-forge:init` | Initialize Forge in a project — 60-second setup wizard. Creates governance hooks, detects project stack, and configures quality baselines. |
-| `/nxtg-forge:dashboard` | Open the Forge governance dashboard in your browser. Requires forge-ui (L3) to be running on port 5050. |
+| `/nxtg-forge:dashboard` | Write a static HTML governance dashboard and open it in your browser. Needs no server and works at L1. |
 | `/nxtg-forge:update` | Update Forge to the latest version. Syncs past Claude Code bug [#29071](https://github.com/anthropics/claude-code/issues/29071) which causes `git fetch` without `git merge`. |
 
 ## CEO Decision Loop
@@ -62,7 +63,7 @@ All 23 slash commands provided by the forge-plugin. These are available inside C
 
 ## Usage Tips
 
-- **Start with `/nxtg-forge:status`** — it's the fastest way to understand any project's state
+- **Start with `/nxtg-forge:status`** — a quick way to understand a project's state
 - **Use `/nxtg-forge:gap-analysis` after major changes** — an optional structured review across 5 dimensions (no accuracy claim)
 - **Save checkpoints before risky changes** — `/nxtg-forge:checkpoint` then `/nxtg-forge:restore` if things go wrong
 - **Commands work without L2** — all slash commands function with just the plugin installed. L2 (orchestrator) adds task management and knowledge features but is not required.

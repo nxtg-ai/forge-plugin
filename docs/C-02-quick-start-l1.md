@@ -9,7 +9,7 @@ claude plugin marketplace add nxtg-ai/forge-plugin
 claude plugin install nxtg-forge
 ```
 
-That's it. The plugin loads 23 agents, 23 slash commands, 32 knowledge skills, and 7 governance hooks. Everything is pure markdown — no build step, no compilation.
+That's it. The plugin loads 33 agents, 24 slash commands, 27 knowledge skills, and 27 hook registrations (including 4 blocking security guards). Everything is pure markdown — no build step, no compilation.
 
 ## Your First Command
 
@@ -34,7 +34,7 @@ You'll see:
 /nxtg-forge:gap-analysis
 ```
 
-This scans your project across 5 dimensions and tells you exactly what's missing:
+This runs fixed checks across 5 dimensions and prints what they found. It makes no accuracy claim: the checks find what they look for, and a clean report does not mean nothing is wrong.
 
 | Dimension | What It Checks |
 |-----------|---------------|
@@ -44,7 +44,7 @@ This scans your project across 5 dimensions and tells you exactly what's missing
 | Architecture | File organization, large files, circular patterns |
 | Performance | Bundle size, dependency count, build configuration |
 
-Each gap comes with an actionable recommendation and priority level.
+At least one recommendation follows the checks, then a model review labelled as carrying no accuracy claim.
 
 ## Build a Feature
 
@@ -52,14 +52,13 @@ Each gap comes with an actionable recommendation and priority level.
 /nxtg-forge:feature "add user authentication"
 ```
 
-This spawns a multi-agent team inside Claude Code:
+This runs an agent team inside Claude Code in three phases:
 
-1. **Planner** designs the architecture and breaks work into steps
-2. **Builder** implements the feature with tests
-3. **Guardian** runs quality checks on the output
-4. **Security** reviews for vulnerabilities
+1. **Planner** confirms the interface contracts in the feature spec
+2. **Builder** writes the source while **Testing** writes the tests, in parallel
+3. **Guardian** runs a quality gate: tests pass, no type errors, no security issues
 
-You watch. They coordinate. The output is production-ready code with tests.
+You watch. They coordinate. Guardian reports what it found.
 
 ## What's Running Behind the Scenes
 
@@ -74,7 +73,7 @@ The plugin installs an MCP governance server that provides 8 tools:
 | `forge_security_scan` | Pattern-based secret and vulnerability detection |
 | `forge_list_checkpoints` | Saved governance snapshots |
 | `forge_get_governance_state` | Full governance state object |
-| `forge_open_dashboard` | Generate and launch HTML health dashboard |
+| `forge_open_dashboard` | Write a static HTML health snapshot and open it in the browser |
 
 These tools run automatically — agents and hooks call them as needed. You don't invoke them directly.
 
@@ -94,7 +93,7 @@ These tools run automatically — agents and hooks call them as needed. You don'
 
 L1 works standalone. You never need to install anything else.
 
-But if you start running **multiple AI tools** on the same codebase (Claude Code + Codex + Gemini), you'll hit file conflicts and lost context. That's when [L2 Pro Builder](C-03-upgrade-to-pro-builder.md) earns its keep (today for Claude Code; Codex CLI as a task runner; Gemini CLI support in development (build B1, target 2026-10-27)).
+But if you start running **multiple AI tools** on the same codebase (for example Claude Code + Codex CLI), you'll hit file conflicts and lost context. That's when [L2 Pro Builder](C-03-upgrade-to-pro-builder.md) helps (Forge orchestrates Claude Code, with Codex CLI and Antigravity CLI (`agy`) as task runners).
 
 Signs you need L2:
 - Two AI tools edited the same file and one overwrote the other
@@ -105,5 +104,5 @@ Signs you need L2:
 ## Next Steps
 
 - [Upgrade to Pro Builder (L2)](C-03-upgrade-to-pro-builder.md) — Multi-tool orchestration
-- [Slash Commands Reference](C-11-slash-commands.md) — All 23 commands in detail
-- [Agents Reference](C-13-agents-skills.md) — When to use each of the 23 agents
+- [Slash Commands Reference](C-11-slash-commands.md) — All 24 commands in detail
+- [Agents Reference](C-13-agents-skills.md) — When to use each of the 33 agents

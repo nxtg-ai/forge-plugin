@@ -14,7 +14,7 @@ plugins/nxtg-forge/
 ├── hooks/scripts/               # Bash lifecycle hooks
 └── servers/governance-mcp/      # Node.js MCP server
     ├── index.mjs                # Server entry point + MCP wiring
-    ├── tools.mjs                # Tool implementations (9 exported functions)
+    ├── tools.mjs                # Tool implementations
     └── tests/                   # Vitest test suite
 ```
 
@@ -26,30 +26,28 @@ cd forge-plugin/plugins/nxtg-forge/servers/governance-mcp
 npm install
 ```
 
-That's the only install step. Plugin content (agents, skills, commands) needs no setup.
+`npm install` installs the test tooling only (Vitest and the MCP SDK's client, both devDependencies); the server itself has no npm dependencies and needs Node.js 20 or newer. Plugin content (agents, skills, commands) needs no setup.
 
 ## Running Tests
 
-Two test suites must both pass before any commit:
+Run these from `plugins/nxtg-forge/servers/governance-mcp`:
 
 ```bash
-# Primary CI — Vitest (run from governance-mcp/)
-cd plugins/nxtg-forge/servers/governance-mcp
-npx vitest run
-# Expected: 27/27 pass
+# What CI runs: Vitest, then the L1 and binding journeys
+npm run test:ci
 
-# Full suite — node:test
-FORGE_TEST_MODE=1 node --test __tests__/health.test.mjs
-# Expected: 43/43 pass
+# Everything: also the L2 journey (needs the pinned `forge` binary on PATH)
+# and the L3 journey (needs a forge-ui checkout with node_modules, in FORGE_UI_DIR or a sibling directory)
+npm test
 ```
 
-`FORGE_TEST_MODE=1` prevents the MCP server from calling `server.connect()`, which would block the process. Always set this flag when running node:test directly.
+CI runs `npm run test:ci` only; L2 and L3 run locally. `vitest.config.mjs` sets `FORGE_TEST_MODE=1`, which keeps `index.mjs` from starting its stdio loop when a test imports it. Set it yourself if you import `index.mjs` outside Vitest.
 
 ## Plugin Content
 
 ### Adding a Command
 
-Create `plugins/nxtg-forge/commands/[FRG]-your-command.md`:
+Create `plugins/nxtg-forge/commands/your-command.md`:
 
 ```markdown
 ---
@@ -103,15 +101,14 @@ The governance MCP server lives entirely in `servers/governance-mcp/`. Tool logi
 To test a tool change locally:
 
 ```bash
-# Start the server in test mode to verify it initializes cleanly
-FORGE_TEST_MODE=1 node index.mjs
+# Start the server and send it one initialize request
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' | node index.mjs
 
 # Run tests after any change to tools.mjs or index.mjs
-npx vitest run
-FORGE_TEST_MODE=1 node --test __tests__/health.test.mjs
+npm run test:ci
 ```
 
-Do not add new MCP tools that duplicate tools already exposed by the orchestrator MCP server (`forge_get_tasks`, `forge_claim_task`, `forge_complete_task`, `forge_get_state`, `forge_get_plan`, `forge_capture_knowledge`, `forge_get_knowledge`, `forge_check_drift`, `forge_set_project`). The plugin MCP server owns governance/health tooling only.
+Do not add new MCP tools that duplicate tools already exposed by the orchestrator MCP server (`forge_get_tasks`, `forge_create_task`, `forge_claim_task`, `forge_complete_task`, `forge_get_state`, `forge_get_plan`, `forge_capture_knowledge`, `forge_get_knowledge`, `forge_check_drift`, `forge_get_health`, `forge_get_events`, `forge_set_project`). The plugin MCP server owns governance/health tooling only.
 
 ## Pull Request Guidelines
 
@@ -131,10 +128,12 @@ Scopes: `governance-mcp`, `agents`, `commands`, `skills`, `hooks`.
 - `feat(*)` → minor bump (3.4.x → 3.5.0)
 - `fix(*)` → patch bump (3.4.7 → 3.4.8)
 
-Three files must stay in sync on every release:
+These version fields must agree on every release (`tests/version-surface.test.mjs` checks them):
+- `.claude-plugin/plugin.json`
 - `plugins/nxtg-forge/.claude-plugin/plugin.json`
-- `.claude-plugin/marketplace.json`
-- `plugins/nxtg-forge/servers/governance-mcp/package.json`
+- `plugins/nxtg-forge-orchestrator/.claude-plugin/plugin.json`
+- both plugin entries in `.claude-plugin/marketplace.json`
+- `plugins/nxtg-forge/servers/governance-mcp/package.json` and its `package-lock.json`
 
 ### Contributor License Agreement (CLA)
 
@@ -155,11 +154,11 @@ The CLA document is in [`CLA.md`](./CLA.md) (based on Apache ICLA terms). Bots a
 ### Before Submitting
 
 1. CLA signed (first-time contributors only)
-2. Both test suites pass (vitest + node:test)
+2. `npm run test:ci` passes
 2. YAML frontmatter is present on any new agent/skill/command
 3. No absolute paths in plugin content — use `${CLAUDE_PLUGIN_ROOT}` instead
-4. No blocking logic added to hooks (all hooks are advisory/non-blocking)
-5. Version bumped and all three version files updated if the change is user-facing
+4. No new blocking hook without review. The security guards, the enforced-task guard and gate, the required-output gate and the CEO-loop Stop hook block by design; every other hook is advisory
+5. Version bumped in every version field above if the change is user-facing
 
 ## Code Style
 

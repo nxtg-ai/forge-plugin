@@ -12,8 +12,6 @@ This is the same coordination problem human engineering teams have faced for dec
 
 Forge decomposes your project spec into tasks, assigns each task to the right AI tool, locks files so tools don't step on each other, captures every decision in a searchable knowledge base, and detects when work drifts from your spec.
 
-It's the tech lead that never sleeps.
-
 ## Three Levels, Your Choice
 
 Forge is designed as a graduated system. Start with what you need. Go deeper when the pain demands it.
@@ -22,9 +20,9 @@ Forge is designed as a graduated system. Start with what you need. Go deeper whe
 
 | Level | Name | What You Get | Install Time |
 |-------|------|-------------|-------------|
-| **L1** | Vibe Coder | 23 AI agents, 23 slash commands, automated quality checks inside Claude Code | 30 seconds |
+| **L1** | Vibe Coder | 33 AI agents, 24 slash commands, automated quality checks inside Claude Code | 30 seconds |
 | **L2** | Pro Builder | Multi-tool orchestration, file locking, task planning, knowledge capture, TUI dashboard | 60 seconds |
-| **L3** | Ship Lord | Visual web dashboard, Infinity Terminal (sessions that survive browser close), full mission control | 2 minutes |
+| **L3** | Ship Lord | Web dashboard with a health score, Infinity Terminal (a shell that survives a closed tab or a network drop) | 2 minutes |
 
 Each level builds on the last. Nothing forces you to go deeper. **Adoption follows the pain.**
 

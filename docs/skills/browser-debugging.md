@@ -32,7 +32,7 @@ The skill catalogs every available Playwright MCP tool: `browser_navigate` for U
 
 ### Screenshot and DOM Inspection
 
-Two complementary inspection methods: `browser_screenshot` captures the page as an image for visual verification, while `browser_snapshot` returns the accessibility tree as structured data for programmatic assertions. Agents learn to use screenshots for visual confirmation and snapshots for element discovery (finding nav items, buttons, or specific components).
+Two complementary inspection methods: `browser_take_screenshot` captures the page as an image for visual verification, while `browser_snapshot` returns the accessibility tree as structured data for programmatic assertions. Agents learn to use screenshots for visual confirmation and snapshots for element discovery (finding nav items, buttons, or specific components).
 
 ### Console and Network Monitoring
 

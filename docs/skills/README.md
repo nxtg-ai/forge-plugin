@@ -1,16 +1,16 @@
 # Skills Reference
 
-> 33 knowledge modules that auto-load when agents need them. Skills are the expertise behind the agents — patterns, conventions, best practices, and anti-patterns that make AI output match senior engineering standards.
+> 27 knowledge modules. Most load automatically when a task needs them; 8 load only when you invoke them. Skills are the expertise behind the agents — patterns, conventions, best practices, and anti-patterns that make AI output match senior engineering standards.
 
-**You don't need to configure, invoke, or manage skills. They are 100% automatic.** When an agent works on a task, the relevant skills load silently in the background. There is nothing to install, nothing to enable, nothing to learn. Just use Forge normally — skills do the rest.
+**Most skills need no setup.** When an agent works on a task, the relevant skills load in the background. Eight skills set `disable-model-invocation: true` and load only when you invoke them as `/nxtg-forge:<skill>`: architecture, ceo-loop, claude-code-framework, codex-framework, coding-standards, domain-knowledge, gemini-framework and skill-development.
 
 ---
 
 ## How Skills Work
 
-Skills are contextual knowledge documents, not executable agents. When an agent starts working, Claude Code matches the task context against skill descriptions and loads the most relevant ones automatically. You never invoke skills directly — they activate when needed.
+Skills are contextual knowledge documents, not executable agents. When an agent starts working, Claude Code matches the task context against skill descriptions and loads the most relevant ones automatically. The eight invoke-only skills listed above are the exception: they load only when you type `/nxtg-forge:<skill>`.
 
-**Example:** You ask Builder to implement a REST API. Claude Code loads the `architecture` skill (system design patterns), the `coding-standards` skill (naming conventions, error handling), and the `core-testing` skill (test strategy). Builder's output reflects all three — proper structure, clean code, testable interfaces.
+**Example:** You ask Builder to implement a REST API. Claude Code can load the `testing` skill (test methodology) and the `runtime-validation` skill (validation at system boundaries) on its own. For layering and naming guidance, invoke `/nxtg-forge:architecture` and `/nxtg-forge:coding-standards` as well.
 
 Skills are the difference between "AI-generated code" and "code that looks like your senior engineer wrote it."
 
@@ -33,7 +33,7 @@ With skills loaded, agents know:
 
 ---
 
-## All 32 Skills by Category
+## All 27 Skills by Category
 
 ### Core
 
@@ -41,10 +41,7 @@ Foundation knowledge loaded across many contexts. These define the baseline stan
 
 | Skill | What It Provides |
 |-------|-----------------|
-| [Core Architecture](core-architecture.md) | Module boundaries, dependency rules, layer separation, component relationships |
-| [Core Coding Standards](core-coding-standards.md) | Code style, naming conventions, error handling patterns, type safety rules |
 | [Core NXTG-Forge](core-nxtg-forge.md) | Forge-specific conventions — MCP tool usage, governance patterns, plugin architecture |
-| [Core Testing](core-testing.md) | Test strategy, coverage targets, assertion quality standards, test infrastructure |
 
 ### Domain Knowledge
 
@@ -52,11 +49,10 @@ Deep expertise in specific engineering domains.
 
 | Skill | What It Provides |
 |-------|-----------------|
-| [Architecture](architecture.md) | System design patterns, data flow, component relationships, trade-off analysis |
-| [Coding Standards](coding-standards.md) | Language-specific conventions, formatting rules, documentation standards |
+| [Architecture](architecture.md) | Clean Architecture layers, design and DDD patterns, backend building blocks, ADRs (invoke-only) |
+| [Coding Standards](coding-standards.md) | Cross-language conventions, complexity limits, pre-PR checklist (invoke-only) |
 | [Documentation](documentation.md) | Doc structure, API documentation patterns, README conventions, JSDoc standards |
-| [Security](security.md) | Vulnerability categories, remediation approaches, auth patterns, secrets management |
-| [Testing Strategy](testing-strategy.md) | Test pyramid, integration patterns, mock guidelines, coverage strategies |
+| OWASP Security (owasp-security, no page yet) | OWASP detection and remediation, plus why a Forge security guard blocked a command and the correct fix |
 | [Testing](testing.md) | Test framework usage, assertion patterns, coverage tools, fixture management |
 
 ### Framework Knowledge
@@ -66,7 +62,6 @@ How AI coding tools discover context — critical for multi-tool workflows.
 | Skill | What It Provides |
 |-------|-----------------|
 | [Claude Code Framework](claude-code-framework.md) | Claude Code architecture, tool usage, agent patterns, extension points |
-| [Claude Code Best Practices](claude-code-best-practices.md) | Effective Claude Code usage, prompt patterns, workflow optimization |
 | [Codex Framework](codex-framework.md) | Codex CLI conventions — AGENTS.md, task mode, skill discovery (reference only) |
 | [Gemini Framework](gemini-framework.md) | Gemini CLI conventions — GEMINI.md, context loading, modular imports (reference only) |
 
@@ -79,7 +74,7 @@ Development process patterns — from environment setup to deployment.
 | [Dev Environment Patterns](dev-environment-patterns.md) | Environment setup, WSL2 patterns, toolchain configuration, CI/CD integration |
 | [Git Workflow](git-workflow.md) | Branching strategy, commit conventions, PR review practices, release patterns |
 | [Runtime Validation](runtime-validation.md) | Input validation, error boundaries, data integrity, type safety at system boundaries |
-| [Parallel Execution](parallel-execution.md) | Plan Mode + Agent Teams — Claude Code's highest-leverage superpowers |
+| [Parallel Execution](parallel-execution.md) | Plan Mode + Agent Teams — Claude Code's two force-multipliers |
 
 ### Performance & Debugging
 
@@ -98,7 +93,7 @@ Meta-skills about the system itself.
 |-------|-----------------|
 | [Skill Development](skill-development.md) | How to create new skills — SKILL.md format, progressive disclosure, triggers |
 | [Domain Knowledge](domain-knowledge.md) | Project-specific domain concepts, business rules, terminology |
-| [Verify Governance](verify-governance.md) | Governance verification patterns, health score interpretation, compliance checking |
+| [Verify Governance](verify-governance.md) | Adjudicates a flagged governance concern with evidence and issues a JUSTIFIED or REVERT verdict |
 | [CEO Loop](ceo-loop.md) | ORBIT protocol for autonomous governance — iteration model, decision tracking |
 | [Crucible Audit](crucible-audit.md) | Forensic test quality methodology — the 8 fraud patterns, detection techniques |
 
@@ -126,10 +121,10 @@ You type a prompt
   Claude Code analyzes context
   │
   ├── Matches task against skill descriptions
-  │     └── "Implement a REST API" → loads: architecture, coding-standards, core-testing
+  │     └── "Implement a REST API" → may load: testing, runtime-validation
   │
   ├── Matches project type
-  │     └── TypeScript project → loads: claude-code-framework, dev-environment-patterns
+  │     └── Dev server on WSL2 → may load: dev-environment-patterns
   │
   └── Matches agent invocation
         └── Builder agent → loads: parallel-execution (knows about Plan Mode)

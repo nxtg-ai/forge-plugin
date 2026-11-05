@@ -50,14 +50,15 @@ Revenue Architect:
   - Assessment: Usage-based is natural fit -- price aligns with
     value consumed. But pure usage creates unpredictable bills.
   - Recommendation: Hybrid model
-    Free tier: 10,000 API calls/month (hook)
-    Pro: $29/mo includes 100K calls + $0.001 per additional
+    (prices and limits are placeholders)
+    Free tier: N API calls/month (hook)
+    Pro: $X/mo includes M calls + $Y per additional
     Enterprise: Volume pricing, committed use discounts
   - Reasoning: Base subscription creates predictable revenue.
     Usage component captures value from heavy users. Free tier
     is generous enough for evaluation but not for production.
-  - Financial projection: 5% free-to-paid conversion, $45 ARPU,
-    projected $540K ARR at 1,000 customers
+  - Financial projection: ARR = customers x free-to-paid
+    conversion x ARPU, computed from your own inputs
 ```
 
 ### Example 2: Stripe Integration Architecture
@@ -131,7 +132,6 @@ Revenue Architect:
 |-------|-------------|
 | **L1 Vibe Coder** | Pricing model design, Stripe architecture, open-core strategy, financial modeling, enterprise pricing |
 | **L2 Pro Builder** | + `forge_capture_knowledge` records pricing decisions and financial models for portfolio reference |
-| **L3 Ship Lord** | + Dashboard panel showing MRR tracking, conversion funnel metrics, and pricing experiment results |
 
 ## Tips & Gotchas
 

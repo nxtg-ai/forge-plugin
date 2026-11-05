@@ -57,13 +57,13 @@ Every agent runs at **L1** (plugin only). Some gain enhanced capabilities at L2 
 
 The most common confusion: Detective, Guardian, Security, and Compliance all touch "quality." Here's when to use each:
 
-| Agent | Speed | Depth | Use When | What It Finds |
-|-------|-------|-------|----------|---------------|
-| [Detective](detective.md) | Fast (~30s) | Broad (5 dimensions) | Start of session, "what's the health of this project?" | Overview: test gaps, stale docs, architecture smells, security surface |
-| [Guardian](guardian.md) | Medium (~1-2 min) | Medium (tests + types + lint + security) | Before committing or pushing code | Pre-ship gate: test failures, type errors, lint violations, basic security |
-| [Security](security.md) | Slow (~5-10 min) | Deep (OWASP-focused) | Before a release, after auth changes, during security audits | Deep: CVEs, hardcoded secrets, auth flow weaknesses, injection vectors |
-| [Compliance](compliance.md) | Medium (~2 min) | Focused (legal/regulatory) | Before release, after adding dependencies | Legal: license conflicts, GDPR violations, WCAG accessibility gaps |
-| [Crucible Detective](crucible-detective.md) | Slow (~5 min) | Forensic (test quality only) | When tests pass but software doesn't work | Fraud: hollow assertions, coverage gaming, mock proliferation |
+| Agent | Depth | Use When | What It Finds |
+|-------|-------|----------|---------------|
+| [Detective](detective.md) | Broad (5 dimensions) | Start of session, "what's the health of this project?" | Overview: test gaps, stale docs, architecture smells, security surface |
+| [Guardian](guardian.md) | Medium (tests + types + lint + security) | Before committing or pushing code | Pre-ship gate: test failures, type errors, lint violations, basic security |
+| [Security](security.md) | Deep (OWASP-focused) | Before a release, after auth changes, during security audits | Deep: CVEs, hardcoded secrets, auth flow weaknesses, injection vectors |
+| [Compliance](compliance.md) | Focused (legal/regulatory) | Before release, after adding dependencies | Legal: license conflicts, GDPR violations, WCAG accessibility gaps |
+| [Crucible Detective](crucible-detective.md) | Forensic (test quality only) | When tests pass but software doesn't work | Fraud: hollow assertions, coverage gaming, mock proliferation |
 
 **The relationship:** Guardian spawns Security and Testing as parallel subagents during quality gates. Detective spawns Testing, Security, Docs, and Performance for health checks. They're a hierarchy, not competitors.
 
@@ -79,8 +79,8 @@ The engine that drives feature development. Plan → Build → Test → Ship.
 
 | Agent | Model | One-Liner |
 |-------|-------|-----------|
-| [Planner](planner.md) | Sonnet | Decomposes features into architecture + task breakdown with dependencies and estimates |
-| [Builder](builder.md) | Sonnet | Implements production-ready code from plans with tests and type safety |
+| [Planner](planner.md) | Opus | Decomposes features into architecture + task breakdown with dependencies and estimates |
+| [Builder](builder.md) | Sonnet | Implements complete, tested code from plans with type safety |
 | [Guardian](guardian.md) | Sonnet | Runs quality gates — tests, security, lint — before code ships |
 | [Orchestrator](orchestrator.md) | Opus | The conductor. Coordinates all agents through the 4-option command center |
 
@@ -111,7 +111,7 @@ The quality conscience. These agents watch, measure, and verify.
 | [Detective](detective.md) | Sonnet | Sherlock for codebases — health checks, gap analysis, tech stack detection |
 | [Compliance](compliance.md) | Sonnet | License auditing, GDPR, WCAG accessibility, regulatory requirements |
 | [Learning](learning.md) | Sonnet | Session analysis, pattern recognition, preference capture, recommendation tuning |
-| [Release Sentinel](release-sentinel.md) | Sonnet | Documentation auditing after code changes, changelog generation, stale doc detection |
+| [Release Sentinel](release-sentinel.md) | Opus | Documentation auditing after code changes, changelog generation, stale doc detection |
 | [Crucible Detective](crucible-detective.md) | Sonnet | Test-quality review — looks for hollow assertions and coverage gaming (no accuracy claim) |
 | [Governance Verifier](governance-verifier.md) | Sonnet | Automated response to governance concerns flagged by hooks |
 | [Oracle](oracle.md) | Sonnet | Background sentinel — monitors development for scope drift and architectural violations |
@@ -122,10 +122,10 @@ Senior engineering perspectives encoded as agents.
 
 | Agent | Model | One-Liner |
 |-------|-------|-----------|
-| [Master Architect](master-architect.md) | Sonnet | The senior architect who says "no, don't build it that way" — system design, trade-offs |
-| [Design Vanguard](design-vanguard.md) | Sonnet | UI/UX specialist — design systems, accessibility, visual hierarchy, DX |
+| [Master Architect](master-architect.md) | Opus | The senior architect who says "no, don't build it that way" — system design, trade-offs |
+| [Design Vanguard](design-vanguard.md) | Opus | UI/UX specialist — design systems, accessibility, visual hierarchy, DX |
 | [DX Engineer](dx-engineer.md) | Sonnet | Developer experience — CLI UX, SDK design, onboarding, error messages |
-| [Incident Commander](incident-commander.md) | Sonnet | Production incident response — triage, coordination, post-mortems, runbooks |
+| [Incident Commander](incident-commander.md) | Opus | Production incident response — triage, coordination, post-mortems, runbooks |
 | [QA Sentinel](qa-sentinel.md) | Sonnet | Quality assurance leadership — test strategy, coverage analysis, bug detection |
 
 ### Executive & Strategy
@@ -135,15 +135,15 @@ Business intelligence and growth, encoded as AI agents.
 | Agent | Model | One-Liner |
 |-------|-------|-----------|
 | [CEO Loop](ceo-loop.md) | Opus | CEO Digital Twin — autonomous strategic decisions using ORBIT governance model |
-| [Product Strategist](product-strategist.md) | Sonnet | Product-market fit, feature prioritization (RICE/MoSCoW), roadmaps, pricing |
-| [Revenue Architect](revenue-architect.md) | Sonnet | Pricing strategy, Stripe integration, monetization design, financial modeling |
+| [Product Strategist](product-strategist.md) | Opus | Product-market fit, feature prioritization (RICE/MoSCoW), roadmaps, pricing |
+| [Revenue Architect](revenue-architect.md) | Opus | Pricing strategy, Stripe integration, monetization design, financial modeling |
 | [Growth Engine](growth-engine.md) | Sonnet | Go-to-market, Product Hunt/HN launches, content marketing, SEO, community |
 | [Scout](scout.md) | Sonnet | Competitive intelligence — feature matrices, market sizing, trend monitoring |
 | [Wordsmith](wordsmith.md) | Sonnet | Landing pages, README rewrites, blog posts, error messages — copy that converts |
 
 ---
 
-## How Agents Gain Superpowers at Each Level
+## What Agents Gain at Each Level
 
 ### L1: Vibe Coder (Plugin Only)
 
@@ -159,11 +159,10 @@ Agents that reference orchestrator MCP tools gain coordination capabilities:
 
 ### L3: Ship Lord (+ Dashboard)
 
-Agent activity becomes visual:
-- Task boards show what each agent is working on
-- Health scores update in real-time as agents complete work
-- The Governance HUD displays Oracle warnings and sentinel findings
-- Infinity Terminal lets you watch agent execution in a browser-based terminal
+forge-ui (the separate dashboard repo) has no per-agent panels. What it does have:
+- The Governance HUD, whose Oracle feed shows sentinel log entries
+- A project health score and an agent activity feed
+- The Infinity Terminal, a browser-based terminal
 
 ---
 

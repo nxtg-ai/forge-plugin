@@ -1,7 +1,7 @@
 # Forge Governance Score — Check-Classification Pass (v1)
 
 **Directive:** DIRECTIVE-NXTG-20260719-04 (B3 §ADVERSARIAL-FOLD **G3**) · Wave W-NXTG-20260719-A
-**Scorer under classification:** `plugins/nxtg-forge/servers/governance-mcp/tools.mjs` → `getHealthScore()` (lines 307–459), the live engine behind `forge_get_governance_health` (`{score, grade, checks[]}`).
+**Scorer under classification:** `plugins/nxtg-forge/servers/governance-mcp/tools.mjs` → `getHealthScore()`, the live engine behind `forge_get_governance_health` (`{score, grade, checks[]}`).
 **Purpose:** partition the 8 governance checks into **commit-tree-pure** vs **environment/worktree-dependent**, so a *deterministic* 0–100 core can be defined as a pure function of the committed tree — the precondition for G3's re-measure + dual-runner byte-identical proof, and the input surface G5/G6/G8 build on.
 
 > **G3 thesis, proven concretely.** The live score is NOT reproducible bit-for-bit on a commit because three checks read state that does not exist in the committed tree. Measured `getHealthScore()` on `forge-plugin` HEAD this session = **50/F** (Governance 0 "not initialized", Git Clean 5 "2 modified 6 untracked", Test Coverage 0 "file ratio", Type Safety 0, README/CLAUDE/File Size/Security = 45). The spec's cited **70/C** was a *different repo/worktree*. Same tool, different environment → different number. That gap IS the impurity this pass removes.
@@ -10,14 +10,14 @@
 
 | # | Check | Points | Source probe (tools.mjs) | Reads | **Class** |
 |---|-------|-------:|---|---|---|
-| 1 | Governance | 15 | `.claude/governance.json` initialized (`:317`) | committed file | **PURE** (if `governance.json` is committed; see note) |
-| 2 | **Git Clean** | 10/5 | `git.modified`/`git.untracked` (`:325–330`) | **working-tree state** | **IMPURE** — worktree-dependent; trivially clean (+10) on a bare `git checkout <sha>`; +5 on any dirty tree. Not a property of the commit. |
-| 3 | **Test Coverage** | 0–20 | 3-tier (`:333–356`): T1 `testCoverage` (coverage-summary.json), T2 `testCaseCount` density, T3 `testFileRatio` | T1 = **generated coverage file** (requires EXECUTING tests; gitignored); T2/T3 = committed file counts | **MIXED** — T1 IMPURE (execution/env/flakiness + generated artifact), T2/T3 PURE (committed tree). |
-| 4 | README | 10 | `README.md` exists (`:362`) | committed file | **PURE** |
-| 5 | CLAUDE.md | 10 | `CLAUDE.md` exists (`:370`) | committed file | **PURE** |
-| 6 | Type Safety | 0–10 | tsconfig strictness tier (`:395`) | committed `tsconfig.json`/`jsconfig.json` | **PURE** (ruleset = the tiered scoring table; pin in rubric per G6) |
-| 7 | File Size | 10/5 | files > 500 lines (`:404`) | committed source line counts | **PURE** |
-| 8 | **Security** | 0–15 | 3 sub-probes (`:411–446`): (a) `.env` committed, (b) **npm audit**, (c) hardcoded secrets/eval | (a)/(c) = committed-tree scan (ruleset-dependent, G6); (b) = **`npm audit`: network + installed `node_modules`** | **MIXED** — (a)+(c) PURE (pinned-ruleset scan), (b) npm-audit IMPURE (network + resolver/lockfile + registry state). |
+| 1 | Governance | 15 | `.claude/governance.json` (or `.forge/governance.json`) initialized | committed file | **PURE** (if `governance.json` is committed; see note) |
+| 2 | **Git Clean** | 10/5 | `git.modified`/`git.untracked` | **working-tree state** | **IMPURE** — worktree-dependent; trivially clean (+10) on a bare `git checkout <sha>`; +5 on any dirty tree. Not a property of the commit. |
+| 3 | **Test Coverage** | 0–20 | 3-tier: T1 `testCoverage` (coverage-summary.json), T2 `testCaseCount` density, T3 `testFileRatio` | T1 = **generated coverage file** (requires EXECUTING tests; gitignored); T2/T3 = committed file counts | **MIXED** — T1 IMPURE (execution/env/flakiness + generated artifact), T2/T3 PURE (committed tree). |
+| 4 | README | 10 | `README.md` exists | committed file | **PURE** |
+| 5 | CLAUDE.md | 10 | `CLAUDE.md` exists | committed file | **PURE** |
+| 6 | Type Safety | 0–10 | tsconfig strictness tier | committed `tsconfig.json`/`jsconfig.json` | **PURE** (ruleset = the tiered scoring table; pin in rubric per G6) |
+| 7 | File Size | 10/5 | files > 500 lines | committed source line counts | **PURE** |
+| 8 | **Security** | 0–15 | 3 sub-probes: (a) `.env` committed, (b) **npm audit**, (c) hardcoded secrets/eval | (a)/(c) = committed-tree scan (ruleset-dependent, G6); (b) = **`npm audit`: network + installed `node_modules`** | **MIXED** — (a)+(c) PURE (pinned-ruleset scan), (b) npm-audit IMPURE (network + resolver/lockfile + registry state). |
 
 ## The redefinition (G3 corrective build)
 
@@ -48,4 +48,4 @@ Removing Git Clean (−the 5–10 it contributes) and the impure Security/Covera
 - **G8:** the gameable checks (checks-disabled, coverage-omits) get the anti-Goodhart weight-table invariant + property test.
 
 ---
-_Instrument: this classification is re-runnable — every row cites a `tools.mjs` line + the exact input surface; the live-vs-deterministic delta is reproduced by running `getHealthScore()` on any two worktrees of the same commit._
+_Instrument: this classification is re-runnable — every row names the `getHealthScore()` check + the exact input surface; the live-vs-deterministic delta is reproduced by running `getHealthScore()` on any two worktrees of the same commit._
