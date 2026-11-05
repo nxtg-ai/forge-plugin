@@ -106,6 +106,29 @@ describe('orchestrator-mcp launcher', () => {
     expect(found.stdout.trim()).toBe(custom);
   });
 
+  // Without mktemp the --version output used to go to a guessable path in TMPDIR, written with `>`,
+  // which follows a symlink someone else planted there. It now goes in a new private directory.
+  // The fake forge reads where its stdout points (Linux /proc) and records that directory's mode.
+  it.skipIf(process.platform !== 'linux')('without mktemp, the version probe writes only inside a new 0700 directory', () => {
+    const nomk = join(root, 'bin-nomktemp');
+    const tmp = join(root, 'tmp-nomktemp');
+    mkdirSync(nomk);
+    mkdirSync(tmp);
+    for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm', 'sleep', 'mkdir', 'readlink', 'stat']) symlinkSync(which(tool), join(nomk, tool));
+    const log = join(root, 'probe-dir.log');
+    const fake = join(nomk, 'forge');
+    writeFileSync(fake, '#!/usr/bin/env bash\nif [ "$1" = --version ]; then p="$(readlink /proc/$$/fd/1)"; d="$(dirname "$p")"; ' +
+      `printf '%s %s\\n' "$d" "$(stat -c %a "$d")" > ${JSON.stringify(log)}; echo "forge 1.7.0"; exit 0; fi\n`);
+    chmodSync(fake, 0o755);
+    const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: nomk, TMPDIR: tmp } });
+    expect(found.stdout.trim()).toBe(fake);
+    const [dir, mode] = readFileSync(log, 'utf8').trim().split(' ');
+    expect(dirname(dir)).toBe(tmp);
+    expect(dir).not.toBe(tmp);
+    expect(mode).toBe('700');
+    expect(spawnSync('ls', ['-A', tmp], { encoding: 'utf8' }).stdout).toBe(''); // removed afterwards
+  });
+
   it('find-forge exits 1 and prints nothing when forge is absent', () => {
     const found = spawnSync(which('bash'), [FIND_FORGE], { encoding: 'utf8', env: { HOME: home, PATH: bin } });
     expect(found.status).toBe(1);
