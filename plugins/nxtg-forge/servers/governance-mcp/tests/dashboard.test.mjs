@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { existsSync, readFileSync, statSync, mkdtempSync as mkdtemp, rmSync as rm } from 'fs';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync, unlinkSync, mkdtempSync as mkdtemp, rmSync as rm } from 'fs';
 import { tmpdir as osTmpdir } from 'os';
 import { join as pjoin } from 'path';
-import { generateDashboard } from '../tools.mjs';
+import { fileURLToPath } from 'url';
+import { generateDashboard, getPluginAgentCount } from '../tools.mjs';
 import { setupFixture, teardownFixture, getFixturePath } from './setup.mjs';
 
 beforeAll(setupFixture);
@@ -45,6 +46,60 @@ describe('generateDashboard', () => {
     // Should be a valid HTML document
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('<title>');
+  });
+
+  it('describes the agents and commands shipped with the plugin, not the inspected project', async () => {
+    const pluginRoot = fileURLToPath(new URL('../../../', import.meta.url));
+    const count = readdirSync(pjoin(pluginRoot, 'agents'), { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md')).length;
+    const result = await generateDashboard(getFixturePath());
+    const html = readFileSync(result.path, 'utf-8');
+
+    expect(count).toBeGreaterThan(0);
+    expect(html).toContain(`${count} AI agents.`);
+    expect(html).toContain(`${count} specialized agents on demand`);
+    for (const command of ['status', 'feature', 'test']) {
+      expect(html).toContain(`/nxtg-forge:${command}`);
+      expect(existsSync(pjoin(pluginRoot, 'commands', `${command}.md`))).toBe(true);
+    }
+  });
+});
+
+describe('getPluginAgentCount', () => {
+  let pluginRoot;
+  beforeEach(() => { pluginRoot = mkdtemp(pjoin(osTmpdir(), 'forge-plugin-count-')); });
+  afterEach(() => { rm(pluginRoot, { recursive: true, force: true }); });
+
+  it('counts only top-level Markdown files, not other files or directories', () => {
+    const agents = pjoin(pluginRoot, 'agents');
+    mkdirSync(agents);
+    writeFileSync(pjoin(agents, 'builder.md'), '# Builder');
+    writeFileSync(pjoin(agents, 'planner.md'), '# Planner');
+    writeFileSync(pjoin(agents, 'notes.txt'), 'Not an agent');
+    mkdirSync(pjoin(agents, 'nested.md'));
+    writeFileSync(pjoin(agents, 'nested.md', 'nested-agent.md'), '# Nested');
+
+    expect(getPluginAgentCount(pluginRoot)).toBe(2);
+  });
+
+  it('returns zero for an empty agent directory', () => {
+    mkdirSync(pjoin(pluginRoot, 'agents'));
+    expect(getPluginAgentCount(pluginRoot)).toBe(0);
+  });
+
+  it('recounts definitions added or removed between calls', () => {
+    const agents = pjoin(pluginRoot, 'agents');
+    mkdirSync(agents);
+    expect(getPluginAgentCount(pluginRoot)).toBe(0);
+    const agent = pjoin(agents, 'builder.md');
+    writeFileSync(agent, '# Builder');
+    expect(getPluginAgentCount(pluginRoot)).toBe(1);
+    unlinkSync(agent);
+    expect(getPluginAgentCount(pluginRoot)).toBe(0);
+  });
+
+  it('returns an unknown count if the agent directory is unavailable', () => {
+    expect(getPluginAgentCount(pluginRoot)).toBeNull();
   });
 });
 
