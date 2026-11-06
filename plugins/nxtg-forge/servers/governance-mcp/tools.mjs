@@ -742,6 +742,17 @@ export function dashboardHint({ isWSL, opened, browserUrl }) {
   return { hint: isWSL ? `Paste this URL into your Windows browser: ${browserUrl}` : `Open this file in your browser: ${browserUrl}` };
 }
 
+/** Count shipped agent definitions, independently of the project being inspected. */
+export function getPluginAgentCount(pluginRoot = fileURLToPath(new URL("../../", import.meta.url))) {
+  try {
+    return readdirSync(join(pluginRoot, "agents"), { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md")).length;
+  } catch {
+    // A partial installation should not prevent the rest of the dashboard from opening.
+    return null;
+  }
+}
+
 // One private dashboard directory per server process, made on first use, so a session leaves one directory in
 // the temp dir rather than one per dashboard. It is made again if TMPDIR changes, or if the path no longer holds a
 // directory this user owns with no group or other access: names in the temp dir are listable, so after a tmp
@@ -771,6 +782,8 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
 
   const projectName = gov.project?.name || git.branch || "Project";
   const projectVision = gov.project?.vision || "No vision set";
+  const agentCount = getPluginAgentCount();
+  const agentCountPrefix = agentCount === null ? "" : `${agentCount} `;
 
   const checksHtml = health.checks
     .map((c) => {
@@ -1030,12 +1043,12 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
             ${health.score > 0 ? '<span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">Active</span>' : '<span class="text-xs text-slate-600">Locked</span>'}
           </div>
           <h4 class="text-lg font-bold mb-1">🎮 Vibe Coder</h4>
-          <p class="text-slate-400 text-xs mb-3">22 AI agents. Governance on autopilot. Ship faster with guardrails.</p>
+          <p class="text-slate-400 text-xs mb-3">${agentCountPrefix}AI agents. Governance on autopilot. Ship faster with guardrails.</p>
           <div class="space-y-1.5 text-xs text-slate-300">
             <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /nxtg-forge:status — project health at a glance</div>
             <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /nxtg-forge:feature — plan and build features</div>
             <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> /nxtg-forge:test — run tests with analysis</div>
-            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 22 specialized agents on demand</div>
+            <div class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> ${agentCountPrefix}specialized agents on demand</div>
           </div>
           <div class="mt-3 pt-3 border-t border-slate-700/50">
             <code class="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded block whitespace-pre-wrap">claude plugin marketplace add nxtg-ai/forge-plugin && claude plugin install nxtg-forge</code>

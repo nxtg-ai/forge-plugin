@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+### Fixed
+
+- The dashboard counts the installed plugin's agent definitions for both Level 1 labels instead of hard-coding 22. The count is independent of the inspected project and updates when definitions change (#112).
+
 ### Changed
 
 - **The marketplace serves v3.14.2.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.2` at its release commit, so `claude plugin update` delivers the 3.14.2 fix.
