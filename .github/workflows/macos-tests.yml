@@ -1,0 +1,65 @@
+name: macOS tests (report only)
+
+# Issue #124: on macOS, vitest fails 15 tests on an untouched main that pass on Linux. This job runs
+# vitest on macOS and lists every failing test in the run summary. Until #124 is fixed it reports
+# and does not fail, so a known macOS failure does not block unrelated PRs. Once vitest is green
+# here, drop the report-only step and make the job fail on a test failure.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/macos-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  vitest-macos:
+    name: vitest on macOS (report only)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: plugins/nxtg-forge/servers/governance-mcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run vitest and record the result
+        env:
+          FORGE_TEST_MODE: '1'
+        run: |
+          set +e
+          npx vitest run --reporter=default --reporter=json --outputFile=vitest-macos.json
+          echo "vitest exit code: $?"
+          exit 0
+
+      - name: List failing tests in the run summary
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const out = process.env.GITHUB_STEP_SUMMARY;
+            if (!fs.existsSync("vitest-macos.json")) { fs.appendFileSync(out, "vitest wrote no report\n"); process.exit(0); }
+            const r = JSON.parse(fs.readFileSync("vitest-macos.json", "utf8"));
+            const lines = [`## vitest on macOS: ${r.numPassedTests} passed, ${r.numFailedTests} failed, ${r.numPendingTests} skipped`, ""];
+            for (const f of r.testResults) for (const t of f.assertionResults) if (t.status === "failed") {
+              lines.push(`- \`${f.name.split("governance-mcp/")[1]}\` > ${t.fullName}`);
+              lines.push("  ```", "  " + String((t.failureMessages || [""])[0]).split("\n").slice(0, 6).join("\n  "), "  ```");
+            }
+            fs.appendFileSync(out, lines.join("\n") + "\n");
+            console.log(lines.slice(0, 1).join(""));
+          '
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vitest-macos
+          path: plugins/nxtg-forge/servers/governance-mcp/vitest-macos.json
