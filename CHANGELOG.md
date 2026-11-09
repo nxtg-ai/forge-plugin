@@ -18,6 +18,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 - The dashboard counts the installed plugin's agent definitions for both Level 1 labels instead of hard-coding 22. The count is independent of the inspected project and updates when definitions change (#112).
 - **The enforced-task guard refuses a protected file reached through a symlink** (#124). It compared the project root, resolved through symlinks, with a file path that was not, so on macOS (`/var` is a link to `/private/var`) or in a project under a symlinked directory, an edit to an existing test file or to the task state was allowed. The guard now resolves the file path and the state directory the same way.
+- **The forge `--version` probe gives up within 3 s on macOS too** (#124). It waited 40 ticks of `sleep 0.05`, and each `sleep` starts a process, which is slow on macOS: a hanging binary held a launcher for 4.9 s on a CI runner. The wall clock now also ends the wait.
 
 ## [3.14.2] — 2026-11-05
 

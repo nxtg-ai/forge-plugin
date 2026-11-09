@@ -10,13 +10,14 @@
 # Laravel's names itself), and `forge mcp` fails in them, which Claude Code shows as a failed server.
 # Every NXTG forge release prints `forge X.Y.Z` for --version.
 # The probe runs an unknown binary, so it is bounded: FORGE_PROBE_TICKS x 0.05 s (2 s by default), then
-# killed, and a slow one counts as not NXTG forge. Background-and-poll, because stock macOS has no
+# killed, and a slow one counts as not NXTG forge. Each `sleep` starts a process, which costs tens of ms on
+# macOS (40 ticks took 4.9 s on a CI runner, #124), so the wall clock also ends the wait: by 3 s at most. Background-and-poll, because stock macOS has no
 # `timeout` and runs bash 3.2. Output goes to a file, not a pipe, so a child that keeps the pipe open
 # cannot hold the probe either.
 # Without mktemp the output goes in a new private directory: mkdir -m 700 fails on any existing path,
 # a planted symlink included, so the probe never writes through a path someone else created.
 is_nxtg_forge() {
-  local out pid i v rc dir=""
+  local out pid i v rc start dir=""
   if ! out="$(mktemp "${TMPDIR:-/tmp}/forge-version.XXXXXX" 2>/dev/null)"; then
     dir="${TMPDIR:-/tmp}/forge-version.$$.$RANDOM"
     mkdir -m 700 "$dir" 2>/dev/null || return 1
@@ -24,8 +25,10 @@ is_nxtg_forge() {
   fi
   "$1" --version >"$out" 2>/dev/null </dev/null &
   pid=$!
+  start=$SECONDS
   for ((i = 0; i < ${FORGE_PROBE_TICKS:-40}; i++)); do
     kill -0 "$pid" 2>/dev/null || break
+    ((SECONDS - start >= 3)) && break
     sleep 0.05
   done
   if kill -0 "$pid" 2>/dev/null; then
