@@ -221,6 +221,24 @@ describe('a foreign forge on PATH is not launched', () => {
     expect(reply.result.serverInfo).toEqual({ name: 'orchestrator-mcp', version: 'unavailable' });
     expect(reply.result.instructions).toContain(`${join(slow, 'forge')} is not the NXTG Forge orchestrator`);
   }, 20000);
+  // Each tick of the probe runs `sleep`, and starting a process costs tens of ms on macOS: 40 ticks took 4.9 s on a
+  // CI runner (#124). A `sleep` that takes 0.15 s per tick stands in for that; the wall clock still ends the wait.
+  it('a forge whose --version hangs, on a system where each sleep is slow: still within the bound', () => {
+    const slow = join(root, 'slow-sleep-bin');
+    mkdirSync(slow, { recursive: true });
+    writeFileSync(join(slow, 'forge'), '#!/usr/bin/env bash\nsleep 30\necho "forge 1.7.0"\n');
+    writeFileSync(join(slow, 'sleep'), '#!/bin/bash\nif [ "$1" = 0.05 ]; then exec /bin/sleep 0.15; fi\nexec /bin/sleep "$@"\n');
+    chmodSync(join(slow, 'forge'), 0o755);
+    chmodSync(join(slow, 'sleep'), 0o755);
+    const t0 = Date.now();
+    const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
+      input: `${INIT_LINE}\n`, encoding: 'utf8', timeout: 15000, env: { HOME: home, PATH: `${slow}:/usr/bin:/bin` },
+    });
+    const ms = Date.now() - t0;
+    expect(r.status).toBe(0);
+    expect(ms).toBeLessThan(4500);
+    expect(JSON.parse(r.stdout.split('\n')[0]).result.serverInfo).toEqual({ name: 'orchestrator-mcp', version: 'unavailable' });
+  }, 20000);
   it('find-forge skips it and still finds NXTG forge in ~/.local/bin', () => {
     const local = join(home, '.local', 'bin');
     mkdirSync(local, { recursive: true });

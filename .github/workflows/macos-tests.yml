@@ -1,23 +1,22 @@
-name: macOS tests (report only)
+name: macOS tests
 
-# Issue #124: on macOS, vitest fails 15 tests on an untouched main that pass on Linux. This job runs
-# vitest on macOS and lists every failing test in the run summary. Until #124 is fixed it reports
-# and does not fail, so a known macOS failure does not block unrelated PRs. Once vitest is green
-# here, drop the report-only step and make the job fail on a test failure.
+# Our other CI runs on Linux only. On macOS, vitest once failed 17 tests that passed on Linux (#124): a
+# guard bug on symlinked paths and tests that assumed GNU tools. This job keeps macOS green. It fails on
+# any test failure and lists every failing test, with its first error lines, in the run summary.
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
-    paths:
-      - '.github/workflows/macos-tests.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   vitest-macos:
-    name: vitest on macOS (report only)
+    name: vitest on macOS
     runs-on: macos-latest
     defaults:
       run:
@@ -32,14 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run vitest and record the result
+      - name: Run vitest
         env:
           FORGE_TEST_MODE: '1'
-        run: |
-          set +e
-          npx vitest run --reporter=default --reporter=json --outputFile=vitest-macos.json
-          echo "vitest exit code: $?"
-          exit 0
+        run: npx vitest run --reporter=default --reporter=json --outputFile=vitest-macos.json
 
       - name: List failing tests in the run summary
         if: always()
@@ -55,7 +50,6 @@ jobs:
               lines.push("  ```", "  " + String((t.failureMessages || [""])[0]).split("\n").slice(0, 6).join("\n  "), "  ```");
             }
             fs.appendFileSync(out, lines.join("\n") + "\n");
-            console.log(lines.slice(0, 1).join(""));
           '
 
       - uses: actions/upload-artifact@v4
