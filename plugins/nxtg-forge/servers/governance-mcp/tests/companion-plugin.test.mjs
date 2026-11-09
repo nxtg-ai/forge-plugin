@@ -4,11 +4,14 @@
 // the session hook still tells Claude the orchestrator is optional and the one command that adds it.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync, statSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, realpathSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync, statSync, symlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve, delimiter } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// The physical temp dir: on macOS tmpdir() is /var/folders/..., a path through the /var -> /private/var link,
+// while the scripts under test report physical paths (pwd -P, git, realpath). Comparing like with like.
+const TMP = realpathSync(tmpdir());
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..'); // plugins/nxtg-forge
 const COMPANION = resolve(PLUGIN, '..', 'nxtg-forge-orchestrator');
@@ -61,7 +64,7 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
   });
 
   it('without forge, the launcher completes the handshake as the stand-in that names the installer', () => {
-    const home = mkdtempSync(join(tmpdir(), 'forge-companion-'));
+    const home = mkdtempSync(join(TMP, 'forge-companion-'));
     try {
       const init = '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}';
       const r = spawnSync('bash', [join(COMPANION, 'servers/orchestrator-mcp/start.sh')], {
@@ -84,7 +87,7 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
 describe('companion launcher binds the Forge project root, not the session subdirectory', () => {
   let root, home, fake, log;
   beforeAll(() => {
-    root = mkdtempSync(join(tmpdir(), 'forge-bind-'));
+    root = mkdtempSync(join(TMP, 'forge-bind-'));
     home = join(root, 'home');
     log = join(root, 'forge.log');
     fake = join(root, 'forge');
@@ -99,13 +102,18 @@ describe('companion launcher binds the Forge project root, not the session subdi
   });
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
+  // Stock macOS has no GNU timeout (exit 127 there, #124). Without it, perl does the same job: it makes its own
+  // process group, runs the launcher in it, and on expiry SIGKILLs the whole group.
+  const KILL_GROUP_AFTER_4S = spawnSync('bash', ['-c', 'command -v timeout'], { env: { PATH: '/usr/bin:/bin' } }).status === 0
+    ? 'timeout -s KILL 4'
+    : `perl -e 'setpgrp(0, 0); my $p = fork; if (!$p) { exec @ARGV; exit 127 } $SIG{ALRM} = sub { kill "KILL", -$$ }; alarm 4; waitpid($p, 0); exit($? >> 8)'`;
   // GNU timeout runs the launcher in its own process group and kills the whole group on expiry. spawnSync's own
   // timeout signals only the bash it started, and a walk looping inside `$(bind_project_root)` is a child subshell:
   // it outlived the SIGTERM and spun for 6 h (2026-10-14, red-before run of the relative-path case).
   const bind = (start, envRoot = start, homeVar = home, deleteCwd = false, extraEnv = {}) => {
     rmSync(log, { force: true });
     const launcher = join(COMPANION, 'servers/orchestrator-mcp/start.sh');
-    const r = spawnSync('bash', ['-c', `cd "$1" && { [ "$3" = 0 ] || rmdir "$1"; } && exec timeout -s KILL 4 bash "$2"`, 'bind', start, launcher, deleteCwd ? '1' : '0'], {
+    const r = spawnSync('bash', ['-c', `cd "$1" && { [ "$3" = 0 ] || rmdir "$1"; } && exec ${KILL_GROUP_AFTER_4S} bash "$2"`, 'bind', start, launcher, deleteCwd ? '1' : '0'], {
       input: '', encoding: 'utf8', timeout: 8000,
       env: { HOME: homeVar, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }), ...extraEnv },
     });
@@ -174,7 +182,7 @@ describe('a foreign forge on PATH is not launched', () => {
   let root, bin, home;
   const INIT_LINE = '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}';
   beforeAll(() => {
-    root = mkdtempSync(join(tmpdir(), 'forge-foreign-'));
+    root = mkdtempSync(join(TMP, 'forge-foreign-'));
     bin = join(root, 'bin');
     home = join(root, 'home');
     mkdirSync(bin);
@@ -235,7 +243,7 @@ describe('a foreign forge on PATH is not launched', () => {
 describe('session hint for the optional orchestrator', () => {
   let root, proj, bin, pathNoForge;
   beforeAll(() => {
-    root = mkdtempSync(join(tmpdir(), 'forge-hint-'));
+    root = mkdtempSync(join(TMP, 'forge-hint-'));
     proj = join(root, 'proj');
     mkdirSync(proj);
     bin = join(root, 'bin');
@@ -325,7 +333,7 @@ describe('session hint for the optional orchestrator', () => {
 describe('companion hook: an installed nxtg-forge that still registers orchestrator-mcp', () => {
   const HOOK = join(COMPANION, 'hooks', 'stale-nxtg-forge.sh');
   let root, k = 0;
-  beforeAll(() => { root = mkdtempSync(join(tmpdir(), 'forge-stale-')); });
+  beforeAll(() => { root = mkdtempSync(join(TMP, 'forge-stale-')); });
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
   // A config dir as Claude Code writes it, with nxtg-forge installed at a cache dir whose .mcp.json is given.

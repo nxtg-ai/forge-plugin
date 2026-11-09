@@ -4,7 +4,8 @@
 # launchers.test.mjs runs it with this machine's bash, and inside the official `bash:3.2` image.
 #
 # Usage: semgrep-guard-check.sh <start.sh> <unavailable-mcp.sh>
-# Prints PASS/FAIL per check; exit status = number of failures. Linux only (reads /proc).
+# Prints PASS/FAIL per check (SKIP for the two SIGTERM checks without /proc and setsid, as on macOS);
+# exit status = number of failures.
 set -u
 L="$1"
 STANDIN="$2"
@@ -100,6 +101,10 @@ in_session() {
 # 5/6. SIGTERM to the launcher ends it and its whole process tree, in both phases.
 term_check() {  # <name> <fake dir>
   local n="$1" dir="$2" lp kids left
+  if [ ! -d /proc/self ] || ! command -v setsid >/dev/null 2>&1; then
+    echo "SKIP $n: needs /proc and setsid(1) (Linux); launchers.test.mjs checks SIGTERM with ps on this system"
+    return
+  fi
   # The feeder keeps stdin open and stops on SIGPIPE once the launcher is gone.
   { printf '%s\n%s\n' "$D" "$I"; while sleep 1; do echo; done; } 2>/dev/null |
     PATH="$dir:$PATH" setsid bash "$L" > "$T/out" 2> "$T/err" &

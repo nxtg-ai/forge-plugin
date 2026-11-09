@@ -3,10 +3,13 @@
 // end in tests/integration/l2-journey.mjs, leg F.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
+import { mkdtempSync, realpathSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// The physical temp dir: on macOS tmpdir() is /var/folders/..., a path through the /var -> /private/var link,
+// while the scripts under test report physical paths (pwd -P, git, realpath). Comparing like with like.
+const TMP = realpathSync(tmpdir());
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const SCRIPT = join(PLUGIN, 'scripts', 'feature-task.sh');
@@ -14,9 +17,9 @@ const FEATURE_MD = join(PLUGIN, 'commands', 'feature.md');
 
 let root, home, stubDir, log;
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'forge-feat-'));
-  home = mkdtempSync(join(tmpdir(), 'forge-feat-home-'));
-  stubDir = mkdtempSync(join(tmpdir(), 'forge-feat-bin-'));
+  root = mkdtempSync(join(TMP, 'forge-feat-'));
+  home = mkdtempSync(join(TMP, 'forge-feat-home-'));
+  stubDir = mkdtempSync(join(TMP, 'forge-feat-bin-'));
   log = join(stubDir, 'calls.log');
   // Records argv, and whether stdin was left open (the script must close it).
   writeFileSync(join(stubDir, 'forge'),
@@ -90,7 +93,7 @@ describe('feature-task.sh', () => {
 
   it('CLAUDE_PROJECT_DIR with a .forge/ wins over the shell cwd', () => {
     initForge();
-    const elsewhere = mkdtempSync(join(tmpdir(), 'forge-feat-cwd-'));
+    const elsewhere = mkdtempSync(join(TMP, 'forge-feat-cwd-'));
     try {
       const r = run(['Via env', 'd'], { cwd: elsewhere, env: { CLAUDE_PROJECT_DIR: root } });
       expect(r.kv).toMatchObject({ status: 'created', project: root });
