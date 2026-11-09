@@ -286,13 +286,16 @@ describe('semgrep-mcp launcher with an upstream that exits early', () => {
   // The launcher runs in a session of its own (spawn detached = setsid), so "its processes" is a fact
   // the kernel keeps: the session id. Its own `set -m` makes a new process group, never a new session.
   // Nothing here kills a computed pid list; cleanup is `pkill -KILL -s <sid>` (incident 2026-10-14 21:20Z).
+  // `sess` is the session column on both procps (an alias of sid) and macOS ps, which has no `sid` (#124). The
+  // session is matched by the value ps prints for the leader, so it holds whether ps prints an id or a handle.
   const sessionProcs = (sid) => {
-    const rows = spawnSync('ps', ['-e', '-o', 'pid=,sid=,stat='], { encoding: 'utf8' }).stdout;
-    return rows
+    const rows = spawnSync('ps', ['-e', '-o', 'pid=,sess=,stat='], { encoding: 'utf8' }).stdout
       .split('\n')
       .map((l) => l.trim().split(/\s+/))
-      .filter((f) => f.length === 3 && !f[2].startsWith('Z') && Number(f[1]) === sid)
-      .map(([pid]) => Number(pid));
+      .filter((f) => f.length === 3);
+    const leader = rows.find(([pid]) => Number(pid) === sid);
+    if (!leader) return [];
+    return rows.filter((f) => !f[2].startsWith('Z') && f[1] === leader[1]).map(([pid]) => Number(pid));
   };
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -354,8 +357,11 @@ describe('semgrep-mcp launcher, portable checks (tests/fixtures/semgrep-guard-ch
   const CHECK = join(SERVERS, 'governance-mcp', 'tests', 'fixtures', 'semgrep-guard-check.sh');
   const hasBash32 =
     spawnSync('docker', ['image', 'inspect', 'bash:3.2'], { stdio: 'ignore', timeout: 10000 }).status === 0;
-  const expectAllPass = (r) => {
+  // The two SIGTERM checks read /proc and use setsid(1), which macOS lacks; there they print SKIP, and the
+  // SIGTERM tests above (ps-based) cover the same behaviour.
+  const expectAllPass = (r, skipOk = []) => {
     expect(r.stdout).toMatch(/^bash \d/m);
+    for (const name of skipOk) expect(r.stdout).toMatch(new RegExp(`^(PASS|SKIP) ${name}`, 'm'));
     for (const name of [
       'crash-stdin-open',
       'crash-stdin-closed',
@@ -363,7 +369,7 @@ describe('semgrep-mcp launcher, portable checks (tests/fixtures/semgrep-guard-ch
       'green-path-relay',
       'sigterm-green-phase',
       'sigterm-standin-phase',
-    ]) {
+    ].filter((n) => !skipOk.includes(n))) {
       expect(r.stdout).toMatch(new RegExp(`^PASS ${name}`, 'm'));
     }
     expect(r.stdout).not.toMatch(/^FAIL/m);
@@ -372,10 +378,11 @@ describe('semgrep-mcp launcher, portable checks (tests/fixtures/semgrep-guard-ch
 
   it("pass under this machine's bash", () => {
     const r = spawnSync(which('bash'), [CHECK, SEMGREP, STANDIN], { encoding: 'utf8', timeout: 60000 });
-    expectAllPass(r);
+    expectAllPass(r, process.platform === 'linux' ? [] : ['sigterm-green-phase', 'sigterm-standin-phase']);
   });
 
-  it.skipIf(!hasBash32 && process.env.CI !== 'true')('pass under real bash 3.2 (docker image bash:3.2, stock macOS /bin/bash)', () => {
+  // On macOS the test above already runs under stock /bin/bash 3.2, and the macOS runner has no docker.
+  it.skipIf((!hasBash32 && process.env.CI !== 'true') || process.platform === 'darwin')('pass under real bash 3.2 (docker image bash:3.2, stock macOS /bin/bash)', () => {
     expect(hasBash32, 'the bash:3.2 image must be present in CI (pr-protection.yml pulls it)').toBe(true);
     const r = spawnSync(
       'docker',
