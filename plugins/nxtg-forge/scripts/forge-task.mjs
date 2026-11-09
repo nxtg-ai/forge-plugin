@@ -18,7 +18,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 
 export const DEFAULT_TEST_GLOBS = [
   '**/test/**', '**/tests/**', '**/__tests__/**', '**/spec/**', '**/testdata/**',
@@ -39,6 +39,20 @@ export function stateDir() {
   const base = process.env.FORGE_TASK_STATE_DIR
     || join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'nxtg-forge', 'tasks');
   return resolve(base);
+}
+// The physical path of p, as realpath gives it, for a path that may not exist yet (a Write of a new file):
+// the deepest existing ancestor is resolved through symlinks and the rest is appended. The project root is
+// physical (git and realpathSync), so every path compared with it must be physical too.
+export function physicalPath(p) {
+  const rest = [];
+  let cur = resolve(p);
+  for (;;) {
+    try { return join(realpathSync(cur), ...rest); } catch { /* not there yet: try the parent */ }
+    const parent = dirname(cur);
+    if (parent === cur) return resolve(p);
+    rest.unshift(basename(cur));
+    cur = parent;
+  }
 }
 export function projectRoot(cwd) {
   const r = spawnSync('git', ['-C', cwd, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
@@ -256,15 +270,16 @@ export function guard(input) {
 
   if (tool === 'Bash') {
     const cmd = String(ti.command || '');
-    if (cmd.includes(sd) || /nxtg-forge\/tasks/.test(cmd)) return `FORGE TASK GUARD: refused a Bash command that touches the Forge task state (${sd}). Only the user changes an active task (/nxtg-forge:task).`;
+    if (cmd.includes(sd) || cmd.includes(physicalPath(sd)) || /nxtg-forge\/tasks/.test(cmd)) return `FORGE TASK GUARD: refused a Bash command that touches the Forge task state (${sd}). Only the user changes an active task (/nxtg-forge:task).`;
     if (/forge-task\.mjs/.test(cmd) && !/forge-task\.mjs["']?\s+(cli\s+)?status\b/.test(cmd)) return 'FORGE TASK GUARD: refused: only the user begins, relaxes or ends a Forge task (/nxtg-forge:task). `forge-task.mjs status` is allowed.';
     return null;
   }
 
   const fp = ti.file_path || ti.notebook_path;
   if (!fp) return null;
-  const abs = resolve(cwd, fp);
-  if (abs === sd || abs.startsWith(sd + sep)) return `FORGE TASK GUARD: refused ${tool} on ${abs}: that is Forge task state. Only the user changes an active task (/nxtg-forge:task).`;
+  const abs = physicalPath(resolve(cwd, fp));
+  const sdp = physicalPath(sd);
+  if (abs === sdp || abs.startsWith(sdp + sep)) return `FORGE TASK GUARD: refused ${tool} on ${abs}: that is Forge task state. Only the user changes an active task (/nxtg-forge:task).`;
   if (!(abs.startsWith(root + sep))) return null;
   if (st.mode === 'tests') return null;
   const rel = relative(root, abs).split(sep).join('/');

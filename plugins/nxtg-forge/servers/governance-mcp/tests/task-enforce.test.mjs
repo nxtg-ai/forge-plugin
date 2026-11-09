@@ -192,6 +192,30 @@ const realpathOf = (p) => spawnSync('realpath', [p], { encoding: 'utf8' }).stdou
 describe('enforced task: shipped behaviour (cases C1-C16)', () => {
   it('C1 guard: an existing test file and new test-runner config are refused; source and new tests are not', () => guardChecks(PLUGIN));
 
+  // The project root is resolved through symlinks (git and realpath both give the physical path), so the
+  // guard must resolve the file path the same way. It did not: a path reached through a symlink (macOS
+  // /var -> /private/var, a symlinked ~/code) never started with the root, and the guard allowed the edit.
+  it('C1 guard through a symlink: a test file or the task state reached by a symlinked path is still refused', () => {
+    const root = project(calc(5));
+    const link = join(tmp, `link-${seq++}`);
+    symlinkSync(root, link);
+    const realState = join(tmp, `state-real-${seq++}`);
+    mkdirSync(realState);
+    const stateLink = join(tmp, `state-link-${seq++}`);
+    symlinkSync(realState, stateLink);
+    const h = hooks(PLUGIN, link, { FORGE_TASK_STATE_DIR: stateLink });
+    expect(h.begin().status).toBe(0);
+    const edit = h.guard('Edit', { file_path: join(link, 'tests/test_calc.py'), old_string: '5', new_string: '4' });
+    expect(edit.status).toBe(2);
+    expect(edit.err).toContain('refused Edit on tests/test_calc.py');
+    expect(h.guard('Write', { file_path: join(root, 'tests/test_calc.py'), content: '' }).status).toBe(2); // physical path
+    expect(h.guard('Write', { file_path: join(link, 'tests/new_test.py'), content: '' }).status).toBe(0); // a new test is allowed
+    const st = readdirSync(realState).find((f) => f.endsWith('.json'));
+    const state = h.guard('Write', { file_path: join(realState, st), content: '{}' });
+    expect(state.status).toBe(2);
+    expect(state.err).toContain('that is Forge task state');
+  });
+
   it('C1 conflict report: a report whose every line checks out ends the task as "conflict"', () => {
     const root = project(calc(5));
     const h = hooks(PLUGIN, root);
