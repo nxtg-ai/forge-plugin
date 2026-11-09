@@ -10,15 +10,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
-### Changed
-
-- **The marketplace serves v3.14.2.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.2` at its release commit, so `claude plugin update` delivers the 3.14.2 fix.
+## [3.14.3] — 2026-11-09
 
 ### Fixed
 
-- The dashboard counts the installed plugin's agent definitions for both Level 1 labels instead of hard-coding 22. The count is independent of the inspected project and updates when definitions change (#112).
-- **The enforced-task guard refuses a protected file reached through a symlink** (#124). It compared the project root, resolved through symlinks, with a file path that was not, so on macOS (`/var` is a link to `/private/var`) or in a project under a symlinked directory, an edit to an existing test file or to the task state was allowed. The guard now resolves the file path and the state directory the same way.
-- **The forge `--version` probe gives up within 3 s on macOS too** (#124). It waited 40 ticks of `sleep 0.05`, and each `sleep` starts a process, which is slow on macOS: a hanging binary held a launcher for 4.9 s on a CI runner. The wall clock now also ends the wait.
+- **The dashboard shows the number of agents the plugin ships** (#123, contributed by @Drchennnn, the first outside contribution). It counts the installed plugin's agent definitions for both Level 1 labels instead of hard-coding 22. The count is independent of the inspected project and updates when definitions change. Fixes #112.
+- **The enforced-task guard refuses a protected file reached through a symlink** (#126; found by the new macOS CI job, #124). It compared the project root, resolved through symlinks, with a file path that was not, so on macOS (`/var` is a link to `/private/var`) or in a project under a symlinked directory, an edit to an existing test file or to the task state was allowed. The guard now resolves the file path and the state directory the same way.
+- **The forge `--version` probe gives up within 3 s on macOS too** (#128). It waited 40 ticks of `sleep 0.05`, and each `sleep` starts a process, which is slow on macOS: a hanging binary held a launcher for 4.9 s on a CI runner. The wall clock now also ends the wait.
+
+### Changed
+
+- **The marketplace serves v3.14.2.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.2` at its release commit, so `claude plugin update` delivers the 3.14.2 fix.
+- **The docs name the current releases** (#122): the README says the install script installs forge v1.8.0, and FORGE-DIFFERENTIATORS describes plugin v3.14.2 and forge v1.8.0.
+- **CI runs the test suite on macOS** (#125, #127, #128). Until now it ran on Linux only. 17 tests that failed only on macOS now pass, and `vitest on macOS` is a required check on every PR and push.
 
 ## [3.14.2] — 2026-11-05
 
