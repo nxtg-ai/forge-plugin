@@ -13,11 +13,11 @@
         "source": "git-subdir",
         "url": "https://github.com/nxtg-ai/forge-plugin.git",
         "path": "plugins/nxtg-forge",
-        "ref": "v3.14.2",
-        "sha": "31b664d47bd69fbf15e8be284c744a10089c4499"
+        "ref": "v3.14.3",
+        "sha": "ce5632a492f85b978fee3f76427ec8d15db7f4ef"
       },
       "description": "AI-powered development governance \u2014 automated quality gates, agent orchestration, and project health monitoring for Claude Code (alpha)",
-      "version": "3.14.2",
+      "version": "3.14.3",
       "author": {
         "name": "NXTG AI"
       },
@@ -40,11 +40,11 @@
         "source": "git-subdir",
         "url": "https://github.com/nxtg-ai/forge-plugin.git",
         "path": "plugins/nxtg-forge-orchestrator",
-        "ref": "v3.14.2",
-        "sha": "31b664d47bd69fbf15e8be284c744a10089c4499"
+        "ref": "v3.14.3",
+        "sha": "ce5632a492f85b978fee3f76427ec8d15db7f4ef"
       },
       "description": "Connects Claude Code to the Forge orchestrator (the forge binary's MCP server: tasks, knowledge, drift), bound to the project root. Optional companion to nxtg-forge; install.sh adds it when it installs forge (alpha)",
-      "version": "3.14.2",
+      "version": "3.14.3",
       "author": {
         "name": "NXTG AI"
       },
