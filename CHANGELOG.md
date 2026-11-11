@@ -18,6 +18,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 - **The companion launcher keeps its home-directory boundary when `HOME` is unset or empty** (#102). It looks up the current account's home with `getent` when available, and leaves the given session directory unchanged if the home cannot be determined or resolved. Global home state is no longer mistaken for a project in that case. Both orchestrator launchers use the same logic.
 
+- **The L1 integration harness finds the Node runtime that started it**, including installations outside system PATH directories. It exposes only that executable in its temporary test directory so unrelated test runners stay excluded.
+
 ## [3.14.3] — 2026-11-09
 
 ### Fixed
