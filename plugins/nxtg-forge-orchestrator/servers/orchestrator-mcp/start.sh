@@ -23,8 +23,16 @@ bind_project_root() {
   # CDPATH is cleared: with it set, `cd` to a relative name prints the directory it found, a second line.
   dir="$(CDPATH= cd -- "$given" >/dev/null 2>&1 && pwd -P)" || dir=""
   [[ "$dir" == /* ]] || { printf '%s\n' "$given"; return; }
-  home="$(CDPATH= cd -- "${HOME:-/}" >/dev/null 2>&1 && pwd -P)" || home="/"
-  [[ "$home" == /* ]] || home="/"
+  home="${HOME:-}"
+  if [[ -z "$home" ]]; then
+    # Launchers may omit HOME. Use the account database when available (getent is not on every host).
+    home="$(getent passwd "$(id -u 2>/dev/null)" 2>/dev/null)" || home=""
+    home="$(printf '%s\n' "$home" | cut -s -d: -f6)"
+    [[ "$home" == /* ]] || { printf '%s\n' "$given"; return; }
+  fi
+  home="$(CDPATH= cd -- "$home" >/dev/null 2>&1 && pwd -P)" || home=""
+  # An unknown/unresolvable home is not /. Keep the given directory rather than walk without a boundary.
+  [[ "$home" == /* ]] || { printf '%s\n' "$given"; return; }
   start="$dir"
   while [[ "$dir" != "/" && "$dir" != "$home" ]]; do
     if [[ -f "$dir/.forge/state.json" ]]; then printf '%s\n' "$dir"; return; fi
