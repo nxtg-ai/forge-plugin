@@ -82,7 +82,7 @@ Test, optimize, deploy — with safety nets.
 | Command | What It Does |
 |---------|-------------|
 | [/nxtg-forge:test](test.md) | Run the test suite with vitest (no other runner), report failures and coverage |
-| `/nxtg-forge:task` | Enforced task: refuses edits to existing tests and blocks stopping until the project's own test command passes |
+| [/nxtg-forge:task](task.md) | Enforced task: refuses edits to existing tests and blocks stopping until the project's own test command passes |
 | [/nxtg-forge:deploy](deploy.md) | Pre-flight validation + deployment — quality gates, branch state, environment checks |
 | [/nxtg-forge:optimize](optimize.md) | Performance and maintainability analysis — bundle size, dependencies, complexity |
 
