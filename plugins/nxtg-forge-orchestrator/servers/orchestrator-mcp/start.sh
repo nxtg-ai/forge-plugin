@@ -28,11 +28,11 @@ bind_project_root() {
     # Launchers may omit HOME. Use the account database when available (getent is not on every host).
     home="$(getent passwd "$(id -u 2>/dev/null)" 2>/dev/null)" || home=""
     home="$(printf '%s\n' "$home" | cut -s -d: -f6)"
-    [[ "$home" == /* ]] || { printf '%s\n' "$given"; return; }
+    [[ "$home" == /* ]] || { printf '%s\n' "$dir"; return; }
   fi
   home="$(CDPATH= cd -- "$home" >/dev/null 2>&1 && pwd -P)" || home=""
-  # An unknown/unresolvable home is not /. Keep the given directory rather than walk without a boundary.
-  [[ "$home" == /* ]] || { printf '%s\n' "$given"; return; }
+  # An unknown/unresolvable home is not /. Keep the resolved directory rather than walk without a boundary.
+  [[ "$home" == /* ]] || { printf '%s\n' "$dir"; return; }
   start="$dir"
   while [[ "$dir" != "/" && "$dir" != "$home" ]]; do
     if [[ -f "$dir/.forge/state.json" ]]; then printf '%s\n' "$dir"; return; fi

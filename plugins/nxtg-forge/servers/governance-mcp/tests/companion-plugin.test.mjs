@@ -189,6 +189,21 @@ describe('companion launcher binds the Forge project root, not the session subdi
     const env = passwdLookup(`printf '%s\\n' 'test:x:1000:1000::${root}/missing-home:/bin/bash'`);
     expect(bind(d, d, null, false, env)).toBe(`root=${d} cwd=${d}`);
   });
+  // #131: the caller cds into the bound root, so returning a relative path would bind it twice.
+  it.each([null, ''])('HOME=%s: a relative root stays absolute when account lookup is unavailable', (homeVar) => {
+    const start = join(home, 'proj', 'src');
+    const d = join(start, 'deep');
+    for (const lookup of ['exit 1', 'exit 127', 'exit 0']) {
+      expect(bind(start, 'deep', homeVar, false, passwdLookup(lookup))).toBe(`root=${d} cwd=${d}`);
+    }
+  });
+  it('a relative root stays absolute when the home directory cannot be resolved', () => {
+    const start = join(home, 'proj', 'src');
+    const d = join(start, 'deep');
+    expect(bind(start, 'deep', join(root, 'missing-home'))).toBe(`root=${d} cwd=${d}`);
+    const env = passwdLookup(`printf '%s\\n' 'test:x:1000:1000::${root}/missing-home:/bin/bash'`);
+    expect(bind(start, 'deep', null, false, env)).toBe(`root=${d} cwd=${d}`);
+  });
   // #97 seat fix 3: with CDPATH set, `cd deep` prints the directory it found, so the resolved path was two lines.
   it('a set CDPATH does not change the binding of a relative FORGE_PROJECT_ROOT', () => {
     const p = join(home, 'proj');
