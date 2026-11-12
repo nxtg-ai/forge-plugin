@@ -32,8 +32,9 @@ beforeAll(() => {
   bin = join(root, 'bin');
   mkdirSync(home);
   mkdirSync(bin);
-  // mktemp and sleep: find-forge's bounded --version probe (coreutils, like dirname).
-  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm', 'mktemp', 'sleep']) symlinkSync(which(tool), join(bin, tool));
+  // mktemp and sleep: find-forge's bounded --version probe; stat: the orchestrator launcher's check that no other
+  // user can write the Forge state it binds (coreutils, like dirname).
+  for (const tool of ['bash', 'dirname', 'cat', 'id', 'rm', 'mktemp', 'sleep', 'stat']) symlinkSync(which(tool), join(bin, tool));
 });
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 

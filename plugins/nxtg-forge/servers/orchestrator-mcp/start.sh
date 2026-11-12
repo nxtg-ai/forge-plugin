@@ -12,12 +12,45 @@ source "$HERE/../lib/find-forge.sh"
 # Bind the Forge project the session is in. Claude Code passes ${CLAUDE_PROJECT_DIR}, the directory the
 # session started in, which can be a subdirectory of the project; `forge mcp` reads FORGE_PROJECT_ROOT
 # as given and does not walk up. So use the nearest ancestor holding .forge/state.json (written by
-# `forge init`), stopping below $HOME so forge-ui's global ~/.forge is never taken for a project.
+# `forge init`) that no other user can write, stopping below $HOME so forge-ui's global ~/.forge is never taken for a project.
 # With no Forge project above, the session directory stands, as before.
 # Both paths are resolved first (`pwd -P`): a relative value is taken from the working directory, so the
 # walk always ends at "/", and a trailing slash or a symlink cannot hide $HOME from the comparison.
 # Only an absolute result is walked: a shell started in a deleted directory resolves "." to "." (getcwd
 # fails), and `dirname .` is ".", so the walk would never end.
+# Forge state another local user can write is not this session's project (GHSA-27cj-q3j4-mfjx): on a shared host
+# a user could create .forge/state.json in /tmp or another shared directory above a session and steer the
+# orchestrator to it. A path is trusted when it is not a symlink, nobody else can write it, and this user or root
+# owns it. `stat` is GNU (-c) or BSD/macOS (-f).
+foreign_writable() {
+  local op uid perm me
+  [[ -L "$1" ]] && return 0
+  op="$(stat -c '%u %a' "$1" 2>/dev/null || stat -f '%u %Lp' "$1" 2>/dev/null)" || return 0
+  uid="${op%% *}" perm="${op##* }"
+  [[ "$uid" =~ ^[0-9]+$ && "$perm" =~ ^[0-7]+$ ]] || return 0
+  me="$(id -u 2>/dev/null)"
+  (( 8#$perm & 8#002 )) && return 0
+  [[ "$uid" == "$me" ]] && return 1
+  [[ "$uid" == 0 ]] && (( (8#$perm & 8#020) == 0 )) && return 1
+  return 0
+}
+# 0 when <dir> holds a Forge project whose state is trusted: .forge and .forge/state.json pass foreign_writable.
+trusted_project() {
+  [[ -d "$1/.forge" && -f "$1/.forge/state.json" ]] || return 1
+  ! foreign_writable "$1/.forge" && ! foreign_writable "$1/.forge/state.json"
+}
+# Prints why <dir> must not be bound, or nothing: the directory, its .forge or its state.json can be written by
+# another user. A path that does not resolve is left to forge, as before.
+untrusted_root() {
+  local p
+  [[ "$1" == /* && -d "$1" ]] || return 1
+  for p in "$1" "$1/.forge" "$1/.forge/state.json"; do
+    [[ -e "$p" || -L "$p" ]] || continue
+    if foreign_writable "$p"; then printf '%s\n' "$p"; return 0; fi
+  done
+  return 1
+}
+
 bind_project_root() {
   local given="${FORGE_PROJECT_ROOT:-$PWD}" dir start home
   # CDPATH is cleared: with it set, `cd` to a relative name prints the directory it found, a second line.
@@ -35,7 +68,9 @@ bind_project_root() {
   [[ "$home" == /* ]] || { printf '%s\n' "$dir"; return; }
   start="$dir"
   while [[ "$dir" != "/" && "$dir" != "$home" ]]; do
-    if [[ -f "$dir/.forge/state.json" ]]; then printf '%s\n' "$dir"; return; fi
+    # A directory another user can write ends the walk: what lies above it is no evidence of this session's project.
+    foreign_writable "$dir" && break
+    if trusted_project "$dir"; then printf '%s\n' "$dir"; return; fi
     dir="$(dirname "$dir")"
   done
   printf '%s\n' "$start"
@@ -44,6 +79,10 @@ bind_project_root() {
 if locate_forge; then
   FORGE="$FORGE_FOUND"
   FORGE_PROJECT_ROOT="$(bind_project_root)"
+  if bad="$(untrusted_root "$FORGE_PROJECT_ROOT")"; then
+    exec bash "$HERE/../lib/unavailable-mcp.sh" orchestrator-mcp \
+      "The Forge orchestrator was not started: $bad can be written by another user, or is a symlink, so the Forge state in $FORGE_PROJECT_ROOT may not be yours. Start the session in a directory you own, or set FORGE_PROJECT_ROOT to one."
+  fi
   export FORGE_PROJECT_ROOT
   cd "$FORGE_PROJECT_ROOT" 2>/dev/null || true
   exec "$FORGE" mcp

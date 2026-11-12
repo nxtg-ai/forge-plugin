@@ -154,6 +154,73 @@ describe('companion launcher binds the Forge project root, not the session subdi
       rmSync(join(home, '.forge', 'state.json'), { force: true });
     }
   });
+  // GHSA-27cj-q3j4-mfjx: the walk stopped only at $HOME or /, so a session outside $HOME bound the first ancestor with
+  // .forge/state.json, whoever could write it. Another local user can write a world-writable directory (0777, as
+  // /tmp is) or a 0666 state file, and owns their own files; a fake `id -u` makes every test file look like theirs.
+  const INIT = '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}';
+  const launch = (start, extraEnv = {}) => {
+    rmSync(log, { force: true });
+    const launcher = join(COMPANION, 'servers/orchestrator-mcp/start.sh');
+    const r = spawnSync('bash', ['-c', `cd "$1" && exec ${KILL_GROUP_AFTER_4S} bash "$2"`, 'launch', start, launcher], {
+      input: `${INIT}\n`, encoding: 'utf8', timeout: 8000,
+      env: { HOME: home, PATH: '/usr/bin:/bin', FORGE_BIN: fake, FORGE_PROJECT_ROOT: start, ...extraEnv },
+    });
+    expect(r.status).toBe(0);
+    let bound = null;
+    try { bound = readFileSync(log, 'utf8').trim(); } catch { /* the stand-in answered */ }
+    const reply = r.stdout ? JSON.parse(r.stdout.split('\n')[0]) : null;
+    return { bound, standIn: reply?.result?.serverInfo?.version === 'unavailable' ? reply.result.instructions : null };
+  };
+  const project = (dir, mode = 0o644) => {
+    mkdirSync(join(dir, '.forge'), { recursive: true });
+    writeFileSync(join(dir, '.forge', 'state.json'), '{}');
+    chmodSync(join(dir, '.forge', 'state.json'), mode);
+  };
+  it('outside $HOME, a project planted in a directory others can write is never bound', () => {
+    const shared = join(root, 'shared');
+    mkdirSync(join(shared, 'me', 'proj', 'sub'), { recursive: true });
+    project(shared);
+    chmodSync(shared, 0o777);
+    const d = join(shared, 'me', 'proj', 'sub');
+    expect(launch(d).bound).toBe(`root=${d} cwd=${d}`);
+  });
+  it('outside $HOME, a state.json others can write is never bound, even in a directory this user owns', () => {
+    const mine = join(root, 'mine');
+    mkdirSync(join(mine, 'proj', 'sub'), { recursive: true });
+    project(mine, 0o666);
+    const d = join(mine, 'proj', 'sub');
+    expect(launch(d).bound).toBe(`root=${d} cwd=${d}`);
+    chmodSync(join(mine, '.forge', 'state.json'), 0o644); // control: the same project, writable only by this user
+    expect(launch(d).bound).toBe(`root=${mine} cwd=${mine}`);
+  });
+  it('a session in a directory others can write that holds Forge state gets the stand-in, not forge mcp', () => {
+    const open = join(root, 'open');
+    mkdirSync(open, { recursive: true });
+    project(open);
+    chmodSync(open, 0o777);
+    const r = launch(open);
+    expect(r.bound).toBe(null);
+    expect(r.standIn).toContain('The Forge orchestrator was not started');
+    expect(r.standIn).toContain(`${open} can be written by another user`);
+  });
+  it('Forge state owned by another user is never bound', () => {
+    const bin = mkdtempSync(join(root, 'id-bin-'));
+    writeFileSync(join(bin, 'id'), '#!/bin/bash\nif [ "$1" = -u ]; then echo 4242; exit 0; fi\nexec /usr/bin/id "$@"\n');
+    chmodSync(join(bin, 'id'), 0o755);
+    const r = launch(join(home, 'proj', 'src', 'deep'), { PATH: `${bin}:/usr/bin:/bin` });
+    expect(r.bound).toBe(null);
+    expect(r.standIn).toContain('can be written by another user');
+  });
+  it('a symlinked .forge is not trusted', () => {
+    const real = join(root, 'real-state');
+    project(real);
+    const p = join(root, 'linked');
+    mkdirSync(p, { recursive: true });
+    symlinkSync(join(real, '.forge'), join(p, '.forge'));
+    const r = launch(p);
+    expect(r.bound).toBe(null);
+    expect(r.standIn).toContain(`${join(p, '.forge')} can be written by another user`);
+  });
   it('FORGE_PROJECT_ROOT unset: starts from the working directory', () => {
     const p = join(home, 'proj');
     expect(bind(join(p, 'src'), null)).toBe(`root=${p} cwd=${p}`);
