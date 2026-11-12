@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+### Security
+
+- **The orchestrator launcher binds Forge project state only when no other user can write it.** It looked for the nearest ancestor holding `.forge/state.json` and stopped only at `$HOME` or `/`, so a session outside the home directory could bind a project in a shared directory that another local user had written. It now trusts a directory, its `.forge` and its `state.json` only when this user (or root) owns them, no other account can write them and none is a symlink. Group write counts as another account's write, except in the user's own private group (the primary group named after the user, with no other member, as Ubuntu and Fedora set up with umask 002). Without `getent`, group write is not trusted; without `stat` or `id`, nothing is, and the stand-in says so. The walk stops at the first directory another user can write. If the directory it would bind fails the check, it starts a stand-in server that says why instead of `forge mcp`. Both plugins' launchers carry the change.
+
 ### Changed
 
 - **The marketplace serves v3.14.4.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.4` at its release commit, so `claude plugin update` delivers the 3.14.4 fix.
