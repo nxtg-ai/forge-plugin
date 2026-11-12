@@ -12,13 +12,14 @@
 //    server dir and the harness "passes" while testing nothing.
 //  * FORGE_TEST_MODE must be ABSENT in the child so index.mjs runs server.connect().
 //  * child PATH = shadowBin:/usr/bin:/bin:/usr/local/bin — no-op browser openers (forge_open_dashboard
-//    calls open() when not in FORGE_TEST_MODE) + conda excluded so `which pytest` fails → forge_run_tests
-//    deterministically reports "no runner".
+//    calls open() when not in FORGE_TEST_MODE), this process's Node runtime, and no conda so `which pytest`
+//    fails → forge_run_tests deterministically reports "no runner". Do not add Node's whole directory:
+//    version managers and bundled runtimes may keep unrelated test runners there too.
 //  * finally{}: close client (kills child), rm tempdirs.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, readFileSync, symlinkSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,6 +47,8 @@ function check(label, ok, detail = "") {
 
 function makeShadowBin() {
   const dir = mkdtempSync(join(tmpdir(), "forge-l1-bin-"));
+  // Node may live outside the harness's deliberately isolated PATH (nvm, Homebrew, cloud runtimes).
+  symlinkSync(process.execPath, join(dir, "node"));
   for (const name of OPENERS) {
     const p = join(dir, name);
     writeFileSync(p, NOOP);
@@ -101,6 +104,11 @@ async function main() {
   const responses = []; // { tool, text } for the orchestrator-ref check
 
   try {
+    const childNode = execFileSync("node", ["-p", "process.execPath"], {
+      env: { PATH: childPath }, encoding: "utf8", timeout: 5000,
+    }).trim();
+    check("isolated PATH uses the harness's Node runtime", realpathSync(childNode) === realpathSync(process.execPath));
+
     // ── Leg A: real stdio handshake + all 8 tools against the fixture ──
     console.log("\n[Leg A] boot governance-mcp via start.sh, handshake, 8 tools");
     transport = new StdioClientTransport({
