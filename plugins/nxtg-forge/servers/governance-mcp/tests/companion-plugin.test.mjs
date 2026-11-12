@@ -86,6 +86,7 @@ describe('companion plugin nxtg-forge-orchestrator', () => {
 // so the launcher binds the nearest ancestor holding .forge/state.json, never $HOME or above.
 describe('companion launcher binds the Forge project root, not the session subdirectory', () => {
   let root, home, fake, log;
+  let seq = 0;
   beforeAll(() => {
     root = mkdtempSync(join(TMP, 'forge-bind-'));
     home = join(root, 'home');
@@ -211,6 +212,47 @@ describe('companion launcher binds the Forge project root, not the session subdi
     expect(r.bound).toBe(null);
     expect(r.standIn).toContain('can be written by another user');
   });
+  // Seat finding on #136: a group-writable path this user owns was trusted, so on a host where users share a group
+  // (umask 002) a group peer could plant or swap the state. Group write is trusted only for the user's private
+  // group (primary, named after the user, no other member: Ubuntu and Fedora). `id` and `getent` are stand-ins.
+  const groups = (members, { group = 'me', getentFails = false } = {}) => {
+    const bin = mkdtempSync(join(root, 'grp-bin-'));
+    writeFileSync(join(bin, 'id'), `#!/bin/bash\ncase "$*" in\n  -un) echo me ;;\n  -gn) echo ${group} ;;\n  *) exec /usr/bin/id "$@" ;;\nesac\n`);
+    writeFileSync(join(bin, 'getent'), getentFails
+      ? '#!/bin/bash\nexit 2\n'
+      : `#!/bin/bash\n[ "$1" = group ] || exit 2\necho "${group}:x:$2:${members}"\n`);
+    chmodSync(join(bin, 'id'), 0o755);
+    chmodSync(join(bin, 'getent'), 0o755);
+    return { PATH: `${bin}:/usr/bin:/bin` };
+  };
+  const groupProject = (name) => {
+    const top = join(root, name);
+    mkdirSync(join(top, 'proj', 'sub'), { recursive: true });
+    project(top, 0o664);
+    chmodSync(join(top, '.forge'), 0o775);
+    // Only .forge and state.json are group-writable; the directories are 0755 whatever the umask (002 on some hosts).
+    for (const dir of [top, join(top, 'proj'), join(top, 'proj', 'sub')]) chmodSync(dir, 0o755);
+    return { top, d: join(top, 'proj', 'sub') };
+  };
+  it('group-writable state in the user\'s private group is trusted (umask 002 distros keep working)', () => {
+    const { top, d } = groupProject('upg');
+    expect(launch(d, groups('')).bound).toBe(`root=${top} cwd=${top}`);
+    expect(launch(d, groups('me')).bound).toBe(`root=${top} cwd=${top}`);
+  });
+  it.each([
+    ['the group has another member', ['me,peer']],
+    ['the group is not named after the user', ['', { group: 'staff' }]],
+    ['getent cannot list the group', ['', { getentFails: true }]],
+  ])('group-writable state is not trusted when %s', (_why, args) => {
+    const { d } = groupProject(`grp-${seq++}`);
+    expect(launch(d, groups(...args)).bound).toBe(`root=${d} cwd=${d}`);
+  });
+  it('a session in a group-writable directory of a shared group that holds Forge state gets the stand-in', () => {
+    const { top } = groupProject(`grp-${seq++}`);
+    const r = launch(top, groups('me,peer'));
+    expect(r.bound).toBe(null);
+    expect(r.standIn).toContain(`${join(top, '.forge')} can be written by another user`);
+  });
   it('a symlinked .forge is not trusted', () => {
     const real = join(root, 'real-state');
     project(real);
@@ -228,7 +270,9 @@ describe('companion launcher binds the Forge project root, not the session subdi
   // #102: HOME can be missing in a launcher's environment. Never use / as a guessed home boundary.
   const passwdLookup = (body) => {
     const bin = mkdtempSync(join(root, 'passwd-bin-'));
-    writeFileSync(join(bin, 'getent'), `#!/bin/bash\n${body}\n`);
+    // Group lookups (the launcher's private-group check under umask 002) go to the real getent.
+    writeFileSync(join(bin, 'getent'), `#!/bin/bash\n[ "$1" = group ] && exec getent-real "$@"\n${body}\n`);
+    try { symlinkSync(spawnSync('bash', ['-c', 'command -v getent'], { encoding: 'utf8' }).stdout.trim() || '/bin/false', join(bin, 'getent-real')); } catch {}
     chmodSync(join(bin, 'getent'), 0o755);
     return { PATH: `${bin}:/usr/bin:/bin` };
   };

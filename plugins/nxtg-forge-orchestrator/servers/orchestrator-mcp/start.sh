@@ -20,19 +20,33 @@ source "$HERE/../lib/find-forge.sh"
 # fails), and `dirname .` is ".", so the walk would never end.
 # Forge state another local user can write is not this session's project (GHSA-27cj-q3j4-mfjx): on a shared host
 # a user could create .forge/state.json in /tmp or another shared directory above a session and steer the
-# orchestrator to it. A path is trusted when it is not a symlink, nobody else can write it, and this user or root
-# owns it. `stat` is GNU (-c) or BSD/macOS (-f).
+# orchestrator to it. A path is trusted when it is not a symlink, no other account can write it (through world or
+# group write), and this user or root owns it. `stat` is GNU (-c) or BSD/macOS (-f).
 foreign_writable() {
-  local op uid perm me
+  local op uid gid perm me
   [[ -L "$1" ]] && return 0
-  op="$(stat -c '%u %a' "$1" 2>/dev/null || stat -f '%u %Lp' "$1" 2>/dev/null)" || return 0
-  uid="${op%% *}" perm="${op##* }"
-  [[ "$uid" =~ ^[0-9]+$ && "$perm" =~ ^[0-7]+$ ]] || return 0
-  me="$(id -u 2>/dev/null)"
+  op="$(stat -c '%u %g %a' "$1" 2>/dev/null || stat -f '%u %g %Lp' "$1" 2>/dev/null)" || return 0
+  uid="${op%% *}" perm="${op##* }" gid="${op#* }" gid="${gid%% *}"
+  [[ "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ && "$perm" =~ ^[0-7]+$ ]] || return 0
+  me="$(id -u 2>/dev/null)" || return 0
   (( 8#$perm & 8#002 )) && return 0
-  [[ "$uid" == "$me" ]] && return 1
-  [[ "$uid" == 0 ]] && (( (8#$perm & 8#020) == 0 )) && return 1
+  [[ "$uid" == "$me" || "$uid" == 0 ]] || return 0
+  (( (8#$perm & 8#020) == 0 )) && return 1
+  # Group-writable: other accounts in that group can write it, unless the group is this user's own private group
+  # (Ubuntu and Fedora give each user one, with umask 002). Root's files never get this exception.
+  [[ "$uid" == "$me" ]] && private_group "$gid" && return 1
   return 0
+}
+# 0 when <gid> is this user's private group: the primary group, named after the user, with no other listed member.
+# Without getent the member list cannot be read, so the answer is no.
+private_group() {
+  local name entry
+  [[ "$1" == "$(id -g 2>/dev/null)" ]] || return 1
+  name="$(id -un 2>/dev/null)" || return 1
+  [[ -n "$name" && "$(id -gn 2>/dev/null)" == "$name" ]] || return 1
+  entry="$(getent group "$1" 2>/dev/null)" || return 1
+  entry="${entry##*:}"
+  [[ -z "$entry" || "$entry" == "$name" ]]
 }
 # 0 when <dir> holds a Forge project whose state is trusted: .forge and .forge/state.json pass foreign_writable.
 trusted_project() {
@@ -44,6 +58,10 @@ trusted_project() {
 untrusted_root() {
   local p
   [[ "$1" == /* && -d "$1" ]] || return 1
+  # Without stat and id nothing can be checked, so every path counts as another user's.
+  if ! command -v stat >/dev/null 2>&1 || ! command -v id >/dev/null 2>&1; then
+    printf '%s\n' "$1 (stat and id are needed to check who can write it, and one is missing)"; return 0
+  fi
   for p in "$1" "$1/.forge" "$1/.forge/state.json"; do
     [[ -e "$p" || -L "$p" ]] || continue
     if foreign_writable "$p"; then printf '%s\n' "$p"; return 0; fi
