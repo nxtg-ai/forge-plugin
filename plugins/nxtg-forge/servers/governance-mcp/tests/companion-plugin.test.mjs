@@ -115,7 +115,7 @@ describe('companion launcher binds the Forge project root, not the session subdi
     const launcher = join(COMPANION, 'servers/orchestrator-mcp/start.sh');
     const r = spawnSync('bash', ['-c', `cd "$1" && { [ "$3" = 0 ] || rmdir "$1"; } && exec ${KILL_GROUP_AFTER_4S} bash "$2"`, 'bind', start, launcher, deleteCwd ? '1' : '0'], {
       input: '', encoding: 'utf8', timeout: 8000,
-      env: { HOME: homeVar, PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }), ...extraEnv },
+      env: { ...(homeVar === null ? {} : { HOME: homeVar }), PATH: '/usr/bin:/bin', FORGE_BIN: fake, ...(envRoot === null ? {} : { FORGE_PROJECT_ROOT: envRoot }), ...extraEnv },
     });
     expect(r.status).toBe(0);
     return readFileSync(log, 'utf8').trim();
@@ -157,6 +157,52 @@ describe('companion launcher binds the Forge project root, not the session subdi
   it('FORGE_PROJECT_ROOT unset: starts from the working directory', () => {
     const p = join(home, 'proj');
     expect(bind(join(p, 'src'), null)).toBe(`root=${p} cwd=${p}`);
+  });
+  // #102: HOME can be missing in a launcher's environment. Never use / as a guessed home boundary.
+  const passwdLookup = (body) => {
+    const bin = mkdtempSync(join(root, 'passwd-bin-'));
+    writeFileSync(join(bin, 'getent'), `#!/bin/bash\n${body}\n`);
+    chmodSync(join(bin, 'getent'), 0o755);
+    return { PATH: `${bin}:/usr/bin:/bin` };
+  };
+  it.each([null, ''])('HOME=%s: uses the account home and still finds a project below it', (homeVar) => {
+    const env = passwdLookup(`[[ "$1" == passwd && "$2" == "$(id -u)" ]] || exit 1\nprintf '%s\\n' 'test:x:1000:1000::${home}/:/bin/bash'`);
+    writeFileSync(join(home, '.forge', 'state.json'), '{}');
+    try {
+      const d = join(home, 'loose', 'sub');
+      expect(bind(d, d, homeVar, false, env)).toBe(`root=${d} cwd=${d}`);
+      const p = join(home, 'proj');
+      expect(bind(join(p, 'src', 'deep'), null, homeVar, false, env)).toBe(`root=${p} cwd=${p}`);
+    } finally {
+      rmSync(join(home, '.forge', 'state.json'), { force: true });
+    }
+  });
+  it.each(['exit 1', 'exit 127', 'exit 0', "printf '%s\\n' 'test:x:1000:1000:::/bin/bash'", "printf '%s\\n' 'test:x:1000:1000::relative:/bin/bash'"])(
+    'an unavailable account home (%s) leaves the session directory unchanged', (lookup) => {
+      const d = join(home, 'proj', 'src', 'deep');
+      expect(bind(d, d, null, false, passwdLookup(lookup))).toBe(`root=${d} cwd=${d}`);
+    },
+  );
+  it('a missing home directory does not remove the walk boundary', () => {
+    const d = join(home, 'proj', 'src', 'deep');
+    expect(bind(d, d, join(root, 'missing-home'))).toBe(`root=${d} cwd=${d}`);
+    const env = passwdLookup(`printf '%s\\n' 'test:x:1000:1000::${root}/missing-home:/bin/bash'`);
+    expect(bind(d, d, null, false, env)).toBe(`root=${d} cwd=${d}`);
+  });
+  // #131: the caller cds into the bound root, so returning a relative path would bind it twice.
+  it.each([null, ''])('HOME=%s: a relative root stays absolute when account lookup is unavailable', (homeVar) => {
+    const start = join(home, 'proj', 'src');
+    const d = join(start, 'deep');
+    for (const lookup of ['exit 1', 'exit 127', 'exit 0']) {
+      expect(bind(start, 'deep', homeVar, false, passwdLookup(lookup))).toBe(`root=${d} cwd=${d}`);
+    }
+  });
+  it('a relative root stays absolute when the home directory cannot be resolved', () => {
+    const start = join(home, 'proj', 'src');
+    const d = join(start, 'deep');
+    expect(bind(start, 'deep', join(root, 'missing-home'))).toBe(`root=${d} cwd=${d}`);
+    const env = passwdLookup(`printf '%s\\n' 'test:x:1000:1000::${root}/missing-home:/bin/bash'`);
+    expect(bind(start, 'deep', null, false, env)).toBe(`root=${d} cwd=${d}`);
   });
   // #97 seat fix 3: with CDPATH set, `cd deep` prints the directory it found, so the resolved path was two lines.
   it('a set CDPATH does not change the binding of a relative FORGE_PROJECT_ROOT', () => {
