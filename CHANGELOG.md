@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+### Changed
+
+- **The marketplace serves v3.14.4.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.4` at its release commit, so `claude plugin update` delivers the 3.14.4 fix.
+
 ## [3.14.4] — 2026-11-12
 
 ### Security
