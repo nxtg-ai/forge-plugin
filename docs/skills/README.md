@@ -52,7 +52,7 @@ Deep expertise in specific engineering domains.
 | [Architecture](architecture.md) | Clean Architecture layers, design and DDD patterns, backend building blocks, ADRs (invoke-only) |
 | [Coding Standards](coding-standards.md) | Cross-language conventions, complexity limits, pre-PR checklist (invoke-only) |
 | [Documentation](documentation.md) | Doc structure, API documentation patterns, README conventions, JSDoc standards |
-| OWASP Security (owasp-security, no page yet) | OWASP detection and remediation, plus why a Forge security guard blocked a command and the correct fix |
+| [OWASP Security](owasp-security.md) | OWASP detection and remediation, plus why a Forge security guard blocked a command and the correct fix |
 | [Testing](testing.md) | Test framework usage, assertion patterns, coverage tools, fixture management |
 
 ### Framework Knowledge
