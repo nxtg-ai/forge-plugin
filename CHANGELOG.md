@@ -10,15 +10,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [3.14.4] — 2026-11-12
+
+### Security
+
+- **The companion launcher keeps its home-directory boundary when `HOME` is unset or empty** (#131, contributed by @Drchennnn; fixes #102). Severity Low, local only: with `HOME` unset or empty the walk had no home boundary, so a session inside your home directory could bind the home directory itself as the Forge project (forge-ui keeps its global `~/.forge` there), and the orchestrator read and wrote task state in it. It looks up the current account's home with `getent` when available, and leaves the given session directory unchanged if the home cannot be determined or resolved. Global home state is no longer mistaken for a project in that case. Both orchestrator launchers use the same logic.
+
 ### Changed
 
 - **The marketplace serves v3.14.3.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.3` at its release commit, so `claude plugin update` delivers the 3.14.3 fixes.
+- **Docs: a reference page for the `owasp-security` skill** (`docs/skills/owasp-security.md`; #132, contributed by @Drchennnn; fixes #103).
+- **Docs: a reference page for `/nxtg-forge:task`, the enforced-task command** (`docs/commands/task.md`; #133, contributed by @Drchennnn; fixes #104).
 
 ### Fixed
 
-- **The companion launcher keeps its home-directory boundary when `HOME` is unset or empty** (#102). It looks up the current account's home with `getent` when available, and leaves the given session directory unchanged if the home cannot be determined or resolved. Global home state is no longer mistaken for a project in that case. Both orchestrator launchers use the same logic.
-
-- **The L1 integration harness finds the Node runtime that started it**, including installations outside system PATH directories. It exposes only that executable in its temporary test directory so unrelated test runners stay excluded.
+- Tests: **the L1 integration harness finds the Node runtime that started it**, including installations outside system PATH directories. It exposes only that executable in its temporary test directory so unrelated test runners stay excluded. (#131)
 
 ## [3.14.3] — 2026-11-09
 
