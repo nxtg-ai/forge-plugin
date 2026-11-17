@@ -14,6 +14,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 - **The marketplace serves v3.14.5.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.5` at its release commit, so `claude plugin update` delivers the 3.14.5 security fix.
 
+### Fixed
+
+- **`forge_get_governance_health` and `forge_get_code_metrics` say "not measured" instead of a false pass or zero** (DIRECTIVE-NXTG-20261117-02). With no git, health reported "Git Clean: pass" (also outside a git repository); with no `find`, `wc` or `grep`, metrics reported 0 source files and 0 tests; a Security scan that could not run (`grep`, or `git` in a repository, or `npm` with a lockfile) reported "clean"; and a count that timed out (15 s, on a very large tree) read as 0, so Test Coverage failed with "No tests found". Now such a check has status `not measured`, points `null` and the reason, and a count that could not be taken is `null` with the reason in `notMeasured`. The score is the points earned as a share of what the measured checks could earn, with `measuredChecks` and `notMeasuredChecks`; with every check measured it is the same sum as before, and with none (an empty project directory) score and grade are `null`. `/nxtg-forge:status` shows no finding and no lost points for an unmeasured check, leaves it out of the dimension totals, and says why health is not scored. The HTML dashboard shows "n/a" and "not measured".
+
 ## [3.14.5] — 2026-11-12
 
 ### Security
