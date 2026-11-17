@@ -1,6 +1,6 @@
 {
   "name": "@nxtg-forge/governance-mcp",
-  "version": "3.14.5",
+  "version": "3.14.6",
   "description": "MCP server for NXTG-Forge governance dashboard",
   "type": "module",
   "main": "index.mjs",
