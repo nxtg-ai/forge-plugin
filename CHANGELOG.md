@@ -10,9 +10,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [3.14.6] — 2026-11-17
+
 ### Changed
 
 - **The marketplace serves v3.14.5.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.5` at its release commit, so `claude plugin update` delivers the 3.14.5 security fix.
+- Dev only: `@hono/node-server` in the test lockfile is updated (#139); nothing a user installs changes.
 
 ### Fixed
 
