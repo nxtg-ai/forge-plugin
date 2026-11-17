@@ -9,7 +9,7 @@
  */
 
 import { execSync, spawn } from "child_process";
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, lstatSync, mkdtempSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, lstatSync, mkdtempSync, accessSync, constants as fsConstants } from "fs";
 import { join, dirname, delimiter } from "path";
 import { fileURLToPath } from "url";
 import { tmpdir } from "os";
@@ -35,6 +35,45 @@ export function run(cmd, opts = {}) {
     console.error('[governance-mcp] run() failed:', cmd, err.message || err);
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// "Not measured": a check that cannot run says so, with the reason, instead of reporting a pass or a zero
+// (DIRECTIVE-NXTG-20261117-02). It never counts toward the score.
+// ---------------------------------------------------------------------------
+
+export const NOT_MEASURED = "not measured";
+
+/** The path of an executable named `name` on PATH, or null. Reads the directories itself, so it needs no shell. */
+export function whichCmd(name, path = process.env.PATH || "") {
+  for (const dir of path.split(delimiter)) {
+    if (!dir) continue;
+    const p = join(dir, name);
+    try {
+      accessSync(p, fsConstants.X_OK);
+      if (statSync(p).isFile()) return p;
+    } catch { /* not here */ }
+  }
+  return null;
+}
+
+/** Why commands that need `tools` (run by `shell`) cannot run, or null when they can. */
+export function toolsMissing(tools, shell = "/bin/sh") {
+  const missing = [...(existsSync(shell) ? [] : [shell]), ...tools.filter((t) => !whichCmd(t))];
+  return missing.length ? `${missing.join(", ")} not available` : null;
+}
+
+/** True when `dir` or an ancestor holds `.git`: a repository that git, when present, would read. */
+export function hasGitDir(dir) {
+  for (let d = dir; ; d = dirname(d)) {
+    if (existsSync(join(d, ".git"))) return true;
+    if (dirname(d) === d) return false;
+  }
+}
+
+/** True when `dir` holds no entries at all: there is nothing to measure. */
+export function isEmptyDir(dir) {
+  try { return readdirSync(dir).length === 0; } catch { return false; }
 }
 
 /**
@@ -158,7 +197,9 @@ export function getGovernanceState(root = process.env.FORGE_PROJECT_ROOT || proc
  * Return git working-tree status for the project.
  * `.claude/` paths are excluded from dirty-state counts (BUG-01).
  * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
- * @returns {{ branch: string|null, commitCount: number, lastCommit: string|null, clean: boolean, modified: number, untracked: number, staged: number, contributors: string[] }}
+ * When git cannot answer (not installed, not a repository, or `git status` fails), `measured` is false,
+ * `notMeasured` says why, and `clean` is null: an unknown working tree is neither clean nor dirty.
+ * @returns {{ branch: string|null, commitCount: number, lastCommit: string|null, clean: boolean|null, modified: number, untracked: number, staged: number, contributors: string[], measured: boolean, notMeasured: string|null }}
  */
 export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   // Bug B: If root doesn't have .git, check subdirectory via findApplicationRoot
@@ -170,10 +211,19 @@ export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cw
     }
   }
 
+  const unmeasured = (reason) => ({
+    branch: null, commitCount: 0, lastCommit: null, modified: 0, untracked: 0, staged: 0,
+    clean: null, contributors: [], measured: false, notMeasured: reason,
+  });
+  const noTool = toolsMissing(["git"]);
+  if (noTool) return unmeasured(noTool);
+  if (run("git rev-parse --is-inside-work-tree", { cwd: gitRoot }) !== "true") return unmeasured("not a git repository");
+
   const branch = run("git rev-parse --abbrev-ref HEAD", { cwd: gitRoot });
   const commitCount = run("git rev-list --count HEAD", { cwd: gitRoot });
   const lastCommit = run('git log -1 --format="%h %s (%cr)"', { cwd: gitRoot });
   const status = run("git status --porcelain", { cwd: gitRoot });
+  if (status === null) return unmeasured("git status failed");
   const contributors = run("git shortlog -sn --no-merges HEAD | head -5", { cwd: gitRoot });
 
   const lines = status ? status.split("\n").filter(Boolean) : [];
@@ -194,6 +244,8 @@ export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cw
     contributors: contributors
       ? contributors.split("\n").map((l) => l.trim())
       : [],
+    measured: true,
+    notMeasured: null,
   };
 }
 
@@ -201,10 +253,21 @@ export function getGitStatus(root = process.env.FORGE_PROJECT_ROOT || process.cw
  * Collect code metrics for the project: file counts, test ratios, line counts, and dependencies.
  * Uses `findApplicationRoot` to locate the manifest; build artifact directories are excluded.
  * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
- * @returns {{ projectType: string, sourceFiles: number, testFiles: number, testCaseCount: number, testFileRatio: number, testCoverage: number|null, totalLines: string, largeFiles: string[], dependencies: number, devDependencies: number }}
+ * A count that could not be taken (find, wc, xargs or grep missing, or an empty project directory) is null,
+ * never 0, and `notMeasured` names the field and the reason.
+ * @returns {{ projectType: string, sourceFiles: number|null, testFiles: number|null, testCaseCount: number|null, testFileRatio: number|null, testCoverage: number|null, totalLines: string|null, largeFiles: string[]|null, dependencies: number, devDependencies: number, notMeasured: Object<string, string> }}
  */
 export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
+  const notMeasured = {};
+  const empty = isEmptyDir(root) ? "the project directory is empty" : null;
+  // Each count is a shell pipeline; it is taken only when its tools are present.
+  const countBlocked = empty || toolsMissing(["find", "wc"], "/bin/bash");
+  const linesBlocked = empty || toolsMissing(["find", "head", "xargs", "wc", "tail"], "/bin/bash");
+  const largeBlocked = empty || toolsMissing(["find", "xargs", "wc", "sort", "head", "grep"], "/bin/bash");
+  const casesBlocked = empty || toolsMissing(["find", "xargs", "grep", "wc"], "/bin/bash");
+  // A pipeline that fails gives null from run(); a count that does not parse is not a measurement either.
+  const count = (raw) => (raw === null || !/^\s*\d+\s*$/.test(raw) ? null : parseInt(raw, 10));
 
   // Detect project type from appRoot (supports subdirectory manifests)
   const hasPackageJson = existsSync(join(appRoot, "package.json"));
@@ -237,25 +300,25 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
   }
 
   // Count source files (BUG-03: exclude *.config.*, BUG-05: exclude build artifacts)
-  const sourceFiles = run(
+  const sourceFiles = countBlocked ? null : run(
     `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} -not -name "*.test.*" -not -name "*.spec.*" -not -path "*/__tests__/*" -not -name "*.config.*" 2>/dev/null | wc -l`,
     { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Count test files
-  const testFiles = run(
+  const testFiles = countBlocked ? null : run(
     `find . \\( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -path "*/__tests__/*" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | wc -l`,
     { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Count total lines
-  const totalLines = run(
+  const totalLines = linesBlocked ? null : run(
     `find . ${findNameExpr(sourceExt)} ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | head -500 | xargs wc -l 2>/dev/null | tail -1`,
     { cwd: appRoot, shell: "/bin/bash" }
   );
 
   // Large files (>300 lines)
-  const largeFiles = run(
+  const largeFiles = largeBlocked ? null : run(
     `find . \\( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \\) ${BUILD_ARTIFACT_EXCLUDES} 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -6 | grep -v total`,
     { cwd: appRoot, shell: "/bin/bash" }
   );
@@ -288,8 +351,11 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
     return null;
   })();
 
-  const srcCount = parseInt(sourceFiles) || 0;
-  const tstCount = parseInt(testFiles) || 0;
+  const srcCount = count(sourceFiles);
+  const tstCount = count(testFiles);
+  if (srcCount === null) notMeasured.sourceFiles = countBlocked || "find failed or took over 15 s";
+  if (tstCount === null) notMeasured.testFiles = countBlocked || "find failed or took over 15 s";
+  if (srcCount === null || tstCount === null) notMeasured.testFileRatio = notMeasured.testFiles || notMeasured.sourceFiles;
 
   // Count individual test cases by grepping for test declarations (~50ms)
   // Uses find to locate test files (avoids node_modules/dist inflation) then greps for patterns.
@@ -306,9 +372,15 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
       go: `find . -name "*_test.go" ${excl} 2>/dev/null | xargs grep -E "^func Test" 2>/dev/null | wc -l`,
     };
     const cmd = patterns[projectType];
-    if (!cmd) return 0;
-    return parseInt(run(cmd, { cwd: appRoot, shell: "/bin/bash" })) || 0;
+    if (casesBlocked) { notMeasured.testCaseCount = casesBlocked; return null; }
+    if (!cmd) return 0; // no test-case pattern for this project type: nothing to count
+    const n = count(run(cmd, { cwd: appRoot, shell: "/bin/bash" }));
+    if (n === null) notMeasured.testCaseCount = "grep failed or took over 15 s";
+    return n;
   })();
+  if (totalLines === null) notMeasured.totalLines = linesBlocked || "wc failed or took over 15 s";
+  // `grep -v total` exits 1 when nothing is left (no source files), so run() gives null for a real empty list.
+  if (largeFiles === null && largeBlocked) notMeasured.largeFiles = largeBlocked;
 
   return {
     projectType,
@@ -316,50 +388,60 @@ export function getCodeMetrics(root = process.env.FORGE_PROJECT_ROOT || process.
     testFiles: tstCount,
     testCaseCount,
     // testFileRatio: test files / source files (proxy metric, not real line coverage)
-    testFileRatio: tstCount && srcCount ? Math.round((tstCount / srcCount) * 100) : 0,
+    testFileRatio: tstCount === null || srcCount === null ? null : tstCount && srcCount ? Math.round((tstCount / srcCount) * 100) : 0,
     // testCoverage: actual line coverage % from Istanbul/c8 report, null if unavailable
     testCoverage,
-    totalLines: totalLines ? totalLines.trim() : "unknown",
-    largeFiles: largeFiles ? largeFiles.split("\n").map((l) => l.trim()).filter(Boolean) : [],
+    totalLines: totalLines ? totalLines.trim() : notMeasured.totalLines ? null : "unknown",
+    largeFiles: notMeasured.largeFiles ? null : largeFiles ? largeFiles.split("\n").map((l) => l.trim()).filter(Boolean) : [],
     dependencies: deps,
     devDependencies: devDeps,
+    notMeasured,
   };
 }
 
+/** The most points each health check can earn; they sum to 100. */
+export const HEALTH_CHECK_MAX = {
+  Governance: 15, "Git Clean": 10, "Test Coverage": 20, README: 10, "CLAUDE.md": 10, "Type Safety": 10, "File Size": 10, Security: 15,
+};
 /**
  * Compute the overall project health score across governance, git, testing, docs, and security dimensions.
+ * A check that cannot run has status "not measured", points null and the reason in `note`. It never counts:
+ * the score is the points earned as a share of the points the measured checks could earn (0-100), and with
+ * no measured check the score and grade are null.
  * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
- * @returns {{ score: number, grade: string, maxScore: number, checks: Array<{ name: string, status: string, points: number, note?: string }> }}
+ * @returns {{ score: number|null, grade: string|null, maxScore: number, checks: Array<{ name: string, status: string, points: number|null, max: number, note?: string }>, measuredChecks: number, notMeasuredChecks: number, pointsEarned: number, pointsPossible: number }}
  */
 export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
+  const empty = isEmptyDir(root) ? "the project directory is empty" : null;
   const gov = getGovernanceState(root);
   const git = getGitStatus(root);
   const metrics = getCodeMetrics(root);
 
-  let score = 0;
   const checks = [];
+  const add = (name, status, points, note) => {
+    const c = { name, status, points, max: HEALTH_CHECK_MAX[name] };
+    if (note) c.note = note;
+    checks.push(c);
+  };
+  const unmeasured = (name, reason) => add(name, NOT_MEASURED, null, reason);
 
   // Governance initialized (15 pts) — always at governance root
-  if (gov.initialized) {
-    score += 15;
-    checks.push({ name: "Governance", status: "pass", points: 15 });
-  } else {
-    checks.push({ name: "Governance", status: "fail", points: 0, note: "Not initialized" });
-  }
+  if (empty) unmeasured("Governance", empty);
+  else if (gov.initialized) add("Governance", "pass", 15);
+  else add("Governance", "fail", 0, "Not initialized");
 
   // Git clean (10 pts)
-  if (git.clean) {
-    score += 10;
-    checks.push({ name: "Git Clean", status: "pass", points: 10 });
-  } else {
-    score += 5;
-    checks.push({ name: "Git Clean", status: "warn", points: 5, note: `${git.modified} modified, ${git.untracked} untracked` });
-  }
+  if (empty) unmeasured("Git Clean", empty);
+  else if (!git.measured) unmeasured("Git Clean", git.notMeasured);
+  else if (git.clean) add("Git Clean", "pass", 10);
+  else add("Git Clean", "warn", 5, `${git.modified} modified, ${git.untracked} untracked`);
 
   // Has tests (20 pts) — tiered: real coverage → test density → file ratio
-  if (metrics.testFiles > 0) {
-    let testScore;
+  if (metrics.testFiles === null) {
+    unmeasured("Test Coverage", metrics.notMeasured.testFiles);
+  } else if (metrics.testFiles > 0) {
+    let testScore = null;
     let coverageNote;
     if (metrics.testCoverage !== null) {
       // Tier 1: Real line coverage from Istanbul/c8/nyc
@@ -374,32 +456,26 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
       else if (density >= 1) testScore = 10;
       else testScore = 5;
       coverageNote = `${metrics.testCaseCount} tests across ${metrics.sourceFiles} files (${density.toFixed(1)}/file)`;
-    } else {
+    } else if (metrics.testFileRatio !== null) {
       // Tier 3: File ratio fallback
       testScore = Math.min(20, Math.round((metrics.testFileRatio / 100) * 20));
       coverageNote = `${metrics.testFileRatio}% file ratio`;
     }
-    score += testScore;
-    checks.push({ name: "Test Coverage", status: testScore >= 15 ? "pass" : "warn", points: testScore, note: coverageNote });
+    if (testScore === null) unmeasured("Test Coverage", metrics.notMeasured.sourceFiles || "source files not counted");
+    else add("Test Coverage", testScore >= 15 ? "pass" : "warn", testScore, coverageNote);
   } else {
-    checks.push({ name: "Test Coverage", status: "fail", points: 0, note: "No tests found" });
+    add("Test Coverage", "fail", 0, "No tests found");
   }
 
   // Has README (10 pts) — check appRoot (may be in subdirectory)
-  if (existsSync(join(appRoot, "README.md"))) {
-    score += 10;
-    checks.push({ name: "README", status: "pass", points: 10 });
-  } else {
-    checks.push({ name: "README", status: "fail", points: 0 });
-  }
+  if (empty) unmeasured("README", empty);
+  else if (existsSync(join(appRoot, "README.md"))) add("README", "pass", 10);
+  else add("README", "fail", 0);
 
   // Has CLAUDE.md (10 pts) — always at governance root
-  if (existsSync(join(root, "CLAUDE.md"))) {
-    score += 10;
-    checks.push({ name: "CLAUDE.md", status: "pass", points: 10 });
-  } else {
-    checks.push({ name: "CLAUDE.md", status: "warn", points: 0, note: "Recommended for AI-assisted development" });
-  }
+  if (empty) unmeasured("CLAUDE.md", empty);
+  else if (existsSync(join(root, "CLAUDE.md"))) add("CLAUDE.md", "pass", 10);
+  else add("CLAUDE.md", "warn", 0, "Recommended for AI-assisted development");
 
   // TypeScript / type checking (0-10 pts, tiered) — BUG-04: nuanced scoring
   const tsTypeSafety = (() => {
@@ -419,71 +495,79 @@ export function getHealthScore(root = process.env.FORGE_PROJECT_ROOT || process.
     }
     return { points: 0, status: "info", note: "no type config" };
   })();
-  score += tsTypeSafety.points;
-  checks.push({ name: "Type Safety", status: tsTypeSafety.status, points: tsTypeSafety.points, note: tsTypeSafety.note });
+  if (empty) unmeasured("Type Safety", empty);
+  else add("Type Safety", tsTypeSafety.status, tsTypeSafety.points, tsTypeSafety.note);
 
   // No large files (10 pts)
-  const largeCount = metrics.largeFiles.filter((f) => {
-    const match = f.match(/^\s*(\d+)/);
-    return match && parseInt(match[1]) > 500;
-  }).length;
-  if (largeCount === 0) {
-    score += 10;
-    checks.push({ name: "File Size", status: "pass", points: 10 });
+  if (metrics.largeFiles === null) {
+    unmeasured("File Size", metrics.notMeasured.largeFiles);
   } else {
-    score += 5;
-    checks.push({ name: "File Size", status: "warn", points: 5, note: `${largeCount} files over 500 lines` });
+    const largeCount = metrics.largeFiles.filter((f) => {
+      const match = f.match(/^\s*(\d+)/);
+      return match && parseInt(match[1]) > 500;
+    }).length;
+    if (largeCount === 0) add("File Size", "pass", 10);
+    else add("File Size", "warn", 5, `${largeCount} files over 500 lines`);
   }
 
-  // Security (15 pts) — npm audit, secrets in git, hardcoded secrets, eval usage
+  // Security (15 pts) — npm audit, secrets in git, hardcoded secrets, eval usage. Every applicable scan must
+  // have run: a scan that could not run would otherwise read as "clean".
   const security = getSecurityScan(root);
-  let securityPoints = 15;
-  const securityNotes = [];
+  if (security.notMeasured.length) {
+    unmeasured("Security", security.notMeasured.join("; "));
+  } else {
+    let securityPoints = 15;
+    const securityNotes = [];
 
-  // .env in git: -5
-  if (security.findings.some((f) => f.label === ".env file committed to git")) {
-    securityPoints -= 5;
-    securityNotes.push("secrets in git");
-  }
-
-  // npm audit vulnerabilities: -10 for critical/high, -5 for moderate
-  if (security.audit?.total > 0) {
-    const v = security.audit.vulnerabilities;
-    if ((v.critical || 0) > 0 || (v.high || 0) > 0) {
-      securityPoints -= 10;
-      securityNotes.push(`${(v.critical || 0) + (v.high || 0)} critical/high vulns`);
-    } else if ((v.moderate || 0) > 0) {
+    // .env in git: -5
+    if (security.findings.some((f) => f.label === ".env file committed to git")) {
       securityPoints -= 5;
-      securityNotes.push(`${v.moderate} moderate vulns`);
+      securityNotes.push("secrets in git");
     }
+
+    // npm audit vulnerabilities: -10 for critical/high, -5 for moderate
+    if (security.audit?.total > 0) {
+      const v = security.audit.vulnerabilities;
+      if ((v.critical || 0) > 0 || (v.high || 0) > 0) {
+        securityPoints -= 10;
+        securityNotes.push(`${(v.critical || 0) + (v.high || 0)} critical/high vulns`);
+      } else if ((v.moderate || 0) > 0) {
+        securityPoints -= 5;
+        securityNotes.push(`${v.moderate} moderate vulns`);
+      }
+    }
+
+    // Hardcoded secrets or eval: -5
+    const hasSecretFindings = security.findings.some(
+      (f) => f.category === "secrets" && f.label !== ".env file committed to git"
+    );
+    const hasEval = security.findings.some((f) => f.category === "injection");
+    if (hasSecretFindings || hasEval) {
+      securityPoints -= 5;
+      securityNotes.push(hasSecretFindings ? "hardcoded secrets" : "eval() usage");
+    }
+
+    securityPoints = Math.max(0, securityPoints);
+    add("Security", securityPoints >= 12 ? "pass" : securityPoints >= 5 ? "warn" : "fail", securityPoints,
+      securityNotes.length ? securityNotes.join(", ") : "clean");
   }
 
-  // Hardcoded secrets or eval: -5
-  const hasSecretFindings = security.findings.some(
-    (f) => f.category === "secrets" && f.label !== ".env file committed to git"
-  );
-  const hasEval = security.findings.some((f) => f.category === "injection");
-  if (hasSecretFindings || hasEval) {
-    securityPoints -= 5;
-    securityNotes.push(hasSecretFindings ? "hardcoded secrets" : "eval() usage");
-  }
-
-  securityPoints = Math.max(0, securityPoints);
-  score += securityPoints;
-  checks.push({
-    name: "Security",
-    status: securityPoints >= 12 ? "pass" : securityPoints >= 5 ? "warn" : "fail",
-    points: securityPoints,
-    note: securityNotes.length ? securityNotes.join(", ") : "clean",
-  });
-
+  const measured = checks.filter((c) => c.status !== NOT_MEASURED);
+  const pointsEarned = measured.reduce((a, c) => a + c.points, 0);
+  const pointsPossible = measured.reduce((a, c) => a + c.max, 0);
+  // With every check measured, pointsPossible is 100 and the score is the plain sum, as before.
+  const score = pointsPossible ? Math.round((pointsEarned / pointsPossible) * 100) : null;
   const grade =
+    score === null ? null :
     score >= 90 ? "A" :
     score >= 80 ? "B" :
     score >= 70 ? "C" :
     score >= 60 ? "D" : "F";
 
-  return { score, grade, maxScore: 100, checks };
+  return {
+    score, grade, maxScore: 100, checks,
+    measuredChecks: measured.length, notMeasuredChecks: checks.length - measured.length, pointsEarned, pointsPossible,
+  };
 }
 
 /**
@@ -576,11 +660,19 @@ export function listCheckpoints(root = process.env.FORGE_PROJECT_ROOT || process
  * Scan the project for common security issues: hardcoded secrets, eval() usage,
  * `.env` files committed to git, and npm audit vulnerabilities.
  * @param {string} [root] - Project root directory (defaults to FORGE_PROJECT_ROOT or cwd)
- * @returns {{ findings: Array<{ severity: string, category: string, label: string, count?: number, sample?: string, files?: string[] }>, audit: { vulnerabilities: object, total: number }|null, totalFindings: number }}
+ * A scan that could not run is listed in `notMeasured` with the reason, so an empty `findings` list is
+ * not read as "clean".
+ * @returns {{ findings: Array<{ severity: string, category: string, label: string, count?: number, sample?: string, files?: string[] }>, audit: { vulnerabilities: object, total: number }|null, totalFindings: number, notMeasured: string[] }}
  */
 export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process.cwd()) {
   const appRoot = findApplicationRoot(root);
   const findings = [];
+  const notMeasured = [];
+  if (isEmptyDir(root)) {
+    return { findings, audit: null, totalFindings: 0, notMeasured: ["the project directory is empty"] };
+  }
+  const grepBlocked = toolsMissing(["grep", "head", "wc"]);
+  if (grepBlocked) notMeasured.push(`secret and eval() scan: ${grepBlocked}`);
 
   // Check for hardcoded secrets
   const secretPatterns = [
@@ -589,7 +681,7 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
     { pattern: "secret\\s*=\\s*['\"][^'\"]+['\"]", label: "Hardcoded secret" },
   ];
 
-  for (const { pattern, label } of secretPatterns) {
+  for (const { pattern, label } of grepBlocked ? [] : secretPatterns) {
     const matches = run(
       `grep -rnI "${pattern}" --include="*.ts" --include="*.js" --include="*.py" . 2>/dev/null | grep -v node_modules | grep -v dist | head -5`,
       { cwd: appRoot }
@@ -606,7 +698,7 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
   }
 
   // Check for eval
-  const evalMatches = run(
+  const evalMatches = grepBlocked ? null : run(
     `grep -rn "eval(" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v node_modules | grep -v dist | wc -l`,
     { cwd: appRoot }
   );
@@ -620,7 +712,13 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
   }
 
   // Check for .env in git (use governance root for git commands)
-  const envInGit = run("git ls-files | grep -i '\\.env$'", { cwd: root });
+  // Outside a git repository nothing is committed, so there is nothing to check; inside one, git must be present.
+  const inRepo = whichCmd("git")
+    ? run("git rev-parse --is-inside-work-tree", { cwd: root }) === "true"
+    : hasGitDir(root);
+  const gitBlocked = inRepo ? toolsMissing(["git", "grep"]) : null;
+  if (gitBlocked) notMeasured.push(`.env in git: ${gitBlocked}`);
+  const envInGit = gitBlocked || !inRepo ? null : run("git ls-files | grep -i '\\.env$'", { cwd: root });
   if (envInGit) {
     findings.push({
       severity: "critical",
@@ -632,7 +730,9 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
 
   // npm audit (if available) — use appRoot where package-lock.json lives
   let audit = null;
-  if (existsSync(join(appRoot, "package-lock.json"))) {
+  const npmBlocked = existsSync(join(appRoot, "package-lock.json")) ? toolsMissing(["npm"]) : null;
+  if (npmBlocked) notMeasured.push(`npm audit: ${npmBlocked}`);
+  if (!npmBlocked && existsSync(join(appRoot, "package-lock.json"))) {
     // npm audit exits non-zero when vulns exist — || true prevents run() from dropping output
     const auditRaw = run("npm audit --json 2>/dev/null || true", { cwd: appRoot, timeout: 30000 });
     if (auditRaw) {
@@ -650,7 +750,7 @@ export function getSecurityScan(root = process.env.FORGE_PROJECT_ROOT || process
     }
   }
 
-  return { findings, audit, totalFindings: findings.length };
+  return { findings, audit, totalFindings: findings.length, notMeasured };
 }
 
 /** The command that opens a file or URL in the user's browser, per platform. Exported for tests. */
@@ -796,7 +896,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
         <div class="flex items-center gap-2">${icon} <span class="text-slate-200">${c.name}</span></div>
         <div class="flex items-center gap-3">
           ${c.note ? `<span class="text-xs text-slate-400">${c.note}</span>` : ""}
-          <span class="text-sm font-mono ${c.points > 0 ? "text-emerald-400" : "text-slate-500"}">${c.points}pts</span>
+          <span class="text-sm font-mono ${c.points > 0 ? "text-emerald-400" : "text-slate-500"}">${c.points === null ? "not measured" : `${c.points}pts`}</span>
         </div>
       </div>`;
     })
@@ -881,11 +981,11 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
           <svg width="140" height="140" viewBox="0 0 140 140">
             <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(99,102,241,0.1)" stroke-width="10"/>
             <circle cx="70" cy="70" r="60" fill="none" stroke="${health.score >= 80 ? "#34d399" : health.score >= 60 ? "#fbbf24" : "#f87171"}" stroke-width="10"
-              stroke-dasharray="${(health.score / 100) * 377} 377" stroke-linecap="round"/>
+              stroke-dasharray="${((health.score ?? 0) / 100) * 377} 377" stroke-linecap="round"/>
           </svg>
           <div class="value flex-col">
-            <span class="text-3xl font-bold ${gradeColor}">${health.grade}</span>
-            <span class="text-xs text-slate-500">${health.score}/100</span>
+            <span class="text-3xl font-bold ${gradeColor}">${health.grade ?? "n/a"}</span>
+            <span class="text-xs text-slate-500">${health.score ?? "n/a"}/100</span>
           </div>
         </div>
       </div>
@@ -895,12 +995,12 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Source Files</div>
-        <div class="text-2xl font-bold text-slate-100">${metrics.sourceFiles}</div>
+        <div class="text-2xl font-bold text-slate-100">${metrics.sourceFiles ?? "n/a"}</div>
         <div class="text-xs text-slate-500 mt-1">${metrics.projectType}</div>
       </div>
       <div class="card rounded-xl p-5">
         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Test Files</div>
-        <div class="text-2xl font-bold text-slate-100">${metrics.testFiles}</div>
+        <div class="text-2xl font-bold text-slate-100">${metrics.testFiles ?? "n/a"}</div>
         <div class="text-xs ${(metrics.testCoverage ?? 0) >= 50 ? "text-emerald-400" : "text-amber-400"} mt-1">${metrics.testCoverage !== null ? `${metrics.testCoverage}% coverage` : metrics.testCaseCount > 0 ? `${metrics.testCaseCount} test cases` : `${metrics.testFileRatio}% file ratio`}</div>
       </div>
       <div class="card rounded-xl p-5">
@@ -930,9 +1030,9 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
           <span class="text-sm text-slate-400">Overall Score</span>
           <div class="flex items-center gap-3">
             <div class="w-32 h-2 bg-slate-700 rounded-full overflow-hidden">
-              <div class="h-full ${scoreBarColor} rounded-full transition-all" style="width: ${health.score}%"></div>
+              <div class="h-full ${scoreBarColor} rounded-full transition-all" style="width: ${health.score ?? 0}%"></div>
             </div>
-            <span class="font-mono text-sm font-semibold ${gradeColor}">${health.score}%</span>
+            <span class="font-mono text-sm font-semibold ${gradeColor}">${health.score ?? "n/a"}%</span>
           </div>
         </div>
       </div>
@@ -990,7 +1090,7 @@ export async function generateDashboard(root = process.env.FORGE_PROJECT_ROOT ||
     </div>
 
     <!-- Large Files -->
-    ${metrics.largeFiles.length > 0 ? `
+    ${metrics.largeFiles?.length > 0 ? `
     <div class="card rounded-xl p-6">
       <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>

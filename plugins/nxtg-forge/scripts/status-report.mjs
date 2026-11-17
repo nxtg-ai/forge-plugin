@@ -41,6 +41,18 @@ export const DIMENSIONS = [
   ['Project', 35, ['Governance', 'Git Clean', 'File Size']],
 ];
 const CHECK_MAX = { Governance: 15, 'Git Clean': 10, 'Test Coverage': 20, README: 10, 'CLAUDE.md': 10, 'Type Safety': 10, 'File Size': 10, Security: 15 };
+// A check governance-mcp could not run (no git, no files, a missing tool). It never counts: no finding, no
+// lost points, and its dimension's maximum leaves it out (DIRECTIVE-NXTG-20261117-02).
+const NOT_MEASURED = 'not measured';
+const measured = (c) => c.status !== NOT_MEASURED;
+// Each dimension as [label, points, max] over its measured checks; points and max are null when none was.
+const dimsOf = (checks) => {
+  const by = Object.fromEntries((checks ?? []).filter(measured).map((c) => [c.name, Number(c.points) || 0]));
+  return DIMENSIONS.map(([label, , names]) => {
+    const got = names.filter((n) => n in by);
+    return [label, got.length ? got.reduce((s, n) => s + by[n], 0) : null, got.length ? got.reduce((s, n) => s + CHECK_MAX[n], 0) : null];
+  });
+};
 
 // The orchestrator's lines are byte-identical to v3.12.1 (C6 judges them exactly); this is their ASCII form.
 export const PLAIN_ORCHESTRATOR = {
@@ -81,8 +93,8 @@ const SEVERITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 };
 export function findings(d) {
   const out = [];
   const add = (severity, issue, action, command, lost = 0) => out.push({ severity, issue, action, command, lost });
-  if (!d.health) add('HIGH', 'Health is not scored (needs Node.js 20+)', 'Install Node.js 20 or newer', 'https://nodejs.org');
-  for (const c of d.health?.checks ?? []) {
+  if (!d.health && !d.healthNotMeasured) add('HIGH', 'Health is not scored (needs Node.js 20+)', 'Install Node.js 20 or newer', 'https://nodejs.org');
+  for (const c of (d.health?.checks ?? []).filter(measured)) {
     const max = CHECK_MAX[c.name]; const pts = Number(c.points) || 0;
     if (!max || pts >= max) continue;
     const lost = max - pts;
@@ -117,12 +129,11 @@ export function verdict(d, f = findings(d)) {
 
 // Pure: the snapshot this run leaves for the next one.
 export function snapshotOf(d) {
-  const pts = Object.fromEntries((d.health?.checks ?? []).map((c) => [c.name, Number(c.points) || 0]));
   return {
     version: 1,
     at: d.generatedAt,
     commit: d.git?.hash ?? null,
-    health: d.health ? { score: d.health.score, grade: d.health.grade, dims: Object.fromEntries(DIMENSIONS.map(([l, , n]) => [l, n.reduce((s, x) => s + (pts[x] ?? 0), 0)])) } : null,
+    health: d.health ? { score: d.health.score, grade: d.health.grade, dims: Object.fromEntries(dimsOf(d.health.checks).map(([l, p]) => [l, p])) } : null,
     tests: { files: d.tests.testFiles, cases: d.tests.testCases },
     git: d.git?.isRepo ? { changed: d.git.staged + d.git.modified + d.git.untracked } : null,
     orchestrator: d.orchestrator.state,
@@ -194,23 +205,25 @@ export function render(d) {
     } else out.push('No commits yet.');
   }
 
-  if (!d.health) out.push('## Health', NOT_SCORED);
+  if (!d.health) out.push('## Health', d.healthNotMeasured ? `**Not scored.** No health check could run: ${clip(cell(d.healthNotMeasured), 160)}.` : NOT_SCORED);
   else {
-    const pts = Object.fromEntries(d.health.checks.map((c) => [c.name, Number(c.points) || 0]));
-    const dims = DIMENSIONS.map(([label, max, names]) => [label, max, names.reduce((s, n) => s + (pts[n] ?? 0), 0)]);
-    const below = dims.filter(([, max, p]) => p < max).length;
-    out.push(`## Health: ${d.health.grade} (${d.health.score}/100), ${below} of ${dims.length} dimensions below max`);
+    const dims = dimsOf(d.health.checks);
+    const scored = dims.filter(([, p]) => p !== null);
+    const below = scored.filter(([, p, max]) => p < max).length;
+    const skipped = dims.length - scored.length;
+    out.push(`## Health: ${d.health.grade} (${d.health.score}/100), ${below} of ${scored.length} dimensions below max${skipped ? `, ${skipped} not measured` : ''}`);
     const status = (p, max) => (p >= max ? '[OK]' : p >= max / 2 ? '[WARN]' : '[FAIL]');
     out.push(...table(['Dimension', 'Score', 'Bar', 'Status'], [
-      ...dims.map(([label, max, p]) => [label, `${p}/${max}`, bar(p, max), status(p, max)]),
+      ...dims.map(([label, p, max]) => (p === null ? [label, 'not measured', '', '[N/A]'] : [label, `${p}/${max}`, bar(p, max), status(p, max)])),
       ['**Overall**', `**${d.health.grade} (${d.health.score}/100)**`, bar(d.health.score, 100), `[${v === 'HEALTHY' ? 'OK' : v === 'AT RISK' ? 'FAIL' : 'WARN'}]`],
     ]));
   }
 
-  out.push(`## Tests: ${plural(d.tests.testFiles, 'file')}, ${plural(d.tests.testCases, 'case')}`);
+  const counted = (n, one) => (n === null ? `${one}s not measured` : plural(n, one));
+  out.push(`## Tests: ${counted(d.tests.testFiles, 'file')}, ${counted(d.tests.testCases, 'case')}`);
   out.push(...table(['Metric', 'Value'], [
-    ['Test files', clip(cell(d.tests.testFiles), 12)],
-    ['Test cases', clip(cell(d.tests.testCases), 12)],
+    ['Test files', clip(cell(d.tests.testFiles ?? NOT_MEASURED), 12)],
+    ['Test cases', clip(cell(d.tests.testCases ?? NOT_MEASURED), 12)],
     ['Runner', clip(cell(d.tests.runner || 'none detected'), 60)],
     ['Coverage', d.tests.coverage ? clip(cell(d.tests.coverage), 60) : 'not scored'],
   ]));
@@ -380,7 +393,11 @@ export async function gather(root, { tools, orchestrator, now = () => new Date()
     try { metrics = t.getCodeMetrics(root); } catch { metrics = null; }
     try { gov = t.getGovernanceState(root); } catch { gov = null; }
   }
-  const cov = health?.checks?.find((c) => c.name === 'Test Coverage');
+  const cov = health?.checks?.find((c) => c.name === 'Test Coverage' && measured(c));
+  // A health result whose every check was not measured has no score; the report says why instead.
+  const healthNotMeasured = health && health.score === null && Array.isArray(health.checks)
+    ? [...new Set(health.checks.map((c) => c.note).filter(Boolean))].join('; ') || NOT_MEASURED
+    : null;
   let vision = null; let status = null;
   if (gov?.initialized) {
     try {
@@ -403,9 +420,11 @@ export async function gather(root, { tools, orchestrator, now = () => new Date()
     stage: stageLine(),
     git: gitData(root),
     health: health && Number.isFinite(health.score) ? health : null,
+    healthNotMeasured,
     tests: {
-      testFiles: metrics?.testFiles ?? 0,
-      testCases: metrics?.testCaseCount ?? 0,
+      // A count governance-mcp could not take is null, shown as "not measured", never as 0.
+      testFiles: metrics ? metrics.testFiles : 0,
+      testCases: metrics ? metrics.testCaseCount : 0,
       runner: runner(root, metrics?.projectType),
       coverage: cov ? `${cov.points}/20${cov.note ? ` (${cov.note})` : ''}` : null,
     },

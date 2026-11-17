@@ -58,7 +58,7 @@ export const TOOLS = [
   {
     name: "forge_get_governance_health",
     description:
-      "Get the project health score (0-100) with letter grade and detailed check results. Evaluates governance, git cleanliness, test coverage, documentation, type safety, file sizes, and security.",
+      "Get the project health score (0-100) with letter grade and detailed check results. Evaluates governance, git cleanliness, test coverage, documentation, type safety, file sizes, and security. A check that cannot run (no git, no files, a missing tool) has status \"not measured\" with the reason and is left out of the score; with no measured check, score and grade are null.",
     inputSchema: { type: "object", properties: {}, required: [] },
   },
   {
@@ -76,7 +76,7 @@ export const TOOLS = [
   {
     name: "forge_get_code_metrics",
     description:
-      "Get code metrics: source file count, test file count, test coverage percentage, total lines, largest files, and dependency counts.",
+      "Get code metrics: source file count, test file count, test coverage percentage, total lines, largest files, and dependency counts. A count that could not be taken is null, never 0, and notMeasured gives the reason.",
     inputSchema: { type: "object", properties: {}, required: [] },
   },
   {
