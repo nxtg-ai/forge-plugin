@@ -1,6 +1,6 @@
 # Gemini Framework
 
-> Reference knowledge for Google Gemini CLI compatibility -- hierarchical context discovery, modular imports, and system prompt override patterns that enable NXTG-Forge to interoperate with Gemini-based workflows.
+> Reference knowledge about Google's retired Gemini CLI, which Google replaced with Antigravity CLI (`agy`): how the old client discovered context, imported files and overrode its system prompt, for projects that still carry `GEMINI.md` or `.gemini/` files.
 
 | | |
 |---|---|
@@ -11,15 +11,15 @@
 
 ## What It Provides
 
-This skill is strictly reference material. It documents how Google's Gemini CLI discovers context, loads instructions, and can be configured so that NXTG-Forge can interoperate with Gemini-based workflows when a project needs to support both platforms. It maps Gemini concepts to their Claude Code equivalents, documents key architectural differences, and provides guidance for dual-platform projects.
+This skill is strictly reference material about a retired tool. Google replaced Gemini CLI with Antigravity CLI, whose executable is `agy` ([Google's notice](https://github.com/google-gemini/gemini-cli/discussions/27274)), and Forge's orchestrator runs `agy` for Google-model agents. The skill documents how the old client discovered context and loaded instructions, so an agent can explain those files in a project that still has them. It maps the old client's concepts to their Claude Code equivalents. It does not describe which files `agy` reads.
 
-Without this skill, agents asked to add Gemini compatibility would not understand Gemini's hierarchical context scanning (current directory up to .git root), its `@file.md` import syntax, or the full system prompt override via `.gemini/system.md`. They would create configurations that do not match Gemini's expectations, leading to broken or incomplete context loading.
+Without this skill, an agent that finds these files could misread them: the old client's hierarchical context scanning (current directory up to .git root), its `@file.md` import syntax, and the full system prompt override via `.gemini/system.md` all differ from Claude Code.
 
 The knowledge covers Gemini's context discovery mechanism, configuration system, directory structure conventions, memory commands, and the critical differences from Claude Code.
 
 ## When It Activates
 
-- When a project needs to support both Claude Code and Gemini CLI
+- When a project still has files from the retired client
 - When an agent encounters `GEMINI.md`, `.gemini/` directories, or playbook files
 - When discussing cross-platform AI coding tool compatibility
 
@@ -29,7 +29,7 @@ This skill does not load automatically (`disable-model-invocation: true`). Invok
 
 ### Hierarchical Context Discovery
 
-Gemini CLI concatenates `GEMINI.md` files from three levels: `~/.gemini/GEMINI.md` (global user instructions), the current directory and all parent directories up to the `.git` root (project instructions), and subdirectories under the current working directory (module-specific instructions). It respects `.gitignore` and `.geminiignore` for filtering. This is fundamentally different from Claude Code's flat CLAUDE.md model -- Gemini inherits context from the directory hierarchy automatically.
+The old client concatenates `GEMINI.md` files from three levels: `~/.gemini/GEMINI.md` (global user instructions), the current directory and all parent directories up to the `.git` root (project instructions), and subdirectories under the current working directory (module-specific instructions). It respects `.gitignore` and `.geminiignore` for filtering. This is fundamentally different from Claude Code's flat CLAUDE.md model -- Gemini inherits context from the directory hierarchy automatically.
 
 ### Modular Imports
 
@@ -37,7 +37,7 @@ Gemini CLI concatenates `GEMINI.md` files from three levels: `~/.gemini/GEMINI.m
 
 ### System Prompt Override
 
-Setting `GEMINI_SYSTEM_MD=1` in `.gemini/.env` makes Gemini CLI fully replace its built-in system prompt with `.gemini/system.md`. This is a full replacement, not a merge -- a critical distinction from Claude Code where CLAUDE.md extends the system prompt. Variable substitution (`${AvailableTools}`, `${AgentSkills}`) is supported. This power comes with responsibility: a bad system.md breaks Gemini's default behavior entirely.
+Setting `GEMINI_SYSTEM_MD=1` in `.gemini/.env` makes the old client fully replace its built-in system prompt with `.gemini/system.md`. This is a full replacement, not a merge -- a critical distinction from Claude Code where CLAUDE.md extends the system prompt. Variable substitution (`${AvailableTools}`, `${AgentSkills}`) is supported. This power comes with responsibility: a bad system.md breaks Gemini's default behavior entirely.
 
 ### Platform Capability Differences
 
@@ -51,20 +51,19 @@ Six key differences: config file (CLAUDE.md vs GEMINI.md), hierarchical scanning
 
 This skill is passive reference material. It activates when agents encounter Gemini-related files or when users ask about cross-platform compatibility. It prevents agents from applying Claude Code patterns to Gemini configuration.
 
-### Example: Adding Gemini Support
+### Example: A Project With Old Gemini Files
 
 ```
-User: "Make this project work with both Claude Code and Gemini CLI"
+User: "This repo has a GEMINI.md and a .gemini/ folder. Do we still need them?"
 
-What happens: The skill activates and the agent creates a GEMINI.md in the project root
-with project context, sets up .gemini/ directory with settings.json and rules/playbooks
-subdirectories, and configures @imports for shared coding standards. Both platforms read
-.claude/governance.json for shared project state.
+What happens: The agent explains what the old client loaded from those files, says Google
+retired that client and replaced it with Antigravity CLI (agy), and leaves the files alone
+unless the user decides to remove them. Forge itself reads .claude/governance.json.
 ```
 
 ## Power Applications
 
-Gemini's hierarchical context discovery is a genuine architectural advantage for monorepos. A module-specific GEMINI.md in `src/auth/` provides authentication context that only activates when working in that directory, while project-level context is always available. Understanding this pattern helps teams structure context efficiently across large codebases.
+The old client's hierarchical context discovery suited monorepos. A module-specific GEMINI.md in `src/auth/` provides authentication context that only activates when working in that directory, while project-level context is always available. Understanding this pattern helps teams structure context efficiently across large codebases.
 
 ## Related Skills
 
@@ -76,7 +75,7 @@ Gemini's hierarchical context discovery is a genuine architectural advantage for
 
 ## Tips
 
-- This is reference-only. Do NOT create GEMINI.md, .gemini/ directories, or playbooks unless the user explicitly asks for Gemini CLI support.
+- This is reference-only. Do NOT create GEMINI.md, .gemini/ directories, or playbooks, and do not tell a user to install or run the retired client.
 - Gemini's system prompt override is a full replacement. Use it carefully -- a mistake removes all default Gemini behavior.
 
 ---
