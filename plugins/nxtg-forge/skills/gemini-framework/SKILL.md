@@ -1,12 +1,12 @@
 ---
 name: Gemini Framework
-description: Reference knowledge about Google's retired Gemini CLI, which Google replaced with Antigravity CLI (`agy`). Describes how the old client read GEMINI.md, .gemini/settings.json and a system-prompt override, for projects that still carry those files. Use when a user asks what GEMINI.md, @imports or .gemini/ files do, or whether to keep them. DO NOT create files from this skill, and do not tell a user to install or run `gemini`; it is reference material only.
+description: Reference knowledge about Google's Gemini CLI, which Google is replacing with Antigravity CLI (`agy`). Describes how Gemini CLI reads GEMINI.md, .gemini/settings.json and a system-prompt override, for projects that carry those files. Use when a user asks what GEMINI.md, @imports or .gemini/ files do, or whether to keep them. DO NOT create files from this skill, and do not tell a user to install Gemini CLI for Forge (its orchestrator runs `agy`); it is reference material only.
 disable-model-invocation: true
 ---
 
-# Gemini CLI (retired) — Reference Knowledge
+# Gemini CLI — Reference Knowledge
 
-> **RETIRED TOOL.** Google retired Gemini CLI and replaced it with Antigravity CLI, whose executable is `agy` (Google's notice: https://github.com/google-gemini/gemini-cli/discussions/27274). Do not tell a user to install, authenticate or run `gemini`. For Google-model agents, Forge's orchestrator runs `agy` (its agent id stays `gemini`). This page records how the old client worked, for projects that still have `GEMINI.md` or `.gemini/` files. It does not describe which files `agy` reads.
+> **BEING REPLACED.** Google is moving Gemini CLI users to Antigravity CLI, whose executable is `agy` (Google's notice: https://github.com/google-gemini/gemini-cli/discussions/27274). Since 2026-06-18 Gemini CLI no longer serves Google AI Pro, Ultra or free-of-charge use; Gemini Code Assist Standard or Enterprise licences, Google Cloud and paid API keys still work, and Google still maintains the repository. Do not tell a user to install Gemini CLI for Forge: for Google-model agents, Forge's orchestrator runs `agy` (its agent id stays `gemini`). This page records how Gemini CLI works, for projects that have `GEMINI.md` or `.gemini/` files. It does not describe which files `agy` reads.
 >
 > **REFERENCE ONLY.** Do NOT create `GEMINI.md`, `.gemini/`, playbooks, or rules files in the user's project. NXTG-Forge delivers all agent functionality through the Claude Code plugin system.
 
@@ -86,7 +86,7 @@ When a project uses Forge and still carries files from the old client:
 
 ## Claude Code vs the Old Gemini Client
 
-| Aspect | Claude Code (Forge) | Gemini CLI (retired) |
+| Aspect | Claude Code (Forge) | Gemini CLI |
 |--------|--------------------|------------|
 | Config file | `CLAUDE.md` | `GEMINI.md` (name configurable) |
 | Hierarchical scan | `@import` chain, no auto parent-scan | Yes — scans parents to `.git` root |

@@ -97,7 +97,7 @@ Skills are contextual knowledge documents that Claude Code loads automatically w
 |-------|-----------------|
 | **claude-code-framework** | Claude Code capabilities, tool usage, agent patterns |
 | **codex-framework** | Codex CLI conventions, task mode, AGENTS.md format |
-| **gemini-framework** | Retired Gemini CLI (replaced by Antigravity CLI, `agy`): GEMINI.md format |
+| **gemini-framework** | Gemini CLI, which Google is replacing with Antigravity CLI (`agy`): GEMINI.md format |
 
 ### Workflow Skills
 

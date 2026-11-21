@@ -12,7 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ### Changed
 
-- **The `gemini-framework` skill and its docs say the client they describe is retired.** Google replaced it with Antigravity CLI (`agy`), which Forge's orchestrator already runs. The skill no longer tells a user to add support for the old client, and it does not claim which files `agy` reads. Docs only; the skill keeps its name.
+- **The `gemini-framework` skill and its docs say Google is moving Gemini CLI users to Antigravity CLI (`agy`)**, which Forge's orchestrator already runs. Since 2026-06-18 Gemini CLI no longer serves Google AI Pro, Ultra or free-of-charge use; enterprise licences and paid API keys still work. The skill no longer tells a user to install Gemini CLI for Forge, and it does not claim which files `agy` reads. Docs only; the skill keeps its name.
 - **The marketplace serves v3.14.6.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.6` at its release commit, so `claude plugin update` delivers the 3.14.6 "not measured" fix.
 
 ## [3.14.6] — 2026-11-17
