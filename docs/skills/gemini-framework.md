@@ -1,6 +1,6 @@
 # Gemini Framework
 
-> Reference knowledge about Google's retired Gemini CLI, which Google replaced with Antigravity CLI (`agy`): how the old client discovered context, imported files and overrode its system prompt, for projects that still carry `GEMINI.md` or `.gemini/` files.
+> Reference knowledge about Google's Gemini CLI, which Google is replacing with Antigravity CLI (`agy`): how Gemini CLI discovers context, imports files and overrides its system prompt, for projects that carry `GEMINI.md` or `.gemini/` files.
 
 | | |
 |---|---|
@@ -11,7 +11,7 @@
 
 ## What It Provides
 
-This skill is strictly reference material about a retired tool. Google replaced Gemini CLI with Antigravity CLI, whose executable is `agy` ([Google's notice](https://github.com/google-gemini/gemini-cli/discussions/27274)), and Forge's orchestrator runs `agy` for Google-model agents. The skill documents how the old client discovered context and loaded instructions, so an agent can explain those files in a project that still has them. It maps the old client's concepts to their Claude Code equivalents. It does not describe which files `agy` reads.
+This skill is strictly reference material. Google is moving Gemini CLI users to Antigravity CLI, whose executable is `agy` ([Google's notice](https://github.com/google-gemini/gemini-cli/discussions/27274)). Since 2026-06-18 Gemini CLI no longer serves Google AI Pro, Ultra or free-of-charge use; Gemini Code Assist Standard or Enterprise licences, Google Cloud and paid API keys still work, and Google still maintains the repository. Forge's orchestrator runs `agy` for Google-model agents. The skill documents how Gemini CLI discovers context and loads instructions, so an agent can explain those files in a project that has them. It maps the old client's concepts to their Claude Code equivalents. It does not describe which files `agy` reads.
 
 Without this skill, an agent that finds these files could misread them: the old client's hierarchical context scanning (current directory up to .git root), its `@file.md` import syntax, and the full system prompt override via `.gemini/system.md` all differ from Claude Code.
 
@@ -19,7 +19,7 @@ The knowledge covers Gemini's context discovery mechanism, configuration system,
 
 ## When It Activates
 
-- When a project still has files from the retired client
+- When a project has Gemini CLI files (`GEMINI.md`, `.gemini/`)
 - When an agent encounters `GEMINI.md`, `.gemini/` directories, or playbook files
 - When discussing cross-platform AI coding tool compatibility
 
@@ -56,9 +56,9 @@ This skill is passive reference material. It activates when agents encounter Gem
 ```
 User: "This repo has a GEMINI.md and a .gemini/ folder. Do we still need them?"
 
-What happens: The agent explains what the old client loaded from those files, says Google
-retired that client and replaced it with Antigravity CLI (agy), and leaves the files alone
-unless the user decides to remove them. Forge itself reads .claude/governance.json.
+What happens: The agent explains what Gemini CLI loads from those files, says Google is
+moving Gemini CLI users to Antigravity CLI (agy), and leaves the files alone unless the
+user decides to remove them. Forge itself reads .claude/governance.json.
 ```
 
 ## Power Applications
@@ -75,7 +75,7 @@ The old client's hierarchical context discovery suited monorepos. A module-speci
 
 ## Tips
 
-- This is reference-only. Do NOT create GEMINI.md, .gemini/ directories, or playbooks, and do not tell a user to install or run the retired client.
+- This is reference-only. Do NOT create GEMINI.md, .gemini/ directories, or playbooks, and do not tell a user to install Gemini CLI for Forge: Forge's orchestrator runs `agy`.
 - Gemini's system prompt override is a full replacement. Use it carefully -- a mistake removes all default Gemini behavior.
 
 ---

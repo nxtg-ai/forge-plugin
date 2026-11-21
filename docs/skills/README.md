@@ -63,7 +63,7 @@ How AI coding tools discover context — critical for multi-tool workflows.
 |-------|-----------------|
 | [Claude Code Framework](claude-code-framework.md) | Claude Code architecture, tool usage, agent patterns, extension points |
 | [Codex Framework](codex-framework.md) | Codex CLI conventions — AGENTS.md, task mode, skill discovery (reference only) |
-| [Gemini Framework](gemini-framework.md) | Retired Gemini CLI (Google replaced it with Antigravity CLI, `agy`): how its GEMINI.md context loading worked (reference only) |
+| [Gemini Framework](gemini-framework.md) | Gemini CLI, which Google is replacing with Antigravity CLI (`agy`): how its GEMINI.md context loading works (reference only) |
 
 ### Workflow
 

@@ -63,7 +63,7 @@ The key insight is the "no duplication" principle. When teams use multiple AI co
 | Skill | Relationship |
 |-------|-------------|
 | **claude-code-framework** | Claude Code's architecture, the primary platform that Codex is compared against |
-| **gemini-framework** | Reference for Google's retired Gemini CLI (replaced by Antigravity CLI, `agy`) |
+| **gemini-framework** | Reference for Google's Gemini CLI, which Google is replacing with Antigravity CLI (`agy`) |
 | **core-nxtg-forge** | NXTG-Forge platform that bridges multiple AI coding tools |
 
 ## Tips
