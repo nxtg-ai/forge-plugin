@@ -229,6 +229,8 @@ export const NxtgForge = async ({ project, directory }) => {
 
 ### 2d. Gemini CLI
 
+> **Note (2026-11-21):** Google has since retired this client and replaced it with Antigravity CLI (`agy`). This section is the March 2026 analysis of the old client, kept as written; it is not a plan to support it.
+
 **Plugin spec:** `gemini-extension.json` metadata + `GEMINI.md` context file + `.gemini/playbooks/` for skills. No hook system. No command system.
 
 **What maps directly:**

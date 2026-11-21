@@ -1,16 +1,18 @@
 ---
 name: Gemini Framework
-description: Reference knowledge for Google Gemini CLI compatibility. Describes how Gemini CLI discovers context (GEMINI.md), configures settings.json, and overrides its system prompt so Forge can interoperate on a dual-platform project. Use when a user asks how Forge coexists with Gemini CLI, how GEMINI.md / @imports / .gemini/settings.json work, or how to add Gemini support alongside Claude Code. DO NOT create files from this skill — it is reference material only.
+description: Reference knowledge about Google's retired Gemini CLI, which Google replaced with Antigravity CLI (`agy`). Describes how the old client read GEMINI.md, .gemini/settings.json and a system-prompt override, for projects that still carry those files. Use when a user asks what GEMINI.md, @imports or .gemini/ files do, or whether to keep them. DO NOT create files from this skill, and do not tell a user to install or run `gemini`; it is reference material only.
 disable-model-invocation: true
 ---
 
-# Gemini CLI — Reference Knowledge
+# Gemini CLI (retired) — Reference Knowledge
 
-> **REFERENCE ONLY.** Do NOT create `GEMINI.md`, `.gemini/`, playbooks, or rules files in the user's project unless the user explicitly asks to add Gemini CLI support. NXTG-Forge delivers all agent functionality through the Claude Code plugin system; this skill only explains the *other* tool so you can advise on interop.
+> **RETIRED TOOL.** Google retired Gemini CLI and replaced it with Antigravity CLI, whose executable is `agy` (Google's notice: https://github.com/google-gemini/gemini-cli/discussions/27274). Do not tell a user to install, authenticate or run `gemini`. For Google-model agents, Forge's orchestrator runs `agy` (its agent id stays `gemini`). This page records how the old client worked, for projects that still have `GEMINI.md` or `.gemini/` files. It does not describe which files `agy` reads.
+>
+> **REFERENCE ONLY.** Do NOT create `GEMINI.md`, `.gemini/`, playbooks, or rules files in the user's project. NXTG-Forge delivers all agent functionality through the Claude Code plugin system.
 
-## How Gemini CLI Discovers Context
+## How the Old Client Discovers Context
 
-Gemini CLI builds its instructional context ("memory") by **concatenating** (not overriding) every `GEMINI.md` it finds, from broadest to most specific:
+The old client builds its instructional context ("memory") by **concatenating** (not overriding) every `GEMINI.md` it finds, from broadest to most specific:
 1. `~/.gemini/GEMINI.md` — global user instructions
 2. Current directory and each parent up to the `.git` root — project instructions
 3. Subdirectories under CWD — module-specific instructions
@@ -31,7 +33,7 @@ It respects `.gitignore` and `.geminiignore` when scanning. The context filename
 
 ## `.gemini/settings.json`
 
-Project-level config (global variant: `~/.gemini/settings.json`). Modern Gemini CLI groups keys under **nested categories** — `general`, `ui`, `model`, `context`, `tools`, `mcpServers`:
+Project-level config (global variant: `~/.gemini/settings.json`). Later versions of the old client group keys under **nested categories** — `general`, `ui`, `model`, `context`, `tools`, `mcpServers`:
 
 ```json
 {
@@ -47,7 +49,7 @@ Project-level config (global variant: `~/.gemini/settings.json`). Modern Gemini 
 
 ## System Prompt Override (`.gemini/system.md`)
 
-Set `GEMINI_SYSTEM_MD` in `.gemini/.env` (or the shell env) to **fully replace** Gemini CLI's built-in system prompt — this is a hard replacement, not a merge:
+Set `GEMINI_SYSTEM_MD` in `.gemini/.env` (or the shell env) to **fully replace** the old client's built-in system prompt — this is a hard replacement, not a merge:
 - `GEMINI_SYSTEM_MD=1` (or `true`) → loads `.gemini/system.md`
 - `GEMINI_SYSTEM_MD=/abs/path/to/file.md` → treats the value as a path to the prompt file
 
@@ -57,7 +59,7 @@ Template variables let you re-inject the built-in pieces you replaced:
 - `${SubAgents}` — the available sub-agents section
 - `${<toolName>_ToolName}` — the resolved name of a specific tool
 
-When an override is active, Gemini CLI shows a `|⌐■_■|` indicator in the UI. No indicator = your `system.md` was not picked up.
+When an override is active, the old client shows a `|⌐■_■|` indicator in the UI. No indicator = your `system.md` was not picked up.
 
 ## Typical Dual-Platform Layout
 
@@ -74,17 +76,17 @@ project/
 └── src/module/GEMINI.md # optional module-scoped context
 ```
 
-## Forge ↔ Gemini Interoperability
+## A Forge Project That Still Has Gemini Files
 
-When a project must support BOTH Claude Code (via Forge) and Gemini CLI:
+When a project uses Forge and still carries files from the old client:
 1. **Forge owns Claude Code** — commands, agents, skills, hooks (the plugin).
-2. **Gemini reads only its own files** — `GEMINI.md`, `.gemini/`.
-3. **Shared state** — both can read `.claude/governance.json` for project context.
-4. **No duplication** — keep platform-specific agent instructions in separate files; Gemini has no plugin/slash-command layer, so the portable pattern is `GEMINI.md` + `@imports` (playbooks) + an optional `system.md` override.
+2. **Only the old client read those files** — `GEMINI.md`, `.gemini/`. Nothing in Forge reads them.
+3. **Forge's project state** is `.claude/governance.json`, whatever other files exist.
+4. **Keep or remove them is the user's call.** Do not convert them for `agy` from this page: it does not describe which files `agy` reads.
 
-## Claude Code vs Gemini CLI
+## Claude Code vs the Old Gemini Client
 
-| Aspect | Claude Code (Forge) | Gemini CLI |
+| Aspect | Claude Code (Forge) | Gemini CLI (retired) |
 |--------|--------------------|------------|
 | Config file | `CLAUDE.md` | `GEMINI.md` (name configurable) |
 | Hierarchical scan | `@import` chain, no auto parent-scan | Yes — scans parents to `.git` root |
@@ -106,6 +108,7 @@ When a project must support BOTH Claude Code (via Forge) and Gemini CLI:
 
 ## Sources
 
+- Google's notice, "Transitioning Gemini CLI to Antigravity CLI" — https://github.com/google-gemini/gemini-cli/discussions/27274
 - Gemini CLI configuration reference — https://geminicli.com/docs/reference/configuration/
 - Gemini CLI system-prompt override — https://geminicli.com/docs/cli/system-prompt/
 - settings.schema.json — https://github.com/google-gemini/gemini-cli/blob/main/schemas/settings.schema.json
