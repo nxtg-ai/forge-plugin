@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ### Changed
 
+- **The optional dashboard install now pins forge-ui v3.5.7**, a security fix release (GHSA-r49v-8jjx-w5f9: one-time sign-in codes work only on the machine running forge-ui). Every `git clone --branch` line and the forge-ui README link in the docs move from v3.5.6.
 - **The `gemini-framework` skill and its docs say Google is moving Gemini CLI users to Antigravity CLI (`agy`)**, which Forge's orchestrator already runs. Since 2026-06-18 Gemini CLI no longer serves Google AI Pro, Ultra or free-of-charge use; enterprise licences and paid API keys still work. The skill no longer tells a user to install Gemini CLI for Forge, and it does not claim which files `agy` reads. Docs only; the skill keeps its name.
 - **The marketplace serves v3.14.6.** Both entries (`nxtg-forge`, `nxtg-forge-orchestrator`) pin `v3.14.6` at its release commit, so `claude plugin update` delivers the 3.14.6 "not measured" fix.
 
