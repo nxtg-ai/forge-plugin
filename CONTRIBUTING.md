@@ -135,26 +135,13 @@ These version fields must agree on every release (`tests/version-surface.test.mj
 - both plugin entries in `.claude-plugin/marketplace.json`
 - `plugins/nxtg-forge/servers/governance-mcp/package.json` and its `package-lock.json`
 
-### Contributor License Agreement (CLA)
+### Contribution License
 
-All contributors must sign the CLA before a pull request can be merged.
-
-When you open a PR, the CLA bot will post a comment. Reply with:
-
-```
-I have read the CLA Document and I hereby sign the CLA
-```
-
-This records your agreement in `.github/cla-signatures.json`. You only need to sign once — subsequent PRs will be recognized automatically.
-
-The CLA document is in [`CLA.md`](./CLA.md) (based on Apache ICLA terms). Bots and `dependabot[bot]` are automatically allowlisted.
-
-> **Note:** The `CLA_PERSONAL_ACCESS_TOKEN` repository secret must be set for the bot to commit signatures. Contact a maintainer if the bot fails to record your signature.
+Contributions are submitted under the project’s [MIT License](./LICENSE).
 
 ### Before Submitting
 
-1. CLA signed (first-time contributors only)
-2. `npm run test:ci` passes
+1. `npm run test:ci` passes
 2. YAML frontmatter is present on any new agent/skill/command
 3. No absolute paths in plugin content — use `${CLAUDE_PLUGIN_ROOT}` instead
 4. No new blocking hook without review. The security guards, the enforced-task guard and gate, the required-output gate and the CEO-loop Stop hook block by design; every other hook is advisory
